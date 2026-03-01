@@ -83,6 +83,7 @@ object KhansOfTarkirSet {
 
         // Red creatures
         BloodfireExpert,
+        BloodfireMentor,
         CanyonLurkers,
         LeapingMaster,
         MarduBlazebringer,
