@@ -2,7 +2,7 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 105 / 145
+**Implemented:** 106 / 145
 
 | Color      | Count |
 |------------|-------|
@@ -10,7 +10,7 @@
 | Blue       | 21/29 |
 | Black      | 21/29 |
 | Red        | 21/29 |
-| Green      | 21/29 |
+| Green      | 22/29 |
 
 ---
 
@@ -112,7 +112,7 @@
 - [x] Plated Sliver
 - [ ] Primal Whisperer
 - [x] Primoc Escapee
-- [ ] Quick Sliver
+- [x] Quick Sliver
 - [x] Ridgetop Raptor
 - [x] Riptide Director
 - [x] Riptide Mangler

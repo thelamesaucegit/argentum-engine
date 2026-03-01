@@ -116,8 +116,8 @@ object LegionsSet {
 
         // Green creatures
         BerserkMurlodont,
-        CanopyCrawler,
         BranchsnapLorian,
+        CanopyCrawler,
         GempalmStrider,
         GloweringRogon,
         Brontotherium,
@@ -130,6 +130,7 @@ object LegionsSet {
         NantukoVigilante,
         NeedleshotGourna,
         PatronOfTheWild,
+        QuickSliver,
         StonewoodInvoker,
         TimberwatchElf,
         TotemSpeaker,
