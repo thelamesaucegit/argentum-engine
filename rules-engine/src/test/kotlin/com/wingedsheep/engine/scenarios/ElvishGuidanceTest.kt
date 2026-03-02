@@ -293,6 +293,57 @@ class ElvishGuidanceTest : FunSpec({
         poolAfter.green shouldBe 3
     }
 
+    test("Casting expensive spell with Elvish Guidance leaves no extra floating mana") {
+        val driver = createDriver()
+        driver.initMirrorMatch(
+            deck = Deck.of("Forest" to 40),
+            startingLife = 20
+        )
+
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        // 4 Forests, one with Elvish Guidance, 2 Elves on battlefield
+        val forest1 = driver.putPermanentOnBattlefield(activePlayer, "Forest")
+        driver.putPermanentOnBattlefield(activePlayer, "Forest")
+        driver.putPermanentOnBattlefield(activePlayer, "Forest")
+        driver.putPermanentOnBattlefield(activePlayer, "Forest")
+        driver.putCreatureOnBattlefield(activePlayer, "Test Elf")
+        driver.putCreatureOnBattlefield(activePlayer, "Test Elf")
+
+        val guidance = driver.putCardInHand(activePlayer, "Elvish Guidance")
+        driver.giveMana(activePlayer, Color.GREEN, 3)
+        driver.castSpell(activePlayer, guidance, listOf(forest1))
+        driver.bothPass()
+
+        // Mana pool should be empty after casting Elvish Guidance ({2}{G})
+        val poolBefore = driver.state.getEntity(activePlayer)?.get<ManaPoolComponent>()!!
+        poolBefore.green shouldBe 0
+
+        // Available mana: 4 Forests (one enchanted) + 2 Elves
+        // Enchanted Forest: 1G base + 2G bonus = 3G
+        // 3 other Forests: 3G
+        // Total = 6G
+        // Create a test creature costing {5}{G} to consume exactly all 6G
+        val bigCreature = CardDefinition.creature(
+            name = "Big Elf",
+            manaCost = ManaCost.parse("{5}{G}"),
+            subtypes = setOf(Subtype("Elf")),
+            power = 6,
+            toughness = 6
+        )
+        driver.registerCards(listOf(bigCreature))
+
+        val card = driver.putCardInHand(activePlayer, "Big Elf")
+        val result = driver.castSpell(activePlayer, card)
+        result.isSuccess shouldBe true
+        driver.bothPass()
+
+        // After casting {5}{G} with exactly 6G available, pool should be empty
+        val poolAfter = driver.state.getEntity(activePlayer)?.get<ManaPoolComponent>()!!
+        poolAfter.green shouldBe 0
+    }
+
     test("ManaSolver getAvailableManaCount includes bonus mana") {
         val driver = createDriver()
         driver.initMirrorMatch(

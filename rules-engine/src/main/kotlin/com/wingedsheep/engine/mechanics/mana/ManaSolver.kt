@@ -63,7 +63,9 @@ data class ManaSource(
  */
 data class ManaSolution(
     val sources: List<ManaSource>,
-    val manaProduced: Map<EntityId, ManaProduction>
+    val manaProduced: Map<EntityId, ManaProduction>,
+    /** Bonus mana remaining after the solver consumed some to pay the cost */
+    val remainingBonusMana: Map<Color, Int> = emptyMap()
 )
 
 /**
@@ -281,7 +283,7 @@ class ManaSolver(
             genericRemaining--
         }
 
-        return ManaSolution(usedSources, manaProduced)
+        return ManaSolution(usedSources, manaProduced, bonusManaPool.filter { it.value > 0 })
     }
 
     /**

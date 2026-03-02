@@ -827,20 +827,12 @@ class CastSpellHandler(
                 }
             }
 
-            // Add bonus mana from auras (e.g., Elvish Guidance) to the mana pool as leftover
-            var hasBonus = false
-            for (source in solution.sources) {
-                if (source.bonusManaPerTap > 0 && source.bonusManaColor != null) {
-                    hasBonus = true
-                }
-            }
-            if (hasBonus) {
+            // Add only the bonus mana that wasn't consumed by the solver to the floating pool
+            if (solution.remainingBonusMana.isNotEmpty()) {
                 currentState = currentState.updateEntity(playerId) { container ->
                     var pool = container.get<ManaPoolComponent>() ?: ManaPoolComponent()
-                    for (source in solution.sources) {
-                        if (source.bonusManaPerTap > 0 && source.bonusManaColor != null) {
-                            pool = pool.add(source.bonusManaColor, source.bonusManaPerTap)
-                        }
+                    for ((color, amount) in solution.remainingBonusMana) {
+                        pool = pool.add(color, amount)
                     }
                     container.with(pool)
                 }
