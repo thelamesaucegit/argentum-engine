@@ -2,13 +2,13 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 73 / 249
+**Implemented:** 74 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 12    |
 | Blue       | 12    |
-| Black      | 12    |
+| Black      | 13    |
 | Red        | 12    |
 | Green      | 12    |
 | Multicolor | 7     |
@@ -175,7 +175,7 @@
 - [ ] Rattleclaw Mystic
 - [ ] Retribution of the Ancients
 - [ ] Ride Down
-- [ ] Rite of the Serpent
+- [x] Rite of the Serpent
 - [x] Riverwheel Aerialists
 - [ ] Roar of Challenge
 - [x] Rotting Mastodon

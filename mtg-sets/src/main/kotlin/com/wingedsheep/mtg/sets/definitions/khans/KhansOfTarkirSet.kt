@@ -68,6 +68,7 @@ object KhansOfTarkirSet {
         Despise,
         DutifulReturn,
         RakshasasSecret,
+        RiteOfTheSerpent,
         Throttle,
 
         // Green creatures
