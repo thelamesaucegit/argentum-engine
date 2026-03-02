@@ -2,13 +2,13 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 120 / 145
+**Implemented:** 121 / 145
 
 | Color      | Count |
 |------------|-------|
 | White      | 24/29 |
 | Blue       | 24/29 |
-| Black      | 24/29 |
+| Black      | 25/29 |
 | Red        | 24/29 |
 | Green      | 24/29 |
 
@@ -118,7 +118,7 @@
 - [x] Riptide Mangler
 - [x] Rockshard Elemental
 - [ ] Root Sliver
-- [ ] Scion of Darkness
+- [x] Scion of Darkness
 - [ ] Seedborn Muse
 - [x] Shaleskin Plower
 - [x] Shifting Sliver

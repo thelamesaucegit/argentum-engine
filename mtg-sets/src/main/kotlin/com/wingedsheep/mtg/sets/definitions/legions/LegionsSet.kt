@@ -91,6 +91,7 @@ object LegionsSet {
         GoblinTurncoat,
         HavocDemon,
         NoxiousGhoul,
+        ScionOfDarkness,
         Skinthinner,
         SmokespewInvoker,
         SootfeatherFlock,
