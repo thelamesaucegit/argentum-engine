@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.TypeLine
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.sdk.scripting.effects.CreateTreasureTokensEffect
 import kotlin.reflect.KClass
 
@@ -30,9 +31,11 @@ class CreateTreasureExecutor : EffectExecutor<CreateTreasureTokensEffect> {
         context: EffectContext
     ): ExecutionResult {
         var newState = state
+        val createdTokenIds = mutableListOf<EntityId>()
 
         repeat(effect.count) {
             val tokenId = EntityId.generate()
+            createdTokenIds.add(tokenId)
 
             val tokenComponent = CardComponent(
                 cardDefinitionId = "token:Treasure",
@@ -54,6 +57,16 @@ class CreateTreasureExecutor : EffectExecutor<CreateTreasureTokensEffect> {
             newState = newState.addToZone(battlefieldZone, tokenId)
         }
 
-        return ExecutionResult.success(newState)
+        val events = createdTokenIds.map { tokenId ->
+            ZoneChangeEvent(
+                entityId = tokenId,
+                entityName = "Treasure",
+                fromZone = null,
+                toZone = Zone.BATTLEFIELD,
+                ownerId = context.controllerId
+            )
+        }
+
+        return ExecutionResult.success(newState, events)
     }
 }

@@ -18,6 +18,7 @@ import com.wingedsheep.sdk.core.TypeLine
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.sdk.scripting.effects.CreateChosenTokenEffect
 import kotlin.reflect.KClass
 
@@ -142,6 +143,16 @@ class CreateChosenTokenExecutor(
         val battlefieldZone = ZoneKey(context.controllerId, Zone.BATTLEFIELD)
         newState = newState.addToZone(battlefieldZone, tokenId)
 
-        return ExecutionResult.success(newState)
+        val events = listOf(
+            ZoneChangeEvent(
+                entityId = tokenId,
+                entityName = tokenName,
+                fromZone = null,
+                toZone = Zone.BATTLEFIELD,
+                ownerId = context.controllerId
+            )
+        )
+
+        return ExecutionResult.success(newState, events)
     }
 }
