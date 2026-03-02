@@ -1608,7 +1608,8 @@ object EffectPatterns {
             from = "found",
             destination = CardDestination.ToZone(Zone.EXILE),
             order = CardOrder.Random,
-            linkToSource = true
+            linkToSource = true,
+            faceDown = true
         ),
         ShuffleLibraryEffect()
     ))

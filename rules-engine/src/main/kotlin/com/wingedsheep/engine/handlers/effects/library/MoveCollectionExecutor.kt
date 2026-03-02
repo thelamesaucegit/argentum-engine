@@ -13,6 +13,7 @@ import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComp
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
+import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -69,7 +70,7 @@ class MoveCollectionExecutor(
 
         return when (destination) {
             is CardDestination.ToZone -> {
-                val result = moveToZone(state, context, cards, destination, effect.order, effect.revealed, effect.moveType)
+                val result = moveToZone(state, context, cards, destination, effect.order, effect.revealed, effect.moveType, effect.faceDown)
                 if (effect.linkToSource && result.isSuccess) {
                     linkCardsToSource(result, context, cards)
                 } else {
@@ -106,7 +107,8 @@ class MoveCollectionExecutor(
         destination: CardDestination.ToZone,
         order: CardOrder,
         revealed: Boolean = false,
-        moveType: MoveType = MoveType.Default
+        moveType: MoveType = MoveType.Default,
+        faceDown: Boolean = false
     ): ExecutionResult {
         val destPlayerId = resolvePlayer(destination.player, context, state)
             ?: return ExecutionResult.error(state, "Could not resolve destination player for MoveCollection")
@@ -123,7 +125,7 @@ class MoveCollectionExecutor(
             }
         }
 
-        return moveCardsToZone(state, context, cards, destination, destPlayerId, revealed, moveType)
+        return moveCardsToZone(state, context, cards, destination, destPlayerId, revealed, moveType, faceDown)
     }
 
     /**
@@ -217,7 +219,8 @@ class MoveCollectionExecutor(
         destination: CardDestination.ToZone,
         destPlayerId: EntityId,
         revealed: Boolean = false,
-        moveType: MoveType = MoveType.Default
+        moveType: MoveType = MoveType.Default,
+        faceDown: Boolean = false
     ): ExecutionResult {
         val destZone = destination.zone
 
@@ -243,7 +246,7 @@ class MoveCollectionExecutor(
 
                 if (nonAuraCards.isNotEmpty()) {
                     val nonAuraResult = moveCardsToZoneInternal(
-                        newState, context, nonAuraCards, destination, destPlayerId, revealed, moveType
+                        newState, context, nonAuraCards, destination, destPlayerId, revealed, moveType, faceDown
                     )
                     newState = nonAuraResult.state
                     events.addAll(nonAuraResult.events)
@@ -262,7 +265,7 @@ class MoveCollectionExecutor(
             }
         }
 
-        return moveCardsToZoneInternal(state, context, cards, destination, destPlayerId, revealed, moveType)
+        return moveCardsToZoneInternal(state, context, cards, destination, destPlayerId, revealed, moveType, faceDown)
     }
 
     /**
@@ -431,7 +434,8 @@ class MoveCollectionExecutor(
         destination: CardDestination.ToZone,
         destPlayerId: EntityId,
         revealed: Boolean = false,
-        moveType: MoveType = MoveType.Default
+        moveType: MoveType = MoveType.Default,
+        faceDown: Boolean = false
     ): ExecutionResult {
         val destZone = destination.zone
         val events = mutableListOf<GameEvent>()
@@ -453,6 +457,14 @@ class MoveCollectionExecutor(
                     newState = EffectExecutorUtils.cleanupCombatReferences(newState, cardId)
                     newState = newState.updateEntity(cardId) { c ->
                         EffectExecutorUtils.stripBattlefieldComponents(c)
+                    }
+                }
+
+                // Strip face-down status when leaving exile (card becomes visible in new zone)
+                if (fromZone == Zone.EXILE) {
+                    val container = newState.getEntity(cardId)
+                    if (container != null && container.has<FaceDownComponent>()) {
+                        newState = newState.updateEntity(cardId) { c -> c.without<FaceDownComponent>() }
                     }
                 }
             }
@@ -514,6 +526,11 @@ class MoveCollectionExecutor(
 
                     newState = newState.copy(entities = newState.entities + (cardId to newContainer))
                 }
+            }
+
+            // Apply face-down status when exiling face-down
+            if (faceDown && destZone == Zone.EXILE) {
+                newState = newState.updateEntity(cardId) { c -> c.with(FaceDownComponent) }
             }
 
             if (fromZone != null) {

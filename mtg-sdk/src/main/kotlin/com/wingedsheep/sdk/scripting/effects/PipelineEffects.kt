@@ -280,7 +280,8 @@ data class MoveCollectionEffect(
     val order: CardOrder = CardOrder.Preserve,
     val revealed: Boolean = false,
     val moveType: MoveType = MoveType.Default,
-    val linkToSource: Boolean = false
+    val linkToSource: Boolean = false,
+    val faceDown: Boolean = false
 ) : Effect {
     override val description: String = buildString {
         if (revealed) append("Reveal and put") else append("Put")

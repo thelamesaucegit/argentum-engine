@@ -8,6 +8,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.effects.TakeFromLinkedExileEffect
@@ -61,6 +62,11 @@ class TakeFromLinkedExileExecutor : EffectExecutor<TakeFromLinkedExileEffect> {
 
         newState = newState.removeFromZone(exileZone, cardId)
         newState = newState.addToZone(handZone, cardId)
+
+        // Strip face-down status when leaving exile
+        if (newState.getEntity(cardId)?.has<FaceDownComponent>() == true) {
+            newState = newState.updateEntity(cardId) { c -> c.without<FaceDownComponent>() }
+        }
 
         val events = listOf(
             ZoneChangeEvent(
