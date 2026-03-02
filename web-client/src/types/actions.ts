@@ -92,6 +92,8 @@ export interface ActivateAbilityAction {
   readonly costPayment?: AdditionalCostPayment
   /** Color chosen for "add one mana of any color" abilities */
   readonly manaColorChoice?: string
+  /** Value of X for X-cost activated abilities */
+  readonly xValue?: number | null
 }
 
 // =============================================================================

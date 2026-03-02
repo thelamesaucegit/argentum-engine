@@ -44,6 +44,7 @@ import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
+import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
 import com.wingedsheep.engine.handlers.CostPaymentChoices
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
@@ -308,6 +309,27 @@ class ActivateAbilityHandler(
         // Collect events from cost payment (e.g., sacrifice events)
         events.addAll(costResult.events)
 
+        // Deduct X mana from the pool. ManaPool.pay() skips X symbols ("handled by caller"),
+        // so we must explicitly spend the X portion here (same pattern as CastSpellHandler.autoPay).
+        if (manaCost != null && manaCost.hasX && xValue > 0) {
+            val xSymbolCount = manaCost.xCount.coerceAtLeast(1)
+            var xRemainingToPay = xValue * xSymbolCount
+
+            // Spend colorless first for X
+            while (xRemainingToPay > 0 && manaPool.colorless > 0) {
+                manaPool = manaPool.spendColorless()!!
+                xRemainingToPay--
+            }
+
+            // Spend colored mana for remaining X
+            for (color in Color.entries) {
+                while (xRemainingToPay > 0 && manaPool.get(color) > 0) {
+                    manaPool = manaPool.spend(color)!!
+                    xRemainingToPay--
+                }
+            }
+        }
+
         // Always update mana pool on state after cost payment.
         // autoTapForManaCost writes the enriched (pre-payment) pool to state,
         // so we must unconditionally write the post-payment pool.
@@ -417,6 +439,26 @@ class ActivateAbilityHandler(
                         green = if (chosenColor == Color.GREEN) amount else 0,
                         colorless = 0
                     )
+                }
+                is CompositeEffect -> {
+                    val anyColorEffect = effect.effects.filterIsInstance<AddAnyColorManaEffect>().firstOrNull()
+                    if (anyColorEffect != null) {
+                        val chosenColor = action.manaColorChoice ?: Color.GREEN
+                        val amount = dynamicAmountEvaluator.evaluate(state, anyColorEffect.amount, context)
+                        ManaAddedEvent(
+                            playerId = action.playerId,
+                            sourceId = action.sourceId,
+                            sourceName = cardComponent.name,
+                            white = if (chosenColor == Color.WHITE) amount else 0,
+                            blue = if (chosenColor == Color.BLUE) amount else 0,
+                            black = if (chosenColor == Color.BLACK) amount else 0,
+                            red = if (chosenColor == Color.RED) amount else 0,
+                            green = if (chosenColor == Color.GREEN) amount else 0,
+                            colorless = 0
+                        )
+                    } else {
+                        null
+                    }
                 }
                 else -> null
             }

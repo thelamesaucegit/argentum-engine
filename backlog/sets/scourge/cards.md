@@ -3,16 +3,16 @@
 
 **Set Size:** 143 cards
 **Release Date:** May 26, 2003
-**Implemented:** 138 / 143
+**Implemented:** 141 / 143
 
 | Color | Count |
 |-------|-------|
 | White | 26 |
-| Blue | 26 |
+| Blue | 27 |
 | Black | 27 |
 | Red | 26 |
 | Green | 27 |
-| Multicolor | 2 |
+| Multicolor | 4 |
 | Colorless | 4 |
 
 ---
@@ -90,7 +90,7 @@
 - [x] Guilty Conscience
 - [x] Hindering Touch
 - [x] Hunting Pack
-- [ ] Karona, False God
+- [x] Karona, False God
 - [x] Karona's Zealot
 - [x] Krosan Drover
 - [x] Krosan Warchief
@@ -107,7 +107,7 @@
 - [x] Nefashu
 - [x] Noble Templar
 - [x] One with Nature
-- [ ] Parallel Thoughts
+- [x] Parallel Thoughts
 - [x] Pemmin's Aura
 - [x] Primitive Etchings
 - [x] Proteus Machine
@@ -130,7 +130,7 @@
 - [x] Silver Knight
 - [x] Skirk Volcanist
 - [x] Skulltap
-- [ ] Sliver Overlord
+- [x] Sliver Overlord
 - [x] Soul Collector
 - [x] Spark Spray
 - [x] Sprouting Vines

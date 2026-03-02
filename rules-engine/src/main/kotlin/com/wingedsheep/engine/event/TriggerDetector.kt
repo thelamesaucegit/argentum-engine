@@ -1450,7 +1450,8 @@ class TriggerDetector(
                         // For other predicates, check the entity's type
                         val entity = state.getEntity(event.entityId) ?: return false
                         val cardComponent = entity.get<CardComponent>() ?: return false
-                        if (!matchesCardPredicate(predicate, cardComponent, projected, event.entityId)) return false
+                        val isFaceDown = entity.has<FaceDownComponent>()
+                        if (!matchesCardPredicate(predicate, cardComponent, projected, event.entityId, isFaceDown)) return false
                     }
                 }
             }
@@ -1475,18 +1476,25 @@ class TriggerDetector(
         predicate: com.wingedsheep.sdk.scripting.predicates.CardPredicate,
         cardComponent: CardComponent,
         projected: ProjectedState,
-        entityId: EntityId
+        entityId: EntityId,
+        isFaceDown: Boolean = false
     ): Boolean {
         return when (predicate) {
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> cardComponent.typeLine.isCreature
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->
                 cardComponent.typeLine.hasSubtype(predicate.subtype)
-            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueAtLeast ->
-                cardComponent.manaValue >= predicate.min
-            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueAtMost ->
-                cardComponent.manaValue <= predicate.max
-            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueEquals ->
-                cardComponent.manaValue == predicate.value
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueAtLeast -> {
+                val cmc = if (isFaceDown) 0 else cardComponent.manaValue
+                cmc >= predicate.min
+            }
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueAtMost -> {
+                val cmc = if (isFaceDown) 0 else cardComponent.manaValue
+                cmc <= predicate.max
+            }
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ManaValueEquals -> {
+                val cmc = if (isFaceDown) 0 else cardComponent.manaValue
+                cmc == predicate.value
+            }
             else -> true // Unknown predicates pass through
         }
     }

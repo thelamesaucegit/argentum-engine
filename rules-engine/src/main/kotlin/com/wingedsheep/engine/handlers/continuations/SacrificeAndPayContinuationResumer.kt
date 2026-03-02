@@ -5,11 +5,14 @@ import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
+import com.wingedsheep.engine.mechanics.mana.ManaPool
+import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
+import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.costs.PayCost
@@ -93,6 +96,7 @@ class SacrificeAndPayContinuationResumer(
             }
             PayOrSufferCostType.SACRIFICE -> resumePayOrSufferSacrifice(state, continuation, response, checkForMore)
             PayOrSufferCostType.PAY_LIFE -> resumePayOrSufferPayLife(state, continuation, response, checkForMore)
+            PayOrSufferCostType.MANA -> resumePayOrSufferMana(state, continuation, response, checkForMore)
         }
     }
 
@@ -260,6 +264,90 @@ class SacrificeAndPayContinuationResumer(
         )
 
         return checkForMore(newState, events)
+    }
+
+    /**
+     * Handle mana cost yes/no choice for pay or suffer.
+     */
+    private fun resumePayOrSufferMana(
+        state: GameState,
+        continuation: PayOrSufferContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is YesNoResponse) {
+            return ExecutionResult.error(state, "Expected yes/no response for pay or suffer mana")
+        }
+
+        if (!response.choice) {
+            return executePayOrSufferConsequence(state, continuation, checkForMore)
+        }
+
+        // Player chose to pay — auto-tap sources and deduct mana
+        val manaCost = continuation.manaCost
+            ?: return ExecutionResult.error(state, "No mana cost stored in continuation")
+        val playerId = continuation.playerId
+        val playerEntity = state.getEntity(playerId)
+            ?: return ExecutionResult.error(state, "Paying player not found")
+
+        val manaPoolComponent = playerEntity.get<ManaPoolComponent>()
+            ?: return ExecutionResult.error(state, "Player has no mana pool")
+
+        val manaPool = ManaPool(
+            manaPoolComponent.white,
+            manaPoolComponent.blue,
+            manaPoolComponent.black,
+            manaPoolComponent.red,
+            manaPoolComponent.green,
+            manaPoolComponent.colorless
+        )
+
+        // Try to pay from floating mana first, then tap sources for the rest
+        val partialResult = manaPool.payPartial(manaCost)
+        val remainingCost = partialResult.remainingCost
+        var currentPool = manaPool
+        var currentState = state
+        val events = mutableListOf<GameEvent>()
+
+        if (!remainingCost.isEmpty()) {
+            val manaSolver = ManaSolver()
+            val solution = manaSolver.solve(currentState, playerId, remainingCost)
+                ?: return executePayOrSufferConsequence(state, continuation, checkForMore)
+
+            for (source in solution.sources) {
+                currentState = currentState.updateEntity(source.entityId) { c ->
+                    c.with(TappedComponent)
+                }
+                events.add(TappedEvent(source.entityId, source.name))
+            }
+
+            for ((_, production) in solution.manaProduced) {
+                currentPool = if (production.color != null) {
+                    currentPool.add(production.color)
+                } else {
+                    currentPool.addColorless(production.colorless)
+                }
+            }
+        }
+
+        // Deduct the cost from the pool
+        val newPool = currentPool.pay(manaCost)
+            ?: return executePayOrSufferConsequence(state, continuation, checkForMore)
+
+        currentState = currentState.updateEntity(playerId) { container ->
+            container.with(
+                ManaPoolComponent(
+                    white = newPool.white,
+                    blue = newPool.blue,
+                    black = newPool.black,
+                    red = newPool.red,
+                    green = newPool.green,
+                    colorless = newPool.colorless
+                )
+            )
+        }
+
+        return checkForMore(currentState, events)
     }
 
     private fun executePayOrSufferConsequence(

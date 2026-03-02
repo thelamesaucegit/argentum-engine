@@ -7,6 +7,7 @@ import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.mechanics.layers.StateProjector
+import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -65,7 +66,7 @@ class PayOrSufferExecutor(
             is PayCost.Discard -> handleDiscardCost(state, effect, context, cost, sourceId, sourceCard.name, controllerId)
             is PayCost.Sacrifice -> handleSacrificeCost(state, effect, context, cost, sourceId, sourceCard.name, controllerId)
             is PayCost.PayLife -> handlePayLifeCost(state, effect, context, cost, sourceId, sourceCard.name, controllerId)
-            is PayCost.Mana -> ExecutionResult.error(state, "Mana payment for PayOrSuffer not yet implemented")
+            is PayCost.Mana -> handleManaCost(state, effect, context, cost, sourceId, sourceCard.name, controllerId)
             is PayCost.ReturnToHand -> ExecutionResult.error(state, "ReturnToHand payment for PayOrSuffer not yet implemented")
         }
     }
@@ -314,6 +315,74 @@ class PayOrSufferExecutor(
             random = false,
             targets = context.targets,
             namedTargets = context.namedTargets
+        )
+
+        val stateWithDecision = state.withPendingDecision(decision)
+        val stateWithContinuation = stateWithDecision.pushContinuation(continuation)
+
+        return ExecutionResult.paused(
+            stateWithContinuation,
+            decision,
+            listOf(
+                DecisionRequestedEvent(
+                    decisionId = decisionId,
+                    playerId = controllerId,
+                    decisionType = "YES_NO",
+                    prompt = prompt
+                )
+            )
+        )
+    }
+
+    /**
+     * Handle a mana cost - player must pay mana to avoid suffer effect.
+     */
+    private fun handleManaCost(
+        state: GameState,
+        effect: PayOrSufferEffect,
+        context: EffectContext,
+        cost: PayCost.Mana,
+        sourceId: EntityId,
+        sourceName: String,
+        controllerId: EntityId
+    ): ExecutionResult {
+        // Check if the player can pay the mana cost
+        val manaSolver = ManaSolver()
+        if (!manaSolver.canPay(state, controllerId, cost.cost)) {
+            return executeSufferEffect(state, effect.suffer, context)
+        }
+
+        // Create a yes/no decision
+        val decisionId = UUID.randomUUID().toString()
+        val consequence = describeConsequence(effect.suffer, sourceName)
+        val prompt = "Pay ${cost.cost} or $consequence?"
+
+        val decision = YesNoDecision(
+            id = decisionId,
+            playerId = controllerId,
+            prompt = prompt,
+            context = DecisionContext(
+                sourceId = sourceId,
+                sourceName = sourceName,
+                phase = DecisionPhase.RESOLUTION
+            ),
+            yesText = "Pay ${cost.cost}",
+            noText = "Accept consequence"
+        )
+
+        val continuation = PayOrSufferContinuation(
+            decisionId = decisionId,
+            playerId = controllerId,
+            sourceId = sourceId,
+            sourceName = sourceName,
+            costType = PayOrSufferCostType.MANA,
+            sufferEffect = effect.suffer,
+            requiredCount = 0,
+            filter = GameObjectFilter.Any,
+            random = false,
+            targets = context.targets,
+            namedTargets = context.namedTargets,
+            manaCost = cost.cost
         )
 
         val stateWithDecision = state.withPendingDecision(decision)

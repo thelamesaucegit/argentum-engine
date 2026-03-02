@@ -93,6 +93,7 @@ object ScourgeSet {
         DragonWings,
         FacesOfThePast,
         FrozenSolid,
+        ParallelThoughts,
         PemminsAura,
 
         // Blue instants
@@ -206,6 +207,10 @@ object ScourgeSet {
         // Black instants
         ChillHaunting,
         ReapingTheGraves,
+
+        // Multicolor creatures
+        KaronaFalseGod,
+        SliverOverlord,
 
         // Lands
         TempleOfTheFalseGod,
