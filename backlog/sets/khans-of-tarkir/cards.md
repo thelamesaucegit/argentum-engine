@@ -2,14 +2,14 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 78 / 249
+**Implemented:** 79 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 13    |
 | Blue       | 13    |
 | Black      | 13    |
-| Red        | 13    |
+| Red        | 14    |
 | Green      | 13    |
 | Multicolor | 7     |
 | Colorless  | 3     |
@@ -26,7 +26,7 @@
 - [ ] Abzan Guide
 - [ ] Act of Treason
 - [x] Ainok Bond-Kin
-- [ ] Ainok Tracker
+- [x] Ainok Tracker
 - [x] Alabaster Kirin
 - [x] Alpine Grizzly
 - [ ] Altar of the Brood
