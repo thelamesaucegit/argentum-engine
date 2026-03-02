@@ -2,15 +2,15 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 118 / 145
+**Implemented:** 122 / 145
 
 | Color      | Count |
 |------------|-------|
-| White      | 23/29 |
+| White      | 24/29 |
 | Blue       | 24/29 |
-| Black      | 24/29 |
-| Red        | 24/29 |
-| Green      | 23/29 |
+| Black      | 25/29 |
+| Red        | 25/29 |
+| Green      | 24/29 |
 
 ---
 
@@ -89,8 +89,8 @@
 - [x] Infernal Caretaker
 - [x] Keeneye Aven
 - [ ] Keeper of the Nine Gales
-- [ ] Kilnmouth Dragon
-- [ ] Krosan Cloudscraper
+- [x] Kilnmouth Dragon
+- [x] Krosan Cloudscraper
 - [x] Krosan Vorine
 - [x] Lavaborn Muse
 - [x] Liege of the Axe
@@ -118,7 +118,7 @@
 - [x] Riptide Mangler
 - [x] Rockshard Elemental
 - [ ] Root Sliver
-- [ ] Scion of Darkness
+- [x] Scion of Darkness
 - [ ] Seedborn Muse
 - [x] Shaleskin Plower
 - [x] Shifting Sliver
@@ -150,7 +150,7 @@
 - [ ] Ward Sliver
 - [x] Warped Researcher
 - [ ] Weaver of Lies
-- [ ] Whipgrass Entangler
+- [x] Whipgrass Entangler
 - [x] White Knight
 - [x] Willbender
 - [x] Windborn Muse
