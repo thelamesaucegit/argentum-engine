@@ -86,6 +86,7 @@ object LegionsSet {
         DrinkerOfSorrow,
         DrippingDead,
         GempalmPolluter,
+        GhastlyRemains,
         GoblinTurncoat,
         HavocDemon,
         NoxiousGhoul,
