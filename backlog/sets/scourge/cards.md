@@ -3,7 +3,7 @@
 
 **Set Size:** 143 cards
 **Release Date:** May 26, 2003
-**Implemented:** 140 / 143
+**Implemented:** 141 / 143
 
 | Color | Count |
 |-------|-------|
@@ -12,7 +12,7 @@
 | Black | 27 |
 | Red | 26 |
 | Green | 27 |
-| Multicolor | 3 |
+| Multicolor | 4 |
 | Colorless | 4 |
 
 ---
@@ -90,7 +90,7 @@
 - [x] Guilty Conscience
 - [x] Hindering Touch
 - [x] Hunting Pack
-- [ ] Karona, False God
+- [x] Karona, False God
 - [x] Karona's Zealot
 - [x] Krosan Drover
 - [x] Krosan Warchief

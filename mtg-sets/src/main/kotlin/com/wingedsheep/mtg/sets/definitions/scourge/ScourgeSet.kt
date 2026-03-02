@@ -209,6 +209,7 @@ object ScourgeSet {
         ReapingTheGraves,
 
         // Multicolor creatures
+        KaronaFalseGod,
         SliverOverlord,
 
         // Lands
