@@ -308,6 +308,27 @@ class ActivateAbilityHandler(
         // Collect events from cost payment (e.g., sacrifice events)
         events.addAll(costResult.events)
 
+        // Deduct X mana from the pool. ManaPool.pay() skips X symbols ("handled by caller"),
+        // so we must explicitly spend the X portion here (same pattern as CastSpellHandler.autoPay).
+        if (manaCost != null && manaCost.hasX && xValue > 0) {
+            val xSymbolCount = manaCost.xCount.coerceAtLeast(1)
+            var xRemainingToPay = xValue * xSymbolCount
+
+            // Spend colorless first for X
+            while (xRemainingToPay > 0 && manaPool.colorless > 0) {
+                manaPool = manaPool.spendColorless()!!
+                xRemainingToPay--
+            }
+
+            // Spend colored mana for remaining X
+            for (color in Color.entries) {
+                while (xRemainingToPay > 0 && manaPool.get(color) > 0) {
+                    manaPool = manaPool.spend(color)!!
+                    xRemainingToPay--
+                }
+            }
+        }
+
         // Always update mana pool on state after cost payment.
         // autoTapForManaCost writes the enriched (pre-payment) pool to state,
         // so we must unconditionally write the post-payment pool.
