@@ -51,6 +51,7 @@ object LegionsSet {
         AvenEnvoy,
         CephalidPathmage,
         CovertOperative,
+        CrookclawElder,
         DreambornMuse,
         EchoTracer,
         FugitiveWizard,

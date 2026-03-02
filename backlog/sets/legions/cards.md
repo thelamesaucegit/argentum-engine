@@ -2,12 +2,12 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 116 / 145
+**Implemented:** 117 / 145
 
 | Color      | Count |
 |------------|-------|
 | White      | 23/29 |
-| Blue       | 23/29 |
+| Blue       | 24/29 |
 | Black      | 23/29 |
 | Red        | 24/29 |
 | Green      | 23/29 |
@@ -39,7 +39,7 @@
 - [x] Corpse Harvester
 - [x] Covert Operative
 - [x] Crested Craghorn
-- [ ] Crookclaw Elder
+- [x] Crookclaw Elder
 - [x] Crypt Sliver
 - [ ] Dark Supplicant
 - [x] Daru Mender
