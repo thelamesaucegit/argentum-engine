@@ -76,6 +76,7 @@ object KhansOfTarkirSet {
         HeirOfTheWilds,
         HighlandGame,
         HootingMandrills,
+        LongshotSquad,
         TuskedColossodon,
         WoollyLoxodon,
 

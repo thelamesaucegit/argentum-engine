@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 74 / 249
+**Implemented:** 75 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -10,7 +10,7 @@
 | Blue       | 12    |
 | Black      | 13    |
 | Red        | 12    |
-| Green      | 12    |
+| Green      | 13    |
 | Multicolor | 7     |
 | Colorless  | 3     |
 | Land       | 3     |
@@ -134,7 +134,7 @@
 - [ ] Krumar Bond-Kin
 - [x] Leaping Master
 - [ ] Lens of Clarity
-- [ ] Longshot Squad
+- [x] Longshot Squad
 - [ ] Mantis Rider
 - [ ] Mardu Ascendancy
 - [x] Mardu Banner
