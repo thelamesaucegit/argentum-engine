@@ -871,6 +871,93 @@ class LegalActionsCalculator(
                         sacrificeTargets = findAbilitySacrificeTargets(state, playerId, dynamicFilter)
                         if (sacrificeTargets.isEmpty()) continue
                     }
+                    is AbilityCost.Composite -> {
+                        val compositeCost = effectiveCost
+                        var costCanBePaid = true
+                        for (subCost in compositeCost.costs) {
+                            when (subCost) {
+                                is AbilityCost.Tap -> {
+                                    if (container.has<TappedComponent>()) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                    if (!cardComponent.typeLine.isLand && cardComponent.typeLine.isCreature) {
+                                        val hasSummoningSickness = container.has<SummoningSicknessComponent>()
+                                        val hasHaste = cardComponent.baseKeywords.contains(Keyword.HASTE)
+                                        if (hasSummoningSickness && !hasHaste) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                    }
+                                }
+                                is AbilityCost.Mana -> {
+                                    if (!manaSolver.canPay(state, playerId, subCost.cost)) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                }
+                                is AbilityCost.Sacrifice -> {
+                                    sacrificeCost = subCost
+                                    sacrificeTargets = findAbilitySacrificeTargets(state, playerId, subCost.filter)
+                                    if (sacrificeTargets.isEmpty()) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                }
+                                is AbilityCost.SacrificeChosenCreatureType -> {
+                                    val chosenType = container.get<ChosenCreatureTypeComponent>()?.creatureType
+                                    if (chosenType == null) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                    val dynamicFilter = GameObjectFilter.Creature.withSubtype(chosenType)
+                                    sacrificeCost = AbilityCost.Sacrifice(dynamicFilter)
+                                    sacrificeTargets = findAbilitySacrificeTargets(state, playerId, dynamicFilter)
+                                    if (sacrificeTargets.isEmpty()) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                }
+                                is AbilityCost.SacrificeSelf -> {
+                                    sacrificeTargets = listOf(entityId)
+                                }
+                                is AbilityCost.TapAttachedCreature -> {
+                                    val attachedId = container.get<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()?.targetId
+                                    if (attachedId == null) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                    val attachedEntity = state.getEntity(attachedId)
+                                    if (attachedEntity == null || attachedEntity.has<TappedComponent>()) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                    val attachedCard = attachedEntity.get<CardComponent>()
+                                    if (attachedCard != null && attachedCard.typeLine.isCreature) {
+                                        val hasSummoningSickness = attachedEntity.has<SummoningSicknessComponent>()
+                                        val hasHaste = attachedCard.baseKeywords.contains(Keyword.HASTE)
+                                        if (hasSummoningSickness && !hasHaste) {
+                                            costCanBePaid = false
+                                            break
+                                        }
+                                    }
+                                }
+                                is AbilityCost.TapPermanents -> {
+                                    tapCost = subCost
+                                    tapTargets = findAbilityTapTargets(state, playerId, subCost.filter)
+                                    if (tapTargets.size < subCost.count) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                }
+                                is AbilityCost.ReturnToHand -> {
+                                    // Bounce costs not typical for mana abilities but handle for completeness
+                                }
+                                else -> {}
+                            }
+                        }
+                        if (!costCanBePaid) continue
+                    }
                     else -> {
                         // Other cost types - allow for now, engine will validate
                     }
