@@ -61,6 +61,7 @@ object LegionsSet {
         MistformSeaswift,
         MistformSliver,
         MistformUltimus,
+        MistformWakecaster,
         PrimocEscapee,
         RiptideDirector,
         RiptideMangler,
