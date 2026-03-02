@@ -361,7 +361,8 @@ data class PayOrSufferContinuation(
     val filter: GameObjectFilter,
     val random: Boolean = false,
     val targets: List<ChosenTarget> = emptyList(),
-    val namedTargets: Map<String, ChosenTarget> = emptyMap()
+    val namedTargets: Map<String, ChosenTarget> = emptyMap(),
+    val manaCost: ManaCost? = null
 ) : ContinuationFrame
 
 /**
@@ -371,7 +372,8 @@ data class PayOrSufferContinuation(
 enum class PayOrSufferCostType {
     DISCARD,
     SACRIFICE,
-    PAY_LIFE
+    PAY_LIFE,
+    MANA
 }
 
 /**
