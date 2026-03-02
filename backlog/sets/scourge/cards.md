@@ -3,7 +3,7 @@
 
 **Set Size:** 143 cards
 **Release Date:** May 26, 2003
-**Implemented:** 139 / 143
+**Implemented:** 140 / 143
 
 | Color | Count |
 |-------|-------|
@@ -12,7 +12,7 @@
 | Black | 27 |
 | Red | 26 |
 | Green | 27 |
-| Multicolor | 2 |
+| Multicolor | 3 |
 | Colorless | 4 |
 
 ---
@@ -130,7 +130,7 @@
 - [x] Silver Knight
 - [x] Skirk Volcanist
 - [x] Skulltap
-- [ ] Sliver Overlord
+- [x] Sliver Overlord
 - [x] Soul Collector
 - [x] Spark Spray
 - [x] Sprouting Vines

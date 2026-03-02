@@ -208,6 +208,9 @@ object ScourgeSet {
         ChillHaunting,
         ReapingTheGraves,
 
+        // Multicolor creatures
+        SliverOverlord,
+
         // Lands
         TempleOfTheFalseGod,
     )
