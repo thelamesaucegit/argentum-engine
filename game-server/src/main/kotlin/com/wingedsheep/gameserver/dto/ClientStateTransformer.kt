@@ -642,7 +642,7 @@ class ClientStateTransformer(
         }
 
         // Build active effects from floating effects
-        val activeEffects = buildCardActiveEffects(state, entityId)
+        val activeEffects = buildCardActiveEffects(state, entityId, projectedState)
 
         // Check if this card is playable from exile (impulse draw like Mind's Desire)
         val playableFromExile = zoneKey.zoneType == Zone.EXILE &&
@@ -786,11 +786,17 @@ class ClientStateTransformer(
 
         // Check floating effects for damage prevention shields on this player
         var preventDamageTotal = 0
+        val preventedCreatureTypes = mutableSetOf<String>()
         for (floatingEffect in state.floatingEffects) {
             if (playerId !in floatingEffect.effect.affectedEntities) continue
-            val modification = floatingEffect.effect.modification
-            if (modification is SerializableModification.PreventNextDamage) {
-                preventDamageTotal += modification.remainingAmount
+            when (val modification = floatingEffect.effect.modification) {
+                is SerializableModification.PreventNextDamage -> {
+                    preventDamageTotal += modification.remainingAmount
+                }
+                is SerializableModification.PreventNextDamageFromCreatureType -> {
+                    preventedCreatureTypes.add(modification.creatureType)
+                }
+                else -> {}
             }
         }
         if (preventDamageTotal > 0) {
@@ -799,6 +805,16 @@ class ClientStateTransformer(
                     effectId = "prevent_damage",
                     name = "Prevent $preventDamageTotal",
                     description = "The next $preventDamageTotal damage that would be dealt to you is prevented",
+                    icon = "prevent-damage"
+                )
+            )
+        }
+        for (creatureType in preventedCreatureTypes) {
+            effects.add(
+                ClientPlayerEffect(
+                    effectId = "prevent_damage_from_${creatureType.lowercase()}",
+                    name = "Prevent $creatureType",
+                    description = "The next time a $creatureType would deal damage to you this turn, prevent that damage",
                     icon = "prevent-damage"
                 )
             )
@@ -904,7 +920,8 @@ class ClientStateTransformer(
      */
     private fun buildCardActiveEffects(
         state: GameState,
-        entityId: EntityId
+        entityId: EntityId,
+        projectedState: ProjectedState? = null
     ): List<ClientCardEffect> {
         val effects = mutableListOf<ClientCardEffect>()
 
@@ -1011,6 +1028,27 @@ class ClientStateTransformer(
 
         // Check for triggered ability condition indicators (intervening-if progress)
         effects.addAll(buildTriggerConditionBadges(state, entityId))
+
+        // Check if this creature's damage is prevented by a PreventNextDamageFromCreatureType shield
+        if (projectedState != null && projectedState.isCreature(entityId)) {
+            val subtypes = projectedState.getSubtypes(entityId)
+            for (floatingEffect in state.floatingEffects) {
+                val modification = floatingEffect.effect.modification
+                if (modification is SerializableModification.PreventNextDamageFromCreatureType) {
+                    if (subtypes.any { it.equals(modification.creatureType, ignoreCase = true) }) {
+                        effects.add(
+                            ClientCardEffect(
+                                effectId = "damage_prevented_by_type_${modification.creatureType.lowercase()}",
+                                name = "Damage Prevented",
+                                description = "Damage from this ${modification.creatureType} would be prevented",
+                                icon = "prevent-damage"
+                            )
+                        )
+                        break
+                    }
+                }
+            }
+        }
 
         return effects
     }
