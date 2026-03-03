@@ -861,7 +861,7 @@ class LegalActionsCalculator(
                     }
                     is AbilityCost.Sacrifice -> {
                         sacrificeCost = effectiveCost
-                        sacrificeTargets = findAbilitySacrificeTargets(state, playerId, sacrificeCost.filter)
+                        sacrificeTargets = findAbilitySacrificeTargets(state, playerId, sacrificeCost.filter, if (sacrificeCost.excludeSelf) entityId else null)
                         if (sacrificeTargets.isEmpty()) continue
                     }
                     is AbilityCost.SacrificeChosenCreatureType -> {
@@ -899,7 +899,7 @@ class LegalActionsCalculator(
                                 }
                                 is AbilityCost.Sacrifice -> {
                                     sacrificeCost = subCost
-                                    sacrificeTargets = findAbilitySacrificeTargets(state, playerId, subCost.filter)
+                                    sacrificeTargets = findAbilitySacrificeTargets(state, playerId, subCost.filter, if (subCost.excludeSelf) entityId else null)
                                     if (sacrificeTargets.isEmpty()) {
                                         costCanBePaid = false
                                         break
@@ -1159,7 +1159,7 @@ class LegalActionsCalculator(
                     }
                     is AbilityCost.Sacrifice -> {
                         sacrificeCost = effectiveCost
-                        sacrificeTargets = findAbilitySacrificeTargets(state, playerId, sacrificeCost.filter)
+                        sacrificeTargets = findAbilitySacrificeTargets(state, playerId, sacrificeCost.filter, if (sacrificeCost.excludeSelf) entityId else null)
                         if (sacrificeTargets.isEmpty()) continue
                     }
                     is AbilityCost.ReturnToHand -> {
@@ -1211,7 +1211,7 @@ class LegalActionsCalculator(
                                 }
                                 is AbilityCost.Sacrifice -> {
                                     sacrificeCost = subCost
-                                    sacrificeTargets = findAbilitySacrificeTargets(state, playerId, subCost.filter)
+                                    sacrificeTargets = findAbilitySacrificeTargets(state, playerId, subCost.filter, if (subCost.excludeSelf) entityId else null)
                                     if (sacrificeTargets.isEmpty()) {
                                         costCanBePaid = false
                                         break
@@ -2017,13 +2017,15 @@ class LegalActionsCalculator(
     private fun findAbilitySacrificeTargets(
         state: GameState,
         playerId: EntityId,
-        filter: GameObjectFilter
+        filter: GameObjectFilter,
+        excludeEntityId: EntityId? = null
     ): List<EntityId> {
         val playerBattlefield = ZoneKey(playerId, Zone.BATTLEFIELD)
         val predicateContext = PredicateContext(controllerId = playerId)
         val projected = stateProjector.project(state)
 
         return state.getZone(playerBattlefield).filter { entityId ->
+            if (entityId == excludeEntityId) return@filter false
             val container = state.getEntity(entityId) ?: return@filter false
             container.get<CardComponent>() ?: return@filter false
             val controllerId = container.get<ControllerComponent>()?.playerId

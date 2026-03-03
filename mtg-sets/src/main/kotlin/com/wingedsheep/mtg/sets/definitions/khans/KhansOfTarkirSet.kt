@@ -63,6 +63,7 @@ object KhansOfTarkirSet {
         DisownedAncestor,
         BellowingSaddlebrute,
         GurmagSwiftwing,
+        KheruDreadmaw,
         RottingMastodon,
         SidisisPet,
         SultaiScavenger,

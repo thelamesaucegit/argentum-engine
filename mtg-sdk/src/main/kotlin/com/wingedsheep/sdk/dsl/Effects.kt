@@ -131,6 +131,12 @@ object Effects {
         GainLifeEffect(amount, target)
 
     /**
+     * Gain life with a dynamic amount. Default target is the controller.
+     */
+    fun GainLife(amount: DynamicAmount, target: EffectTarget = EffectTarget.Controller): Effect =
+        GainLifeEffect(amount, target)
+
+    /**
      * Lose life. Default target is target opponent.
      */
     fun LoseLife(amount: Int, target: EffectTarget = EffectTarget.PlayerRef(Player.TargetOpponent)): Effect =

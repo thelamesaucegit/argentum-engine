@@ -76,7 +76,8 @@ class CostHandler(
                 life > cost.amount // Can pay if life is > cost (not <= 0 after)
             }
             is AbilityCost.Sacrifice -> {
-                findMatchingPermanentsUnified(state, controllerId, cost.filter).isNotEmpty()
+                val candidates = findMatchingPermanentsUnified(state, controllerId, cost.filter)
+                if (cost.excludeSelf) candidates.any { it != sourceId } else candidates.isNotEmpty()
             }
             is AbilityCost.SacrificeChosenCreatureType -> {
                 val chosenType = state.getEntity(sourceId)?.get<ChosenCreatureTypeComponent>()?.creatureType
@@ -207,6 +208,10 @@ class CostHandler(
                     if (!predicateEvaluator.matchesWithProjection(state, projected, toSacrifice, sacrificeFilter, context)) {
                         return CostPaymentResult.failure("Sacrifice target does not match the required filter")
                     }
+                }
+                // Validate excludeSelf: "sacrifice another creature" cannot sacrifice the source
+                if (cost is AbilityCost.Sacrifice && cost.excludeSelf && toSacrifice == sourceId) {
+                    return CostPaymentResult.failure("Sacrifice target does not match the required filter")
                 }
 
                 // Move from battlefield to graveyard

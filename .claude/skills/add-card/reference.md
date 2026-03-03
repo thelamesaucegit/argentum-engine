@@ -29,7 +29,7 @@ constructors.
 
 ### Life
 
-- `Effects.GainLife(amount, target = Controller)`
+- `Effects.GainLife(amount, target = Controller)` — also accepts `DynamicAmount`
 - `Effects.LoseLife(amount, target = TargetOpponent)` — also accepts `DynamicAmount`
 - `Effects.SetLifeTotal(amount, target = Controller)` — set a player's life total to a specific value
 
@@ -575,7 +575,7 @@ constructors.
 - `Costs.Tap` / `Costs.Untap`
 - `Costs.Mana("2R")` / `Costs.Mana(manaCost)`
 - `Costs.PayLife(amount)`
-- `Costs.Sacrifice(filter)` / `Costs.SacrificeSelf` / `Costs.SacrificeChosenCreatureType`
+- `Costs.Sacrifice(filter)` / `Costs.SacrificeAnother(filter)` / `Costs.SacrificeSelf` / `Costs.SacrificeChosenCreatureType`
 - `Costs.DiscardCard` / `Costs.Discard(filter)` / `Costs.DiscardSelf` / `Costs.DiscardHand`
 - `Costs.ExileFromGraveyard(count, filter)`
 - `Costs.TapAttachedCreature` — tap the creature this is attached to

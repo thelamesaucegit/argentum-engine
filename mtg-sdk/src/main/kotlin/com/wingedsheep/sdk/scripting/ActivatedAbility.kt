@@ -110,9 +110,10 @@ sealed interface AbilityCost {
     @SerialName("CostSacrifice")
     @Serializable
     data class Sacrifice(
-        val filter: GameObjectFilter = GameObjectFilter.Any
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val excludeSelf: Boolean = false
     ) : AbilityCost {
-        override val description: String = "Sacrifice a ${filter.description}"
+        override val description: String = "Sacrifice ${if (excludeSelf) "another " else "a "}${filter.description}"
     }
 
     /**

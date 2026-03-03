@@ -72,6 +72,12 @@ object Costs {
     fun Sacrifice(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
         AbilityCost.Sacrifice(filter)
 
+    /**
+     * Sacrifice another permanent matching the filter (excludes the source permanent).
+     */
+    fun SacrificeAnother(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
+        AbilityCost.Sacrifice(filter, excludeSelf = true)
+
     // =========================================================================
     // Discard Costs
     // =========================================================================
