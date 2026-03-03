@@ -64,9 +64,7 @@ class BoosterGenerator(
             setName = ScourgeSet.SET_NAME,
             cards = ScourgeSet.allCards,
             basicLands = PortalSet.basicLands,  // Use Portal lands for now
-            incomplete = true,
-            block = "Onslaught",
-            totalSetSize = 143
+            block = "Onslaught"
         )
 
         /**
