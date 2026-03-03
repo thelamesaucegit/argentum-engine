@@ -4,6 +4,9 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
+import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.*
@@ -16,6 +19,7 @@ import com.wingedsheep.gameserver.repository.GameRepository
 import com.wingedsheep.gameserver.session.GameSession
 import com.wingedsheep.gameserver.session.PlayerIdentity
 import com.wingedsheep.gameserver.session.SessionRegistry
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
@@ -408,8 +412,12 @@ class DevScenarioController(
                     builder.withCardOnBattlefield(
                         1, card.name,
                         tapped = card.tapped,
-                        summoningSickness = card.summoningSickness
+                        summoningSickness = card.summoningSickness,
+                        counters = card.counters ?: emptyMap()
                     )
+                }
+                config.battlefield.forEach { card ->
+                    card.attachedTo?.let { hostName -> builder.wireAttachment(card.name, hostName) }
                 }
                 config.graveyard.forEach { builder.withCardInGraveyard(1, it) }
                 config.library.forEach { builder.withCardInLibrary(1, it) }
@@ -423,8 +431,12 @@ class DevScenarioController(
                     builder.withCardOnBattlefield(
                         2, card.name,
                         tapped = card.tapped,
-                        summoningSickness = card.summoningSickness
+                        summoningSickness = card.summoningSickness,
+                        counters = card.counters ?: emptyMap()
                     )
+                }
+                config.battlefield.forEach { card ->
+                    card.attachedTo?.let { hostName -> builder.wireAttachment(card.name, hostName) }
                 }
                 config.graveyard.forEach { builder.withCardInGraveyard(2, it) }
                 config.library.forEach { builder.withCardInLibrary(2, it) }
@@ -591,11 +603,15 @@ class DevScenarioController(
             return this
         }
 
+        /** Tracks placed battlefield card entity IDs by card name for attachment wiring */
+        private val placedCardIds = mutableListOf<Pair<String, EntityId>>()
+
         fun withCardOnBattlefield(
             playerNumber: Int,
             cardName: String,
             tapped: Boolean = false,
-            summoningSickness: Boolean = false
+            summoningSickness: Boolean = false,
+            counters: Map<String, Int> = emptyMap()
         ): ScenarioBuilder {
             val playerId = if (playerNumber == 1) player1Id!! else player2Id!!
             val cardId = createCard(cardName, playerId)
@@ -613,6 +629,11 @@ class DevScenarioController(
                 container = container.with(SummoningSicknessComponent)
             }
 
+            if (counters.isNotEmpty()) {
+                val counterMap = counters.mapKeys { CounterType.valueOf(it.key) }
+                container = container.with(CountersComponent(counterMap))
+            }
+
             // Add continuous effects from static abilities and replacement effects
             val cardDef = cardRegistry.getCard(cardName)
             if (cardDef != null) {
@@ -622,6 +643,24 @@ class DevScenarioController(
             }
 
             state = state.withEntity(cardId, container)
+            placedCardIds.add(cardName to cardId)
+            return this
+        }
+
+        fun wireAttachment(auraName: String, hostName: String): ScenarioBuilder {
+            val auraId = placedCardIds.lastOrNull { it.first == auraName }?.second
+                ?: error("Aura not found on battlefield: $auraName")
+            val hostId = placedCardIds.lastOrNull { it.first == hostName }?.second
+                ?: error("Host not found on battlefield: $hostName")
+
+            // Set AttachedToComponent on the aura
+            state = state.updateEntity(auraId) { it.with(AttachedToComponent(hostId)) }
+
+            // Set/merge AttachmentsComponent on the host
+            val existingAttachments = state.getEntity(hostId)?.get<AttachmentsComponent>()
+            val attachedIds = (existingAttachments?.attachedIds ?: emptyList()) + auraId
+            state = state.updateEntity(hostId) { it.with(AttachmentsComponent(attachedIds)) }
+
             return this
         }
 
@@ -754,11 +793,15 @@ data class PlayerConfig(
  * Configuration for a card on the battlefield.
  * For simple cases, just provide the name.
  * For detailed setup, also specify tapped/summoningSickness state.
+ * For auras, set [attachedTo] to the name of the host creature.
+ * For counters, provide a map of counter type name to count (e.g., {"PLUS_ONE_PLUS_ONE": 3}).
  */
 data class BattlefieldCardConfig(
     val name: String,
     val tapped: Boolean = false,
-    val summoningSickness: Boolean = false
+    val summoningSickness: Boolean = false,
+    val counters: Map<String, Int>? = null,
+    val attachedTo: String? = null
 )
 
 data class ScenarioResponse(

@@ -4,6 +4,8 @@ export interface BattlefieldCardConfig {
   name: string
   tapped?: boolean
   summoningSickness?: boolean
+  counters?: Record<string, number>
+  attachedTo?: string
 }
 
 export interface PlayerConfig {
