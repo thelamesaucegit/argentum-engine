@@ -80,6 +80,7 @@ object KhansOfTarkirSet {
         HighlandGame,
         HootingMandrills,
         LongshotSquad,
+        SmokeTeller,
         TuskedColossodon,
         WoollyLoxodon,
 

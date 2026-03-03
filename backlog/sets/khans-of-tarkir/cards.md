@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 81 / 249
+**Implemented:** 82 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -10,7 +10,7 @@
 | Blue       | 13    |
 | Black      | 14    |
 | Red        | 14    |
-| Green      | 13    |
+| Green      | 14    |
 | Multicolor | 7     |
 | Colorless  | 3     |
 | Land       | 3     |
@@ -208,7 +208,7 @@
 - [ ] Siege Rhino
 - [ ] Singing Bell Strike
 - [x] Smite the Monstrous
-- [ ] Smoke Teller
+- [x] Smoke Teller
 - [x] Snowhorn Rider
 - [ ] Sorin, Solemn Visitor
 - [ ] Stubborn Denial
