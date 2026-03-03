@@ -111,6 +111,7 @@ object KhansOfTarkirSet {
         MonasterySwiftspear,
         SummitProwler,
         ValleyDasher,
+        WarNameAspirant,
 
         // Red spells
         BarrageOfBoulders,

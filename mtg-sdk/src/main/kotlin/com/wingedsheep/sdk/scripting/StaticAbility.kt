@@ -634,6 +634,22 @@ data class CantBeBlockedByPower(
 }
 
 /**
+ * This creature can't be blocked by creatures with power X or less.
+ * Used for cards like War-Name Aspirant: "can't be blocked by creatures with power 1 or less."
+ *
+ * @property maxPower The maximum power a creature can have and still be excluded from blocking
+ * @property target What this ability applies to (typically SourceCreature)
+ */
+@SerialName("CantBeBlockedByPowerOrLess")
+@Serializable
+data class CantBeBlockedByPowerOrLess(
+    val maxPower: Int,
+    val target: StaticTarget = StaticTarget.SourceCreature
+) : StaticAbility {
+    override val description: String = "can't be blocked by creatures with power $maxPower or less"
+}
+
+/**
  * This creature can't block creatures with power greater than this creature's power.
  * Used for cards like Spitfire Handler.
  *

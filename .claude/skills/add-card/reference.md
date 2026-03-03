@@ -866,7 +866,7 @@ Set via `staticAbility { ability = ... }`:
 
 ### Evasion
 
-- `CantBeBlockedByColor(colors, target)` / `CantBeBlockedByPower(minPower, target)`
+- `CantBeBlockedByColor(colors, target)` / `CantBeBlockedByPower(minPower, target)` / `CantBeBlockedByPowerOrLess(maxPower, target)`
 - `CantBeBlockedExceptByKeyword(requiredKeyword, target)` / `CantBeBlockedByMoreThan(maxBlockers, target)`
 - `CantBeBlockedUnlessDefenderSharesCreatureType(minSharedCount, target)`
 

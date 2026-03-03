@@ -2,14 +2,14 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 92 / 249
+**Implemented:** 93 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 16    |
 | Blue       | 16    |
 | Black      | 16    |
-| Red        | 15    |
+| Red        | 16    |
 | Green      | 16    |
 | Multicolor | 7     |
 | Colorless  | 3     |
@@ -251,7 +251,7 @@
 - [ ] Villainous Wealth
 - [ ] War Behemoth
 - [ ] Warden of the Eye
-- [ ] War-Name Aspirant
+- [x] War-Name Aspirant
 - [ ] Watcher of the Roost
 - [ ] Waterwhirl
 - [x] Weave Fate

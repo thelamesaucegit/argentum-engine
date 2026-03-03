@@ -29,6 +29,7 @@ import com.wingedsheep.sdk.scripting.AttackTax
 import com.wingedsheep.sdk.scripting.CantBeAttackedWithout
 import com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWithKeyword
 import com.wingedsheep.sdk.scripting.CantBeBlockedByPower
+import com.wingedsheep.sdk.scripting.CantBeBlockedByPowerOrLess
 import com.wingedsheep.sdk.scripting.CantBeBlockedExceptByKeyword
 import com.wingedsheep.sdk.scripting.CantBeBlockedUnlessDefenderSharesCreatureType
 import com.wingedsheep.sdk.scripting.CanBlockAnyNumber
@@ -743,6 +744,14 @@ class CombatManager(
             return powerRestrictionValidation
         }
 
+        // CantBeBlockedByPowerOrLess: Cannot be blocked by creatures with power <= N
+        val lowPowerRestrictionValidation = validateCantBeBlockedByPowerOrLess(
+            attackerId, attackerCard, blockerId, blockerCard, projected
+        )
+        if (lowPowerRestrictionValidation != null) {
+            return lowPowerRestrictionValidation
+        }
+
         // CantBeBlockedExceptByColor: Can only be blocked by creatures of the specified color
         val colorRestrictionValidation = validateCantBeBlockedExceptByColor(
             state, attackerId, attackerCard, blockerId, blockerCard
@@ -908,6 +917,53 @@ class CombatManager(
         val blockerPower = projected.getPower(blockerId) ?: 0
 
         return blockerPower < powerRestriction.minPower
+    }
+
+    /**
+     * Check if attacker has CantBeBlockedByPowerOrLess restriction and blocker's power is at or below it.
+     * Returns an error message if the blocker cannot block due to power restriction, null otherwise.
+     *
+     * Uses projected power to account for spells that modify power (e.g., Giant Growth).
+     */
+    private fun validateCantBeBlockedByPowerOrLess(
+        attackerId: EntityId,
+        attackerCard: CardComponent,
+        blockerId: EntityId,
+        blockerCard: CardComponent,
+        projected: ProjectedState
+    ): String? {
+        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return null
+        val powerRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedByPowerOrLess>().firstOrNull()
+            ?: return null
+
+        val blockerPower = projected.getPower(blockerId) ?: 0
+
+        if (blockerPower <= powerRestriction.maxPower) {
+            return "${blockerCard.name} cannot block ${attackerCard.name} (power $blockerPower or less)"
+        }
+
+        return null
+    }
+
+    /**
+     * Check if attacker has CantBeBlockedByPowerOrLess restriction and blocker's power is at or below it.
+     * Returns false if the blocker cannot block due to power restriction.
+     *
+     * Uses projected power to account for spells that modify power.
+     */
+    private fun canBlockDespiteLowPowerRestriction(
+        attackerId: EntityId,
+        attackerCard: CardComponent,
+        blockerId: EntityId,
+        projected: ProjectedState
+    ): Boolean {
+        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return true
+        val powerRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedByPowerOrLess>().firstOrNull()
+            ?: return true
+
+        val blockerPower = projected.getPower(blockerId) ?: 0
+
+        return blockerPower > powerRestriction.maxPower
     }
 
     /**
@@ -2763,6 +2819,11 @@ class CombatManager(
 
         // CantBeBlockedByPower: Cannot be blocked by creatures with power >= N
         if (!canBlockDespitePowerRestriction(attackerId, attackerCard, blockerId, projected)) {
+            return false
+        }
+
+        // CantBeBlockedByPowerOrLess: Cannot be blocked by creatures with power <= N
+        if (!canBlockDespiteLowPowerRestriction(attackerId, attackerCard, blockerId, projected)) {
             return false
         }
 
