@@ -2,7 +2,7 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 122 / 145
+**Implemented:** 123 / 145
 
 | Color      | Count |
 |------------|-------|
@@ -10,7 +10,7 @@
 | Blue       | 24/29 |
 | Black      | 25/29 |
 | Red        | 25/29 |
-| Green      | 24/29 |
+| Green      | 25/29 |
 
 ---
 
@@ -110,7 +110,7 @@
 - [ ] Phage the Untouchable
 - [ ] Planar Guide
 - [x] Plated Sliver
-- [ ] Primal Whisperer
+- [x] Primal Whisperer
 - [x] Primoc Escapee
 - [x] Quick Sliver
 - [x] Ridgetop Raptor

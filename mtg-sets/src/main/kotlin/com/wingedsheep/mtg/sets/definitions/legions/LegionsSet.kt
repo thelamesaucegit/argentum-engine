@@ -146,6 +146,7 @@ object LegionsSet {
         NantukoVigilante,
         NeedleshotGourna,
         PatronOfTheWild,
+        PrimalWhisperer,
         QuickSliver,
         StonewoodInvoker,
         TimberwatchElf,
