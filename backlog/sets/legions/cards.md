@@ -2,14 +2,14 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 126 / 145
+**Implemented:** 127 / 145
 
 | Color      | Count |
 |------------|-------|
 | White      | 26/29 |
 | Blue       | 25/29 |
 | Black      | 25/29 |
-| Red        | 25/29 |
+| Red        | 26/29 |
 | Green      | 25/29 |
 
 ---
@@ -123,7 +123,7 @@
 - [x] Shaleskin Plower
 - [x] Shifting Sliver
 - [x] Skinthinner
-- [ ] Skirk Alarmist
+- [x] Skirk Alarmist
 - [x] Skirk Drill Sergeant
 - [x] Skirk Marauder
 - [x] Skirk Outrider

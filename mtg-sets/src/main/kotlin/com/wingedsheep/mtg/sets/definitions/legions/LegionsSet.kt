@@ -126,6 +126,7 @@ object LegionsSet {
         RidgetopRaptor,
         RockshardElemental,
         ShaleskinPlower,
+        SkirkAlarmist,
         SkirkDrillSergeant,
         SkirkMarauder,
         SkirkOutrider,

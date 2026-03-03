@@ -136,6 +136,7 @@ constructors.
 ### Sacrifice
 
 - `Effects.Sacrifice(filter, count = 1, target = Controller)`
+- `Effects.SacrificeTarget(target)` — sacrifice a specific permanent by target (for delayed triggers)
 
 ### Tap/Untap
 
@@ -216,6 +217,7 @@ constructors.
 | `MoveToZoneEffect`                          | `target, destination: Zone, placement, byDestruction, controllerOverride` | Unified zone movement    |
 | `SacrificeEffect`                           | `filter, count, any`                                  | Sacrifice permanents     |
 | `SacrificeSelfEffect`                       | (object)                                              | Sacrifice this permanent |
+| `SacrificeTargetEffect`                     | `target`                                              | Sacrifice specific permanent by target |
 | `ForceSacrificeEffect`                      | `filter, count, target`                               | Force opponent sacrifice |
 | `RegenerateEffect`                          | `target`                                              | Regenerate               |
 | `CantBeRegeneratedEffect`                   | `target`                                              | Prevents regeneration    |
@@ -413,7 +415,7 @@ constructors.
 ### Creature
 
 - `Targets.Creature` / `Targets.CreatureYouControl` / `Targets.CreatureOpponentControls`
-- `Targets.AttackingCreature` / `Targets.BlockingCreature` / `Targets.TappedCreature`
+- `Targets.AttackingCreature` / `Targets.BlockingCreature` / `Targets.TappedCreature` / `Targets.FaceDownCreatureYouControl`
 - `Targets.CreatureWithKeyword(keyword)` / `Targets.CreatureWithColor(color)`
 - `Targets.CreatureWithPowerAtMost(maxPower)` / `Targets.UpToCreatures(count)`
 
