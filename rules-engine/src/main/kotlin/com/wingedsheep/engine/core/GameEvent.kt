@@ -164,6 +164,18 @@ data class AbilityTriggeredEvent(
 ) : GameEvent
 
 /**
+ * A spell or ability's target was randomly reselected (e.g., by Grip of Chaos).
+ */
+@Serializable
+@SerialName("TargetReselectedEvent")
+data class TargetReselectedEvent(
+    val spellOrAbilityName: String,
+    val oldTargetName: String,
+    val newTargetName: String,
+    val sourceName: String
+) : GameEvent
+
+/**
  * A spell or ability resolved.
  */
 @Serializable

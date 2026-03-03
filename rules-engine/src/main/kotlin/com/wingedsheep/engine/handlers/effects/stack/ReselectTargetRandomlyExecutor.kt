@@ -78,7 +78,29 @@ class ReselectTargetRandomlyExecutor : EffectExecutor<ReselectTargetRandomlyEffe
             container.with(newTargetsComponent)
         }
 
-        return ExecutionResult.success(newState)
+        // 7. Emit event for the game log
+        val spellName = stackEntity.get<CardComponent>()?.name
+            ?: stackEntity.get<com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent>()?.sourceName
+            ?: stackEntity.get<com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent>()?.sourceName
+            ?: "spell or ability"
+        val oldTargetId = getTargetEntityId(currentTarget)
+        val newTargetId = getTargetEntityId(newTarget)
+        val oldTargetName = oldTargetId?.let { resolveEntityName(state, it) } ?: "unknown"
+        val newTargetName = newTargetId?.let { resolveEntityName(state, it) } ?: "unknown"
+        val sourceName = context.sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name } ?: "Grip of Chaos"
+
+        val events = if (oldTargetId != newTargetId) {
+            listOf(com.wingedsheep.engine.core.TargetReselectedEvent(
+                spellOrAbilityName = spellName,
+                oldTargetName = oldTargetName,
+                newTargetName = newTargetName,
+                sourceName = sourceName
+            ))
+        } else {
+            emptyList()
+        }
+
+        return ExecutionResult.success(newState, events)
     }
 
     /**
@@ -196,5 +218,16 @@ class ReselectTargetRandomlyExecutor : EffectExecutor<ReselectTargetRandomlyEffe
             is ChosenTarget.Card -> target.cardId
             is ChosenTarget.Spell -> target.spellEntityId
         }
+    }
+
+    private fun resolveEntityName(state: GameState, entityId: EntityId): String {
+        val entity = state.getEntity(entityId) ?: return "unknown"
+        // Check if it's a card (permanent, spell, etc.)
+        entity.get<CardComponent>()?.name?.let { return it }
+        // Check if it's a player
+        entity.get<com.wingedsheep.engine.state.components.identity.PlayerComponent>()?.let {
+            return it.name
+        }
+        return "unknown"
     }
 }

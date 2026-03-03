@@ -508,6 +508,20 @@ sealed interface ClientEvent {
         val reason: String,
         override val description: String = "Ability fizzled: $reason"
     ) : ClientEvent
+
+    // =========================================================================
+    // Target Reselection Events
+    // =========================================================================
+
+    @Serializable
+    @SerialName("targetReselected")
+    data class TargetReselected(
+        val spellOrAbilityName: String,
+        val oldTargetName: String,
+        val newTargetName: String,
+        val sourceName: String,
+        override val description: String = "$sourceName changed $spellOrAbilityName's target from $oldTargetName to $newTargetName"
+    ) : ClientEvent
 }
 
 /**
@@ -875,6 +889,13 @@ is PermanentsSacrificedEvent -> {
                     source = "first draw reveal"
                 )
             }
+
+            is TargetReselectedEvent -> ClientEvent.TargetReselected(
+                spellOrAbilityName = event.spellOrAbilityName,
+                oldTargetName = event.oldTargetName,
+                newTargetName = event.newTargetName,
+                sourceName = event.sourceName
+            )
 
             // Events that don't need client representation or are handled differently
             is DrawFailedEvent,
