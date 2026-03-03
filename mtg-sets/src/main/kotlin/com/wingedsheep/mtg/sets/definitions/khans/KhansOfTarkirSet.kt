@@ -116,6 +116,7 @@ object KhansOfTarkirSet {
         WarNameAspirant,
 
         // Red spells
+        ActOfTreason,
         BarrageOfBoulders,
         BringLow,
         HordelingOutburst,
