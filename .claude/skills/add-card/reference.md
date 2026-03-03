@@ -842,6 +842,7 @@ Set via `staticAbility { ability = ... }`:
 - `GrantDynamicStatsEffect(target, powerBonus: DynamicAmount, toughnessBonus: DynamicAmount)`
 - `GlobalEffect(effectType: GlobalEffectType, filter)` — global anthem/debuff
 - `GrantProtection(color, target)` — grant protection from color
+- `GrantProtectionFromChosenColorToGroup(filter: GroupFilter)` — grant protection from chosen color (via `EntersWithColorChoice`) to a group
 
 ### Land Animation
 

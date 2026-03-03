@@ -45,6 +45,7 @@ object LegionsSet {
         SwoopingTalon,
         WallOfHope,
         WhipgrassEntangler,
+        WardSliver,
         WhiteKnight,
         WindbornMuse,
         WingbeatWarrior,
