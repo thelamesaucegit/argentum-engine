@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 91 / 249
+**Implemented:** 92 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 15    |
+| White      | 16    |
 | Blue       | 16    |
 | Black      | 16    |
 | Red        | 15    |
@@ -180,7 +180,7 @@
 - [ ] Roar of Challenge
 - [x] Rotting Mastodon
 - [x] Rugged Highlands
-- [ ] Rush of Battle
+- [x] Rush of Battle
 - [ ] Ruthless Ripper
 - [ ] Sage-Eye Harrier
 - [ ] Sage of the Inward Eye
