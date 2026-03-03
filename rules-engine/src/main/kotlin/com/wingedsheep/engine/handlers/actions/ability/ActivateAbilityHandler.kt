@@ -496,16 +496,84 @@ class ActivateAbilityHandler(
             ability.targetRequirements
         }
 
-        val stackResult = stackResolver.putActivatedAbility(
+        var stackResult = stackResolver.putActivatedAbility(
             currentState, abilityOnStack, action.targets,
             targetRequirements = effectiveTargetReqs
         )
-        val allEvents = events + stackResult.events
+        currentState = stackResult.newState
+        events.addAll(stackResult.events)
+
+        // Handle repeated activations (repeatCount > 1)
+        if (action.repeatCount > 1) {
+            for (i in 2..action.repeatCount) {
+                // Re-read mana pool from current state
+                val repeatPoolComponent = currentState.getEntity(action.playerId)?.get<ManaPoolComponent>()
+                    ?: ManaPoolComponent()
+                var repeatPool = ManaPool(
+                    white = repeatPoolComponent.white,
+                    blue = repeatPoolComponent.blue,
+                    black = repeatPoolComponent.black,
+                    red = repeatPoolComponent.red,
+                    green = repeatPoolComponent.green,
+                    colorless = repeatPoolComponent.colorless
+                )
+
+                // Auto-tap for mana cost
+                if (manaCost != null) {
+                    val autoTapResult = autoTapForManaCost(currentState, action.playerId, repeatPool, manaCost, cardComponent.name, 0)
+                        ?: break // Can't afford — stop early
+                    currentState = autoTapResult.newState
+                    repeatPool = autoTapResult.newPool
+                    events.addAll(autoTapResult.events)
+                }
+
+                // Pay the cost
+                val repeatCostResult = costHandler.payAbilityCost(
+                    currentState, effectiveCost, action.sourceId, action.playerId, repeatPool, CostPaymentChoices()
+                )
+                if (!repeatCostResult.success) break // Can't pay — stop early
+
+                currentState = repeatCostResult.newState!!
+                repeatPool = repeatCostResult.newManaPool!!
+                events.addAll(repeatCostResult.events)
+
+                // Update mana pool on state
+                currentState = currentState.updateEntity(action.playerId) { c ->
+                    c.with(ManaPoolComponent(
+                        white = repeatPool.white,
+                        blue = repeatPool.blue,
+                        black = repeatPool.black,
+                        red = repeatPool.red,
+                        green = repeatPool.green,
+                        colorless = repeatPool.colorless
+                    ))
+                }
+
+                // Put another ability on the stack
+                val repeatAbilityOnStack = ActivatedAbilityOnStackComponent(
+                    sourceId = action.sourceId,
+                    sourceName = cardComponent.name,
+                    controllerId = action.playerId,
+                    effect = finalEffect,
+                    sacrificedPermanents = emptyList(),
+                    xValue = action.xValue,
+                    tappedPermanents = emptyList()
+                )
+                val repeatStackResult = stackResolver.putActivatedAbility(
+                    currentState, repeatAbilityOnStack, action.targets,
+                    targetRequirements = effectiveTargetReqs
+                )
+                currentState = repeatStackResult.newState
+                events.addAll(repeatStackResult.events)
+            }
+        }
+
+        val allEvents = events.toList()
 
         // Detect and process triggers from cost payment (e.g., sacrifice death triggers)
-        val triggers = triggerDetector.detectTriggers(stackResult.newState, allEvents)
+        val triggers = triggerDetector.detectTriggers(currentState, allEvents)
         if (triggers.isNotEmpty()) {
-            val triggerResult = triggerProcessor.processTriggers(stackResult.newState, triggers)
+            val triggerResult = triggerProcessor.processTriggers(currentState, triggers)
 
             if (triggerResult.isPaused) {
                 return ExecutionResult.paused(
@@ -521,7 +589,7 @@ class ActivateAbilityHandler(
             )
         }
 
-        return ExecutionResult.success(stackResult.newState, allEvents)
+        return ExecutionResult.success(currentState, allEvents)
     }
 
     /**

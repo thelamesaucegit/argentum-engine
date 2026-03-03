@@ -12,7 +12,7 @@ export function XCostSelector() {
 
   if (!xSelectionState) return null
 
-  const { cardName, minX, maxX, selectedX } = xSelectionState
+  const { cardName, minX, maxX, selectedX, isRepeatCount } = xSelectionState
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateXValue(parseInt(e.target.value, 10))
@@ -33,11 +33,11 @@ export function XCostSelector() {
   return (
     <div style={styles.overlay}>
       <div style={styles.container}>
-        <h2 style={styles.title}>Choose X Value</h2>
+        <h2 style={styles.title}>{isRepeatCount ? 'Activate How Many Times?' : 'Choose X Value'}</h2>
         <p style={styles.cardName}>{cardName}</p>
 
         <div style={styles.valueDisplay}>
-          <span style={styles.xLabel}>X =</span>
+          <span style={styles.xLabel}>{isRepeatCount ? 'Times =' : 'X ='}</span>
           <span style={styles.xValue}>{selectedX}</span>
         </div>
 

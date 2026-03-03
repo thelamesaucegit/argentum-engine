@@ -677,21 +677,31 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
       }
     } else if (actionInfo.action.type === 'ActivateAbility') {
       const baseAction = actionInfo.action
-      const actionWithX = {
-        ...baseAction,
-        xValue: selectedX,
-      }
 
-      if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
-        startTargeting({
-          action: actionWithX,
-          validTargets: [...actionInfo.validTargets],
-          selectedTargets: [],
-          minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
-          maxTargets: actionInfo.targetCount ?? 1,
-        })
+      if (xSelectionState.isRepeatCount) {
+        // Repeat count mode: action already has auto-selected targets, just set repeatCount
+        const actionWithRepeat = {
+          ...baseAction,
+          repeatCount: selectedX,
+        }
+        getWebSocket()?.send(createSubmitActionMessage(actionWithRepeat))
       } else {
-        getWebSocket()?.send(createSubmitActionMessage(actionWithX))
+        const actionWithX = {
+          ...baseAction,
+          xValue: selectedX,
+        }
+
+        if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
+          startTargeting({
+            action: actionWithX,
+            validTargets: [...actionInfo.validTargets],
+            selectedTargets: [],
+            minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
+            maxTargets: actionInfo.targetCount ?? 1,
+          })
+        } else {
+          getWebSocket()?.send(createSubmitActionMessage(actionWithX))
+        }
       }
     } else if (actionInfo.action.type === 'TurnFaceUp') {
       const baseAction = actionInfo.action

@@ -890,7 +890,9 @@ data class LegalActionInfo(
     /** Blocker IDs that can block multiple attackers (e.g., CanBlockAnyNumber) */
     val canBlockMultipleAttackers: List<EntityId>? = null,
     /** Pre-computed mandatory blocker→attacker assignments from Provoke / MustBeBlockedByAll */
-    val mandatoryBlockerAssignments: Map<EntityId, List<EntityId>>? = null
+    val mandatoryBlockerAssignments: Map<EntityId, List<EntityId>>? = null,
+    /** Maximum times this ability can be activated in a batch (for repeat-eligible self-targeting abilities) */
+    val maxRepeatableActivations: Int? = null
 )
 
 /**

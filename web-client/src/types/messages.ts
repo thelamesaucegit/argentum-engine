@@ -467,6 +467,8 @@ export interface LegalActionInfo {
   readonly canBlockMultipleAttackers?: readonly EntityId[]
   /** Pre-computed mandatory blocker→attacker assignments from Provoke / MustBeBlockedByAll */
   readonly mandatoryBlockerAssignments?: Readonly<Record<EntityId, readonly EntityId[]>>
+  /** Maximum times this ability can be activated in a batch (for repeat-eligible self-targeting abilities) */
+  readonly maxRepeatableActivations?: number
 }
 
 /**

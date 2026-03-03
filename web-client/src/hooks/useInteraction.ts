@@ -132,6 +132,20 @@ export function useInteraction() {
     (actionInfo: LegalActionInfo) => {
       const action = actionInfo.action
 
+      // Check if ability is repeat-eligible (self-targeting, mana-only cost)
+      if (action.type === 'ActivateAbility' && actionInfo.maxRepeatableActivations && actionInfo.maxRepeatableActivations > 1) {
+        startXSelection({
+          actionInfo,
+          cardName: actionInfo.description,
+          minX: 1,
+          maxX: actionInfo.maxRepeatableActivations,
+          selectedX: 1,
+          isRepeatCount: true,
+        })
+        selectCard(null)
+        return
+      }
+
       // Check if spell or ability or morph has X cost - needs X selection first
       if ((action.type === 'CastSpell' || action.type === 'ActivateAbility' || action.type === 'TurnFaceUp') && actionInfo.hasXCost) {
         startXSelection({
@@ -379,6 +393,11 @@ export function useInteraction() {
   const canAutoExecute = useCallback(
     (actionInfo: LegalActionInfo): boolean => {
       const action = actionInfo.action
+
+      // Repeat-eligible abilities need count selection
+      if (action.type === 'ActivateAbility' && actionInfo.maxRepeatableActivations && actionInfo.maxRepeatableActivations > 1) {
+        return false
+      }
 
       // X cost spells/abilities/morph need selection
       if ((action.type === 'CastSpell' || action.type === 'ActivateAbility' || action.type === 'TurnFaceUp') && actionInfo.hasXCost) {

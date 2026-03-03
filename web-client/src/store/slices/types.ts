@@ -149,6 +149,8 @@ export interface XSelectionState {
   minX: number
   maxX: number
   selectedX: number
+  /** When true, this is a repeat count selector (not X cost) */
+  isRepeatCount?: boolean
 }
 
 /**

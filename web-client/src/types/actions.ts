@@ -94,6 +94,8 @@ export interface ActivateAbilityAction {
   readonly manaColorChoice?: string
   /** Value of X for X-cost activated abilities */
   readonly xValue?: number | null
+  /** Number of times to repeat this activation (for batch activation) */
+  readonly repeatCount?: number
 }
 
 // =============================================================================

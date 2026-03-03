@@ -1341,6 +1341,23 @@ class LegalActionsCalculator(
                     manaSolver.solve(state, playerId, abilityManaCost)?.sources?.map { it.entityId }
                 } else null
 
+                // Compute maxRepeatableActivations for eligible self-targeting abilities
+                // Eligible: pure mana cost, no X, no once-per-turn restriction
+                val isRepeatEligible = ability.cost is AbilityCost.Mana
+                    && !abilityHasXCost
+                    && !ability.restrictions.any {
+                        it is ActivationRestriction.OncePerTurn ||
+                        (it is ActivationRestriction.All && it.restrictions.any { r -> r is ActivationRestriction.OncePerTurn })
+                    }
+                val maxRepeatableActivations: Int? = if (isRepeatEligible && abilityManaCost != null) {
+                    val availableSources = manaSolver.getAvailableManaCount(state, playerId)
+                    val costPerActivation = abilityManaCost.cmc
+                    if (costPerActivation > 0) {
+                        val maxRepeats = availableSources / costPerActivation
+                        if (maxRepeats > 1) maxRepeats else null
+                    } else null
+                } else null
+
                 // Check for target requirements (apply text-changing effects to filter)
                 val targetReqs = if (textReplacement != null) {
                     ability.targetRequirements.map { SubtypeReplacer.replaceTargetRequirement(it, textReplacement) }
@@ -1381,6 +1398,19 @@ class LegalActionsCalculator(
                             hasXCost = abilityHasXCost,
                             maxAffordableX = abilityMaxAffordableX,
                             autoTapPreview = abilityAutoTapPreview
+                        ))
+                    } else if (targetReqs.size == 1 && firstReqInfo.validTargets.size == 1 && firstReqInfo.validTargets.first() == entityId) {
+                        // Self-targeting: only valid target is the source itself — auto-select and offer repeat
+                        val autoSelectedTarget = ChosenTarget.Permanent(entityId)
+                        result.add(LegalActionInfo(
+                            actionType = "ActivateAbility",
+                            description = ability.description,
+                            action = ActivateAbility(playerId, entityId, ability.id, targets = listOf(autoSelectedTarget)),
+                            additionalCostInfo = costInfo,
+                            hasXCost = abilityHasXCost,
+                            maxAffordableX = abilityMaxAffordableX,
+                            autoTapPreview = abilityAutoTapPreview,
+                            maxRepeatableActivations = maxRepeatableActivations
                         ))
                     } else {
                         result.add(LegalActionInfo(
