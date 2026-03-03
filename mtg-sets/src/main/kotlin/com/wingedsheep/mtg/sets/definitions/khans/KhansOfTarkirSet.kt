@@ -28,7 +28,7 @@ object KhansOfTarkirSet {
         FirehoofCavalry,
         JeskaiStudent,
         MarduHateblade,
-
+        SaltRoadPatrol,
         VenerableLammasu,
 
         // White spells
@@ -50,6 +50,7 @@ object KhansOfTarkirSet {
         WhirlwindAdept,
 
         // Blue spells
+        BlindingSpray,
         Cancel,
         CripplingChill,
         DisdainfulStroke,
@@ -80,6 +81,7 @@ object KhansOfTarkirSet {
         HighlandGame,
         HootingMandrills,
         LongshotSquad,
+        SmokeTeller,
         TuskedColossodon,
         WoollyLoxodon,
 
