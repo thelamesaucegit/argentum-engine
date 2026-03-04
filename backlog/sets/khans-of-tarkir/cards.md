@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 102 / 249
+**Implemented:** 103 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 17    |
+| White      | 18    |
 | Blue       | 18    |
 | Black      | 18    |
 | Red        | 18    |
@@ -182,7 +182,7 @@
 - [x] Rugged Highlands
 - [x] Rush of Battle
 - [ ] Ruthless Ripper
-- [ ] Sage-Eye Harrier
+- [x] Sage-Eye Harrier
 - [ ] Sage of the Inward Eye
 - [x] Sagu Archer
 - [ ] Sagu Mauler
