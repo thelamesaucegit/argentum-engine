@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 109 / 249
+**Implemented:** 110 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 19    |
+| White      | 20    |
 | Blue       | 19    |
 | Black      | 19    |
 | Red        | 20    |
@@ -249,7 +249,7 @@
 - [x] Valley Dasher
 - [x] Venerable Lammasu
 - [ ] Villainous Wealth
-- [ ] War Behemoth
+- [x] War Behemoth
 - [ ] Warden of the Eye
 - [x] War-Name Aspirant
 - [ ] Watcher of the Roost
