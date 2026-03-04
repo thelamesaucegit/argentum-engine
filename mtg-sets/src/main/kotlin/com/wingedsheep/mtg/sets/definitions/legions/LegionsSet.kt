@@ -26,6 +26,7 @@ object LegionsSet {
         AkromasDevoted,
         AvenRedeemer,
         AvenWarhawk,
+        BeaconOfDestiny,
         CelestialGatekeeper,
         CloudreachCavalry,
         DaruMender,
@@ -52,6 +53,7 @@ object LegionsSet {
 
         // Blue creatures
         AvenEnvoy,
+        ChromeshellCrab,
         CephalidPathmage,
         CovertOperative,
         CrookclawElder,
@@ -134,6 +136,7 @@ object LegionsSet {
         SkirkDrillSergeant,
         SkirkMarauder,
         SkirkOutrider,
+        UnstableHulk,
         WarbreakTrumpeter,
 
         // Green creatures

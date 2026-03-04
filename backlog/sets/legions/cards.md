@@ -2,14 +2,14 @@
 
 **Set Size:** 145 cards
 **Release Date:** February 3, 2003
-**Implemented:** 133 / 145
+**Implemented:** 136 / 145
 
 | Color      | Count |
 |------------|-------|
-| White      | 26/29 |
-| Blue       | 26/29 |
+| White      | 27/29 |
+| Blue       | 27/29 |
 | Black      | 27/29 |
-| Red        | 27/29 |
+| Red        | 28/29 |
 | Green      | 27/29 |
 
 ---
@@ -21,7 +21,7 @@
 - [x] Aven Redeemer
 - [x] Aven Warhawk
 - [x] Bane of the Living
-- [ ] Beacon of Destiny
+- [x] Beacon of Destiny
 - [x] Berserk Murlodont
 - [x] Blade Sliver
 - [x] Blood Celebrant
@@ -33,7 +33,7 @@
 - [x] Canopy Crawler
 - [x] Celestial Gatekeeper
 - [x] Cephalid Pathmage
-- [ ] Chromeshell Crab
+- [x] Chromeshell Crab
 - [x] Clickslither
 - [x] Cloudreach Cavalry
 - [x] Corpse Harvester
@@ -140,7 +140,7 @@
 - [x] Totem Speaker
 - [x] Toxin Sliver
 - [x] Tribal Forcemage
-- [ ] Unstable Hulk
+- [x] Unstable Hulk
 - [x] Vexing Beetle
 - [x] Vile Deacon
 - [x] Voidmage Apprentice
