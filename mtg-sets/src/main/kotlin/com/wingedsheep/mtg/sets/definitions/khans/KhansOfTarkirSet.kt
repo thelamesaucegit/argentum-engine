@@ -71,6 +71,7 @@ object KhansOfTarkirSet {
         GurmagSwiftwing,
         KheruDreadmaw,
         KrumarBondKin,
+        MarduSkullhunter,
         RottingMastodon,
         SidisisPet,
         ShamblingAttendants,
