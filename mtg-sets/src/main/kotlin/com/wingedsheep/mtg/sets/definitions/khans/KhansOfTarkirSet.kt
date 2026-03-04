@@ -128,6 +128,7 @@ object KhansOfTarkirSet {
         BringLow,
         HordelingOutburst,
         Shatter,
+        SwiftKick,
         TormentingVoice,
         TrumpetBlast,
 
