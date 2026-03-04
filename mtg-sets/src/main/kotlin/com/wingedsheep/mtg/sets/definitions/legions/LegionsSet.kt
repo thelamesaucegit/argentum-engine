@@ -104,6 +104,7 @@ object LegionsSet {
         HavocDemon,
         HollowSpecter,
         NoxiousGhoul,
+        PhageTheUntouchable,
         ScionOfDarkness,
         Skinthinner,
         SmokespewInvoker,
