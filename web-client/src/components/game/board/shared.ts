@@ -130,6 +130,13 @@ export function getChargeCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of depletion counters on a card.
+ */
+export function getDepletionCounters(card: ClientCard): number {
+  return card.counters[CounterType.DEPLETION] ?? 0
+}
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {

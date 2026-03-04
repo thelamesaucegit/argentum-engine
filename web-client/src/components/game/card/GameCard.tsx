@@ -13,6 +13,7 @@ import {
   getGoldCounters,
   getPlagueCounters,
   getChargeCounters,
+  getDepletionCounters,
   getTokenFrameGradient,
   getTokenFrameTextColor,
   getCardFallbackColor,
@@ -814,6 +815,20 @@ export function GameCard({
           <span style={{ fontSize: responsive.isMobile ? 8 : 10 }}>&#x26A1;</span>
           <span style={{ fontWeight: 700 }}>
             {getChargeCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Depletion counter badge */}
+      {battlefield && !faceDown && getDepletionCounters(card) > 0 && (
+        <div style={{
+          ...styles.depletionCounterBadge,
+          fontSize: responsive.isMobile ? 9 : 11,
+          padding: responsive.isMobile ? '1px 4px' : '2px 6px',
+        }}>
+          <span style={{ fontSize: responsive.isMobile ? 8 : 10 }}>&#x25C9;</span>
+          <span style={{ fontWeight: 700 }}>
+            {getDepletionCounters(card)}
           </span>
         </div>
       )}

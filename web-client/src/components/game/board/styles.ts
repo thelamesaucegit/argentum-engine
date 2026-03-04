@@ -907,6 +907,21 @@ export const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     zIndex: 5,
   } as React.CSSProperties,
+  // Depletion counter badge (for Force Bubble etc.)
+  depletionCounterBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: 'rgba(20, 80, 60, 0.95)',
+    borderRadius: 4,
+    border: '1px solid rgba(60, 200, 140, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    color: '#60e0a0',
+    fontWeight: 700,
+    zIndex: 5,
+  } as React.CSSProperties,
   // Enhanced preview stats box styles
   cardPreviewStatsBox: {
     display: 'flex',

@@ -275,6 +275,8 @@ export enum CounterType {
   POISON = 'POISON',
   GOLD = 'GOLD',
   PLAGUE = 'PLAGUE',
+  TRAP = 'TRAP',
+  DEPLETION = 'DEPLETION',
 }
 
 export const CounterTypeDisplayNames: Record<CounterType, string> = {
@@ -285,6 +287,8 @@ export const CounterTypeDisplayNames: Record<CounterType, string> = {
   [CounterType.POISON]: 'Poison',
   [CounterType.GOLD]: 'Gold',
   [CounterType.PLAGUE]: 'Plague',
+  [CounterType.TRAP]: 'Trap',
+  [CounterType.DEPLETION]: 'Depletion',
 }
 
 /**
