@@ -225,6 +225,7 @@ constructors.
 | `RegenerateEffect`                          | `target`                                              | Regenerate               |
 | `CantBeRegeneratedEffect`                   | `target`                                              | Prevents regeneration    |
 | `MarkExileOnDeathEffect`                    | `target`                                              | Mark for exile on death  |
+| `MarkExileControllerGraveyardOnDeathEffect` | `target`                                              | When dies, exile ctrl's GY |
 | `ExileUntilLeavesEffect`                    | `target`                                              | O-Ring style exile       |
 | `ExileAndReplaceWithTokenEffect`            | `target, tokenPower/Toughness/Colors/Types/Keywords`  | Exile + token            |
 | `SeparatePermanentsIntoPilesEffect`         | `target`                                              | Separate into piles      |

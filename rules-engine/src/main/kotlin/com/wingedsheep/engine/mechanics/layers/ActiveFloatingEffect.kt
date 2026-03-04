@@ -277,6 +277,13 @@ sealed interface SerializableModification {
     data object ExileOnDeath : SerializableModification
 
     /**
+     * Death trigger: when the affected creature dies this turn, exile its controller's graveyard.
+     * Used by Burn Away and similar effects.
+     */
+    @Serializable
+    data object ExileControllerGraveyardOnDeath : SerializableModification
+
+    /**
      * Damage prevention: prevent all combat damage that creatures matching the filter would deal this turn.
      * Used by Frontline Strategist and similar effects.
      * The filter is stored so that creature type is checked at the time damage would be dealt.
@@ -352,6 +359,8 @@ fun SerializableModification.toModification(): Modification = when (this) {
     is SerializableModification.PreventNextDamageFromCreatureType -> Modification.NoOp
     // ExileOnDeath doesn't map to a layer modification - it's checked during SBA creature death
     is SerializableModification.ExileOnDeath -> Modification.NoOp
+    // ExileControllerGraveyardOnDeath doesn't map to a layer modification - it's checked during SBA creature death
+    is SerializableModification.ExileControllerGraveyardOnDeath -> Modification.NoOp
     // PreventCombatDamageFromGroup doesn't map to a layer modification - it's checked by CombatManager directly
     is SerializableModification.PreventCombatDamageFromGroup -> Modification.NoOp
     // PreventCombatDamageToAndBy doesn't map to a layer modification - it's checked by CombatManager directly

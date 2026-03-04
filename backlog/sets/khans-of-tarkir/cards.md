@@ -2,14 +2,14 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 108 / 249
+**Implemented:** 109 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 19    |
 | Blue       | 19    |
 | Black      | 19    |
-| Red        | 19    |
+| Red        | 20    |
 | Green      | 19    |
 | Multicolor | 7     |
 | Colorless  | 3     |
@@ -54,7 +54,7 @@
 - [ ] Brave the Sands
 - [ ] Briber's Purse
 - [x] Bring Low
-- [ ] Burn Away
+- [x] Burn Away
 - [ ] Butcher of the Horde
 - [x] Cancel
 - [x] Canyon Lurkers

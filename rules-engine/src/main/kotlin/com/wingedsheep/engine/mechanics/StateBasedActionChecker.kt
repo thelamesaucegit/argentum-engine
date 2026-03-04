@@ -564,6 +564,27 @@ class StateBasedActionChecker {
             newState = newState.copy(floatingEffects = updatedEffects)
         }
 
+        // Check for ExileControllerGraveyardOnDeath marker
+        val exileGraveyardIndex = state.floatingEffects.indexOfFirst { effect ->
+            effect.effect.modification is com.wingedsheep.engine.mechanics.layers.SerializableModification.ExileControllerGraveyardOnDeath &&
+                entityId in effect.effect.affectedEntities
+        }
+        val exileGraveyard = exileGraveyardIndex != -1
+
+        // Consume the ExileControllerGraveyardOnDeath floating effect if present
+        if (exileGraveyard) {
+            val updatedEffects = newState.floatingEffects.toMutableList()
+            // Find the index in the current state (may differ from original if ExileOnDeath was also consumed)
+            val currentIndex = updatedEffects.indexOfFirst { effect ->
+                effect.effect.modification is com.wingedsheep.engine.mechanics.layers.SerializableModification.ExileControllerGraveyardOnDeath &&
+                    entityId in effect.effect.affectedEntities
+            }
+            if (currentIndex != -1) {
+                updatedEffects.removeAt(currentIndex)
+                newState = newState.copy(floatingEffects = updatedEffects)
+            }
+        }
+
         newState = newState.removeFromZone(battlefieldZone, entityId)
         newState = newState.addToZone(destinationZoneKey, entityId)
 
@@ -573,18 +594,40 @@ class StateBasedActionChecker {
         // Remove permanent components
         newState = newState.updateEntity(entityId) { c -> stripBattlefieldComponents(c) }
 
-        return ExecutionResult.success(
-            newState,
-            listOf(
-                CreatureDestroyedEvent(entityId, cardComponent.name, reason, controllerId),
-                ZoneChangeEvent(
-                    entityId,
-                    cardComponent.name,
-                    Zone.BATTLEFIELD,
-                    destinationZone,
-                    ownerId
-                )
+        val events = mutableListOf(
+            CreatureDestroyedEvent(entityId, cardComponent.name, reason, controllerId),
+            ZoneChangeEvent(
+                entityId,
+                cardComponent.name,
+                Zone.BATTLEFIELD,
+                destinationZone,
+                ownerId
             )
         )
+
+        // If ExileControllerGraveyardOnDeath was triggered, exile the controller's graveyard
+        if (exileGraveyard) {
+            val graveyardZone = ZoneKey(controllerId, Zone.GRAVEYARD)
+            val exileZone = ZoneKey(controllerId, Zone.EXILE)
+            val graveyardCardIds = newState.getZone(graveyardZone).toList()
+            for (cardId in graveyardCardIds) {
+                val cardComp = newState.getEntity(cardId)?.get<CardComponent>()
+                val cardOwnerId = cardComp?.ownerId ?: controllerId
+                val ownerExileZone = ZoneKey(cardOwnerId, Zone.EXILE)
+                newState = newState.removeFromZone(graveyardZone, cardId)
+                newState = newState.addToZone(ownerExileZone, cardId)
+                events.add(
+                    ZoneChangeEvent(
+                        cardId,
+                        cardComp?.name ?: "Unknown",
+                        Zone.GRAVEYARD,
+                        Zone.EXILE,
+                        cardOwnerId
+                    )
+                )
+            }
+        }
+
+        return ExecutionResult.success(newState, events)
     }
 }

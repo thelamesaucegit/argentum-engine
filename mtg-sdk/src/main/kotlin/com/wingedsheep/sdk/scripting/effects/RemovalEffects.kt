@@ -59,6 +59,24 @@ data class MarkExileOnDeathEffect(
 }
 
 /**
+ * Mark target creature so that when it dies this turn, its controller's graveyard is exiled.
+ * "When that creature dies this turn, exile its controller's graveyard."
+ *
+ * Creates a floating effect marker on the target. When the creature dies (via SBA or destruction),
+ * all cards in the controller's graveyard (including the dying creature itself) are exiled.
+ * If the creature doesn't die this turn, the marker expires at end of turn.
+ *
+ * Only applies to creatures — if the target is a player, this effect does nothing.
+ */
+@SerialName("MarkExileControllerGraveyardOnDeath")
+@Serializable
+data class MarkExileControllerGraveyardOnDeathEffect(
+    val target: EffectTarget
+) : Effect {
+    override val description: String = "When ${target.description} dies this turn, exile its controller's graveyard"
+}
+
+/**
  * Destroy all creatures that share a creature type with the sacrificed creature.
  * Used for Endemic Plague and similar effects.
  *

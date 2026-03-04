@@ -34,6 +34,7 @@ class RemovalExecutors(
         CantBeRegeneratedExecutor(),
         ExileGroupAndLinkExecutor(),
         MarkExileOnDeathExecutor(),
+        MarkExileControllerGraveyardOnDeathExecutor(),
         ForceSacrificeExecutor(),
         EachPlayerChoosesCreatureTypeExecutor(),
         DestroyAllExecutor(),

@@ -130,6 +130,7 @@ object KhansOfTarkirSet {
         ArrowStorm,
         BarrageOfBoulders,
         BringLow,
+        BurnAway,
         HordelingOutburst,
         Shatter,
         SwiftKick,
