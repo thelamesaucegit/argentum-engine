@@ -48,6 +48,7 @@ import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.events.DamageType
 import com.wingedsheep.sdk.scripting.DoubleDamage
 import com.wingedsheep.sdk.scripting.PreventDamage
+import com.wingedsheep.sdk.scripting.PreventLifeGain
 import com.wingedsheep.sdk.scripting.ModifyCounterPlacement
 import com.wingedsheep.sdk.scripting.ReplaceDamageWithCounters
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
@@ -390,6 +391,25 @@ object EffectExecutorUtils {
         val targetIsFaceDown = targetContainer?.has<FaceDownComponent>() == true
         events.add(DamageDealtEvent(sourceId, targetId, effectiveAmount, false, sourceName = sourceName, targetName = targetName, targetIsPlayer = targetIsPlayer, targetWasFaceDown = targetIsFaceDown))
 
+        // Lifelink: if the source has lifelink, its controller gains life equal to the damage dealt (Rule 702.15)
+        if (sourceId != null) {
+            val projected = stateProjector.project(newState)
+            if (projected.hasKeyword(sourceId, Keyword.LIFELINK.name)) {
+                val controllerId = projected.getController(sourceId)
+                    ?: newState.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+                if (controllerId != null && !isLifeGainPrevented(newState, controllerId)) {
+                    val currentLife = newState.getEntity(controllerId)?.get<LifeTotalComponent>()?.life
+                    if (currentLife != null) {
+                        val newLife = currentLife + effectiveAmount
+                        newState = newState.updateEntity(controllerId) { container ->
+                            container.with(LifeTotalComponent(newLife))
+                        }
+                        events.add(LifeChangedEvent(controllerId, currentLife, newLife, LifeChangeReason.LIFE_GAIN))
+                    }
+                }
+            }
+        }
+
         return ExecutionResult.success(newState, events)
     }
 
@@ -421,6 +441,38 @@ object EffectExecutorUtils {
                 ?: DamageDealtToCreaturesThisTurnComponent()
             container.with(existing.withCreature(targetCreatureId))
         }
+    }
+
+    /**
+     * Check if life gain is prevented for a player by any PreventLifeGain replacement effect
+     * on the battlefield (e.g., Sulfuric Vortex, Erebos).
+     */
+    fun isLifeGainPrevented(state: GameState, playerId: EntityId): Boolean {
+        for (entityId in state.getBattlefield()) {
+            val container = state.getEntity(entityId) ?: continue
+            val replacementComponent = container.get<ReplacementEffectSourceComponent>() ?: continue
+
+            for (effect in replacementComponent.replacementEffects) {
+                if (effect !is PreventLifeGain) continue
+
+                val lifeGainEvent = effect.appliesTo
+                if (lifeGainEvent !is com.wingedsheep.sdk.scripting.GameEvent.LifeGainEvent) continue
+
+                when (lifeGainEvent.player) {
+                    Player.Each -> return true
+                    Player.You -> {
+                        val sourceControllerId = container.get<ControllerComponent>()?.playerId
+                        if (playerId == sourceControllerId) return true
+                    }
+                    Player.Opponent -> {
+                        val sourceControllerId = container.get<ControllerComponent>()?.playerId
+                        if (playerId != sourceControllerId) return true
+                    }
+                    else -> {}
+                }
+            }
+        }
+        return false
     }
 
     /**

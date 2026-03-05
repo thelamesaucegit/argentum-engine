@@ -1646,6 +1646,13 @@ class CombatManager(
             }
         }
 
+        // Lifelink: for each source that dealt combat damage, if it has lifelink,
+        // its controller gains life equal to the total damage dealt (Rule 702.15).
+        // Process after all combat damage is applied (simultaneous).
+        val lifelinkResult = applyLifelinkFromDamageEvents(newState, events, projected)
+        newState = lifelinkResult.first
+        events.addAll(lifelinkResult.second)
+
         // Check for lethal damage (state-based actions)
         val (postDamageState, deathEvents) = checkLethalDamage(newState)
         newState = postDamageState
@@ -1849,6 +1856,45 @@ class CombatManager(
         }
 
         return ExecutionResult.success(newState, events)
+    }
+
+    /**
+     * Apply lifelink life gain from combat damage events.
+     * Aggregates total damage dealt by each source with lifelink, then grants life
+     * to that source's controller.
+     */
+    private fun applyLifelinkFromDamageEvents(
+        state: GameState,
+        existingEvents: List<GameEvent>,
+        projected: ProjectedState
+    ): Pair<GameState, List<GameEvent>> {
+        // Aggregate damage dealt per source that has lifelink
+        val damageBySource = mutableMapOf<EntityId, Int>()
+        for (event in existingEvents) {
+            if (event !is DamageDealtEvent) continue
+            val sourceId = event.sourceId ?: continue
+            if (!projected.hasKeyword(sourceId, Keyword.LIFELINK.name)) continue
+            damageBySource[sourceId] = (damageBySource[sourceId] ?: 0) + event.amount
+        }
+
+        if (damageBySource.isEmpty()) return state to emptyList()
+
+        var newState = state
+        val lifelinkEvents = mutableListOf<GameEvent>()
+
+        for ((sourceId, totalDamage) in damageBySource) {
+            val controllerId = projected.getController(sourceId) ?: continue
+            if (EffectExecutorUtils.isLifeGainPrevented(newState, controllerId)) continue
+
+            val currentLife = newState.getEntity(controllerId)?.get<LifeTotalComponent>()?.life ?: continue
+            val newLife = currentLife + totalDamage
+            newState = newState.updateEntity(controllerId) { container ->
+                container.with(LifeTotalComponent(newLife))
+            }
+            lifelinkEvents.add(LifeChangedEvent(controllerId, currentLife, newLife, LifeChangeReason.LIFE_GAIN))
+        }
+
+        return newState to lifelinkEvents
     }
 
     /**
