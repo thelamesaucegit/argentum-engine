@@ -38,7 +38,6 @@ class RemovalExecutors(
         ForceSacrificeExecutor(),
         EachPlayerChoosesCreatureTypeExecutor(),
         DestroyAllExecutor(),
-        PatriarchsBiddingExecutor(),
         payOrSufferExecutor,
         RegenerateExecutor(),
         ReturnAllToHandExecutor(),

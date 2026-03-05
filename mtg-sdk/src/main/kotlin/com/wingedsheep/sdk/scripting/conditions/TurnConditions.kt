@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting.conditions
 
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,6 +15,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object IsYourTurn : Condition {
     override val description: String = "if it's your turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -23,6 +25,7 @@ data object IsYourTurn : Condition {
 @Serializable
 data object IsNotYourTurn : Condition {
     override val description: String = "if it's not your turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 // =============================================================================
@@ -38,6 +41,7 @@ data object IsNotYourTurn : Condition {
 @Serializable
 data object YouWereAttackedThisStep : Condition {
     override val description: String = "if you've been attacked this step"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -47,6 +51,7 @@ data object YouWereAttackedThisStep : Condition {
 @Serializable
 data object YouWereDealtCombatDamageThisTurn : Condition {
     override val description: String = "if you were dealt combat damage this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -56,6 +61,7 @@ data object YouWereDealtCombatDamageThisTurn : Condition {
 @Serializable
 data object YouAttackedThisTurn : Condition {
     override val description: String = "if you attacked this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 // =============================================================================
@@ -71,6 +77,7 @@ data object YouAttackedThisTurn : Condition {
 @Serializable
 data object PlayedLandThisTurn : Condition {
     override val description: String = "if you've played a land this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 // =============================================================================
@@ -86,5 +93,6 @@ data object PlayedLandThisTurn : Condition {
 @Serializable
 data object OpponentSpellOnStack : Condition {
     override val description: String = "if an opponent has cast a spell"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 

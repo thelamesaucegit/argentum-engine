@@ -10,7 +10,7 @@ Audit of monolithic effects in `mtg-sdk` that could be decomposed into atomic pi
 - [ ] Wire `EachOpponentDiscardsEffect` to existing `EffectPatterns` pipeline (unblocked by unified draw replacement shield refactor)
 - [ ] Decompose `ExileAndReplaceWithTokenEffect` — needs StoreControllerRef / "Data Bus" infrastructure
 - [ ] Decompose `PutCreatureFromHandSharingTypeWithTappedEffect` — needs context-aware filter
-- [ ] Decompose `HarshMercyEffect` / `PatriarchsBiddingEffect` — needs aggregate-choices primitive
+- [x] Decompose `PatriarchsBiddingEffect` — replaced with `EffectPatterns.patriarchsBidding()` (EachPlayerChoosesCreatureType → ForEachPlayer(Gather → Move) pipeline) + added `HasSubtypeInStoredList`/`HasSubtypeFromVariable` context-aware predicates. Also decomposed `ChooseCreatureTypeUntapEffect` → `EffectPatterns.chooseCreatureTypeUntap()` (ChooseOption → ForEachInGroup untap)
 - [ ] Decompose `EachPlayerDiscardsOrLoseLifeEffect` — needs ChoiceGate primitive
 - [ ] Decompose `EachPlayerMayDrawEffect` — needs SelectNumber + remainder arithmetic
 - [ ] Decompose `DiscardAndChainCopyEffect` — needs OptionalCostEffect + MayCopySourceEffect (see Chain Gate below)

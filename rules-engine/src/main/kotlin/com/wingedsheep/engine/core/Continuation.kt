@@ -1189,26 +1189,6 @@ data class ChooseCreatureTypeGainControlContinuation(
 ) : ContinuationFrame
 
 /**
- * Continuation for choosing a creature type and then untapping all creatures of that type.
- *
- * Used by Riptide Chronologist: "{U}, Sacrifice Riptide Chronologist:
- * Untap all creatures of the creature type of your choice."
- *
- * @property controllerId The player who controls the effect
- * @property sourceId The permanent that created this effect
- * @property sourceName Name of the source for event messages
- * @property creatureTypes The creature type options (indexed by OptionChosenResponse.optionIndex)
- */
-@Serializable
-data class ChooseCreatureTypeUntapContinuation(
-    override val decisionId: String,
-    val controllerId: EntityId,
-    val sourceId: EntityId?,
-    val sourceName: String?,
-    val creatureTypes: List<String>
-) : ContinuationFrame
-
-/**
  * Resume after a player chose a creature type for "each player chooses a creature type" effects.
  *
  * Each player (in APNAP order) chooses a creature type. After all players have chosen,
@@ -1234,28 +1214,6 @@ data class EachPlayerChoosesCreatureTypeContinuation(
     val chosenTypes: List<String>,
     val creatureTypes: List<String>,
     val storeAs: String
-) : ContinuationFrame
-
-/**
- * Continuation for Patriarch's Bidding.
- * Each player chooses a creature type (APNAP order). After all choices, all creature cards
- * matching any chosen type are returned from all graveyards to the battlefield.
- *
- * @property currentPlayerId The player currently choosing
- * @property remainingPlayers Players who still need to choose (APNAP order)
- * @property chosenTypes Creature types chosen so far by each player
- * @property creatureTypes The creature type options list
- */
-@Serializable
-data class PatriarchsBiddingContinuation(
-    override val decisionId: String,
-    val sourceId: EntityId?,
-    val sourceName: String?,
-    val controllerId: EntityId,
-    val currentPlayerId: EntityId,
-    val remainingPlayers: List<EntityId>,
-    val chosenTypes: List<String>,
-    val creatureTypes: List<String>
 ) : ContinuationFrame
 
 /**

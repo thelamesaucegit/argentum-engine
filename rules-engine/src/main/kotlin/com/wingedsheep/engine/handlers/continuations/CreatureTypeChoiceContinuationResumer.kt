@@ -1,21 +1,18 @@
 package com.wingedsheep.engine.handlers.continuations
 
 import com.wingedsheep.engine.core.*
-import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
 import com.wingedsheep.engine.mechanics.layers.Layer
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.mechanics.layers.Sublayer
 import com.wingedsheep.engine.state.GameState
-import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacement
 import com.wingedsheep.engine.state.components.identity.TextReplacementCategory
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.sdk.core.Subtype
-import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 
 class CreatureTypeChoiceContinuationResumer(
@@ -32,9 +29,7 @@ class CreatureTypeChoiceContinuationResumer(
         resumer(ChooseCreatureTypeGainControlContinuation::class, ::resumeChooseCreatureTypeGainControl),
         resumer(BecomeChosenTypeAllCreaturesContinuation::class, ::resumeBecomeChosenTypeAllCreatures),
         resumer(ChooseCreatureTypeMustAttackContinuation::class, ::resumeChooseCreatureTypeMustAttack),
-        resumer(ChooseCreatureTypeUntapContinuation::class, ::resumeChooseCreatureTypeUntap),
-        resumer(EachPlayerChoosesCreatureTypeContinuation::class, ::resumeEachPlayerChoosesCreatureType),
-        resumer(PatriarchsBiddingContinuation::class, ::resumePatriarchsBidding)
+        resumer(EachPlayerChoosesCreatureTypeContinuation::class, ::resumeEachPlayerChoosesCreatureType)
     )
 
     /**
@@ -477,56 +472,6 @@ class CreatureTypeChoiceContinuationResumer(
     }
 
     /**
-     * Resume after player chose a creature type for "untap all creatures of that type" effect.
-     *
-     * Untaps all creatures of the chosen type on the battlefield.
-     */
-    fun resumeChooseCreatureTypeUntap(
-        state: GameState,
-        continuation: ChooseCreatureTypeUntapContinuation,
-        response: DecisionResponse,
-        checkForMore: CheckForMore
-    ): ExecutionResult {
-        if (response !is OptionChosenResponse) {
-            return ExecutionResult.error(state, "Expected option choice response for creature type selection")
-        }
-
-        val chosenType = continuation.creatureTypes.getOrNull(response.optionIndex)
-            ?: return ExecutionResult.error(state, "Invalid creature type index: ${response.optionIndex}")
-
-        var newState = state
-        val events = mutableListOf<GameEvent>(
-            CreatureTypeChosenEvent(
-                playerId = continuation.controllerId,
-                chosenType = chosenType,
-                sourceName = continuation.sourceName
-            )
-        )
-
-        for (entityId in newState.getBattlefield()) {
-            val container = newState.getEntity(entityId) ?: continue
-            val cardComponent = container.get<CardComponent>() ?: continue
-
-            // Must be a creature
-            if (!cardComponent.typeLine.isCreature) continue
-
-            // Must have the chosen subtype
-            if (!cardComponent.typeLine.hasSubtype(Subtype(chosenType))) continue
-
-            // Skip already untapped creatures
-            if (!container.has<com.wingedsheep.engine.state.components.battlefield.TappedComponent>()) continue
-
-            // Untap the creature
-            newState = newState.updateEntity(entityId) {
-                it.without<com.wingedsheep.engine.state.components.battlefield.TappedComponent>()
-            }
-            events.add(UntappedEvent(entityId, cardComponent.name))
-        }
-
-        return checkForMore(newState, events)
-    }
-
-    /**
      * Resume after a player chose a creature type for "each player chooses a creature type" effects.
      *
      * Records the chosen type, asks the next player if any remain,
@@ -606,99 +551,4 @@ class CreatureTypeChoiceContinuationResumer(
         return checkForMore(newState, emptyList())
     }
 
-    /**
-     * Resume after a player chooses a creature type for Patriarch's Bidding.
-     * If more players remain, ask the next one. Otherwise, return all creature cards
-     * matching any chosen type from all graveyards to the battlefield.
-     */
-    fun resumePatriarchsBidding(
-        state: GameState,
-        continuation: PatriarchsBiddingContinuation,
-        response: DecisionResponse,
-        checkForMore: CheckForMore
-    ): ExecutionResult {
-        if (response !is OptionChosenResponse) {
-            return ExecutionResult.error(state, "Expected option choice response for creature type selection")
-        }
-
-        val chosenType = continuation.creatureTypes.getOrNull(response.optionIndex)
-            ?: return ExecutionResult.error(state, "Invalid creature type index: ${response.optionIndex}")
-
-        val updatedChosenTypes = continuation.chosenTypes + chosenType
-
-        // If there are more players, ask the next one
-        if (continuation.remainingPlayers.isNotEmpty()) {
-            val nextPlayer = continuation.remainingPlayers.first()
-            val nextRemaining = continuation.remainingPlayers.drop(1)
-
-            val decisionId = java.util.UUID.randomUUID().toString()
-            val decision = ChooseOptionDecision(
-                id = decisionId,
-                playerId = nextPlayer,
-                prompt = "Choose a creature type",
-                context = DecisionContext(
-                    sourceId = continuation.sourceId,
-                    sourceName = continuation.sourceName,
-                    phase = DecisionPhase.RESOLUTION
-                ),
-                options = continuation.creatureTypes
-            )
-
-            val newContinuation = continuation.copy(
-                decisionId = decisionId,
-                currentPlayerId = nextPlayer,
-                remainingPlayers = nextRemaining,
-                chosenTypes = updatedChosenTypes
-            )
-
-            val stateWithDecision = state.withPendingDecision(decision)
-            val stateWithContinuation = stateWithDecision.pushContinuation(newContinuation)
-
-            return ExecutionResult.paused(
-                stateWithContinuation,
-                decision,
-                listOf(
-                    DecisionRequestedEvent(
-                        decisionId = decisionId,
-                        playerId = nextPlayer,
-                        decisionType = "CHOOSE_OPTION",
-                        prompt = decision.prompt
-                    )
-                )
-            )
-        }
-
-        // All players have chosen — return matching creatures from all graveyards to battlefield
-        val chosenSubtypes = updatedChosenTypes.map { Subtype(it) }.toSet()
-
-        var newState = state
-        val events = mutableListOf<GameEvent>()
-
-        // Process each player's graveyard
-        for (playerId in state.turnOrder) {
-            val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
-            val graveyard = newState.getZone(graveyardZone).toList() // snapshot to avoid concurrent modification
-
-            for (entityId in graveyard) {
-                val container = newState.getEntity(entityId) ?: continue
-                val cardComponent = container.get<CardComponent>() ?: continue
-
-                // Only creature cards
-                if (!cardComponent.typeLine.isCreature) continue
-
-                // Check if creature has any of the chosen subtypes
-                val hasChosenType = cardComponent.typeLine.subtypes.any { it in chosenSubtypes }
-                if (!hasChosenType) continue
-
-                // Move from graveyard to battlefield
-                val result = EffectExecutorUtils.moveCardToZone(
-                    newState, entityId, Zone.BATTLEFIELD
-                )
-                newState = result.newState
-                events.addAll(result.events)
-            }
-        }
-
-        return checkForMore(newState, events)
-    }
 }

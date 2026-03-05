@@ -1,8 +1,8 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.PatriarchsBiddingEffect
 
 /**
  * Patriarch's Bidding
@@ -17,7 +17,7 @@ val PatriarchsBidding = card("Patriarch's Bidding") {
     oracleText = "Each player chooses a creature type. Each player returns all creature cards of a type chosen this way from their graveyard to the battlefield."
 
     spell {
-        effect = PatriarchsBiddingEffect
+        effect = Effects.PatriarchsBidding()
     }
 
     metadata {

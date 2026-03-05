@@ -6,6 +6,8 @@ import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
 import com.wingedsheep.sdk.scripting.predicates.StatePredicate
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.Serializable
 
 /**
@@ -42,7 +44,7 @@ data class GameObjectFilter(
     val statePredicates: List<StatePredicate> = emptyList(),
     val controllerPredicate: ControllerPredicate? = null,
     val matchAll: Boolean = true  // true = AND all predicates, false = OR
-) {
+) : TextReplaceable<GameObjectFilter> {
     val description: String
         get() = buildDescription()
 
@@ -201,6 +203,16 @@ data class GameObjectFilter(
         cardPredicates = cardPredicates + CardPredicate.NotOfSourceChosenType
     )
 
+    /** Must have a subtype matching the value stored in chosenValues[variableName] */
+    fun withSubtypeFromVariable(variableName: String) = copy(
+        cardPredicates = cardPredicates + CardPredicate.HasSubtypeFromVariable(variableName)
+    )
+
+    /** Must have a subtype matching any value in storedStringLists[listName] */
+    fun withSubtypeInStoredList(listName: String) = copy(
+        cardPredicates = cardPredicates + CardPredicate.HasSubtypeInStoredList(listName)
+    )
+
     // =============================================================================
     // Fluent Builder Methods - State Predicates
     // =============================================================================
@@ -299,4 +311,14 @@ data class GameObjectFilter(
         controllerPredicate = other.controllerPredicate ?: controllerPredicate,
         matchAll = false
     )
+
+    override fun applyTextReplacement(replacer: TextReplacer): GameObjectFilter {
+        var changed = false
+        val newPredicates = cardPredicates.map {
+            val new = it.applyTextReplacement(replacer)
+            if (new !== it) changed = true
+            new
+        }
+        return if (changed) copy(cardPredicates = newPredicates) else this
+    }
 }

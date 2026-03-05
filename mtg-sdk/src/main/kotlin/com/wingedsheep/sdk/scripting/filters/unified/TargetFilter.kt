@@ -6,6 +6,8 @@ import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.Serializable
 
 /**
@@ -38,7 +40,7 @@ data class TargetFilter(
     val baseFilter: GameObjectFilter,
     val zone: Zone = Zone.BATTLEFIELD,
     val excludeSelf: Boolean = false
-) {
+) : TextReplaceable<TargetFilter> {
     val description: String
         get() = buildDescription()
 
@@ -245,4 +247,9 @@ data class TargetFilter(
 
     /** Target in a different zone */
     fun inZone(zone: Zone) = copy(zone = zone)
+
+    override fun applyTextReplacement(replacer: TextReplacer): TargetFilter {
+        val newBase = baseFilter.applyTextReplacement(replacer)
+        return if (newBase !== baseFilter) copy(baseFilter = newBase) else this
+    }
 }

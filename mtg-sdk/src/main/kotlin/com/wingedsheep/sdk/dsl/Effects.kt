@@ -1155,4 +1155,19 @@ object Effects {
         spellName = spellName
     )
 
+    // =========================================================================
+    // Creature Type Choice Patterns (Pipeline)
+    // =========================================================================
+
+    /**
+     * Each player chooses a creature type. Each player returns all creature cards
+     * of a type chosen this way from their graveyard to the battlefield.
+     */
+    fun PatriarchsBidding(): Effect = EffectPatterns.patriarchsBidding()
+
+    /**
+     * Choose a creature type. Untap all creatures of the chosen type.
+     */
+    fun ChooseCreatureTypeUntap(): Effect = EffectPatterns.chooseCreatureTypeUntap()
+
 }

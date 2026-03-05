@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting.conditions
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.references.Player
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -50,6 +51,11 @@ data class Compare(
     val right: DynamicAmount
 ) : Condition {
     override val description: String = "${left.description} ${operator.symbol} ${right.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition {
+        val newLeft = left.applyTextReplacement(replacer)
+        val newRight = right.applyTextReplacement(replacer)
+        return if (newLeft !== left || newRight !== right) copy(left = newLeft, right = newRight) else this
+    }
 }
 
 /**
@@ -86,5 +92,9 @@ data class Exists(
         append(player.possessive)
         append(" ")
         append(zone.displayName.removePrefix("a ").removePrefix("the "))
+    }
+    override fun applyTextReplacement(replacer: TextReplacer): Condition {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
     }
 }

@@ -287,6 +287,21 @@ class PredicateEvaluator {
                 }
             }
 
+            // Context-relative predicates (pipeline variable references)
+            is CardPredicate.HasSubtypeFromVariable -> {
+                val chosenType = context?.chosenValues?.get(predicate.variableName) ?: return false
+                val entitySubtypes = projectedValues?.subtypes ?: card.typeLine.subtypes.map { it.value }.toSet()
+                entitySubtypes.any { it.equals(chosenType, ignoreCase = true) }
+            }
+
+            is CardPredicate.HasSubtypeInStoredList -> {
+                val storedTypes = context?.storedStringLists?.get(predicate.listName) ?: return false
+                val entitySubtypes = projectedValues?.subtypes ?: card.typeLine.subtypes.map { it.value }.toSet()
+                entitySubtypes.any { subtype ->
+                    storedTypes.any { it.equals(subtype, ignoreCase = true) }
+                }
+            }
+
             // Composite predicates
             is CardPredicate.And -> {
                 predicate.predicates.all { matchesCardPredicateWithProjection(state, projected, entityId, it, context) }
@@ -471,6 +486,19 @@ class PredicateEvaluator {
                 }
             }
 
+            // Context-relative predicates (pipeline variable references)
+            is CardPredicate.HasSubtypeFromVariable -> {
+                val chosenType = context?.chosenValues?.get(predicate.variableName) ?: return false
+                card.typeLine.subtypes.any { it.value.equals(chosenType, ignoreCase = true) }
+            }
+
+            is CardPredicate.HasSubtypeInStoredList -> {
+                val storedTypes = context?.storedStringLists?.get(predicate.listName) ?: return false
+                card.typeLine.subtypes.any { subtype ->
+                    storedTypes.any { it.equals(subtype.value, ignoreCase = true) }
+                }
+            }
+
             // Composite predicates
             is CardPredicate.And -> {
                 predicate.predicates.all { matchesCardPredicate(state, entityId, it, context) }
@@ -624,7 +652,11 @@ data class PredicateContext(
     /** Owner of the entity being evaluated (for graveyard targeting) */
     val ownerId: EntityId? = null,
     /** The entity that caused the trigger to fire (for SharesCreatureTypeWithTriggeringEntity) */
-    val triggeringEntityId: EntityId? = null
+    val triggeringEntityId: EntityId? = null,
+    /** Named values chosen by the player during pipeline execution (e.g., creature type, color). */
+    val chosenValues: Map<String, String> = emptyMap(),
+    /** Named string lists stored by pipeline effects (e.g., chosen creature types). */
+    val storedStringLists: Map<String, List<String>> = emptyMap()
 ) {
     companion object {
         /**
@@ -636,7 +668,9 @@ data class PredicateContext(
                 targetOpponentId = context.opponentId,
                 targetPlayerId = context.opponentId,
                 sourceId = context.sourceId,
-                triggeringEntityId = context.triggeringEntityId
+                triggeringEntityId = context.triggeringEntityId,
+                chosenValues = context.chosenValues,
+                storedStringLists = context.storedStringLists
             )
         }
     }

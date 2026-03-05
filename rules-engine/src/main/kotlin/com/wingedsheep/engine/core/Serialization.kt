@@ -153,8 +153,6 @@ val engineSerializersModule = SerializersModule {
         subclass(ChainCopyTargetContinuation::class)
         subclass(DamagePreventionContinuation::class)
         subclass(EachPlayerChoosesCreatureTypeContinuation::class)
-        subclass(PatriarchsBiddingContinuation::class)
-        subclass(ChooseCreatureTypeUntapContinuation::class)
         subclass(ChangeSpellTargetContinuation::class)
         subclass(SecretBidContinuation::class)
         subclass(DrawReplacementRemainingDrawsContinuation::class)

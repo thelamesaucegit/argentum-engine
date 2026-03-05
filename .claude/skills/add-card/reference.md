@@ -237,7 +237,7 @@ constructors.
 | `SacrificeAtEndOfCombatEffect`              | `target`                                              | Sacrifice at end of combat |
 | `DestroyAllSharingTypeWithSacrificedEffect` | `noRegenerate`                                        | Destroy all sharing type |
 | `HarshMercyEffect`                          | (object)                                              | Harsh Mercy              |
-| `PatriarchsBiddingEffect`                   | (object)                                              | Patriarch's Bidding      |
+| `Effects.PatriarchsBidding()`               | (pipeline pattern)                                    | Patriarch's Bidding      |
 | `ExileGroupAndLinkEffect`                   | `filter: GroupFilter, storeAs`                        | Exile group + link to source |
 | `ReturnLinkedExileEffect`                   | `underOwnersControl: Boolean = false`                 | Return linked exiled cards |
 
@@ -265,7 +265,7 @@ constructors.
 | `SetGroupCreatureSubtypesEffect`            | `subtypes, filter, duration`                                                | Set group subtypes                       |
 | `ChangeGroupColorEffect`                    | `colors, filter, duration`                                                  | Change group color                       |
 | `ChooseCreatureTypeModifyStatsEffect`       | `power: DynamicAmount, toughness: DynamicAmount, duration, grantKeyword?`   | Choose type, modify stats (+ keyword)    |
-| `ChooseCreatureTypeUntapEffect`             | (object)                                                                    | Choose type, untap all of that type      |
+| `Effects.ChooseCreatureTypeUntap()`         | (pipeline pattern)                                                          | Choose type, untap all of that type      |
 | `GainControlEffect`                         | `target, duration`                                                          | Gain control                             |
 | `GainControlByActivePlayerEffect`           | `target`                                                                    | Active player gains control              |
 | `GainControlByMostOfSubtypeEffect`          | `subtype, target`                                                           | Control by most of subtype               |

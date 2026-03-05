@@ -7,7 +7,9 @@ import com.wingedsheep.sdk.scripting.effects.CardDestination
 import com.wingedsheep.sdk.scripting.effects.CardOrder
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeEffect
+import com.wingedsheep.sdk.scripting.effects.ChooseOptionEffect
 import com.wingedsheep.sdk.scripting.effects.Chooser
+import com.wingedsheep.sdk.scripting.effects.EachPlayerChoosesCreatureTypeEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
@@ -15,6 +17,7 @@ import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
 import com.wingedsheep.sdk.scripting.effects.DrawUpToEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
+import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachPlayerEffect
 import com.wingedsheep.sdk.scripting.effects.ForEachTargetEffect
 import com.wingedsheep.sdk.scripting.effects.GainLifeEffect
@@ -33,9 +36,12 @@ import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
 import com.wingedsheep.sdk.scripting.effects.ShuffleLibraryEffect
+import com.wingedsheep.sdk.scripting.effects.OptionType
 import com.wingedsheep.sdk.scripting.effects.StoreCountEffect
 import com.wingedsheep.sdk.scripting.effects.StoreResultEffect
+import com.wingedsheep.sdk.scripting.effects.TapUntapEffect
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -1672,4 +1678,53 @@ object EffectPatterns {
         ),
         ShuffleLibraryEffect()
     ))
+
+    /**
+     * Each player chooses a creature type. Each player returns all creature cards
+     * of a type chosen this way from their graveyard to the battlefield.
+     *
+     * Pipeline: EachPlayerChoosesCreatureType → ForEachPlayer(Gather matching creatures → Move to battlefield)
+     */
+    fun patriarchsBidding(): CompositeEffect = CompositeEffect(
+        listOf(
+            EachPlayerChoosesCreatureTypeEffect(storeAs = "biddingTypes"),
+            ForEachPlayerEffect(
+                players = Player.ActivePlayerFirst,
+                effects = listOf(
+                    GatherCardsEffect(
+                        source = CardSource.FromZone(
+                            zone = Zone.GRAVEYARD,
+                            player = Player.You,
+                            filter = GameObjectFilter.Creature.withSubtypeInStoredList("biddingTypes")
+                        ),
+                        storeAs = "toReturn"
+                    ),
+                    MoveCollectionEffect(
+                        from = "toReturn",
+                        destination = CardDestination.ToZone(Zone.BATTLEFIELD)
+                    )
+                )
+            )
+        )
+    )
+
+    /**
+     * Choose a creature type. Untap all creatures of the chosen type.
+     *
+     * Pipeline: ChooseOption(creature type) → UntapGroup(creatures with chosen type)
+     */
+    fun chooseCreatureTypeUntap(): CompositeEffect = CompositeEffect(
+        listOf(
+            ChooseOptionEffect(
+                optionType = OptionType.CREATURE_TYPE,
+                storeAs = "chosenType"
+            ),
+            ForEachInGroupEffect(
+                filter = GroupFilter(
+                    baseFilter = GameObjectFilter.Creature.withSubtypeFromVariable("chosenType")
+                ),
+                effect = TapUntapEffect(EffectTarget.Self, tap = false)
+            )
+        )
+    )
 }

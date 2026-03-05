@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.conditions
 
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -17,6 +18,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class APlayerControlsMostOfSubtype(val subtype: Subtype) : Condition {
     override val description: String = "if a player controls more ${subtype.value}s than each other player"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition {
+        val new = replacer.replaceSubtype(subtype)
+        return if (new == subtype) this else APlayerControlsMostOfSubtype(new)
+    }
 }
 
 /**
@@ -28,4 +33,8 @@ data class APlayerControlsMostOfSubtype(val subtype: Subtype) : Condition {
 @Serializable
 data class EnchantedCreatureHasSubtype(val subtype: Subtype) : Condition {
     override val description: String = "if enchanted creature is a ${subtype.value}"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition {
+        val new = replacer.replaceSubtype(subtype)
+        return if (new == subtype) this else EnchantedCreatureHasSubtype(new)
+    }
 }

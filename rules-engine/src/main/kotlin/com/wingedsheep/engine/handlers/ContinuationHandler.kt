@@ -380,7 +380,8 @@ class ContinuationHandler(
                 sourceId = nextContinuation.sourceId,
                 controllerId = nextContinuation.controllerId,
                 opponentId = nextContinuation.opponentId,
-                xValue = nextContinuation.xValue
+                xValue = nextContinuation.xValue,
+                storedStringLists = nextContinuation.storedStringLists
             )
             val result = forEachPlayerExecutor.processPlayers(
                 stateAfterPop,

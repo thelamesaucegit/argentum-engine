@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.conditions
 
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.scripting.conditions.Condition
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -16,6 +17,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object SourceIsAttacking : Condition {
     override val description: String = "if this creature is attacking"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -25,6 +27,7 @@ data object SourceIsAttacking : Condition {
 @Serializable
 data object SourceIsBlocking : Condition {
     override val description: String = "if this creature is blocking"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -34,6 +37,7 @@ data object SourceIsBlocking : Condition {
 @Serializable
 data object SourceIsTapped : Condition {
     override val description: String = "if this creature is tapped"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -43,6 +47,7 @@ data object SourceIsTapped : Condition {
 @Serializable
 data object SourceIsUntapped : Condition {
     override val description: String = "if this creature is untapped"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -55,6 +60,7 @@ data object SourceIsUntapped : Condition {
 @Serializable
 data object SourceHasDealtDamage : Condition {
     override val description: String = "this creature has dealt damage"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -65,6 +71,7 @@ data object SourceHasDealtDamage : Condition {
 @Serializable
 data object SourceHasDealtCombatDamageToPlayer : Condition {
     override val description: String = "this creature has dealt combat damage to a player"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -75,6 +82,7 @@ data object SourceHasDealtCombatDamageToPlayer : Condition {
 @Serializable
 data object SourceEnteredThisTurn : Condition {
     override val description: String = "this creature entered the battlefield this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -87,6 +95,7 @@ data object SourceEnteredThisTurn : Condition {
 @Serializable
 data object WasCastFromHand : Condition {
     override val description: String = "you cast it from your hand"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
 /**
@@ -100,4 +109,8 @@ data object WasCastFromHand : Condition {
 @Serializable
 data class SourceHasSubtype(val subtype: Subtype) : Condition {
     override val description: String = "as long as this creature is a ${subtype.value}"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition {
+        val new = replacer.replaceSubtype(subtype)
+        return if (new == subtype) this else SourceHasSubtype(new)
+    }
 }

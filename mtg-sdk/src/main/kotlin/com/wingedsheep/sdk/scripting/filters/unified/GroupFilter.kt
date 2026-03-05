@@ -4,6 +4,8 @@ import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.Serializable
 
 /**
@@ -36,7 +38,7 @@ import kotlinx.serialization.Serializable
 data class GroupFilter(
     val baseFilter: GameObjectFilter,
     val excludeSelf: Boolean = false
-) {
+) : TextReplaceable<GroupFilter> {
     val description: String
         get() = buildDescription()
 
@@ -174,4 +176,9 @@ data class GroupFilter(
 
     /** Exclude the source permanent */
     fun other() = copy(excludeSelf = true)
+
+    override fun applyTextReplacement(replacer: TextReplacer): GroupFilter {
+        val newBase = baseFilter.applyTextReplacement(replacer)
+        return if (newBase !== baseFilter) copy(baseFilter = newBase) else this
+    }
 }

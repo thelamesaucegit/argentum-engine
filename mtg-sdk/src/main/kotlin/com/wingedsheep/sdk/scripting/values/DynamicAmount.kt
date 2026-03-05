@@ -5,6 +5,8 @@ import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.conditions.Condition
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,7 +16,7 @@ import kotlinx.serialization.Serializable
  * Sources for dynamic values in effects.
  */
 @Serializable
-sealed interface DynamicAmount {
+sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
     val description: String
 
     companion object {
@@ -49,6 +51,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object YourLifeTotal : DynamicAmount {
         override val description: String = "your life total"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -65,6 +68,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class LifeTotal(val player: Player) : DynamicAmount {
         override val description: String = "${player.possessive} life total"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -74,6 +78,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class Fixed(val amount: Int) : DynamicAmount {
         override val description: String = "$amount"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -83,6 +88,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object ColorsAmongPermanentsYouControl : DynamicAmount {
         override val description: String = "the number of colors among permanents you control"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     // =========================================================================
@@ -97,6 +103,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object CardTypesInAllGraveyards : DynamicAmount {
         override val description: String = "the number of card types among cards in all graveyards"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     // =========================================================================
@@ -111,6 +118,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object XValue : DynamicAmount {
         override val description: String = "X"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -122,6 +130,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class VariableReference(val variableName: String) : DynamicAmount {
         override val description: String = "the stored $variableName"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -133,6 +142,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class StoredCardManaValue(val collectionName: String) : DynamicAmount {
         override val description: String = "the mana value of the $collectionName card"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     // =========================================================================
@@ -147,6 +157,11 @@ sealed interface DynamicAmount {
     @Serializable
     data class Add(val left: DynamicAmount, val right: DynamicAmount) : DynamicAmount {
         override val description: String = "(${left.description} + ${right.description})"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newLeft = left.applyTextReplacement(replacer)
+            val newRight = right.applyTextReplacement(replacer)
+            return if (newLeft !== left || newRight !== right) copy(left = newLeft, right = newRight) else this
+        }
     }
 
     /**
@@ -156,6 +171,11 @@ sealed interface DynamicAmount {
     @Serializable
     data class Subtract(val left: DynamicAmount, val right: DynamicAmount) : DynamicAmount {
         override val description: String = "(${left.description} - ${right.description})"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newLeft = left.applyTextReplacement(replacer)
+            val newRight = right.applyTextReplacement(replacer)
+            return if (newLeft !== left || newRight !== right) copy(left = newLeft, right = newRight) else this
+        }
     }
 
     /**
@@ -166,6 +186,10 @@ sealed interface DynamicAmount {
     @Serializable
     data class Multiply(val amount: DynamicAmount, val multiplier: Int) : DynamicAmount {
         override val description: String = "$multiplier × ${amount.description}"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newAmount = amount.applyTextReplacement(replacer)
+            return if (newAmount !== amount) copy(amount = newAmount) else this
+        }
     }
 
     /**
@@ -177,6 +201,10 @@ sealed interface DynamicAmount {
     @Serializable
     data class IfPositive(val amount: DynamicAmount) : DynamicAmount {
         override val description: String = "${amount.description} (if positive)"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newAmount = amount.applyTextReplacement(replacer)
+            return if (newAmount !== amount) copy(amount = newAmount) else this
+        }
     }
 
     /**
@@ -186,6 +214,11 @@ sealed interface DynamicAmount {
     @Serializable
     data class Max(val left: DynamicAmount, val right: DynamicAmount) : DynamicAmount {
         override val description: String = "max(${left.description}, ${right.description})"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newLeft = left.applyTextReplacement(replacer)
+            val newRight = right.applyTextReplacement(replacer)
+            return if (newLeft !== left || newRight !== right) copy(left = newLeft, right = newRight) else this
+        }
     }
 
     /**
@@ -195,6 +228,11 @@ sealed interface DynamicAmount {
     @Serializable
     data class Min(val left: DynamicAmount, val right: DynamicAmount) : DynamicAmount {
         override val description: String = "min(${left.description}, ${right.description})"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newLeft = left.applyTextReplacement(replacer)
+            val newRight = right.applyTextReplacement(replacer)
+            return if (newLeft !== left || newRight !== right) copy(left = newLeft, right = newRight) else this
+        }
     }
 
     /**
@@ -209,6 +247,13 @@ sealed interface DynamicAmount {
         val ifFalse: DynamicAmount
     ) : DynamicAmount {
         override val description: String = "${ifTrue.description} ${condition.description}, otherwise ${ifFalse.description}"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newCondition = (condition as? TextReplaceable<*>)?.applyTextReplacement(replacer) as? Condition ?: condition
+            val newIfTrue = ifTrue.applyTextReplacement(replacer)
+            val newIfFalse = ifFalse.applyTextReplacement(replacer)
+            return if (newCondition !== condition || newIfTrue !== ifTrue || newIfFalse !== ifFalse)
+                copy(condition = newCondition, ifTrue = newIfTrue, ifFalse = newIfFalse) else this
+        }
     }
 
     // =========================================================================
@@ -223,6 +268,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object SacrificedPermanentPower : DynamicAmount {
         override val description: String = "the sacrificed creature's power"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -232,6 +278,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object SacrificedPermanentToughness : DynamicAmount {
         override val description: String = "the sacrificed creature's toughness"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -242,6 +289,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object TriggerDamageAmount : DynamicAmount {
         override val description: String = "the damage dealt"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -253,6 +301,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object TriggerLifeGainAmount : DynamicAmount {
         override val description: String = "the life gained"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -264,6 +313,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object AdditionalCostExiledCount : DynamicAmount {
         override val description: String = "the number of cards exiled"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -274,6 +324,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object SourcePower : DynamicAmount {
         override val description: String = "its power"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     // =========================================================================
@@ -307,6 +358,10 @@ sealed interface DynamicAmount {
         val zone: Zone,
         val filter: GameObjectFilter = GameObjectFilter.Companion.Any
     ) : DynamicAmount {
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
         override val description: String = buildString {
             append("the number of ")
             append(pluralize(filter.description))
@@ -338,6 +393,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class CountersOnSelf(val counterType: CounterTypeFilter) : DynamicAmount {
         override val description: String = "the number of ${counterType.description} counters on it"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -374,6 +430,10 @@ sealed interface DynamicAmount {
         val property: CardNumericProperty? = null,
         val excludeSelf: Boolean = false
     ) : DynamicAmount {
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
         override val description: String = buildString {
             when (aggregation) {
                 Aggregation.COUNT -> {
@@ -419,6 +479,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class TargetPower(val targetIndex: Int = 0) : DynamicAmount {
         override val description: String = "target creature's power"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -429,6 +490,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class TargetManaValue(val targetIndex: Int = 0) : DynamicAmount {
         override val description: String = "target spell's mana value"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -439,6 +501,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class CountersOnTarget(val counterType: CounterTypeFilter, val targetIndex: Int = 0) : DynamicAmount {
         override val description: String = "the number of ${counterType.description} counters on target"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     // =========================================================================
@@ -457,6 +520,12 @@ sealed interface DynamicAmount {
         val roundUp: Boolean = true
     ) : DynamicAmount {
         override val description: String = "${numerator.description} / ${denominator.description}"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newNumerator = numerator.applyTextReplacement(replacer)
+            val newDenominator = denominator.applyTextReplacement(replacer)
+            return if (newNumerator !== numerator || newDenominator !== denominator)
+                copy(numerator = newNumerator, denominator = newDenominator) else this
+        }
     }
 
     /**
@@ -470,6 +539,7 @@ sealed interface DynamicAmount {
     @Serializable
     data class DamageDealtToTargetPlayerThisTurn(val targetIndex: Int = 0) : DynamicAmount {
         override val description: String = "the damage already dealt to that player this turn"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -481,6 +551,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object NumberOfBlockers : DynamicAmount {
         override val description: String = "the number of creatures blocking it"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -491,6 +562,7 @@ sealed interface DynamicAmount {
     @Serializable
     data object CreaturesSharingTypeWithTriggeringEntity : DynamicAmount {
         override val description: String = "the number of creatures you control that share a creature type with it"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
     /**
@@ -504,5 +576,6 @@ sealed interface DynamicAmount {
     @Serializable
     data class NonTokenCreaturesDiedThisTurn(val player: Player) : DynamicAmount {
         override val description: String = "the number of nontoken creatures put into ${player.possessive} graveyard from the battlefield this turn"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 }

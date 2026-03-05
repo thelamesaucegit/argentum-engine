@@ -1,5 +1,7 @@
 package com.wingedsheep.sdk.scripting.conditions
 
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.Serializable
 
 /**
@@ -22,7 +24,7 @@ import kotlinx.serialization.Serializable
  * Note: ConditionalEffect (an Effect that checks a Condition) is in effects/ConditionalEffect.kt
  */
 @Serializable
-sealed interface Condition {
+sealed interface Condition : TextReplaceable<Condition> {
     /** Human-readable description of this condition */
     val description: String
 }

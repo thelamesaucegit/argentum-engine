@@ -71,7 +71,8 @@ class ForEachPlayerExecutor(
                     sourceId = outerContext.sourceId,
                     controllerId = outerContext.controllerId,
                     opponentId = outerContext.opponentId,
-                    xValue = outerContext.xValue
+                    xValue = outerContext.xValue,
+                    storedStringLists = outerContext.storedStringLists
                 )
                 currentState.pushContinuation(continuation)
             } else {
@@ -130,7 +131,9 @@ class ForEachPlayerExecutor(
                     xValue = currentContext.xValue,
                     targets = currentContext.targets,
                     storedCollections = currentContext.storedCollections,
-                    namedTargets = currentContext.namedTargets
+                    namedTargets = currentContext.namedTargets,
+                    chosenValues = currentContext.chosenValues,
+                    storedStringLists = currentContext.storedStringLists
                 )
                 currentState.pushContinuation(continuation)
             } else {
