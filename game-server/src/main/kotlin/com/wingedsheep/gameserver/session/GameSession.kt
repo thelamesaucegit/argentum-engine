@@ -420,8 +420,32 @@ class GameSession(
      * the opponent can't respond before the active player passes priority).
      */
     private fun isUndoEligibleAction(action: GameAction): Boolean = when (action) {
-        is PlayLand, is DeclareAttackers, is DeclareBlockers, is TurnFaceUp, is PassPriority -> true
+        is PlayLand, is DeclareAttackers, is DeclareBlockers, is OrderBlockers, is TurnFaceUp -> true
         else -> false
+    }
+
+    /**
+     * Check if an action should preserve the existing undo checkpoint (neither set nor clear).
+     * PassPriority and mana abilities are "checkpoint-neutral" — they don't represent meaningful
+     * game decisions that should either create a new checkpoint or invalidate an existing one.
+     */
+    private fun isCheckpointNeutralAction(action: GameAction): Boolean = when {
+        action is PassPriority -> true
+        action is ActivateAbility -> isManaAbilityActivation(action)
+        action is ChooseManaColor -> true
+        else -> false
+    }
+
+    /**
+     * Check if an ActivateAbility action is activating a mana ability.
+     */
+    private fun isManaAbilityActivation(action: ActivateAbility): Boolean {
+        val state = gameState ?: return false
+        val container = state.getEntity(action.sourceId) ?: return false
+        val cardComponent = container.get<CardComponent>() ?: return false
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return false
+        val ability = cardDef.script.activatedAbilities.find { it.id == action.abilityId }
+        return ability?.isManaAbility == true
     }
 
     /**
@@ -441,10 +465,13 @@ class GameSession(
             }
         }
 
-        // Manage undo checkpoint: save before undo-eligible actions, clear otherwise
+        // Manage undo checkpoint:
+        // - Undo-eligible actions (land, combat declarations, morph): save checkpoint
+        // - Checkpoint-neutral actions (pass priority, mana abilities): preserve existing checkpoint
+        // - Everything else (cast spell, non-mana abilities, decisions): clear checkpoint
         if (isUndoEligibleAction(action)) {
             undoCheckpoint = state
-        } else {
+        } else if (!isCheckpointNeutralAction(action)) {
             undoCheckpoint = null
         }
 
