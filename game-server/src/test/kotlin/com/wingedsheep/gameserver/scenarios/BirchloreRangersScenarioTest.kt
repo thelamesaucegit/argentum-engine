@@ -1,10 +1,12 @@
 package com.wingedsheep.gameserver.scenarios
 
 import com.wingedsheep.engine.core.ActivateAbility
+import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.scripting.AdditionalCostPayment
@@ -21,6 +23,8 @@ import io.kotest.matchers.shouldNotBe
  *   Morph {G}
  */
 class BirchloreRangersScenarioTest : ScenarioTestBase() {
+
+    private val manaSolver = ManaSolver(cardRegistry)
 
     init {
         context("Birchlore Rangers tap two Elves ability") {
@@ -209,6 +213,109 @@ class BirchloreRangersScenarioTest : ScenarioTestBase() {
 
                 withClue("Ability should fail when one Elf is already tapped") {
                     activateResult.error shouldNotBe null
+                }
+            }
+        }
+
+        context("ManaSolver accounts for TapPermanents mana abilities") {
+            test("getAvailableManaCount includes Birchlore Rangers mana from non-source Elves") {
+                val game = scenario()
+                    .withPlayers("Elf Player", "Opponent")
+                    .withCardOnBattlefield(1, "Birchlore Rangers")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withCardOnBattlefield(1, "Forest")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Forest = 1 mana, Birchlore Rangers tapping 2 Elves = 1 mana → total 2
+                val available = manaSolver.getAvailableManaCount(game.state, game.player1Id)
+                withClue("Should count Forest (1) + TapPermanents bonus (1) = 2 mana") {
+                    available shouldBe 2
+                }
+            }
+
+            test("canPay returns true when TapPermanents provides needed mana") {
+                val game = scenario()
+                    .withPlayers("Elf Player", "Opponent")
+                    .withCardOnBattlefield(1, "Birchlore Rangers")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withCardOnBattlefield(1, "Forest")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Cost {1}{G}: Forest provides {G}, TapPermanents provides {1}
+                withClue("Should be able to pay {1}{G} with Forest + Birchlore ability") {
+                    manaSolver.canPay(game.state, game.player1Id, ManaCost.parse("{1}{G}")) shouldBe true
+                }
+            }
+
+            test("canPay returns true for off-color costs when TapPermanents produces any color") {
+                val game = scenario()
+                    .withPlayers("Elf Player", "Opponent")
+                    .withCardOnBattlefield(1, "Birchlore Rangers")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // No lands at all, but TapPermanents produces any color
+                withClue("Should be able to pay {U} with Birchlore any-color mana") {
+                    manaSolver.canPay(game.state, game.player1Id, ManaCost.parse("{U}")) shouldBe true
+                }
+            }
+
+            test("canPay returns false when not enough TapPermanents mana") {
+                val game = scenario()
+                    .withPlayers("Elf Player", "Opponent")
+                    .withCardOnBattlefield(1, "Birchlore Rangers")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Only 1 TapPermanents activation (1 mana), need 2
+                withClue("Should not be able to pay {U}{U} with only 1 TapPermanents mana") {
+                    manaSolver.canPay(game.state, game.player1Id, ManaCost.parse("{U}{U}")) shouldBe false
+                }
+            }
+
+            test("does not double-count mana dork Elves as TapPermanents targets") {
+                val game = scenario()
+                    .withPlayers("Elf Player", "Opponent")
+                    .withCardOnBattlefield(1, "Birchlore Rangers")
+                    .withCardOnBattlefield(1, "Wirewood Elf") // Elf that taps for {G}
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Wirewood Elf is a regular mana source (1 mana).
+                // Rangers is not a regular source (TapPermanents cost, not Tap).
+                // Only 1 non-source Elf (Rangers), need 2 for TapPermanents → no bonus.
+                // Total = 1 (Wirewood Elf)
+                val available = manaSolver.getAvailableManaCount(game.state, game.player1Id)
+                withClue("Should count Wirewood Elf (1) only, no TapPermanents bonus") {
+                    available shouldBe 1
+                }
+            }
+
+            test("multiple TapPermanents activations with enough Elves") {
+                val game = scenario()
+                    .withPlayers("Elf Player", "Opponent")
+                    .withCardOnBattlefield(1, "Birchlore Rangers")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withCardOnBattlefield(1, "Elvish Warrior")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // 5 Elves total (all non-source): 5/2 = 2 activations → 2 bonus mana
+                val available = manaSolver.getAvailableManaCount(game.state, game.player1Id)
+                withClue("Should count 2 TapPermanents bonus from 5 non-source Elves (5/2=2)") {
+                    available shouldBe 2
                 }
             }
         }

@@ -2,6 +2,8 @@ package com.wingedsheep.engine.mechanics.mana
 
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
@@ -95,6 +97,8 @@ class ManaSolver(
     private val stateProjector: StateProjector = StateProjector(),
     private val dynamicAmountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator()
 ) {
+
+    private val predicateEvaluator = PredicateEvaluator()
 
     /**
      * Finds a valid set of mana sources to pay the cost.
@@ -682,7 +686,33 @@ class ManaSolver(
         }
 
         // Check if we can tap sources for the remaining cost (including remaining X)
-        return solve(state, playerId, remainingCost, xRemainingToPay) != null
+        if (solve(state, playerId, remainingCost, xRemainingToPay) != null) return true
+
+        // Fallback: check if TapPermanents mana abilities (e.g., Birchlore Rangers) provide enough extra mana.
+        // These abilities tap other permanents (not the source itself) to produce mana.
+        val tapPermanentsBonus = calculateTapPermanentsBonusMana(state, playerId)
+        if (tapPermanentsBonus.totalMana == 0) return false
+
+        // Allocate any-color bonus mana to the pool based on what the cost needs,
+        // then re-check. This correctly handles color requirements.
+        val augmentedPool = allocateAnyColorManaToPool(pool, tapPermanentsBonus.anyColorMana, cost)
+            .let { p ->
+                // Also add specific-color bonus mana
+                tapPermanentsBonus.specificMana.entries.fold(p) { acc, (color, amount) -> acc.add(color, amount) }
+            }
+            .let { p ->
+                // Also add colorless bonus mana
+                if (tapPermanentsBonus.colorlessMana > 0) p.addColorless(tapPermanentsBonus.colorlessMana) else p
+            }
+        val augmentedResult = augmentedPool.payPartial(cost)
+        val augmentedRemaining = augmentedResult.remainingCost
+        val augmentedPoolAfter = augmentedResult.newPool
+
+        val augmentedXPaid = augmentedPoolAfter.total.coerceAtMost(totalXMana)
+        val augmentedXRemaining = totalXMana - augmentedXPaid
+
+        if (augmentedRemaining.isEmpty() && augmentedXRemaining == 0) return true
+        return solve(state, playerId, augmentedRemaining, augmentedXRemaining) != null
     }
 
     /**
@@ -699,6 +729,139 @@ class ManaSolver(
         }
 
         // Add untapped mana sources (including bonus mana from auras and multi-mana sources)
-        return floatingMana + findAvailableManaSources(state, playerId).sumOf { it.manaAmount + it.bonusManaPerTap }
+        val sourceMana = findAvailableManaSources(state, playerId).sumOf { it.manaAmount + it.bonusManaPerTap }
+
+        // Add extra mana from TapPermanents abilities (e.g., Birchlore Rangers)
+        val tapPermanentsMana = calculateTapPermanentsBonusMana(state, playerId).totalMana
+
+        return floatingMana + sourceMana + tapPermanentsMana
+    }
+
+    /**
+     * Bonus mana available from TapPermanents mana abilities.
+     */
+    internal data class TapPermanentsBonusMana(
+        val anyColorMana: Int = 0,
+        val specificMana: Map<Color, Int> = emptyMap(),
+        val colorlessMana: Int = 0
+    ) {
+        val totalMana: Int get() = anyColorMana + specificMana.values.sum() + colorlessMana
+    }
+
+    /**
+     * Calculates extra mana available from TapPermanents mana abilities (e.g., Birchlore Rangers).
+     *
+     * These abilities tap other permanents (not the source itself) to produce mana.
+     * Only counts activations using permanents that are NOT already regular mana sources,
+     * so this represents genuinely "extra" mana that the solver doesn't know about.
+     */
+    internal fun calculateTapPermanentsBonusMana(
+        state: GameState,
+        playerId: EntityId
+    ): TapPermanentsBonusMana {
+        if (cardRegistry == null) return TapPermanentsBonusMana()
+
+        val projected = stateProjector.project(state)
+        val battlefieldCards = projected.getBattlefieldControlledBy(playerId)
+        val regularSourceIds = findAvailableManaSources(state, playerId).map { it.entityId }.toSet()
+
+        var anyColorTotal = 0
+        val specificColorTotal = mutableMapOf<Color, Int>()
+        var colorlessTotal = 0
+
+        // Track which non-source permanents have already been "consumed" by a TapPermanents activation
+        val consumedIds = mutableSetOf<EntityId>()
+
+        for (entityId in battlefieldCards) {
+            val container = state.getEntity(entityId) ?: continue
+            val card = container.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+
+            for (ability in cardDef.script.activatedAbilities) {
+                if (!ability.isManaAbility) continue
+                val tapCost = ability.cost as? AbilityCost.TapPermanents ?: continue
+
+                // Find untapped permanents matching the filter that are NOT regular mana sources
+                // and haven't been consumed by another TapPermanents activation.
+                // Note: TapPermanents doesn't use the {T} symbol, so summoning sickness doesn't apply.
+                val context = PredicateContext(controllerId = playerId)
+                val matchingNonSources = battlefieldCards.filter { targetId ->
+                    targetId !in regularSourceIds &&
+                    targetId !in consumedIds &&
+                    state.getEntity(targetId)?.has<TappedComponent>() == false &&
+                    predicateEvaluator.matchesWithProjection(state, projected, targetId, tapCost.filter, context)
+                }
+
+                val activationCount = matchingNonSources.size / tapCost.count
+                if (activationCount == 0) continue
+
+                // Mark consumed permanents
+                val toConsume = matchingNonSources.take(activationCount * tapCost.count)
+                consumedIds.addAll(toConsume)
+
+                // Accumulate mana production
+                when (val effect = ability.effect) {
+                    is AddAnyColorManaEffect -> anyColorTotal += activationCount
+                    is AddManaEffect -> {
+                        val amount = (effect.amount as? DynamicAmount.Fixed)?.amount ?: 1
+                        specificColorTotal[effect.color] =
+                            (specificColorTotal[effect.color] ?: 0) + activationCount * amount
+                    }
+                    is AddColorlessManaEffect -> {
+                        val amount = (effect.amount as? DynamicAmount.Fixed)?.amount ?: 1
+                        colorlessTotal += activationCount * amount
+                    }
+                    else -> {}
+                }
+            }
+        }
+
+        return TapPermanentsBonusMana(anyColorTotal, specificColorTotal, colorlessTotal)
+    }
+
+    /**
+     * Allocates any-color bonus mana to the pool based on what the cost needs.
+     * Adds mana to colors where there's a deficit relative to the cost's colored requirements,
+     * then adds the rest as colorless (usable for generic costs).
+     */
+    private fun allocateAnyColorManaToPool(pool: ManaPool, anyColorCount: Int, cost: ManaCost): ManaPool {
+        if (anyColorCount == 0) return pool
+
+        // Determine colored mana needed from the cost
+        val colorNeeds = mutableMapOf<Color, Int>()
+        for (symbol in cost.symbols) {
+            when (symbol) {
+                is ManaSymbol.Colored -> colorNeeds[symbol.color] = (colorNeeds[symbol.color] ?: 0) + 1
+                is ManaSymbol.Phyrexian -> colorNeeds[symbol.color] = (colorNeeds[symbol.color] ?: 0) + 1
+                is ManaSymbol.Hybrid -> {
+                    // For hybrid, add to both colors (overestimates but correct for affordability)
+                    colorNeeds[symbol.color1] = (colorNeeds[symbol.color1] ?: 0) + 1
+                    colorNeeds[symbol.color2] = (colorNeeds[symbol.color2] ?: 0) + 1
+                }
+                else -> {}
+            }
+        }
+
+        var result = pool
+        var remaining = anyColorCount
+
+        // Allocate to colors where pool is deficient, starting with the biggest deficit
+        for ((color, needed) in colorNeeds.entries.sortedByDescending { it.value }) {
+            val poolHas = result.get(color)
+            val deficit = needed - poolHas
+            if (deficit > 0) {
+                val toAdd = minOf(remaining, deficit)
+                result = result.add(color, toAdd)
+                remaining -= toAdd
+                if (remaining == 0) break
+            }
+        }
+
+        // Remaining any-color mana goes to colorless (usable for generic costs)
+        if (remaining > 0) {
+            result = result.addColorless(remaining)
+        }
+
+        return result
     }
 }
