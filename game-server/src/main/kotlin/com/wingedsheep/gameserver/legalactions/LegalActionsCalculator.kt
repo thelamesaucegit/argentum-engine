@@ -7,7 +7,6 @@ import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.mechanics.mana.CostCalculator
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
-import com.wingedsheep.engine.mechanics.text.SubtypeReplacer
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -832,7 +831,7 @@ class LegalActionsCalculator(
             for (ability in manaAbilities) {
                 // Apply text replacement to cost filters
                 val effectiveCost = if (manaTextReplacement != null) {
-                    SubtypeReplacer.replaceAbilityCost(ability.cost, manaTextReplacement)
+                    ability.cost.applyTextReplacement(manaTextReplacement)
                 } else {
                     ability.cost
                 }
@@ -1149,7 +1148,7 @@ class LegalActionsCalculator(
             for (ability in nonManaAbilities) {
                 // Apply text replacement to cost filters (e.g., "Sacrifice a Goblin" → "Sacrifice a Bird")
                 val effectiveCost = if (textReplacement != null) {
-                    SubtypeReplacer.replaceAbilityCost(ability.cost, textReplacement)
+                    ability.cost.applyTextReplacement(textReplacement)
                 } else {
                     ability.cost
                 }
@@ -1389,7 +1388,7 @@ class LegalActionsCalculator(
 
                 // Check for target requirements (apply text-changing effects to filter)
                 val targetReqs = if (textReplacement != null) {
-                    ability.targetRequirements.map { SubtypeReplacer.replaceTargetRequirement(it, textReplacement) }
+                    ability.targetRequirements.map { it.applyTextReplacement(textReplacement) }
                 } else {
                     ability.targetRequirements
                 }
@@ -1491,7 +1490,7 @@ class LegalActionsCalculator(
 
                 for (ability in anyPlayerAbilities) {
                     val effectiveCost = if (textReplacement != null) {
-                        SubtypeReplacer.replaceAbilityCost(ability.cost, textReplacement)
+                        ability.cost.applyTextReplacement(textReplacement)
                     } else {
                         ability.cost
                     }
@@ -1517,7 +1516,7 @@ class LegalActionsCalculator(
 
                     // Check target requirements
                     val targetReqs = if (textReplacement != null) {
-                        ability.targetRequirements.map { SubtypeReplacer.replaceTargetRequirement(it, textReplacement) }
+                        ability.targetRequirements.map { it.applyTextReplacement(textReplacement) }
                     } else {
                         ability.targetRequirements
                     }

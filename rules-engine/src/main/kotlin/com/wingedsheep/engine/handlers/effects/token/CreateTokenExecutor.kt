@@ -42,8 +42,9 @@ class CreateTokenExecutor(
         if (count <= 0) return ExecutionResult.success(state)
 
         // Resolve who receives the token — defaults to spell/ability controller
-        val tokenControllerId = if (effect.controller != null) {
-            EffectExecutorUtils.resolvePlayerTarget(effect.controller, context, state)
+        val controller = effect.controller
+        val tokenControllerId = if (controller != null) {
+            EffectExecutorUtils.resolvePlayerTarget(controller, context, state)
                 ?: context.controllerId
         } else {
             context.controllerId

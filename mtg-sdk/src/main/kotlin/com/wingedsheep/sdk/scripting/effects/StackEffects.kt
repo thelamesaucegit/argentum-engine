@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -23,6 +24,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object CounterSpellEffect : Effect {
     override val description: String = "Counter target spell"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -35,6 +38,11 @@ data class CounterSpellWithFilterEffect(
     val filter: TargetFilter = TargetFilter.SpellOnStack
 ) : Effect {
     override val description: String = "Counter target ${filter.baseFilter.description} spell"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -51,6 +59,8 @@ data class CounterUnlessPaysEffect(
     val cost: ManaCost
 ) : Effect {
     override val description: String = "Counter target spell unless its controller pays $cost"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -66,6 +76,11 @@ data class CounterUnlessDynamicPaysEffect(
     val amount: DynamicAmount
 ) : Effect {
     override val description: String = "Counter target spell unless its controller pays ${amount.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -80,6 +95,8 @@ data class CounterUnlessDynamicPaysEffect(
 @Serializable
 data object CounterTriggeringSpellEffect : Effect {
     override val description: String = "Counter that spell"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -94,6 +111,8 @@ data object CounterTriggeringSpellEffect : Effect {
 @Serializable
 data object CounterAbilityEffect : Effect {
     override val description: String = "Counter target activated or triggered ability"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -114,6 +133,8 @@ data class ChangeSpellTargetEffect(
     } else {
         "Change target spell's target to another creature"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -131,6 +152,8 @@ data class ChangeSpellTargetEffect(
 @Serializable
 data object ChangeTargetEffect : Effect {
     override val description: String = "Change the target of target spell or ability with a single target"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -145,6 +168,8 @@ data object ChangeTargetEffect : Effect {
 @Serializable
 data object ReselectTargetRandomlyEffect : Effect {
     override val description: String = "Reselect its target at random"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -169,6 +194,16 @@ data class StormCopyEffect(
     val spellName: String
 ) : Effect {
     override val description: String = "Copy $spellName $copyCount time(s)"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        var changed = false
+        val newReqs = spellTargetRequirements.map {
+            val n = it.applyTextReplacement(replacer); if (n !== it) changed = true; n
+        }
+        val newSpellEffect = spellEffect.applyTextReplacement(replacer)
+        if (newSpellEffect !== spellEffect) changed = true
+        return if (changed) copy(spellEffect = newSpellEffect, spellTargetRequirements = newReqs) else this
+    }
 }
 
 /**
@@ -187,4 +222,6 @@ data class CopyTargetSpellEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0)
 ) : Effect {
     override val description: String = "Copy target instant or sorcery spell"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

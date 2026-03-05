@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting.effects
 
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -27,4 +28,6 @@ data class SecretBidEffect(
         "Each player secretly chooses a number. Then those numbers are revealed. " +
             "Each player with the highest number loses that much life. " +
             "If you are one of those players, put $counterCount $counterType counters on this creature."
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

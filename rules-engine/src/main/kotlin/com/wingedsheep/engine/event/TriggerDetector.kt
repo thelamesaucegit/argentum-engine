@@ -22,7 +22,6 @@ import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
-import com.wingedsheep.engine.mechanics.text.SubtypeReplacer
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
@@ -89,7 +88,7 @@ class TriggerDetector(
         // Apply text replacement if the entity has one
         val textReplacement = state.getEntity(entityId)?.get<TextReplacementComponent>()
         return if (textReplacement != null) {
-            combined.map { SubtypeReplacer.replaceTriggeredAbility(it, textReplacement) }
+            combined.map { it.applyTextReplacement(textReplacement) }
         } else {
             combined
         }

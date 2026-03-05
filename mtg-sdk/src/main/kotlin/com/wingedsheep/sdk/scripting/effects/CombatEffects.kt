@@ -6,6 +6,7 @@ import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -26,6 +27,8 @@ data class ProvokeEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0)
 ) : Effect {
     override val description: String = "Target creature defending player controls untaps and blocks ${target.description} if able"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -38,6 +41,8 @@ data class MustBeBlockedEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "All creatures able to block ${target.description} this turn do so"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -51,6 +56,8 @@ data class TauntEffect(
 ) : Effect {
     override val description: String =
         "During ${target.description}'s next turn, creatures they control attack you if able"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -70,6 +77,8 @@ data class ReflectCombatDamageEffect(
     override val description: String =
         "This turn, whenever an attacking creature deals combat damage to you, " +
                 "it deals that much damage to its controller"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -85,6 +94,11 @@ data class PreventCombatDamageFromEffect(
 ) : Effect {
     override val description: String =
         "Prevent all combat damage that would be dealt by ${source.description.replaceFirstChar { it.lowercase() }}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newSource = source.applyTextReplacement(replacer)
+        return if (newSource !== source) copy(source = newSource) else this
+    }
 }
 
 /**
@@ -95,6 +109,8 @@ data class PreventCombatDamageFromEffect(
 @Serializable
 data object PreventDamageFromAttackingCreaturesThisTurnEffect : Effect {
     override val description: String = "Prevent all damage that would be dealt to you this turn by attacking creatures"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -105,6 +121,8 @@ data object PreventDamageFromAttackingCreaturesThisTurnEffect : Effect {
 @Serializable
 data object PreventAllCombatDamageThisTurnEffect : Effect {
     override val description: String = "Prevent all combat damage that would be dealt this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -128,6 +146,11 @@ data class GrantCantBeBlockedExceptByColorEffect(
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
         append(" except by ${canOnlyBeBlockedByColor.displayName.lowercase()} creatures")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -147,6 +170,11 @@ data class CantBlockGroupEffect(
     val duration: Duration = Duration.EndOfTurn
 ) : Effect {
     override val description: String = "${filter.description} can't block this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -162,6 +190,8 @@ data class CantBlockTargetCreaturesEffect(
     val duration: Duration = Duration.EndOfTurn
 ) : Effect {
     override val description: String = "Target creatures can't block this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -179,6 +209,11 @@ data class PreventNextDamageEffect(
 ) : Effect {
     override val description: String =
         "Prevent the next ${amount.description} damage that would be dealt to ${target.description} this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -193,6 +228,8 @@ data class RemoveFromCombatEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "Remove ${target.description} from combat"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -207,6 +244,8 @@ data class RemoveFromCombatEffect(
 data object ChooseCreatureTypeMustAttackEffect : Effect {
     override val description: String =
         "Creatures of the creature type of your choice attack this turn if able"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -232,6 +271,8 @@ data class RedirectNextDamageEffect(
         append("damage that would be dealt to ${protectedTargets.joinToString(" and/or ") { it.description }} this turn")
         append(" is dealt to ${redirectTo.description} instead")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -247,6 +288,8 @@ data class RedirectNextDamageEffect(
 data object PreventNextDamageFromChosenCreatureTypeEffect : Effect {
     override val description: String =
         "The next time a creature of the chosen type would deal damage to you this turn, prevent that damage"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -262,6 +305,8 @@ data class PreventCombatDamageToAndByEffect(
 ) : Effect {
     override val description: String =
         "Prevent all combat damage that would be dealt to and dealt by ${target.description} this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -280,6 +325,8 @@ data class PreventAllDamageDealtByTargetEffect(
 ) : Effect {
     override val description: String =
         "Prevent all damage ${target.description} would deal this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -302,6 +349,11 @@ data class GrantAttackBlockTaxPerCreatureTypeEffect(
 ) : Effect {
     override val description: String =
         "Target creature gains \"This creature can't attack or block unless its controller pays $manaCostPer for each $creatureType on the battlefield.\""
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newType = replacer.replaceCreatureType(creatureType)
+        return if (newType != creatureType) copy(creatureType = newType) else this
+    }
 }
 
 /**
@@ -321,5 +373,7 @@ data class RedirectCombatDamageToControllerEffect(
 ) : Effect {
     override val description: String =
         "The next time ${target.description} would deal combat damage this turn, it deals that damage to you instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 

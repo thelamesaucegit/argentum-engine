@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting.effects
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -31,6 +32,12 @@ data class CreateChosenTokenEffect(
 ) : Effect {
     override val description: String =
         "Create an ${dynamicPower.description}/${dynamicToughness.description} creature token of the chosen color and type"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newPower = dynamicPower.applyTextReplacement(replacer)
+        val newToughness = dynamicToughness.applyTextReplacement(replacer)
+        return if (newPower !== dynamicPower || newToughness !== dynamicToughness) copy(dynamicPower = newPower, dynamicToughness = newToughness) else this
+    }
 }
 
 // =============================================================================
@@ -105,6 +112,12 @@ data class CreateTokenEffect(
             append(keywords.joinToString(", ") { it.name.lowercase() })
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newCount = count.applyTextReplacement(replacer)
+        val newTypes = creatureTypes.map { replacer.replaceCreatureType(it) }.toSet()
+        return if (newCount !== count || newTypes != creatureTypes) copy(count = newCount, creatureTypes = newTypes) else this
+    }
 }
 
 /**
@@ -121,6 +134,8 @@ data class CreateTreasureTokensEffect(
     } else {
         "Create $count Treasure tokens"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -142,5 +157,10 @@ data class CreateTokenFromGraveyardEffect(
         append(" ")
         append(creatureTypes.joinToString(" "))
         append(" creature token")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newTypes = creatureTypes.map { replacer.replaceCreatureType(it) }.toSet()
+        return if (newTypes != creatureTypes) copy(creatureTypes = newTypes) else this
     }
 }

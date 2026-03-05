@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -30,6 +31,11 @@ data class ChooseColorAndGrantProtectionToGroupEffect(
         append("Choose a color. ${filter.description} gain protection from the chosen color")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -51,4 +57,6 @@ data class ChooseColorAndGrantProtectionToTargetEffect(
         append("${target.description} gains protection from the color of your choice")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

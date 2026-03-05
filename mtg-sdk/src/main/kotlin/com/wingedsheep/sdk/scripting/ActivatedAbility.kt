@@ -4,6 +4,8 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,7 +26,7 @@ data class ActivatedAbility(
     val activateFromZone: Zone = Zone.BATTLEFIELD,
     val promptOnDraw: Boolean = false,
     val descriptionOverride: String? = null
-) {
+) : TextReplaceable<ActivatedAbility> {
     /** Backward-compatible secondary constructor for single-target abilities. */
     constructor(
         id: AbilityId,
@@ -58,13 +60,26 @@ data class ActivatedAbility(
 
     val description: String
         get() = descriptionOverride ?: "${cost.description}: ${effect.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ActivatedAbility {
+        val newCost = cost.applyTextReplacement(replacer)
+        val newEffect = effect.applyTextReplacement(replacer)
+        var trChanged = false
+        val newTargetReqs = targetRequirements.map {
+            val n = it.applyTextReplacement(replacer)
+            if (n !== it) trChanged = true
+            n
+        }
+        return if (newCost !== cost || newEffect !== effect || trChanged)
+            copy(cost = newCost, effect = newEffect, targetRequirements = newTargetReqs) else this
+    }
 }
 
 /**
  * Costs for activated abilities.
  */
 @Serializable
-sealed interface AbilityCost {
+sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     val description: String
 
     /** No cost ({0}) — the ability is free to activate */
@@ -72,6 +87,7 @@ sealed interface AbilityCost {
     @Serializable
     data object Free : AbilityCost {
         override val description: String = "{0}"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Tap the permanent ({T}) */
@@ -79,6 +95,7 @@ sealed interface AbilityCost {
     @Serializable
     data object Tap : AbilityCost {
         override val description: String = "{T}"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Untap the permanent ({Q}) */
@@ -86,6 +103,7 @@ sealed interface AbilityCost {
     @Serializable
     data object Untap : AbilityCost {
         override val description: String = "{Q}"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Pay mana */
@@ -93,6 +111,7 @@ sealed interface AbilityCost {
     @Serializable
     data class Mana(val cost: ManaCost) : AbilityCost {
         override val description: String = cost.toString()
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Pay life */
@@ -100,6 +119,7 @@ sealed interface AbilityCost {
     @Serializable
     data class PayLife(val amount: Int) : AbilityCost {
         override val description: String = "Pay $amount life"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /**
@@ -124,6 +144,11 @@ sealed interface AbilityCost {
             append(filter.description)
             if (count > 1) append("s")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**
@@ -137,6 +162,11 @@ sealed interface AbilityCost {
         val filter: GameObjectFilter = GameObjectFilter.Any
     ) : AbilityCost {
         override val description: String = "Discard a ${filter.description}"
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**
@@ -156,6 +186,11 @@ sealed interface AbilityCost {
             if (count > 1) append("s")
             append(" from your graveyard")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /** Discard your entire hand */
@@ -163,6 +198,7 @@ sealed interface AbilityCost {
     @Serializable
     data object DiscardHand : AbilityCost {
         override val description: String = "Discard your hand"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Discard self (the card with this ability) - used for cycling */
@@ -170,6 +206,7 @@ sealed interface AbilityCost {
     @Serializable
     data object DiscardSelf : AbilityCost {
         override val description: String = "Discard this card"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Sacrifice self (the permanent with this ability) */
@@ -177,6 +214,7 @@ sealed interface AbilityCost {
     @Serializable
     data object SacrificeSelf : AbilityCost {
         override val description: String = "Sacrifice this permanent"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /** Exile self (the permanent with this ability) */
@@ -184,6 +222,7 @@ sealed interface AbilityCost {
     @Serializable
     data object ExileSelf : AbilityCost {
         override val description: String = "Exile this creature"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /**
@@ -194,6 +233,7 @@ sealed interface AbilityCost {
     @Serializable
     data object SacrificeChosenCreatureType : AbilityCost {
         override val description: String = "Sacrifice a creature of the chosen type"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /**
@@ -220,6 +260,11 @@ sealed interface AbilityCost {
             if (count != 1) append("s")
             append(" you control")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /** Multiple costs combined */
@@ -227,6 +272,16 @@ sealed interface AbilityCost {
     @Serializable
     data class Composite(val costs: List<AbilityCost>) : AbilityCost {
         override val description: String = costs.joinToString(", ") { it.description }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            var changed = false
+            val newCosts = costs.map {
+                val n = it.applyTextReplacement(replacer)
+                if (n !== it) changed = true
+                n
+            }
+            return if (changed) copy(costs = newCosts) else this
+        }
     }
 
     /** Tap the creature this aura is attached to ({T} enchanted creature) */
@@ -234,6 +289,7 @@ sealed interface AbilityCost {
     @Serializable
     data object TapAttachedCreature : AbilityCost {
         override val description: String = "{T} enchanted creature"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 
     /**
@@ -248,6 +304,11 @@ sealed interface AbilityCost {
         val filter: GameObjectFilter = GameObjectFilter.Any
     ) : AbilityCost {
         override val description: String = "Return a ${filter.description} you control to its owner's hand"
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /** Loyalty cost for planeswalker abilities */
@@ -255,5 +316,6 @@ sealed interface AbilityCost {
     @Serializable
     data class Loyalty(val change: Int) : AbilityCost {
         override val description: String = if (change >= 0) "+$change" else "$change"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
 }

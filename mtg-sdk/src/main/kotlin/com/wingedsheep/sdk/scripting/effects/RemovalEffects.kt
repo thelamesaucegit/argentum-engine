@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,6 +25,7 @@ data class RegenerateEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "Regenerate ${target.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -39,6 +41,7 @@ data class CantBeRegeneratedEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "${target.description} can't be regenerated"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -54,6 +57,7 @@ data class MarkExileOnDeathEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "If ${target.description} would die this turn, exile it instead"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -72,6 +76,7 @@ data class MarkExileControllerGraveyardOnDeathEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "When ${target.description} dies this turn, exile its controller's graveyard"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -93,6 +98,7 @@ data class DestroyAllSharingTypeWithSacrificedEffect(
         append("Destroy all creatures that share a creature type with the sacrificed creature")
         if (noRegenerate) append(". They can't be regenerated")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -118,6 +124,10 @@ data class SacrificeEffect(
             else -> append("$count ${filter.description}s")
         }
     }
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -130,6 +140,7 @@ data class SacrificeEffect(
 @Serializable
 data object SacrificeSelfEffect : Effect {
     override val description: String = "sacrifice this permanent"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -145,6 +156,7 @@ data class SacrificeTargetEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0)
 ) : Effect {
     override val description: String = "sacrifice ${target.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -169,6 +181,10 @@ data class ForceSacrificeEffect(
         append(filter.description)
         if (count != 1) append("s")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -185,6 +201,7 @@ data class SeparatePermanentsIntoPilesEffect(
     override val description: String =
         "Separate all permanents ${target.description} controls into two piles. " +
                 "That player sacrifices all permanents in the pile of their choice"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -198,6 +215,7 @@ data class ExileUntilLeavesEffect(
 ) : Effect {
     override val description: String =
         "Exile ${target.description} until this permanent leaves the battlefield"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -214,6 +232,7 @@ data class DestroyAtEndOfCombatEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "Destroy ${target.description} at end of combat"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -228,6 +247,7 @@ data class SacrificeAtEndOfCombatEffect(
     val target: EffectTarget
 ) : Effect {
     override val description: String = "Sacrifice ${target.description} at end of combat"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -256,6 +276,10 @@ data class DestroyAllEffect(
         append("Destroy all ${filter.description}")
         if (!canRegenerate) append(". They can't be regenerated")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -268,6 +292,10 @@ data class ReturnAllToHandEffect(
     val filter: GroupFilter
 ) : Effect {
     override val description: String = "Return ${filter.description} to their owners' hands"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 @SerialName("MoveToZone")
@@ -300,6 +328,7 @@ data class MoveToZoneEffect(
             else -> append("Put ${target.description} into ${destination.displayName}")
         }
     }
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -316,6 +345,7 @@ data class ReturnSelfToBattlefieldAttachedEffect(
 ) : Effect {
     override val description: String =
         "Return this card from your graveyard to the battlefield attached to ${target.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -338,6 +368,10 @@ data class ExileGroupAndLinkEffect(
 ) : Effect {
     override val description: String =
         "Exile all ${filter.description} and link them to this permanent"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -356,6 +390,7 @@ data class ReturnLinkedExileEffect(
     override val description: String =
         if (underOwnersControl) "Return the exiled cards to the battlefield under their owners' control"
         else "Return the exiled cards to the battlefield under your control"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -374,4 +409,5 @@ data class ReturnLinkedExileEffect(
 data object ReturnOneFromLinkedExileEffect : Effect {
     override val description: String =
         "Return one of the exiled cards you own to the battlefield"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

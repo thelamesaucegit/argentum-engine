@@ -2,6 +2,8 @@ package com.wingedsheep.sdk.scripting.costs
 
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -12,7 +14,7 @@ import kotlinx.serialization.Serializable
  * - Any future mechanic that requires a payable cost
  */
 @Serializable
-sealed interface PayCost {
+sealed interface PayCost : TextReplaceable<PayCost> {
     val description: String
 
     /**
@@ -25,6 +27,7 @@ sealed interface PayCost {
     @Serializable
     data class Mana(val cost: ManaCost) : PayCost {
         override val description: String = cost.toString()
+        override fun applyTextReplacement(replacer: TextReplacer): PayCost = this
     }
 
     /**
@@ -50,6 +53,11 @@ sealed interface PayCost {
                 append("$count ${filter.description}s")
             }
             if (random) append(" at random")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): PayCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
         }
     }
 
@@ -86,6 +94,11 @@ sealed interface PayCost {
             5 -> "five"
             else -> n.toString()
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): PayCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**
@@ -100,6 +113,7 @@ sealed interface PayCost {
         val amount: Int
     ) : PayCost {
         override val description: String = "pay $amount life"
+        override fun applyTextReplacement(replacer: TextReplacer): PayCost = this
     }
 
     /**
@@ -135,6 +149,11 @@ sealed interface PayCost {
             }
             append(" in your hand")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): PayCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     @SerialName("ReturnToHand")
@@ -153,6 +172,11 @@ sealed interface PayCost {
                 append("$count ${filterDesc}s")
             }
             append(" you control to its owner's hand")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): PayCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
         }
     }
 }

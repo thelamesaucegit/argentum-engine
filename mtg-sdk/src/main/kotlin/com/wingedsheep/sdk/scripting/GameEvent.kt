@@ -37,7 +37,7 @@ import kotlinx.serialization.Serializable
  * - Zone.kt - Zone enumeration
  */
 @Serializable
-sealed interface GameEvent {
+sealed interface GameEvent : TextReplaceable<GameEvent> {
     val description: String
 
     // =========================================================================
@@ -71,6 +71,8 @@ sealed interface GameEvent {
                 append(source.description)
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // =========================================================================
@@ -119,6 +121,11 @@ sealed interface GameEvent {
                 append(" would leave ${from.displayName}")
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     // =========================================================================
@@ -146,6 +153,8 @@ sealed interface GameEvent {
             append("counters would be placed on ")
             append(recipient.description)
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // =========================================================================
@@ -177,6 +186,12 @@ sealed interface GameEvent {
                 append(controller.description)
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val f = tokenFilter ?: return this
+            val newFilter = f.applyTextReplacement(replacer)
+            return if (newFilter !== f) copy(tokenFilter = newFilter) else this
+        }
     }
 
     // =========================================================================
@@ -196,6 +211,8 @@ sealed interface GameEvent {
         val player: Player = Player.You
     ) : GameEvent {
         override val description: String = "${player.description} would draw a card"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // =========================================================================
@@ -211,6 +228,8 @@ sealed interface GameEvent {
         val player: Player = Player.You
     ) : GameEvent {
         override val description: String = "${player.description} would gain life"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -222,6 +241,8 @@ sealed interface GameEvent {
         val player: Player = Player.You
     ) : GameEvent {
         override val description: String = "${player.description} would lose life"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // =========================================================================
@@ -246,6 +267,12 @@ sealed interface GameEvent {
                 append("a card")
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val f = cardFilter ?: return this
+            val newFilter = f.applyTextReplacement(replacer)
+            return if (newFilter !== f) copy(cardFilter = newFilter) else this
+        }
     }
 
     // =========================================================================
@@ -261,6 +288,8 @@ sealed interface GameEvent {
         val player: Player = Player.You
     ) : GameEvent {
         override val description: String = "${player.description} would search a library"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // =========================================================================
@@ -277,6 +306,7 @@ sealed interface GameEvent {
     @Serializable
     data object AttackEvent : GameEvent {
         override val description: String = "a creature attacks"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -292,6 +322,8 @@ sealed interface GameEvent {
         } else {
             "you attack with $minAttackers or more creatures"
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -302,6 +334,7 @@ sealed interface GameEvent {
     @Serializable
     data object BlockEvent : GameEvent {
         override val description: String = "a creature blocks"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -321,6 +354,12 @@ sealed interface GameEvent {
             } else {
                 append("a creature becomes blocked")
             }
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val f = filter ?: return this
+            val newFilter = f.applyTextReplacement(replacer)
+            return if (newFilter !== f) copy(filter = newFilter) else this
         }
     }
 
@@ -356,6 +395,12 @@ sealed interface GameEvent {
                 append(recipient.description)
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val f = sourceFilter ?: return this
+            val newFilter = f.applyTextReplacement(replacer)
+            return if (newFilter !== f) copy(sourceFilter = newFilter) else this
+        }
     }
 
     /**
@@ -376,6 +421,8 @@ sealed interface GameEvent {
                 append(source.description)
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -389,6 +436,7 @@ sealed interface GameEvent {
     @Serializable
     data object CreatureDealtDamageBySourceDiesEvent : GameEvent {
         override val description: String = "whenever a creature dealt damage by this creature this turn dies"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // ---- Phase/Step Triggers ----
@@ -414,6 +462,8 @@ sealed interface GameEvent {
             }
             append(step.displayName)
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -427,6 +477,8 @@ sealed interface GameEvent {
     ) : GameEvent {
         override val description: String =
             "at the beginning of enchanted creature's controller's ${step.displayName}"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -437,6 +489,7 @@ sealed interface GameEvent {
     @Serializable
     data object EnchantedCreatureDamageReceivedEvent : GameEvent {
         override val description: String = "when enchanted creature is dealt damage"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -447,6 +500,7 @@ sealed interface GameEvent {
     @Serializable
     data object EnchantedCreatureDealsCombatDamageToPlayerEvent : GameEvent {
         override val description: String = "when enchanted creature deals combat damage to a player"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -457,6 +511,7 @@ sealed interface GameEvent {
     @Serializable
     data object EnchantedCreatureDealsDamageEvent : GameEvent {
         override val description: String = "when enchanted creature deals damage"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -467,6 +522,7 @@ sealed interface GameEvent {
     @Serializable
     data object EnchantedCreatureTurnedFaceUpEvent : GameEvent {
         override val description: String = "when enchanted creature is turned face up"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -477,6 +533,7 @@ sealed interface GameEvent {
     @Serializable
     data object EnchantedCreatureAttacksEvent : GameEvent {
         override val description: String = "when enchanted creature attacks"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -487,6 +544,7 @@ sealed interface GameEvent {
     @Serializable
     data object EnchantedPermanentBecomesTappedEvent : GameEvent {
         override val description: String = "when enchanted permanent becomes tapped"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // ---- Spell/Card Triggers ----
@@ -517,6 +575,8 @@ sealed interface GameEvent {
             if (manaValueAtMost != null) append(" with mana value $manaValueAtMost or less")
             if (manaValueEquals != null) append(" with mana value $manaValueEquals")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -528,6 +588,8 @@ sealed interface GameEvent {
         val player: Player = Player.You
     ) : GameEvent {
         override val description: String = "${player.description} cycles a card"
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // ---- Targeting Triggers ----
@@ -549,6 +611,11 @@ sealed interface GameEvent {
             append(describeObjectForEvent(targetFilter))
             append(" becomes the target of a spell or ability")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val newFilter = targetFilter.applyTextReplacement(replacer)
+            return if (newFilter !== targetFilter) copy(targetFilter = newFilter) else this
+        }
     }
 
     // ---- State Change Triggers ----
@@ -561,6 +628,7 @@ sealed interface GameEvent {
     @Serializable
     data object TapEvent : GameEvent {
         override val description: String = "this permanent becomes tapped"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -571,6 +639,7 @@ sealed interface GameEvent {
     @Serializable
     data object UntapEvent : GameEvent {
         override val description: String = "this permanent becomes untapped"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -581,6 +650,7 @@ sealed interface GameEvent {
     @Serializable
     data object TurnFaceUpEvent : GameEvent {
         override val description: String = "this is turned face up"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -600,6 +670,8 @@ sealed interface GameEvent {
                 null -> {}
             }
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -610,6 +682,7 @@ sealed interface GameEvent {
     @Serializable
     data object ControlChangeEvent : GameEvent {
         override val description: String = "control of this permanent changes"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     // ---- Draw/Reveal Triggers ----
@@ -625,6 +698,7 @@ sealed interface GameEvent {
     @Serializable
     data object SpellOrAbilityOnStackEvent : GameEvent {
         override val description: String = "a spell or ability is put onto the stack"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
     /**
@@ -650,6 +724,12 @@ sealed interface GameEvent {
                 append("a card")
             }
             append(" this way")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val f = cardFilter ?: return this
+            val newFilter = f.applyTextReplacement(replacer)
+            return if (newFilter !== f) copy(cardFilter = newFilter) else this
         }
     }
 }

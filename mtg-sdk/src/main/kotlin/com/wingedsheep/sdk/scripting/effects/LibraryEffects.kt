@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -21,6 +22,8 @@ data class ShuffleLibraryEffect(
         EffectTarget.Controller -> "Shuffle your library"
         else -> "${target.description.replaceFirstChar { it.uppercase() }} shuffles their library"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 
@@ -54,6 +57,8 @@ data object PutCreatureFromHandSharingTypeWithTappedEffect : Effect {
     override val description: String =
         "You may put a creature card from your hand that shares a creature type " +
         "with each creature tapped this way onto the battlefield"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -68,4 +73,6 @@ data object PutCreatureFromHandSharingTypeWithTappedEffect : Effect {
 data object TakeFromLinkedExileEffect : Effect {
     override val description: String =
         "Put the top card of the exiled pile into your hand"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

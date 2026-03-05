@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.conditions.Condition
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -26,5 +27,13 @@ data class ConditionalEffect(
             append(". Otherwise, ")
             append(elseEffect.description.replaceFirstChar { it.lowercase() })
         }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newCondition = condition.applyTextReplacement(replacer)
+        val newEffect = effect.applyTextReplacement(replacer)
+        val newElseEffect = elseEffect?.applyTextReplacement(replacer)
+        return if (newCondition !== condition || newEffect !== effect || newElseEffect !== elseEffect)
+            copy(condition = newCondition, effect = newEffect, elseEffect = newElseEffect) else this
     }
 }

@@ -4,6 +4,8 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.conditions.Condition
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.Serializable
 
 /**
@@ -32,7 +34,7 @@ data class TriggeredAbility(
     /** When true, the triggered ability is controlled by the triggering entity's controller
      * instead of the source permanent's controller. Used for cards like Death Match. */
     val controlledByTriggeringEntityController: Boolean = false
-) {
+) : TextReplaceable<TriggeredAbility> {
     /** All target requirements for this ability (primary + additional). */
     val allTargetRequirements: List<TargetRequirement>
         get() = listOfNotNull(targetRequirement) + additionalTargetRequirements
@@ -61,6 +63,28 @@ data class TriggeredAbility(
     /** Whether this triggered ability requires targets */
     val requiresTargets: Boolean
         get() = targetRequirement != null
+
+    override fun applyTextReplacement(replacer: TextReplacer): TriggeredAbility {
+        val newTrigger = trigger.applyTextReplacement(replacer)
+        val newEffect = effect.applyTextReplacement(replacer)
+        val newTargetReq = targetRequirement?.applyTextReplacement(replacer)
+        var addlChanged = false
+        val newAddlTargetReqs = additionalTargetRequirements.map {
+            val n = it.applyTextReplacement(replacer)
+            if (n !== it) addlChanged = true
+            n
+        }
+        val newElseEffect = elseEffect?.applyTextReplacement(replacer)
+        val newTriggerCondition = triggerCondition?.applyTextReplacement(replacer)
+        return if (newTrigger !== trigger || newEffect !== effect ||
+                   newTargetReq !== targetRequirement || addlChanged ||
+                   newElseEffect !== elseEffect || newTriggerCondition !== triggerCondition)
+            copy(trigger = newTrigger, effect = newEffect,
+                 targetRequirement = newTargetReq,
+                 additionalTargetRequirements = newAddlTargetReqs,
+                 elseEffect = newElseEffect,
+                 triggerCondition = newTriggerCondition) else this
+    }
 
     companion object {
         fun create(

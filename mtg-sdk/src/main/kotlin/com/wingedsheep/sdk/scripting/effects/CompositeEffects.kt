@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.EffectVariable
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -27,6 +28,12 @@ data class CompositeEffect(
     val effects: List<Effect>
 ) : Effect {
     override val description: String = effects.joinToString(". ") { it.description }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        var changed = false
+        val newEffects = effects.map { val n = it.applyTextReplacement(replacer); if (n !== it) changed = true; n }
+        return if (changed) CompositeEffect(newEffects) else this
+    }
 }
 
 /**
@@ -44,6 +51,11 @@ data class MayEffect(
     val sourceRequiredZone: Zone? = null
 ) : Effect {
     override val description: String = description_override ?: "You may ${effect.description.lowercase()}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
+    }
 }
 
 /**
@@ -123,6 +135,20 @@ data class ModalEffect(
         }
     }
 
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        var anyChanged = false
+        val newModes = modes.map { mode ->
+            val newEffect = mode.effect.applyTextReplacement(replacer)
+            var modeChanged = newEffect !== mode.effect
+            val newTargetReqs = mode.targetRequirements.map { tr ->
+                val n = tr.applyTextReplacement(replacer); if (n !== tr) modeChanged = true; n
+            }
+            if (modeChanged) anyChanged = true
+            if (modeChanged) mode.copy(effect = newEffect, targetRequirements = newTargetReqs) else mode
+        }
+        return if (anyChanged) copy(modes = newModes) else this
+    }
+
     companion object {
         /**
          * Create a simple modal effect with effects that have no targeting.
@@ -171,6 +197,14 @@ data class OptionalCostEffect(
             append(". Otherwise, ${ifNotPaid.description.replaceFirstChar { it.lowercase() }}")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newCost = cost.applyTextReplacement(replacer)
+        val newIfPaid = ifPaid.applyTextReplacement(replacer)
+        val newIfNotPaid = ifNotPaid?.applyTextReplacement(replacer)
+        return if (newCost !== cost || newIfPaid !== ifPaid || newIfNotPaid !== ifNotPaid)
+            copy(cost = newCost, ifPaid = newIfPaid, ifNotPaid = newIfNotPaid) else this
+    }
 }
 
 /**
@@ -197,6 +231,13 @@ data class ReflexiveTriggerEffect(
         append(". When you do, ")
         append(reflexiveEffect.description.replaceFirstChar { it.lowercase() })
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAction = action.applyTextReplacement(replacer)
+        val newReflexiveEffect = reflexiveEffect.applyTextReplacement(replacer)
+        return if (newAction !== action || newReflexiveEffect !== reflexiveEffect)
+            copy(action = newAction, reflexiveEffect = newReflexiveEffect) else this
+    }
 }
 
 /**
@@ -220,6 +261,13 @@ data class PayOrSufferEffect(
     val player: EffectTarget = EffectTarget.Controller
 ) : Effect {
     override val description: String = "${suffer.description} unless you ${cost.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newCost = cost.applyTextReplacement(replacer)
+        val newSuffer = suffer.applyTextReplacement(replacer)
+        return if (newCost !== cost || newSuffer !== suffer)
+            copy(cost = newCost, suffer = newSuffer) else this
+    }
 }
 
 /**
@@ -250,6 +298,11 @@ data class CreateDelayedTriggerEffect(
     val effect: Effect
 ) : Effect {
     override val description: String = "create a delayed trigger at the beginning of the next ${step.displayName}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
+    }
 }
 
 /**
@@ -269,6 +322,11 @@ data class StoreResultEffect(
     val storeAs: EffectVariable
 ) : Effect {
     override val description: String = "${effect.description} (stored as ${storeAs.name})"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
+    }
 }
 
 /**
@@ -287,6 +345,11 @@ data class StoreCountEffect(
     val storeAs: EffectVariable.Count
 ) : Effect {
     override val description: String = "${effect.description} (count stored as ${storeAs.name})"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
+    }
 }
 
 /**
@@ -312,6 +375,11 @@ data class BlightEffect(
         append("You may blight $blightAmount. If you do, ")
         append(innerEffect.description.replaceFirstChar { it.lowercase() })
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newInnerEffect = innerEffect.applyTextReplacement(replacer)
+        return if (newInnerEffect !== innerEffect) copy(innerEffect = newInnerEffect) else this
+    }
 }
 
 /**
@@ -330,6 +398,11 @@ data class TapCreatureForEffectEffect(
     override val description: String = buildString {
         append("You may tap another untapped creature you control. If you do, ")
         append(innerEffect.description.replaceFirstChar { it.lowercase() })
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newInnerEffect = innerEffect.applyTextReplacement(replacer)
+        return if (newInnerEffect !== innerEffect) copy(innerEffect = newInnerEffect) else this
     }
 }
 
@@ -352,6 +425,11 @@ data class MayPayManaEffect(
     val effect: Effect
 ) : Effect {
     override val description: String = "You may pay $cost. If you do, ${effect.description.replaceFirstChar { it.lowercase() }}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
+    }
 }
 
 /**
@@ -372,6 +450,11 @@ data class MayPayXForEffect(
     val effect: Effect
 ) : Effect {
     override val description: String = "You may pay {X}. If you do, ${effect.description.replaceFirstChar { it.lowercase() }}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newEffect !== effect) copy(effect = newEffect) else this
+    }
 }
 
 /**
@@ -395,6 +478,13 @@ data class AnyPlayerMayPayEffect(
 ) : Effect {
     override val description: String =
         "Any player may ${cost.description}. If a player does, ${consequence.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newCost = cost.applyTextReplacement(replacer)
+        val newConsequence = consequence.applyTextReplacement(replacer)
+        return if (newCost !== cost || newConsequence !== consequence)
+            copy(cost = newCost, consequence = newConsequence) else this
+    }
 }
 
 /**
@@ -414,6 +504,12 @@ data class ForEachTargetEffect(
     override val description: String = buildString {
         append("For each target, ")
         append(effects.joinToString(". ") { it.description.replaceFirstChar { c -> c.lowercase() } })
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        var changed = false
+        val newEffects = effects.map { val n = it.applyTextReplacement(replacer); if (n !== it) changed = true; n }
+        return if (changed) copy(effects = newEffects) else this
     }
 }
 
@@ -437,6 +533,12 @@ data class ForEachPlayerEffect(
     override val description: String = buildString {
         append("For each player, ")
         append(effects.joinToString(". ") { it.description.replaceFirstChar { c -> c.lowercase() } })
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        var changed = false
+        val newEffects = effects.map { val n = it.applyTextReplacement(replacer); if (n !== it) changed = true; n }
+        return if (changed) copy(effects = newEffects) else this
     }
 }
 
@@ -463,6 +565,13 @@ data class FlipCoinEffect(
         if (lostEffect != null) {
             append(" If you lose the flip, ${lostEffect.description.replaceFirstChar { it.lowercase() }}.")
         }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newWon = wonEffect?.applyTextReplacement(replacer)
+        val newLost = lostEffect?.applyTextReplacement(replacer)
+        return if (newWon !== wonEffect || newLost !== lostEffect)
+            copy(wonEffect = newWon, lostEffect = newLost) else this
     }
 }
 
@@ -547,5 +656,10 @@ data class RepeatWhileEffect(
             is RepeatCondition.PlayerChooses -> append(" as many times as ${repeatCondition.decider.description} chooses")
             is RepeatCondition.WhileCondition -> append(" while ${repeatCondition.condition.description}")
         }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newBody = body.applyTextReplacement(replacer)
+        return if (newBody !== body) copy(body = newBody) else this
     }
 }

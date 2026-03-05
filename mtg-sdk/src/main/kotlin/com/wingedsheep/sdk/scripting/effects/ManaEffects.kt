@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,6 +28,8 @@ data class AddManaEffect(
         is DynamicAmount.Fixed -> "Add ${"{${color.symbol}}".repeat(a.amount)}"
         else -> "Add {${color.symbol}} for each ${a.description}"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -46,6 +49,8 @@ data class AddColorlessManaEffect(
         is DynamicAmount.Fixed -> "Add ${"{C}".repeat(a.amount)}"
         else -> "Add an amount of {C} equal to ${a.description}"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -70,6 +75,8 @@ data class AddAnyColorManaEffect(
         }
         else -> "Add ${a.description} mana of any color"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -89,6 +96,11 @@ data class AddDynamicManaEffect(
         append("Add X mana in any combination of ")
         append(allowedColors.joinToString(" and/or ") { "{${it.symbol}}" })
         append(", where X is ${amountSource.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amountSource.applyTextReplacement(replacer)
+        return if (newAmount !== amountSource) copy(amountSource = newAmount) else this
     }
 }
 

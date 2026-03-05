@@ -1,6 +1,8 @@
 package com.wingedsheep.sdk.scripting
 
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,7 +16,7 @@ import kotlinx.serialization.Serializable
  * Additional costs are declared in the CardScript and validated/paid during casting.
  */
 @Serializable
-sealed interface AdditionalCost {
+sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
     /** Human-readable description of the cost */
     val description: String
 
@@ -41,6 +43,11 @@ sealed interface AdditionalCost {
             append(filter.description)
             if (count != 1) append("s")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**
@@ -66,6 +73,11 @@ sealed interface AdditionalCost {
             append(filter.description)
             if (count != 1) append("s")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**
@@ -78,6 +90,7 @@ sealed interface AdditionalCost {
         val amount: Int
     ) : AdditionalCost {
         override val description: String = "Pay $amount life"
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost = this
     }
 
     /**
@@ -106,6 +119,11 @@ sealed interface AdditionalCost {
             if (count != 1) append("s")
             append(" from your ${fromZone.description}")
         }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
     }
 
     /**
@@ -128,6 +146,11 @@ sealed interface AdditionalCost {
             append("Exile X ")
             append(filter.description)
             append("s from your ${fromZone.description}")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
         }
     }
 
@@ -154,6 +177,11 @@ sealed interface AdditionalCost {
             append(filter.description)
             if (count != 1) append("s")
             append(" you control")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
         }
     }
 }

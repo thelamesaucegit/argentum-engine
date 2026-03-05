@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.costs.PayCost
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.Serializable
 
 /**
@@ -223,7 +224,7 @@ data class TextReplacement(
 @Serializable
 data class TextReplacementComponent(
     val replacements: List<TextReplacement> = emptyList()
-) : Component {
+) : Component, TextReplacer {
 
     /**
      * Apply creature type replacements to a subtype string.
@@ -239,6 +240,8 @@ data class TextReplacementComponent(
         return result
     }
 
+    override fun replaceCreatureType(subtype: String): String = applyToCreatureType(subtype)
+
     /**
      * Apply creature type replacements to a Subtype.
      */
@@ -246,6 +249,8 @@ data class TextReplacementComponent(
         val replaced = applyToCreatureType(subtype.value)
         return if (replaced == subtype.value) subtype else Subtype(replaced)
     }
+
+    override fun replaceSubtype(subtype: Subtype): Subtype = applyToSubtype(subtype)
 
     /**
      * Add a new replacement, returning a new component.

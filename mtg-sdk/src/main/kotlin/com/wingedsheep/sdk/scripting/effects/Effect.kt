@@ -1,6 +1,8 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import kotlinx.serialization.Serializable
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 
 /**
  * Sealed hierarchy of effects.
@@ -28,7 +30,7 @@ import kotlinx.serialization.Serializable
  * - costs/ - PayCost
  */
 @Serializable
-sealed interface Effect {
+sealed interface Effect : TextReplaceable<Effect> {
     /** Human-readable description of the effect */
     val description: String
 

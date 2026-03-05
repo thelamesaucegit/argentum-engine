@@ -6,6 +6,8 @@ import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.conditions.Condition
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.TriggeredAbility
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -18,7 +20,7 @@ import kotlinx.serialization.Serializable
  * layer system (StateProjector) which calculates the projected game state.
  */
 @Serializable
-sealed interface StaticAbility {
+sealed interface StaticAbility : TextReplaceable<StaticAbility> {
     val description: String
 }
 
@@ -38,6 +40,7 @@ data class GrantKeyword(
         this(keyword.name, target)
 
     override val description: String = "Grants ${keyword.lowercase().replace('_', ' ')}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -52,6 +55,10 @@ data class GrantKeywordToCreatureGroup(
     val filter: GroupFilter
 ) : StaticAbility {
     override val description: String = "${filter.description} have ${keyword.name.lowercase().replace('_', ' ')}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -73,6 +80,11 @@ data class GrantTriggeredAbilityToCreatureGroup(
     val filter: GroupFilter
 ) : StaticAbility {
     override val description: String = "${filter.description} have ${ability.trigger}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newFilter !== filter || newAbility !== ability) copy(filter = newFilter, ability = newAbility) else this
+    }
 }
 
 /**
@@ -93,6 +105,11 @@ data class GrantActivatedAbilityToCreatureGroup(
     val filter: GroupFilter
 ) : StaticAbility {
     override val description: String = "${filter.description} have ${ability.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newFilter !== filter || newAbility !== ability) copy(filter = newFilter, ability = newAbility) else this
+    }
 }
 
 /**
@@ -110,6 +127,10 @@ data class ModifyStatsForCreatureGroup(
         val powerStr = if (powerBonus >= 0) "+$powerBonus" else "$powerBonus"
         val toughStr = if (toughnessBonus >= 0) "+$toughnessBonus" else "$toughnessBonus"
         append("${filter.description} get $powerStr/$toughStr")
+    }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
     }
 }
 
@@ -130,6 +151,7 @@ data class ModifyStatsForChosenCreatureType(
         val toughStr = if (toughnessBonus >= 0) "+$toughnessBonus" else "$toughnessBonus"
         append("Creatures of the chosen type get $powerStr/$toughStr")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -145,6 +167,7 @@ data class GrantKeywordForChosenCreatureType(
 ) : StaticAbility {
     override val description: String =
         "Creatures of the chosen type have ${keyword.name.lowercase().replace('_', ' ')}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -162,6 +185,7 @@ data class ModifyStats(
         val toughStr = if (toughnessBonus >= 0) "+$toughnessBonus" else "$toughnessBonus"
         append("$powerStr/$toughStr")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -172,6 +196,7 @@ data class ModifyStats(
 @Serializable
 data object ControlEnchantedPermanent : StaticAbility {
     override val description: String = "You control enchanted permanent"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -184,6 +209,10 @@ data class GlobalEffect(
     val filter: GroupFilter = GroupFilter.AllCreatures
 ) : StaticAbility {
     override val description: String = effectType.description
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -196,6 +225,7 @@ data class CantAttack(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "${target.toString().lowercase()} can't attack"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -208,6 +238,7 @@ data class MustAttack(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "attacks each combat if able"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -220,6 +251,7 @@ data class CantBlock(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "${target.toString().lowercase()} can't block"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -234,6 +266,10 @@ data class CantBlockForCreatureGroup(
     val filter: GroupFilter
 ) : StaticAbility {
     override val description: String = "${filter.description} can't block"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -255,6 +291,7 @@ data class AssignDamageEqualToToughness(
         }
         append("assigns combat damage equal to its toughness rather than its power")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -271,6 +308,7 @@ data class DivideCombatDamageFreely(
 ) : StaticAbility {
     override val description: String =
         "You may assign this creature's combat damage divided as you choose among defending player and/or any number of creatures they control"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -330,6 +368,11 @@ data class GrantDynamicStatsEffect(
     override val description: String = buildString {
         append("Creatures get +X/+X where X is ${powerBonus.description}")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newPower = powerBonus.applyTextReplacement(replacer)
+        val newToughness = toughnessBonus.applyTextReplacement(replacer)
+        return if (newPower !== powerBonus || newToughness !== toughnessBonus) copy(powerBonus = newPower, toughnessBonus = newToughness) else this
+    }
 }
 
 /**
@@ -342,6 +385,7 @@ data class CantReceiveCounters(
     val target: StaticTarget = StaticTarget.AttachedCreature
 ) : StaticAbility {
     override val description: String = "${target.toString().lowercase()} can't have counters put on it"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -363,6 +407,10 @@ data class ReduceSpellCostBySubtype(
     val amount: Int
 ) : StaticAbility {
     override val description: String = "$subtype spells you cast cost {$amount} less to cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newSubtype = replacer.replaceCreatureType(subtype)
+        return if (newSubtype != subtype) copy(subtype = newSubtype) else this
+    }
 }
 
 /**
@@ -383,6 +431,10 @@ data class ReduceSpellColoredCostBySubtype(
     val manaReduction: String
 ) : StaticAbility {
     override val description: String = "$subtype spells you cast cost $manaReduction less to cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newSubtype = replacer.replaceCreatureType(subtype)
+        return if (newSubtype != subtype) copy(subtype = newSubtype) else this
+    }
 }
 
 /**
@@ -407,6 +459,10 @@ data class ReduceSpellCostByFilter(
     val amount: Int
 ) : StaticAbility {
     override val description: String = "${filter.description} spells you cast cost {$amount} less to cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -424,6 +480,7 @@ data class SpellCostReduction(
     val reductionSource: CostReductionSource
 ) : StaticAbility {
     override val description: String = "This spell costs {X} less to cast, where X is ${reductionSource.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -442,6 +499,7 @@ data class FaceDownSpellCostReduction(
     val reductionSource: CostReductionSource
 ) : StaticAbility {
     override val description: String = "Face-down creature spells you cast cost {${reductionSource.description}} less to cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -529,6 +587,7 @@ data class ModifyStatsByCounterOnSource(
         val toughStr = if (toughnessModPerCounter >= 0) "+$toughnessModPerCounter" else "$toughnessModPerCounter"
         append("$powerStr/$toughStr for each $counterType counter on this permanent")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -558,6 +617,8 @@ data class CantBeBlockedByColor(
     /** Convenience constructor for a single color. */
     constructor(color: Color, target: StaticTarget = StaticTarget.SourceCreature)
         : this(setOf(color), target)
+
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 
@@ -572,6 +633,7 @@ data class CanOnlyBlockCreaturesWithKeyword(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can block only creatures with ${keyword.displayName.lowercase()}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 // =============================================================================
@@ -595,6 +657,11 @@ data class ConditionalStaticAbility(
     val condition: Condition
 ) : StaticAbility {
     override val description: String = "${ability.description} ${condition.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newAbility = ability.applyTextReplacement(replacer)
+        val newCondition = condition.applyTextReplacement(replacer)
+        return if (newAbility !== ability || newCondition !== condition) copy(ability = newAbility, condition = newCondition) else this
+    }
 }
 
 // =============================================================================
@@ -615,6 +682,11 @@ data class GrantCantBeBlockedExceptBySubtype(
     val requiredSubtype: String
 ) : StaticAbility {
     override val description: String = "${filter.description} can't be blocked except by ${requiredSubtype}s"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newSubtype = replacer.replaceCreatureType(requiredSubtype)
+        return if (newFilter !== filter || newSubtype != requiredSubtype) copy(filter = newFilter, requiredSubtype = newSubtype) else this
+    }
 }
 
 /**
@@ -631,6 +703,7 @@ data class CantBeBlockedByPower(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't be blocked by creatures with power $minPower or greater"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -647,6 +720,7 @@ data class CantBeBlockedByPowerOrLess(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't be blocked by creatures with power $maxPower or less"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -663,6 +737,7 @@ data class CantBlockCreaturesWithGreaterPower(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't block creatures with power greater than this creature's power"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -679,6 +754,7 @@ data class CantBeBlockedExceptByKeyword(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't be blocked except by creatures with ${requiredKeyword.displayName.lowercase()}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -697,6 +773,7 @@ data class CantBeBlockedByMoreThan(
     override val description: String = "can't be blocked by more than ${
         if (maxBlockers == 1) "one creature" else "$maxBlockers creatures"
     }"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -711,6 +788,7 @@ data class CanBlockAnyNumber(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can block any number of creatures"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 // =============================================================================
@@ -731,6 +809,7 @@ data class GrantProtection(
     val target: StaticTarget = StaticTarget.AttachedCreature
 ) : StaticAbility {
     override val description: String = "Grants protection from ${color.displayName.lowercase()}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -747,6 +826,10 @@ data class GrantProtectionFromChosenColorToGroup(
     val filter: GroupFilter = GroupFilter(GameObjectFilter.Companion.Creature.youControl())
 ) : StaticAbility {
     override val description: String = "Creatures of the chosen group have protection from the chosen color"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 // =============================================================================
@@ -771,6 +854,7 @@ data class GrantKeywordByCounter(
 ) : StaticAbility {
     override val description: String =
         "Each creature ${if (controllerOnly) "you control " else ""}with a $counterType counter on it has ${keyword.name.lowercase().replace('_', ' ')}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -788,6 +872,10 @@ data class AddCreatureTypeByCounter(
 ) : StaticAbility {
     override val description: String =
         "Each creature with a $counterType counter on it is a $creatureType in addition to its other creature types"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newCreatureType = replacer.replaceCreatureType(creatureType)
+        return if (newCreatureType != creatureType) copy(creatureType = newCreatureType) else this
+    }
 }
 
 /**
@@ -806,6 +894,7 @@ data class CantBeBlockedUnlessDefenderSharesCreatureType(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't be blocked unless defending player controls $minSharedCount or more creatures that share a creature type"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 // =============================================================================
@@ -858,6 +947,7 @@ data class CantAttackUnless(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't attack unless ${condition.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -874,6 +964,7 @@ data class CantBlockUnless(
     val target: StaticTarget = StaticTarget.SourceCreature
 ) : StaticAbility {
     override val description: String = "can't block unless ${condition.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 // =============================================================================
@@ -896,6 +987,7 @@ data class AttackTax(
 ) : StaticAbility {
     override val description: String =
         "Creatures can't attack you unless their controller pays $manaCostPerAttacker for each creature they control that's attacking you"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -914,6 +1006,7 @@ data class CantBeAttackedWithout(
 ) : StaticAbility {
     override val description: String =
         "Creatures without ${requiredKeyword.displayName.lowercase()} can't attack you"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -931,6 +1024,7 @@ data class ReduceFaceDownCastingCost(
     val amount: Int
 ) : StaticAbility {
     override val description: String = "Face-down creature spells you cast cost {$amount} less to cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -948,6 +1042,7 @@ data class SetEnchantedLandType(
     override val description: String = "Enchanted land is ${
         if (landType.first().lowercaseChar() in "aeiou") "an" else "a"
     } $landType"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -959,6 +1054,7 @@ data class SetEnchantedLandType(
 @Serializable
 data object GrantShroudToController : StaticAbility {
     override val description: String = "You have shroud"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -979,6 +1075,10 @@ data class AdditionalManaOnTap(
     val amount: DynamicAmount
 ) : StaticAbility {
     override val description: String = "Whenever enchanted land is tapped for mana, its controller adds additional mana"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -991,6 +1091,7 @@ data class AdditionalManaOnTap(
 data object PlayFromTopOfLibrary : StaticAbility {
     override val description: String =
         "Play with the top card of your library revealed. You may play lands and cast spells from the top of your library."
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -1014,6 +1115,7 @@ data class ModifyStatsPerSharedCreatureType(
         val toughStr = if (toughnessModPerCreature >= 0) "+$toughnessModPerCreature" else "$toughnessModPerCreature"
         append("$powerStr/$toughStr for each other creature that shares a creature type with it")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -1027,6 +1129,7 @@ data class ModifyStatsPerSharedCreatureType(
 @Serializable
 data object PreventCycling : StaticAbility {
     override val description: String = "Players can't cycle cards"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -1041,6 +1144,7 @@ data object PreventCycling : StaticAbility {
 @Serializable
 data object PreventManaPoolEmptying : StaticAbility {
     override val description: String = "Players don't lose unspent mana as steps and phases end"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -1056,6 +1160,7 @@ data object PreventManaPoolEmptying : StaticAbility {
 @Serializable
 data object RevealFirstDrawEachTurn : StaticAbility {
     override val description: String = "Reveal the first card you draw each turn"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -1075,6 +1180,7 @@ data class IncreaseMorphCost(
     val amount: Int
 ) : StaticAbility {
     override val description: String = "All morph costs cost {$amount} more"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
 /**
@@ -1095,6 +1201,10 @@ data class IncreaseSpellCostByFilter(
     val amount: Int
 ) : StaticAbility {
     override val description: String = "${filter.description} spells cost {$amount} more to cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 // =============================================================================
@@ -1131,6 +1241,11 @@ data class AnimateLandGroup(
         if (creatureSubtypes.isNotEmpty()) append(" ${creatureSubtypes.joinToString(" ")}")
         append(" creatures that are still lands")
     }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newSubtypes = creatureSubtypes.map { replacer.replaceCreatureType(it) }
+        return if (newFilter !== filter || newSubtypes != creatureSubtypes) copy(filter = newFilter, creatureSubtypes = newSubtypes) else this
+    }
 }
 
 // =============================================================================
@@ -1152,6 +1267,10 @@ data class GrantFlashToSpellType(
     val filter: GameObjectFilter
 ) : StaticAbility {
     override val description: String = "Any player may cast ${filter.description} spells as though they had flash"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -1170,6 +1289,10 @@ data class GrantCantBeCountered(
     val filter: GameObjectFilter
 ) : StaticAbility {
     override val description: String = "${filter.description} spells can't be countered"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 /**
@@ -1184,4 +1307,5 @@ data class GrantCantBeCountered(
 @Serializable
 data object UntapDuringOtherUntapSteps : StaticAbility {
     override val description: String = "Untap all permanents you control during each other player's untap step"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }

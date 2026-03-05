@@ -8,6 +8,7 @@ import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.TriggeredAbility
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,6 +28,7 @@ data class TapUntapEffect(
     val tap: Boolean = true
 ) : Effect {
     override val description: String = "${if (tap) "Tap" else "Untap"} ${target.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -65,6 +67,13 @@ data class ModifyStatsEffect(
         append("$pDesc/$tDesc")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newPower = powerModifier.applyTextReplacement(replacer)
+        val newToughness = toughnessModifier.applyTextReplacement(replacer)
+        return if (newPower !== powerModifier || newToughness !== toughnessModifier)
+            copy(powerModifier = newPower, toughnessModifier = newToughness) else this
+    }
 }
 
 /**
@@ -81,6 +90,8 @@ data class LoseAllCreatureTypesEffect(
         append("${target.description} loses all creature types")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -96,6 +107,8 @@ data class AddCountersEffect(
 ) : Effect {
     override val description: String =
         "Put $count $counterType counter${if (count != 1) "s" else ""} on ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -111,6 +124,8 @@ data class RemoveCountersEffect(
 ) : Effect {
     override val description: String =
         "Remove $count $counterType counter${if (count != 1) "s" else ""} from ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -134,6 +149,8 @@ data class GrantKeywordUntilEndOfTurnEffect(
         append("${target.description} gains ${keyword.lowercase().replace('_', ' ')}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -157,6 +174,8 @@ data class RemoveKeywordUntilEndOfTurnEffect(
         append("${target.description} loses ${keyword.lowercase().replace('_', ' ')}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -174,6 +193,8 @@ data class AddMinusCountersEffect(
 ) : Effect {
     override val description: String =
         "Put $count -1/-1 counter${if (count != 1) "s" else ""} on ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -207,6 +228,11 @@ data class TransformAllCreaturesEffect(
         append(" ")
         append(effects.joinToString(", "))
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newType = addCreatureType?.let { replacer.replaceCreatureType(it) }
+        return if (newType != addCreatureType) copy(addCreatureType = newType) else this
+    }
 }
 
 /**
@@ -220,6 +246,8 @@ data class TapTargetCreaturesEffect(
     val maxTargets: Int
 ) : Effect {
     override val description: String = "Tap up to $maxTargets target creature${if (maxTargets > 1) "s" else ""}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -248,6 +276,8 @@ data class ChangeCreatureTypeTextEffect(
             append(" The new creature type can't be ${excludedTypes.joinToString(" or ")}.")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -268,6 +298,11 @@ data class GrantTriggeredAbilityUntilEndOfTurnEffect(
     override val description: String = buildString {
         append("${target.description} gains \"${ability.description}\"")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newAbility !== ability) copy(ability = newAbility) else this
     }
 }
 
@@ -292,6 +327,11 @@ data class GrantActivatedAbilityUntilEndOfTurnEffect(
         append("${target.description} gains \"${ability.description}\"")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newAbility !== ability) copy(ability = newAbility) else this
+    }
 }
 
 
@@ -311,6 +351,11 @@ data class GainControlByMostOfSubtypeEffect(
 ) : Effect {
     override val description: String =
         "the player who controls the most ${subtype.value}s gains control of ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val new = replacer.replaceSubtype(subtype)
+        return if (new == subtype) this else copy(subtype = new)
+    }
 }
 
 /**
@@ -331,6 +376,8 @@ data class GainControlEffect(
             append(" ${duration.description}")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -347,6 +394,8 @@ data class GainControlByActivePlayerEffect(
     val target: EffectTarget = EffectTarget.Self
 ) : Effect {
     override val description: String = "that player gains control of ${target.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -360,6 +409,8 @@ data class TurnFaceDownEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0)
 ) : Effect {
     override val description: String = "Turn ${target.description} face down"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -373,6 +424,8 @@ data class TurnFaceUpEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0)
 ) : Effect {
     override val description: String = "Turn ${target.description} face up"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -413,6 +466,13 @@ data class ChooseCreatureTypeModifyStatsEffect(
         if (grantKeyword != null) append(" and gain ${grantKeyword.lowercase()}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newPower = powerModifier.applyTextReplacement(replacer)
+        val newToughness = toughnessModifier.applyTextReplacement(replacer)
+        return if (newPower !== powerModifier || newToughness !== toughnessModifier)
+            copy(powerModifier = newPower, toughnessModifier = newToughness) else this
+    }
 }
 
 /**
@@ -444,6 +504,8 @@ data class BecomeChosenTypeAllCreaturesEffect(
         append("becomes that type")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -465,6 +527,8 @@ data class BecomeCreatureTypeEffect(
         if (excludedTypes.isNotEmpty()) append(" other than ${excludedTypes.joinToString(", ")}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -485,6 +549,8 @@ data class GiveControlToTargetPlayerEffect(
     val duration: Duration = Duration.Permanent
 ) : Effect {
     override val description: String = "target opponent gains control of ${permanent.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -506,6 +572,8 @@ data class ExchangeControlEffect(
 ) : Effect {
     override val description: String =
         "Exchange control of ${target1.description} and ${target2.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -553,6 +621,8 @@ data class GrantToEnchantedCreatureTypeGroupEffect(
         }
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -575,6 +645,13 @@ data class SetGroupCreatureSubtypesEffect(
     override val description: String = buildString {
         append("${filter.description} become ${subtypes.joinToString(" ")}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newSubtypes = subtypes.map { replacer.replaceCreatureType(it) }.toSet()
+        return if (newFilter !== filter || newSubtypes != subtypes)
+            copy(filter = newFilter, subtypes = newSubtypes) else this
     }
 }
 
@@ -599,6 +676,11 @@ data class SetCreatureSubtypesEffect(
         append("${target.description} becomes a ${subtypes.joinToString(" ")}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newSubtypes = subtypes.map { replacer.replaceCreatureType(it) }.toSet()
+        return if (newSubtypes != subtypes) copy(subtypes = newSubtypes) else this
+    }
 }
 
 /**
@@ -621,6 +703,11 @@ data class ChangeGroupColorEffect(
     override val description: String = buildString {
         append("${filter.description} become ${colors.joinToString(", ") { it.lowercase() }}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
     }
 }
 
@@ -645,6 +732,13 @@ data class GrantActivatedAbilityToGroupEffect(
         append("${filter.description} gain \"${ability.description}\"")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newFilter !== filter || newAbility !== ability)
+            copy(filter = newFilter, ability = newAbility) else this
+    }
 }
 
 /**
@@ -666,6 +760,8 @@ data class ChooseCreatureTypeGainControlEffect(
 ) : Effect {
     override val description: String =
         "Choose a creature type. If you control more creatures of that type than each other player, you gain control of all creatures of that type"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -691,6 +787,8 @@ data class DistributeCountersFromSelfEffect(
 ) : Effect {
     override val description: String =
         "Move any number of $counterType counters from this creature onto other creatures"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -714,6 +812,11 @@ data class SetBasePowerEffect(
     override val description: String = buildString {
         append("Change ${target.description}'s base power to ${power.description}")
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newPower = power.applyTextReplacement(replacer)
+        return if (newPower !== power) copy(power = newPower) else this
     }
 }
 
@@ -743,4 +846,6 @@ data class AnimateLandEffect(
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
         append(". It's still a land.")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

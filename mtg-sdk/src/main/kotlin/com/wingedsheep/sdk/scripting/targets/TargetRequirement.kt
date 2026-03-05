@@ -2,6 +2,8 @@ package com.wingedsheep.sdk.scripting.targets
 
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -23,7 +25,7 @@ import kotlinx.serialization.Serializable
  * - "one or two target creatures": count=2, minCount=1
  */
 @Serializable
-sealed interface TargetRequirement {
+sealed interface TargetRequirement : TextReplaceable<TargetRequirement> {
     val description: String
     val count: Int get() = 1  // Maximum targets
     val minCount: Int get() = count  // Minimum targets (defaults to count)
@@ -50,6 +52,7 @@ data class TargetPlayer(
     override val id: String? = null
 ) : TargetRequirement {
     override val description: String = if (count == 1) "target player" else "target $count players"
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
 /**
@@ -63,6 +66,7 @@ data class TargetOpponent(
     override val id: String? = null
 ) : TargetRequirement {
     override val description: String = if (count == 1) "target opponent" else "target $count opponents"
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
 // =============================================================================
@@ -111,6 +115,7 @@ data class AnyTarget(
     override val id: String? = null
 ) : TargetRequirement {
     override val description: String = if (count == 1) "any target" else "$count targets"
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
 /**
@@ -124,6 +129,7 @@ data class TargetCreatureOrPlayer(
     override val id: String? = null
 ) : TargetRequirement {
     override val description: String = if (count == 1) "target creature or player" else "$count targets (creatures or players)"
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
 /**
@@ -137,6 +143,7 @@ data class TargetCreatureOrPlaneswalker(
     override val id: String? = null
 ) : TargetRequirement {
     override val description: String = if (count == 1) "target creature or planeswalker" else "$count targets (creatures or planeswalkers)"
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
 // =============================================================================
@@ -157,6 +164,7 @@ data class TargetSpellOrPermanent(
     override val id: String? = null
 ) : TargetRequirement {
     override val description: String = if (count == 1) "target spell or permanent" else "$count target spells or permanents"
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
 // =============================================================================
@@ -209,6 +217,11 @@ data class TargetObject(
         append("target ")
         append(if (count == 1) filter.description else "$count ${filter.description}s")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
 }
 
 // =============================================================================
@@ -229,6 +242,11 @@ data class TargetOther(
     override val description: String = "target other ${baseRequirement.description}"
     override val count: Int = baseRequirement.count
     override val optional: Boolean = baseRequirement.optional
+
+    override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement {
+        val newBase = baseRequirement.applyTextReplacement(replacer)
+        return if (newBase !== baseRequirement) copy(baseRequirement = newBase) else this
+    }
 }
 
 /**

@@ -4,6 +4,7 @@ import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.TriggeredAbility
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -21,6 +22,8 @@ data class SkipCombatPhasesEffect(
     val target: EffectTarget = EffectTarget.PlayerRef(Player.TargetPlayer)
 ) : Effect {
     override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} skips all combat phases of their next turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -41,6 +44,8 @@ data class SkipUntapEffect(
         ).joinToString(" and ")
         append("$affectedTypes ${target.description} controls don't untap during their next untap step")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -55,6 +60,8 @@ data class PlayAdditionalLandsEffect(
     val count: Int
 ) : Effect {
     override val description: String = "You may play up to $count additional land${if (count != 1) "s" else ""} this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -67,6 +74,8 @@ data class PlayAdditionalLandsEffect(
 data object AddCombatPhaseEffect : Effect {
     override val description: String =
         "After this main phase, there is an additional combat phase followed by an additional main phase"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -86,6 +95,8 @@ data class TakeExtraTurnEffect(
             append(". At the beginning of that turn's end step, you lose the game")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -97,6 +108,8 @@ data class TakeExtraTurnEffect(
 @Serializable
 data object PreventLandPlaysThisTurnEffect : Effect {
     override val description: String = "You can't play lands this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -115,6 +128,11 @@ data class CreateGlobalTriggeredAbilityUntilEndOfTurnEffect(
 ) : Effect {
     override val description: String =
         "Until end of turn, ${ability.description.replaceFirstChar { it.lowercase() }}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newAbility !== ability) copy(ability = newAbility) else this
+    }
 }
 
 /**
@@ -132,6 +150,11 @@ data class CreatePermanentGlobalTriggeredAbilityEffect(
     val ability: TriggeredAbility
 ) : Effect {
     override val description: String = ability.description
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAbility = ability.applyTextReplacement(replacer)
+        return if (newAbility !== ability) copy(ability = newAbility) else this
+    }
 }
 
 /**
@@ -146,6 +169,8 @@ data class SkipNextTurnEffect(
     val target: EffectTarget = EffectTarget.Controller
 ) : Effect {
     override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} skips their next turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -162,6 +187,8 @@ data class CantCastSpellsEffect(
     val duration: Duration = Duration.EndOfTurn
 ) : Effect {
     override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} can't cast spells ${duration.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -178,6 +205,8 @@ data class LoseGameEffect(
     val message: String? = null
 ) : Effect {
     override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} loses the game"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -199,4 +228,6 @@ data class GrantShroudEffect(
     val duration: Duration = Duration.EndOfTurn
 ) : Effect {
     override val description: String = "${target.description.replaceFirstChar { it.uppercase() }} gains shroud ${duration.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

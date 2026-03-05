@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -39,6 +40,11 @@ data class DealDamageEffect(
         }
         if (cantBePrevented) append(". This damage can't be prevented")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -66,6 +72,11 @@ data class DealDamageToPlayersEffect(
         EffectTarget.Controller -> "Deal ${amount.description} damage to you"
         else -> "Deal ${amount.description} damage to ${target.description}"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -80,6 +91,8 @@ data class DividedDamageEffect(
     val maxTargets: Int = 3
 ) : Effect {
     override val description: String = "Deal $totalDamage damage divided as you choose among $minTargets to $maxTargets target creatures"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -96,4 +109,6 @@ data class FightEffect(
     val target2: EffectTarget
 ) : Effect {
     override val description: String = "${target1.description} fights ${target2.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

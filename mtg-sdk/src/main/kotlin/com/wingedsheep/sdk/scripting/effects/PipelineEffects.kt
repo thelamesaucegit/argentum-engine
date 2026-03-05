@@ -4,8 +4,9 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 import com.wingedsheep.sdk.scripting.references.Player
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
+import com.wingedsheep.sdk.scripting.text.TextReplacer
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -215,6 +216,8 @@ data class GatherCardsEffect(
         if (revealed) append("Reveal ") else append("Look at ")
         append(source.description)
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -256,6 +259,11 @@ data class SelectFromCollectionEffect(
         if (chooser == Chooser.Opponent) append("An opponent ")
         append(selection.description.replaceFirstChar { it.uppercase() })
         append(" from the $from cards")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
     }
 }
 
@@ -302,6 +310,8 @@ data class MoveCollectionEffect(
         append(" the $from cards ")
         append(destination.description)
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -337,6 +347,11 @@ data class RevealUntilEffect(
         append(" library until you reveal a ${matchFilter.description} card")
         if (matchChosenCreatureType) append(" of the chosen type")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = matchFilter.applyTextReplacement(replacer)
+        return if (newFilter !== matchFilter) copy(matchFilter = newFilter) else this
+    }
 }
 
 /**
@@ -350,6 +365,8 @@ data class RevealUntilEffect(
 @Serializable
 data object ChooseCreatureTypeEffect : Effect {
     override val description: String = "Choose a creature type"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -390,6 +407,8 @@ data class ChooseOptionEffect(
             OptionType.COLOR -> "a color"
         })
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -407,6 +426,8 @@ data class EachPlayerChoosesCreatureTypeEffect(
     val storeAs: String
 ) : Effect {
     override val description: String = "Each player chooses a creature type"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -434,6 +455,11 @@ data class SelectTargetEffect(
     val storeAs: String = "pipelineTarget"
 ) : Effect {
     override val description: String = "Choose ${requirement.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newRequirement = requirement.applyTextReplacement(replacer)
+        return if (newRequirement !== requirement) copy(requirement = newRequirement) else this
+    }
 }
 
 /**
@@ -453,6 +479,8 @@ data class GrantMayPlayFromExileEffect(
 ) : Effect {
     override val description: String =
         "Until end of turn, you may play the $from cards from exile"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -471,4 +499,6 @@ data class GrantPlayWithoutPayingCostEffect(
 ) : Effect {
     override val description: String =
         "Until end of turn, you may play the $from cards without paying their mana costs"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

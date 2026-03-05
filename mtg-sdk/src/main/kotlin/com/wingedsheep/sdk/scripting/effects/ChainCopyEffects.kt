@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting.effects
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -116,5 +117,12 @@ data class ChainCopyEffect(
                 append("If the player does, they may copy this spell and may choose a new target for that copy")
             }
         }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newTargetFilter = targetFilter?.applyTextReplacement(replacer)
+        val newCopyTargetReq = copyTargetRequirement.applyTextReplacement(replacer)
+        return if (newTargetFilter !== targetFilter || newCopyTargetReq !== copyTargetRequirement)
+            copy(targetFilter = newTargetFilter, copyTargetRequirement = newCopyTargetReq) else this
     }
 }

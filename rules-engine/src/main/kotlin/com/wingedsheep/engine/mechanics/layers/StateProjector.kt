@@ -12,7 +12,7 @@ import com.wingedsheep.engine.state.components.identity.ChosenCreatureTypeCompon
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.ProtectionComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
-import com.wingedsheep.engine.mechanics.text.SubtypeReplacer
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.CounterType
@@ -171,7 +171,7 @@ class StateProjector(
 
                 fun resolveDynamicAmount(source: DynamicAmount): Int {
                     val effective = if (textReplacement != null) {
-                        SubtypeReplacer.replaceDynamicAmount(source, textReplacement)
+                        source.applyTextReplacement(textReplacement)
                     } else {
                         source
                     }
@@ -344,7 +344,7 @@ class StateProjector(
                 val textReplacement = container.get<TextReplacementComponent>()
                 effects.addAll(continuousEffectComponent.effects.map { effect ->
                     val effectiveFilter = if (textReplacement != null && effect.affectsFilter != null) {
-                        SubtypeReplacer.replaceAffectsFilter(effect.affectsFilter, textReplacement)
+                        effect.affectsFilter.applyTextReplacement(textReplacement)
                     } else {
                         effect.affectsFilter
                     }
@@ -1117,80 +1117,119 @@ data class ContinuousEffectData(
  */
 @Serializable
 sealed interface AffectsFilter {
+
+    fun applyTextReplacement(replacer: TextReplacer): AffectsFilter
+
     @Serializable
-    data object Self : AffectsFilter
+    data object Self : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
     @Serializable
-    data object AllCreatures : AffectsFilter
+    data object AllCreatures : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
     @Serializable
-    data object AllCreaturesYouControl : AffectsFilter
+    data object AllCreaturesYouControl : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
     @Serializable
-    data object AllCreaturesOpponentsControl : AffectsFilter
+    data object AllCreaturesOpponentsControl : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
     @Serializable
-    data class SpecificEntities(val entityIds: Set<EntityId>) : AffectsFilter
+    data class SpecificEntities(val entityIds: Set<EntityId>) : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
     @Serializable
-    data class WithSubtype(val subtype: String) : AffectsFilter
+    data class WithSubtype(val subtype: String) : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter {
+            val new = replacer.replaceCreatureType(subtype)
+            return if (new == subtype) this else WithSubtype(new)
+        }
+    }
 
     /**
      * Other creatures with a specific subtype (excludes the source permanent).
      * Used for lord effects like "Other Bird creatures get +1/+1."
      */
     @Serializable
-    data class OtherCreaturesWithSubtype(val subtype: String) : AffectsFilter
+    data class OtherCreaturesWithSubtype(val subtype: String) : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter {
+            val new = replacer.replaceCreatureType(subtype)
+            return if (new == subtype) this else OtherCreaturesWithSubtype(new)
+        }
+    }
 
     /**
      * Other tapped creatures you control (excludes the source permanent).
      * Used for effects like "Other tapped creatures you control have indestructible."
      */
     @Serializable
-    data object OtherTappedCreaturesYouControl : AffectsFilter
+    data object OtherTappedCreaturesYouControl : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * Other creatures you control (excludes the source permanent).
      * Used for lord effects like "Other creatures you control get +1/+1."
      */
     @Serializable
-    data object OtherCreaturesYouControl : AffectsFilter
+    data object OtherCreaturesYouControl : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * All other creatures (excludes the source permanent).
      */
     @Serializable
-    data object AllOtherCreatures : AffectsFilter
+    data object AllOtherCreatures : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * The permanent this Aura is attached to.
      * Used for Aura effects like "You control enchanted permanent."
      */
     @Serializable
-    data object AttachedPermanent : AffectsFilter
+    data object AttachedPermanent : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * All creatures that have a specific counter type.
      * Used for Aurification: "Each creature with a gold counter on it..."
      */
     @Serializable
-    data class CreaturesWithCounter(val counterType: String) : AffectsFilter
+    data class CreaturesWithCounter(val counterType: String) : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * All creatures you control that have a specific counter type.
      * Used for outlast lords: "Each creature you control with a +1/+1 counter on it has reach."
      */
     @Serializable
-    data class OwnCreaturesWithCounter(val counterType: String) : AffectsFilter
+    data class OwnCreaturesWithCounter(val counterType: String) : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * All face-down creatures.
      * Used for Ixidor, Reality Sculptor: "Face-down creatures get +1/+1."
      */
     @Serializable
-    data object FaceDownCreatures : AffectsFilter
+    data object FaceDownCreatures : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * All creatures of the chosen creature type (resolved dynamically from source's ChosenCreatureTypeComponent).
      * Used for Shared Triumph: "Creatures of the chosen type get +1/+1."
      */
     @Serializable
-    data object ChosenCreatureTypeCreatures : AffectsFilter
+    data object ChosenCreatureTypeCreatures : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter = this
+    }
 
     /**
      * Generic filter that preserves the full GroupFilter and evaluates it
@@ -1199,7 +1238,12 @@ sealed interface AffectsFilter {
      * the predicate combination (e.g., subtype + controller together).
      */
     @Serializable
-    data class Generic(val groupFilter: GroupFilter) : AffectsFilter
+    data class Generic(val groupFilter: GroupFilter) : AffectsFilter {
+        override fun applyTextReplacement(replacer: TextReplacer): AffectsFilter {
+            val new = groupFilter.applyTextReplacement(replacer)
+            return if (new === groupFilter) this else Generic(new)
+        }
+    }
 }
 
 /**

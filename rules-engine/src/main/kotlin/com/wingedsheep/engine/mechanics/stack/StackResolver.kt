@@ -17,7 +17,6 @@ import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.MorphDataComponent
 import com.wingedsheep.engine.state.components.identity.RevealedToComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
-import com.wingedsheep.engine.mechanics.text.SubtypeReplacer
 import com.wingedsheep.sdk.scripting.GrantCantBeCountered
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.core.Color
@@ -620,7 +619,7 @@ class StackResolver(
         val rawSpellEffect = cardComponent?.spellEffect
         val textReplacement = state.getEntity(spellId)?.get<TextReplacementComponent>()
         val spellEffect = if (rawSpellEffect != null && textReplacement != null) {
-            SubtypeReplacer.replaceEffect(rawSpellEffect, textReplacement)
+            rawSpellEffect.applyTextReplacement(textReplacement)
         } else {
             rawSpellEffect
         }

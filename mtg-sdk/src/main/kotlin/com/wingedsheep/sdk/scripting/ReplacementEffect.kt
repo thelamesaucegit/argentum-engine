@@ -5,6 +5,8 @@ import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplaceable
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -52,7 +54,7 @@ import kotlinx.serialization.Serializable
  * ```
  */
 @Serializable
-sealed interface ReplacementEffect {
+sealed interface ReplacementEffect : TextReplaceable<ReplacementEffect> {
     /** Human-readable description of the replacement effect */
     val description: String
 
@@ -75,6 +77,11 @@ data class DoubleTokenCreation(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, create twice that many of those tokens instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -91,6 +98,11 @@ data class ModifyTokenCount(
         if (modifier > 0) append("$modifier more")
         else append("${-modifier} fewer")
         append(" of those tokens instead")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
     }
 }
 
@@ -112,6 +124,11 @@ data class DoubleCounterPlacement(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, place twice that many counters instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -139,6 +156,11 @@ data class ModifyCounterPlacement(
             append(" is placed")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -157,6 +179,11 @@ data class RedirectZoneChange(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, put it into ${newDestination.displayName} instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -172,6 +199,11 @@ data class EntersTapped(
     )
 ) : ReplacementEffect {
     override val description: String = "If ${appliesTo.description}, it enters tapped"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -190,6 +222,11 @@ data class EntersWithCounters(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, it enters with $count ${counterType.description} counters"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -208,6 +245,12 @@ data class EntersWithDynamicCounters(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, it enters with ${count.description} ${counterType.description} counters"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newCount = count.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo || newCount !== count) copy(appliesTo = newAppliesTo, count = newCount) else this
+    }
 }
 
 /**
@@ -224,6 +267,11 @@ data class UndyingEffect(
 ) : ReplacementEffect {
     override val description: String =
         "When this creature dies, if it had no +1/+1 counters on it, return it to the battlefield with a +1/+1 counter"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -240,6 +288,11 @@ data class PersistEffect(
 ) : ReplacementEffect {
     override val description: String =
         "When this creature dies, if it had no -1/-1 counters on it, return it to the battlefield with a -1/-1 counter"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -264,6 +317,11 @@ data class PreventDamage(
             append("$amount of that damage")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -278,6 +336,11 @@ data class RedirectDamage(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, that damage is dealt to ${redirectTo.description} instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -291,6 +354,11 @@ data class DoubleDamage(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, it deals double that damage instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -313,6 +381,14 @@ data class ReplaceDrawWithEffect(
         if (optional) append("you may ")
         append("instead ${replacementEffect.description}")
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newReplacementEffect = replacementEffect.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo || newReplacementEffect !== replacementEffect)
+            copy(appliesTo = newAppliesTo, replacementEffect = newReplacementEffect)
+        else this
+    }
 }
 
 /**
@@ -326,6 +402,11 @@ data class PreventDraw(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, that draw doesn't happen"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -343,6 +424,11 @@ data class PreventLifeGain(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, that player gains no life instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 /**
@@ -357,6 +443,14 @@ data class ReplaceLifeGain(
 ) : ReplacementEffect {
     override val description: String =
         "If ${appliesTo.description}, instead ${replacementEffect.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newReplacementEffect = replacementEffect.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo || newReplacementEffect !== replacementEffect)
+            copy(appliesTo = newAppliesTo, replacementEffect = newReplacementEffect)
+        else this
+    }
 }
 
 /**
@@ -373,6 +467,11 @@ data class ModifyLifeGain(
         2 -> "If ${appliesTo.description}, gain twice that much life instead"
         0 -> "If ${appliesTo.description}, gain no life instead"
         else -> "If ${appliesTo.description}, gain $multiplier times that much life instead"
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
     }
 }
 
@@ -402,6 +501,11 @@ data class EntersAsCopy(
     } else {
         "This creature enters as a copy of any creature on the battlefield"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -422,6 +526,11 @@ data class EntersWithColorChoice(
     )
 ) : ReplacementEffect {
     override val description: String = "As this permanent enters, choose a color"
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -447,6 +556,11 @@ data class EntersWithCreatureTypeChoice(
     } else {
         "As this permanent enters, choose a creature type"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -471,6 +585,11 @@ data class AmplifyEffect(
 ) : ReplacementEffect {
     override val description: String =
         "Amplify $countersPerReveal — As this creature enters, you may reveal any number of cards from your hand that share a creature type with it. For each card revealed this way, put $countersPerReveal +1/+1 counter${if (countersPerReveal > 1) "s" else ""} on it."
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -501,6 +620,11 @@ data class ReplaceDamageWithCounters(
             append(". When there are $sacrificeThreshold or more $counterType counters on this permanent, sacrifice it")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo) copy(appliesTo = newAppliesTo) else this
+    }
 }
 
 // =============================================================================
@@ -517,4 +641,12 @@ data class GenericReplacementEffect(
     val replacement: Effect?,  // null = prevent entirely
     override val appliesTo: GameEvent,
     override val description: String
-) : ReplacementEffect
+) : ReplacementEffect {
+    override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
+        val newAppliesTo = appliesTo.applyTextReplacement(replacer)
+        val newReplacement = replacement?.applyTextReplacement(replacer)
+        return if (newAppliesTo !== appliesTo || newReplacement !== replacement)
+            copy(appliesTo = newAppliesTo, replacement = newReplacement)
+        else this
+    }
+}

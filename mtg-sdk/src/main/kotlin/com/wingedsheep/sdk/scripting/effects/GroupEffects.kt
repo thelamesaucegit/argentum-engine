@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -33,5 +34,12 @@ data class ForEachInGroupEffect(
         append(" ")
         append(filter.description.replaceFirstChar { it.lowercase() })
         if (noRegenerate) append(". They can't be regenerated")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newFilter = filter.applyTextReplacement(replacer)
+        val newEffect = effect.applyTextReplacement(replacer)
+        return if (newFilter !== filter || newEffect !== effect)
+            copy(filter = newFilter, effect = newEffect) else this
     }
 }

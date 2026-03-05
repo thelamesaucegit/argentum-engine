@@ -24,7 +24,6 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
-import com.wingedsheep.engine.mechanics.text.SubtypeReplacer
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
@@ -125,12 +124,12 @@ class ActivateAbilityHandler(
         // Apply text-changing effects to cost and target filters
         val textReplacement = container.get<TextReplacementComponent>()
         val effectiveCost = if (textReplacement != null) {
-            SubtypeReplacer.replaceAbilityCost(ability.cost, textReplacement)
+            ability.cost.applyTextReplacement(textReplacement)
         } else {
             ability.cost
         }
         val effectiveTargetReqs = if (textReplacement != null) {
-            ability.targetRequirements.map { SubtypeReplacer.replaceTargetRequirement(it, textReplacement) }
+            ability.targetRequirements.map { it.applyTextReplacement(textReplacement) }
         } else {
             ability.targetRequirements
         }
@@ -247,7 +246,7 @@ class ActivateAbilityHandler(
         // Apply text-changing effects to cost
         val textReplacement = container.get<TextReplacementComponent>()
         val effectiveCost = if (textReplacement != null) {
-            SubtypeReplacer.replaceAbilityCost(ability.cost, textReplacement)
+            ability.cost.applyTextReplacement(textReplacement)
         } else {
             ability.cost
         }
@@ -374,7 +373,7 @@ class ActivateAbilityHandler(
 
         // Apply text replacement if the source has a TextReplacementComponent
         val finalEffect = if (textReplacement != null) {
-            SubtypeReplacer.replaceEffect(ability.effect, textReplacement)
+            ability.effect.applyTextReplacement(textReplacement)
         } else {
             ability.effect
         }
@@ -489,7 +488,7 @@ class ActivateAbilityHandler(
 
         // Apply text-changing effects to the target requirements for resolution-time re-validation
         val effectiveTargetReqs = if (textReplacement != null) {
-            ability.targetRequirements.map { SubtypeReplacer.replaceTargetRequirement(it, textReplacement) }
+            ability.targetRequirements.map { it.applyTextReplacement(textReplacement) }
         } else {
             ability.targetRequirements
         }

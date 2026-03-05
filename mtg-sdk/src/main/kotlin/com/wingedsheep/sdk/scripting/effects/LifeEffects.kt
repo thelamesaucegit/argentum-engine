@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,6 +28,11 @@ data class GainLifeEffect(
         EffectTarget.Controller -> "You gain ${amount.description} life"
         else -> "${target.description.replaceFirstChar { it.uppercase() }} gains ${amount.description} life"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -47,6 +53,11 @@ data class LoseLifeEffect(
         EffectTarget.Controller -> "You lose ${amount.description} life"
         else -> "${target.description.replaceFirstChar { it.uppercase() }} loses ${amount.description} life"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -59,6 +70,8 @@ data class PayLifeEffect(
     val amount: Int
 ) : Effect {
     override val description: String = "pay $amount life"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -72,6 +85,8 @@ data class OwnerGainsLifeEffect(
     val amount: Int
 ) : Effect {
     override val description: String = "Its owner gains $amount life"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -88,6 +103,8 @@ data class GainLifeForEachLandOnBattlefieldEffect(
     val lifePerLand: Int = 1
 ) : Effect {
     override val description: String = "You gain $lifePerLand life for each $landType on the battlefield"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -113,6 +130,11 @@ data class SetLifeTotalEffect(
         EffectTarget.Controller -> "Your life total becomes ${amount.description}"
         else -> "${target.description.replaceFirstChar { it.uppercase() }}'s life total becomes ${amount.description}"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newAmount = amount.applyTextReplacement(replacer)
+        return if (newAmount !== amount) copy(amount = newAmount) else this
+    }
 }
 
 /**
@@ -131,4 +153,6 @@ data class SetLifeTotalForEachPlayerEffect(
     val perPlayerAmount: DynamicAmount
 ) : Effect {
     override val description: String = "Each player's life total becomes ${perPlayerAmount.description}"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }

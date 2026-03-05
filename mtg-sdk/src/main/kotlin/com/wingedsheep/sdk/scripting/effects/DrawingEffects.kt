@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,6 +31,11 @@ data class DrawCardsEffect(
         }
         else -> "${target.description.replaceFirstChar { it.uppercase() }} draws cards equal to ${count.description}"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newCount = count.applyTextReplacement(replacer)
+        return if (newCount !== count) copy(count = newCount) else this
+    }
 }
 
 /**
@@ -53,6 +59,8 @@ data class EachOpponentDiscardsEffect(
             append(". You draw a card for each card discarded this way")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 
@@ -67,6 +75,8 @@ data class LookAtTargetHandEffect(
     val target: EffectTarget = EffectTarget.PlayerRef(Player.TargetPlayer)
 ) : Effect {
     override val description: String = "Look at ${target.description}'s hand"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -80,6 +90,8 @@ data class LookAtFaceDownCreatureEffect(
     val target: EffectTarget = EffectTarget.ContextTarget(0)
 ) : Effect {
     override val description: String = "Look at target face-down creature"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -95,6 +107,8 @@ data class LookAtAllFaceDownCreaturesEffect(
     val target: EffectTarget = EffectTarget.PlayerRef(Player.TargetPlayer)
 ) : Effect {
     override val description: String = "Look at any face-down creatures ${target.description} controls"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -110,6 +124,8 @@ data class EachPlayerDiscardsOrLoseLifeEffect(
 ) : Effect {
     override val description: String =
         "Each player discards a card. Then each player who didn't discard a creature card this way loses $lifeLoss life."
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -122,6 +138,8 @@ data class EachPlayerDiscardsOrLoseLifeEffect(
 data object EachPlayerReturnsPermanentToHandEffect : Effect {
     override val description: String =
         "each player returns a permanent they control to its owner's hand"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -157,6 +175,11 @@ data class ReplaceNextDrawWithEffect(
 ) : Effect {
     override val description: String =
         "The next time you would draw a card this turn, ${replacementEffect.description} instead"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newReplacement = replacementEffect.applyTextReplacement(replacer)
+        return if (newReplacement !== replacementEffect) copy(replacementEffect = newReplacement) else this
+    }
 }
 
 /**
@@ -168,6 +191,8 @@ data class ReplaceNextDrawWithEffect(
 data object ReadTheRunesEffect : Effect {
     override val description: String =
         "Draw X cards. For each card drawn this way, discard a card unless you sacrifice a permanent."
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -192,6 +217,8 @@ data class DrawUpToEffect(
             else -> append("${target.description.replaceFirstChar { it.uppercase() }} draws up to $maxCards cards")
         }
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**
@@ -210,4 +237,6 @@ data class RevealHandEffect(
         EffectTarget.Controller -> "Reveal your hand"
         else -> "${target.description.replaceFirstChar { it.uppercase() }} reveals their hand"
     }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
