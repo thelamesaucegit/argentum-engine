@@ -499,6 +499,8 @@ object Effects {
 
     /**
      * Create creature tokens.
+     * @param controller Who receives the token. Null = spell controller.
+     *   Use [EffectTarget.TargetController] to give tokens to the target's controller.
      */
     fun CreateToken(
         power: Int,
@@ -506,14 +508,39 @@ object Effects {
         colors: Set<Color> = emptySet(),
         creatureTypes: Set<String>,
         keywords: Set<Keyword> = emptySet(),
-        count: Int = 1
-    ): Effect = CreateTokenEffect(count, power, toughness, colors, creatureTypes, keywords)
+        count: Int = 1,
+        controller: EffectTarget? = null
+    ): Effect = CreateTokenEffect(count, power, toughness, colors, creatureTypes, keywords, controller = controller)
 
     /**
      * Create Treasure tokens.
      */
     fun CreateTreasure(count: Int = 1): Effect =
         CreateTreasureTokensEffect(count)
+
+    /**
+     * Exile target permanent, and its controller gets a token. (e.g., Crib Swap)
+     */
+    fun ExileAndReplaceWithToken(
+        target: EffectTarget,
+        power: Int,
+        toughness: Int,
+        colors: Set<Color> = emptySet(),
+        creatureTypes: Set<String>,
+        keywords: Set<Keyword> = emptySet()
+    ): Effect = EffectPatterns.exileAndReplaceWithToken(target, power, toughness, colors, creatureTypes, keywords)
+
+    /**
+     * Destroy target permanent, and its controller gets a token. (e.g., Beast Within, Pongify)
+     */
+    fun DestroyAndReplaceWithToken(
+        target: EffectTarget,
+        power: Int,
+        toughness: Int,
+        colors: Set<Color> = emptySet(),
+        creatureTypes: Set<String>,
+        keywords: Set<Keyword> = emptySet()
+    ): Effect = EffectPatterns.destroyAndReplaceWithToken(target, power, toughness, colors, creatureTypes, keywords)
 
     // =========================================================================
     // Library Effects

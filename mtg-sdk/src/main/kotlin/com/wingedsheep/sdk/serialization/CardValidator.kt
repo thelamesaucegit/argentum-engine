@@ -13,7 +13,6 @@ import com.wingedsheep.sdk.scripting.effects.ConditionalEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.effects.DestroyAtEndOfCombatEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
-import com.wingedsheep.sdk.scripting.effects.ExileAndReplaceWithTokenEffect
 import com.wingedsheep.sdk.scripting.effects.ExileUntilLeavesEffect
 import com.wingedsheep.sdk.scripting.effects.FlipCoinEffect
 import com.wingedsheep.sdk.scripting.effects.LoseGameEffect
@@ -227,7 +226,6 @@ object CardValidator {
             is RegenerateEffect -> effect.target
             is CantBeRegeneratedEffect -> effect.target
             is ExileUntilLeavesEffect -> effect.target
-            is ExileAndReplaceWithTokenEffect -> effect.target
             is DestroyAtEndOfCombatEffect -> effect.target
             is MustBeBlockedEffect -> effect.target
             is PreventNextDamageEffect -> effect.target

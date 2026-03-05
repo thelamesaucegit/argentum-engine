@@ -1,7 +1,5 @@
 package com.wingedsheep.sdk.scripting.effects
 
-import com.wingedsheep.sdk.core.Color
-import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
@@ -200,45 +198,6 @@ data class ExileUntilLeavesEffect(
 ) : Effect {
     override val description: String =
         "Exile ${target.description} until this permanent leaves the battlefield"
-}
-
-/**
- * Exile a creature and create a token for its controller.
- * Used for effects like Crib Swap: "Exile target creature. Its controller creates a 1/1 token."
- *
- * @property target The creature to exile
- * @property tokenPower Power of the replacement token
- * @property tokenToughness Toughness of the replacement token
- * @property tokenColors Colors of the token (empty for colorless)
- * @property tokenTypes Creature types of the token
- * @property tokenKeywords Keywords the token has
- */
-@SerialName("ExileAndReplaceWithToken")
-@Serializable
-data class ExileAndReplaceWithTokenEffect(
-    val target: EffectTarget,
-    val tokenPower: Int,
-    val tokenToughness: Int,
-    val tokenColors: Set<Color> = emptySet(),
-    val tokenTypes: Set<String>,
-    val tokenKeywords: Set<Keyword> = emptySet()
-) : Effect {
-    override val description: String = buildString {
-        append("Exile ${target.description}. Its controller creates a ")
-        append("$tokenPower/$tokenToughness ")
-        if (tokenColors.isEmpty()) {
-            append("colorless ")
-        } else {
-            append(tokenColors.joinToString(" and ") { it.displayName.lowercase() })
-            append(" ")
-        }
-        append(tokenTypes.joinToString(" "))
-        append(" creature token")
-        if (tokenKeywords.isNotEmpty()) {
-            append(" with ")
-            append(tokenKeywords.joinToString(", ") { it.displayName.lowercase() })
-        }
-    }
 }
 
 /**

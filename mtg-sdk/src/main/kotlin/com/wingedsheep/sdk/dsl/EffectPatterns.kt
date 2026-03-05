@@ -1,6 +1,8 @@
 package com.wingedsheep.sdk.dsl
 
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.effects.CardDestination
@@ -1724,6 +1726,62 @@ object EffectPatterns {
                     baseFilter = GameObjectFilter.Creature.withSubtypeFromVariable("chosenType")
                 ),
                 effect = TapUntapEffect(EffectTarget.Self, tap = false)
+            )
+        )
+    )
+
+    // =========================================================================
+    // Removal + Token Replacement Patterns
+    // =========================================================================
+
+    /**
+     * Exile target permanent, and its controller gets a token. (e.g., Crib Swap)
+     *
+     * Composes MoveToZone(exile) + CreateToken(controller = TargetController).
+     */
+    fun exileAndReplaceWithToken(
+        target: EffectTarget,
+        power: Int,
+        toughness: Int,
+        colors: Set<Color> = emptySet(),
+        creatureTypes: Set<String>,
+        keywords: Set<Keyword> = emptySet()
+    ): CompositeEffect = CompositeEffect(
+        listOf(
+            MoveToZoneEffect(target, Zone.EXILE),
+            CreateTokenEffect(
+                power = power,
+                toughness = toughness,
+                colors = colors,
+                creatureTypes = creatureTypes,
+                keywords = keywords,
+                controller = EffectTarget.TargetController
+            )
+        )
+    )
+
+    /**
+     * Destroy target permanent, and its controller gets a token. (e.g., Beast Within, Pongify)
+     *
+     * Composes MoveToZone(graveyard, byDestruction) + CreateToken(controller = TargetController).
+     */
+    fun destroyAndReplaceWithToken(
+        target: EffectTarget,
+        power: Int,
+        toughness: Int,
+        colors: Set<Color> = emptySet(),
+        creatureTypes: Set<String>,
+        keywords: Set<Keyword> = emptySet()
+    ): CompositeEffect = CompositeEffect(
+        listOf(
+            MoveToZoneEffect(target, Zone.GRAVEYARD, byDestruction = true),
+            CreateTokenEffect(
+                power = power,
+                toughness = toughness,
+                colors = colors,
+                creatureTypes = creatureTypes,
+                keywords = keywords,
+                controller = EffectTarget.TargetController
             )
         )
     )

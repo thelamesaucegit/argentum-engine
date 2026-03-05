@@ -223,6 +223,13 @@ object EffectExecutorUtils {
         // Try stateless resolution first
         resolvePlayerTarget(effectTarget, context)?.let { return it }
 
+        // Handle TargetController: resolve the first target, then look up its controller
+        if (effectTarget is EffectTarget.TargetController) {
+            val targetEntity = context.targets.firstOrNull()?.toEntityId() ?: return null
+            return state.getEntity(targetEntity)?.get<ControllerComponent>()?.playerId
+                ?: state.getEntity(targetEntity)?.get<CardComponent>()?.ownerId
+        }
+
         // Handle state-dependent relational references
         return when (effectTarget) {
             is EffectTarget.PlayerRef -> when (val player = effectTarget.player) {

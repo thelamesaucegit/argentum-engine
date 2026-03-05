@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -50,6 +51,8 @@ data class CreateChosenTokenEffect(
  * @property keywords Keywords the token has (e.g., flying, vigilance)
  * @property name Optional token name (defaults to creature types + "Token")
  * @property imageUri Optional image URI for the token artwork
+ * @property controller Who receives the token. Null means the spell/ability controller (default).
+ *   Use [EffectTarget.TargetController] to give the token to the controller of a targeted permanent.
  */
 @SerialName("CreateToken")
 @Serializable
@@ -61,7 +64,8 @@ data class CreateTokenEffect(
     val creatureTypes: Set<String>,
     val keywords: Set<Keyword> = emptySet(),
     val name: String? = null,
-    val imageUri: String? = null
+    val imageUri: String? = null,
+    val controller: EffectTarget? = null
 ) : Effect {
     constructor(
         count: Int,
@@ -71,8 +75,9 @@ data class CreateTokenEffect(
         creatureTypes: Set<String>,
         keywords: Set<Keyword> = emptySet(),
         name: String? = null,
-        imageUri: String? = null
-    ) : this(DynamicAmount.Fixed(count), power, toughness, colors, creatureTypes, keywords, name, imageUri)
+        imageUri: String? = null,
+        controller: EffectTarget? = null
+    ) : this(DynamicAmount.Fixed(count), power, toughness, colors, creatureTypes, keywords, name, imageUri, controller)
 
     override val description: String = buildString {
         append("Create ")

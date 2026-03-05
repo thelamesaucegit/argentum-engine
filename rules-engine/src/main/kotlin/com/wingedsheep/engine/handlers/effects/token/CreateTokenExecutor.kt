@@ -17,6 +17,7 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.core.ZoneChangeEvent
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import kotlin.reflect.KClass
 
@@ -40,6 +41,14 @@ class CreateTokenExecutor(
         val count = amountEvaluator.evaluate(state, effect.count, context)
         if (count <= 0) return ExecutionResult.success(state)
 
+        // Resolve who receives the token — defaults to spell/ability controller
+        val tokenControllerId = if (effect.controller != null) {
+            EffectExecutorUtils.resolvePlayerTarget(effect.controller, context, state)
+                ?: context.controllerId
+        } else {
+            context.controllerId
+        }
+
         var newState = state
         val createdTokens = mutableListOf<EntityId>()
 
@@ -58,21 +67,21 @@ class CreateTokenExecutor(
                 baseStats = CreatureStats(effect.power, effect.toughness),
                 baseKeywords = effect.keywords,
                 colors = effect.colors,
-                ownerId = context.controllerId,
+                ownerId = tokenControllerId,
                 imageUri = effect.imageUri
             )
 
             val container = ComponentContainer.of(
                 tokenComponent,
                 TokenComponent,
-                ControllerComponent(context.controllerId),
+                ControllerComponent(tokenControllerId),
                 SummoningSicknessComponent
             )
 
             newState = newState.withEntity(tokenId, container)
 
             // Add to battlefield
-            val battlefieldZone = ZoneKey(context.controllerId, Zone.BATTLEFIELD)
+            val battlefieldZone = ZoneKey(tokenControllerId, Zone.BATTLEFIELD)
             newState = newState.addToZone(battlefieldZone, tokenId)
         }
 
@@ -84,7 +93,7 @@ class CreateTokenExecutor(
                 entityName = card.name,
                 fromZone = null,
                 toZone = Zone.BATTLEFIELD,
-                ownerId = context.controllerId
+                ownerId = tokenControllerId
             )
         }
 
