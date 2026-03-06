@@ -614,3 +614,5 @@ test('card does X', async ({ createGame }) => {
 - **Always** emit events for animations, never mutate silently
 - **Always** prefer atomic pipeline effects (Gather/Select/Move via `EffectPatterns`) over monolithic executors for library/zone mechanics
 - **Always** use `Effects.*` facade methods (e.g., `Effects.DrawCards()`, `Effects.Destroy()`) instead of direct effect constructors (e.g., `DrawCardsEffect()`) in card definitions
+- **`Effects.kt`** should only contain foundational atomic effect facades — do not add facades for `EffectPatterns` compositions here
+- **`EffectPatterns.kt`** should contain pipelines composed of atomic effects (e.g., Gather → Select → Move) — this is where reusable multi-step mechanics like Scry, Mill, and SearchLibrary live
