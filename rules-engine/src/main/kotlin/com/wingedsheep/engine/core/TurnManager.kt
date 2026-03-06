@@ -32,7 +32,6 @@ import com.wingedsheep.engine.state.components.player.SkipNextTurnComponent
 import com.wingedsheep.engine.state.components.player.SkipUntapComponent
 import com.wingedsheep.engine.state.components.player.LoseAtEndStepComponent
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
@@ -1308,50 +1307,9 @@ class TurnManager(
     fun hasValidAttackers(state: GameState, playerId: EntityId): Boolean {
         val battlefield = state.getBattlefield()
 
-        // Project state once to get all keywords (including granted abilities)
-        val projected = state.projectedState
-
         return battlefield.any { entityId ->
-            val container = state.getEntity(entityId) ?: return@any false
-            container.get<CardComponent>() ?: return@any false
-            val controller = projected.getController(entityId)
-            val projectedTypes = projected.getProjectedValues(entityId)?.types ?: emptySet()
-
-            // Must be a creature controlled by the player (use projected types for animated lands etc.)
-            if ("CREATURE" !in projectedTypes || controller != playerId) {
-                return@any false
-            }
-
-            // Must be untapped
-            if (container.has<TappedComponent>()) {
-                return@any false
-            }
-
-            // Check projected keywords for Haste/Defender
-            val hasHaste = projected.hasKeyword(entityId, Keyword.HASTE)
-            val hasDefender = projected.hasKeyword(entityId, Keyword.DEFENDER)
-
-            // Must not have summoning sickness (unless it has haste)
-            if (!hasHaste && container.has<SummoningSicknessComponent>()) {
-                return@any false
-            }
-
-            // Must not have defender or "can't attack"
-            if (hasDefender || projected.cantAttack(entityId)) {
-                return@any false
-            }
-
-            // Check creature count attack restriction (e.g., Goblin Goon)
-            if (combatManager.hasCantAttackUnlessRestriction(state, entityId, playerId, projected)) {
-                return@any false
-            }
-
-            // Check "creatures without X can't attack you" (e.g., Form of the Dragon)
-            if (combatManager.hasCantBeAttackedWithoutRestriction(state, entityId, playerId, projected)) {
-                return@any false
-            }
-
-            true
+            combatManager.isValidAttacker(state, entityId, playerId) &&
+                !combatManager.isRestrictedFromAllDefenders(state, entityId, playerId)
         }
     }
 
@@ -1366,50 +1324,9 @@ class TurnManager(
     fun getValidAttackers(state: GameState, playerId: EntityId): List<EntityId> {
         val battlefield = state.getBattlefield()
 
-        // Project state once to get all keywords (including granted abilities)
-        val projected = state.projectedState
-
         return battlefield.filter { entityId ->
-            val container = state.getEntity(entityId) ?: return@filter false
-            container.get<CardComponent>() ?: return@filter false
-            val controller = projected.getController(entityId)
-            val projectedTypes = projected.getProjectedValues(entityId)?.types ?: emptySet()
-
-            // Must be a creature controlled by the player (use projected types for animated lands etc.)
-            if ("CREATURE" !in projectedTypes || controller != playerId) {
-                return@filter false
-            }
-
-            // Must be untapped
-            if (container.has<TappedComponent>()) {
-                return@filter false
-            }
-
-            // Check projected keywords for Haste/Defender
-            val hasHaste = projected.hasKeyword(entityId, Keyword.HASTE)
-            val hasDefender = projected.hasKeyword(entityId, Keyword.DEFENDER)
-
-            // Must not have summoning sickness (unless it has haste)
-            if (!hasHaste && container.has<SummoningSicknessComponent>()) {
-                return@filter false
-            }
-
-            // Must not have defender or "can't attack"
-            if (hasDefender || projected.cantAttack(entityId)) {
-                return@filter false
-            }
-
-            // Check creature count attack restriction (e.g., Goblin Goon)
-            if (combatManager.hasCantAttackUnlessRestriction(state, entityId, playerId, projected)) {
-                return@filter false
-            }
-
-            // Check "creatures without X can't attack you" (e.g., Form of the Dragon)
-            if (combatManager.hasCantBeAttackedWithoutRestriction(state, entityId, playerId, projected)) {
-                return@filter false
-            }
-
-            true
+            combatManager.isValidAttacker(state, entityId, playerId) &&
+                !combatManager.isRestrictedFromAllDefenders(state, entityId, playerId)
         }
     }
 

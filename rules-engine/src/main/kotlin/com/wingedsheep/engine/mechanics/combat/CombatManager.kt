@@ -7,11 +7,9 @@ import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.DamageComponent
-import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.combat.*
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.handlers.PredicateContext
@@ -24,16 +22,19 @@ import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.ManaSymbol
 import com.wingedsheep.sdk.scripting.AttackTax
-import com.wingedsheep.sdk.scripting.CantBeAttackedWithout
 import com.wingedsheep.sdk.scripting.CanBlockAnyNumber
-import com.wingedsheep.sdk.scripting.CantAttackUnless
 import com.wingedsheep.sdk.scripting.CantBlock
 import com.wingedsheep.sdk.scripting.CantBlockUnless
 import com.wingedsheep.sdk.scripting.CombatCondition
 import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
 import com.wingedsheep.sdk.scripting.StaticTarget
+import com.wingedsheep.engine.mechanics.combat.rules.AttackCheckContext
+import com.wingedsheep.engine.mechanics.combat.rules.AttackDefenderRule
+import com.wingedsheep.engine.mechanics.combat.rules.AttackRestrictionRule
 import com.wingedsheep.engine.mechanics.combat.rules.BlockCheckContext
 import com.wingedsheep.engine.mechanics.combat.rules.BlockEvasionRule
+import com.wingedsheep.engine.mechanics.combat.rules.defaultAttackDefenderRules
+import com.wingedsheep.engine.mechanics.combat.rules.defaultAttackRestrictionRules
 import com.wingedsheep.engine.mechanics.combat.rules.defaultBlockEvasionRules
 import java.util.UUID
 
@@ -51,6 +52,8 @@ class CombatManager(
     private val cardRegistry: CardRegistry? = null,
     private val damageCalculator: DamageCalculator = DamageCalculator(),
     private val blockEvasionRules: List<BlockEvasionRule> = defaultBlockEvasionRules(),
+    private val attackRestrictionRules: List<AttackRestrictionRule> = defaultAttackRestrictionRules(),
+    private val attackDefenderRules: List<AttackDefenderRule> = defaultAttackDefenderRules(),
 ) {
 
     // =========================================================================
@@ -74,20 +77,13 @@ class CombatManager(
             if (validation != null) {
                 return ExecutionResult.error(state, validation)
             }
-            // Check creature count attack restrictions (e.g., Goblin Goon)
-            val creatureCountValidation = validateCantAttackUnless(
-                state, attackerId, attackingPlayer, defenderId, projected
-            )
-            if (creatureCountValidation != null) {
-                return ExecutionResult.error(state, creatureCountValidation)
-            }
-
-            // Check "creatures without X can't attack you" restrictions (e.g., Form of the Dragon)
-            val keywordRestriction = validateCantBeAttackedWithout(
-                state, attackerId, defenderId, projected
-            )
-            if (keywordRestriction != null) {
-                return ExecutionResult.error(state, keywordRestriction)
+            // Check per-defender restrictions (CantAttackUnless, CantBeAttackedWithout, etc.)
+            val ctx = AttackCheckContext(state, projected, attackerId, attackingPlayer, cardRegistry)
+            for (rule in attackDefenderRules) {
+                val error = rule.check(ctx, defenderId)
+                if (error != null) {
+                    return ExecutionResult.error(state, error)
+                }
             }
         }
 
@@ -149,58 +145,27 @@ class CombatManager(
 
     /**
      * Validate that a creature can attack.
+     * Delegates to registered [AttackRestrictionRule] instances.
      */
     private fun validateAttacker(
         state: GameState,
         attackingPlayer: EntityId,
         attackerId: EntityId
     ): String? {
-        val container = state.getEntity(attackerId)
-            ?: return "Attacker not found: $attackerId"
+        state.getEntity(attackerId) ?: return "Attacker not found: $attackerId"
+        state.getEntity(attackerId)?.get<CardComponent>() ?: return "Not a card: $attackerId"
 
-        val cardComponent = container.get<CardComponent>()
-            ?: return "Not a card: $attackerId"
-
-        // Use projected state for controller, keywords, and types (includes floating effects like animate land)
-        val projected = state.projectedState
-
-        // Must be a creature (use projected types to handle animated lands etc.)
-        if (!projected.isCreature(attackerId)) {
-            return "Only creatures can attack: ${cardComponent.name}"
+        val ctx = AttackCheckContext(
+            state = state,
+            projected = state.projectedState,
+            attackerId = attackerId,
+            attackingPlayer = attackingPlayer,
+            cardRegistry = cardRegistry
+        )
+        for (rule in attackRestrictionRules) {
+            val error = rule.check(ctx)
+            if (error != null) return error
         }
-
-        // Must be controlled by attacking player (use projected controller for control-changing effects)
-        val controller = projected.getController(attackerId)
-        if (controller != attackingPlayer) {
-            return "You don't control ${cardComponent.name}"
-        }
-
-        // Must be untapped
-        if (container.has<TappedComponent>()) {
-            return "${cardComponent.name} is tapped and cannot attack"
-        }
-
-        // Cannot have summoning sickness (unless it has haste)
-        val hasHaste = projected.hasKeyword(attackerId, Keyword.HASTE)
-        if (!hasHaste && container.has<SummoningSicknessComponent>()) {
-            return "${cardComponent.name} has summoning sickness"
-        }
-
-        // Cannot have defender
-        if (projected.hasKeyword(attackerId, Keyword.DEFENDER)) {
-            return "${cardComponent.name} has defender and cannot attack"
-        }
-
-        // Cannot have "can't attack" (e.g., from Pacifism)
-        if (projected.cantAttack(attackerId)) {
-            return "${cardComponent.name} can't attack"
-        }
-
-        // Cannot be already attacking
-        if (container.has<AttackingComponent>()) {
-            return "${cardComponent.name} is already attacking"
-        }
-
         return null
     }
 
@@ -340,50 +305,22 @@ class CombatManager(
 
     /**
      * Get all creatures that can legally attack for a player.
+     * Delegates to registered [AttackRestrictionRule] and [AttackDefenderRule] instances.
      * Used for validating must-attack requirements.
      */
     private fun getValidAttackers(state: GameState, playerId: EntityId): List<EntityId> {
-        val battlefield = state.getBattlefield()
         val projected = state.projectedState
 
-        return battlefield.filter { entityId ->
-            val container = state.getEntity(entityId) ?: return@filter false
-            container.get<CardComponent>() ?: return@filter false
-            val controller = projected.getController(entityId)
+        return state.getBattlefield().filter { entityId ->
+            state.getEntity(entityId)?.get<CardComponent>() ?: return@filter false
 
-            // Must be a creature controlled by the player (use projected types for animated lands etc.)
-            if (!projected.isCreature(entityId) || controller != playerId) {
-                return@filter false
-            }
+            val ctx = AttackCheckContext(state, projected, entityId, playerId, cardRegistry)
 
-            // Must be untapped
-            if (container.has<TappedComponent>()) {
-                return@filter false
-            }
+            // Check per-creature restrictions
+            if (attackRestrictionRules.any { it.check(ctx) != null }) return@filter false
 
-            // Check projected keywords for Haste/Defender
-            val hasHaste = projected.hasKeyword(entityId, Keyword.HASTE)
-            val hasDefender = projected.hasKeyword(entityId, Keyword.DEFENDER)
-
-            // Must not have summoning sickness (unless it has haste)
-            if (!hasHaste && container.has<SummoningSicknessComponent>()) {
-                return@filter false
-            }
-
-            // Must not have defender or "can't attack"
-            if (hasDefender || projected.cantAttack(entityId)) {
-                return@filter false
-            }
-
-            // Check creature count attack restriction (e.g., Goblin Goon)
-            if (hasCantAttackUnlessRestriction(state, entityId, playerId, projected)) {
-                return@filter false
-            }
-
-            // Check "creatures without X can't attack you" (e.g., Form of the Dragon)
-            if (hasCantBeAttackedWithoutRestriction(state, entityId, playerId, projected)) {
-                return@filter false
-            }
+            // Check per-defender restrictions (must be able to attack at least one opponent)
+            if (attackDefenderRules.any { it.restrictsAllDefenders(ctx) }) return@filter false
 
             true
         }
@@ -1873,6 +1810,26 @@ class CombatManager(
     // =========================================================================
 
     /**
+     * Check if a creature passes all per-creature attack restrictions.
+     * Does NOT check per-defender restrictions.
+     */
+    fun isValidAttacker(state: GameState, attackerId: EntityId, attackingPlayer: EntityId): Boolean {
+        val projected = state.projectedState
+        val ctx = AttackCheckContext(state, projected, attackerId, attackingPlayer, cardRegistry)
+        return attackRestrictionRules.all { it.check(ctx) == null }
+    }
+
+    /**
+     * Check if a creature is restricted from attacking all opponents by per-defender rules.
+     * Returns true if the creature cannot attack any opponent.
+     */
+    fun isRestrictedFromAllDefenders(state: GameState, attackerId: EntityId, attackingPlayer: EntityId): Boolean {
+        val projected = state.projectedState
+        val ctx = AttackCheckContext(state, projected, attackerId, attackingPlayer, cardRegistry)
+        return attackDefenderRules.any { it.restrictsAllDefenders(ctx) }
+    }
+
+    /**
      * Get all attacking creatures.
      */
     fun getAttackers(state: GameState): List<EntityId> {
@@ -2220,7 +2177,7 @@ class CombatManager(
     }
 
     // =========================================================================
-    // Conditional Attack/Block Restrictions (CantAttackUnless / CantBlockUnless)
+    // Conditional Block Restrictions (CantBlockUnless)
     // =========================================================================
 
     /**
@@ -2233,11 +2190,11 @@ class CombatManager(
     }
 
     /**
-     * Evaluate a [CombatCondition] for an attack restriction.
+     * Evaluate a [CombatCondition] for an attack/block restriction.
      *
      * @param controllerId The creature's controller
-     * @param opponentId The defending player
-     * @return true if the condition is satisfied (attack is allowed)
+     * @param opponentId The opposing player
+     * @return true if the condition is satisfied (action is allowed)
      */
     private fun evaluateCombatCondition(
         condition: CombatCondition,
@@ -2498,129 +2455,6 @@ class CombatManager(
     }
 
     /**
-     * Validate CantAttackUnless restrictions for an attacker.
-     *
-     * @return Error message if restricted, null if allowed
-     */
-    private fun validateCantAttackUnless(
-        state: GameState,
-        attackerId: EntityId,
-        attackingPlayer: EntityId,
-        defenderId: EntityId,
-        projected: ProjectedState
-    ): String? {
-        val container = state.getEntity(attackerId) ?: return null
-        if (container.has<FaceDownComponent>()) return null
-        val cardComponent = container.get<CardComponent>() ?: return null
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: return null
-
-        val restriction = cardDef.staticAbilities
-            .filterIsInstance<CantAttackUnless>()
-            .firstOrNull { it.target == StaticTarget.SourceCreature } ?: return null
-
-        val defendingPlayer = findDefendingPlayer(state, defenderId)
-
-        if (!evaluateCombatCondition(restriction.condition, state, attackingPlayer, defendingPlayer, projected)) {
-            return "${cardComponent.name} ${restriction.description}"
-        }
-
-        return null
-    }
-
-    /**
-     * Check if a creature has a CantAttackUnless restriction that prevents it
-     * from attacking any opponent. Used for legal action generation.
-     *
-     * @return true if the creature is restricted from attacking all opponents
-     */
-    fun hasCantAttackUnlessRestriction(
-        state: GameState,
-        attackerId: EntityId,
-        attackingPlayer: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val container = state.getEntity(attackerId) ?: return false
-        if (container.has<FaceDownComponent>()) return false
-        val cardComponent = container.get<CardComponent>() ?: return false
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: return false
-
-        val restriction = cardDef.staticAbilities
-            .filterIsInstance<CantAttackUnless>()
-            .firstOrNull { it.target == StaticTarget.SourceCreature } ?: return false
-
-        // Check against all opponents - if restricted against all, can't attack anyone
-        val opponents = state.turnOrder.filter { it != attackingPlayer }
-        return opponents.all { opponentId ->
-            !evaluateCombatCondition(restriction.condition, state, attackingPlayer, opponentId, projected)
-        }
-    }
-
-    // =========================================================================
-    // CantBeAttackedWithout Restrictions (e.g., Form of the Dragon)
-    // =========================================================================
-
-    /**
-     * Validate CantBeAttackedWithout restrictions for an attacker.
-     * Scans the defending player's battlefield for permanents with CantBeAttackedWithout
-     * and checks if the attacker has the required keyword.
-     *
-     * @return Error message if restricted, null if allowed
-     */
-    private fun validateCantBeAttackedWithout(
-        state: GameState,
-        attackerId: EntityId,
-        defenderId: EntityId,
-        projected: ProjectedState
-    ): String? {
-        // Only applies when attacking a player directly
-        val defendingPlayer = findDefendingPlayer(state, defenderId)
-
-        val defenderPermanents = projected.getBattlefieldControlledBy(defendingPlayer)
-        for (permId in defenderPermanents) {
-            val container = state.getEntity(permId) ?: continue
-            val cardComponent = container.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: continue
-            for (ability in cardDef.staticAbilities) {
-                if (ability is CantBeAttackedWithout) {
-                    if (!projected.hasKeyword(attackerId, ability.requiredKeyword)) {
-                        val attackerName = state.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
-                        return "$attackerName can't attack: ${ability.description}"
-                    }
-                }
-            }
-        }
-        return null
-    }
-
-    /**
-     * Check if a creature is restricted from attacking all opponents due to
-     * CantBeAttackedWithout restrictions on their battlefields.
-     * Used for legal action generation.
-     *
-     * @return true if the creature can't attack any opponent
-     */
-    fun hasCantBeAttackedWithoutRestriction(
-        state: GameState,
-        attackerId: EntityId,
-        attackingPlayer: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val opponents = state.turnOrder.filter { it != attackingPlayer }
-        return opponents.all { opponentId ->
-            val defenderPermanents = projected.getBattlefieldControlledBy(opponentId)
-            defenderPermanents.any { permId ->
-                val container = state.getEntity(permId) ?: return@any false
-                val cardComponent = container.get<CardComponent>() ?: return@any false
-                val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: return@any false
-                cardDef.staticAbilities.any { ability ->
-                    ability is CantBeAttackedWithout &&
-                        !projected.hasKeyword(attackerId, ability.requiredKeyword)
-                }
-            }
-        }
-    }
-
-    /**
      * Validate CantBlockUnless restrictions for a blocker.
      *
      * @return Error message if restricted, null if allowed
@@ -2683,15 +2517,4 @@ class CombatManager(
         return !evaluateCombatCondition(restriction.condition, state, blockingPlayer, attackingPlayer, projected)
     }
 
-    /**
-     * Find the defending player given a defender entity (could be a player or planeswalker).
-     */
-    private fun findDefendingPlayer(state: GameState, defenderId: EntityId): EntityId {
-        // If the defender is a player directly, return it
-        if (state.getEntity(defenderId)?.has<LifeTotalComponent>() == true) {
-            return defenderId
-        }
-        // Otherwise it's a planeswalker — find its controller
-        return state.getEntity(defenderId)?.get<ControllerComponent>()?.playerId ?: defenderId
-    }
 }
