@@ -22,6 +22,7 @@ val WalkingDesecration = card("Walking Desecration") {
     activatedAbility {
         cost = Costs.Composite(Costs.Mana("{B}"), Costs.Tap)
         effect = EffectPatterns.chooseCreatureTypeMustAttack()
+        description = "Creatures of the creature type of your choice attack this turn if able"
     }
 
     metadata {
