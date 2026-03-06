@@ -431,17 +431,10 @@ data class TurnFaceUpEffect(
 /**
  * Choose a creature type. Each creature becomes that type until end of turn.
  *
- * Used for Standardize: "Choose a creature type other than Wall. Each creature becomes
- * that type until end of turn."
- *
- * At resolution time, the executor:
- * 1. Presents a ChooseOptionDecision with creature types (excluding any in excludedTypes)
- * 2. Pushes a BecomeChosenTypeAllCreaturesContinuation
- * 3. On response, creates a floating effect that sets all creatures' subtypes
- *
- * @property excludedTypes Creature types that cannot be chosen (e.g., "Wall")
- * @property duration How long the effect lasts
+ * @deprecated Use [com.wingedsheep.sdk.dsl.EffectPatterns.becomeChosenTypeAllCreatures] instead,
+ * which composes ChooseOptionEffect → ForEachInGroupEffect → SetCreatureSubtypesEffect pipeline.
  */
+@Deprecated("Use EffectPatterns.becomeChosenTypeAllCreatures() pipeline instead")
 @SerialName("BecomeChosenTypeAllCreatures")
 @Serializable
 data class BecomeChosenTypeAllCreaturesEffect(
@@ -614,19 +607,27 @@ data class SetGroupCreatureSubtypesEffect(
  *
  * Creates a floating effect on Layer.TYPE that replaces creature subtypes.
  *
- * @property subtypes The set of subtypes to replace existing creature subtypes with
+ * @property subtypes The set of subtypes to replace existing creature subtypes with (used when fromChosenValueKey is null)
  * @property target The creature to change
  * @property duration How long the effect lasts
+ * @property fromChosenValueKey When non-null, reads the subtype from EffectContext.chosenValues[key]
+ *   instead of using the hardcoded [subtypes] field. Used in pipeline compositions where the
+ *   subtype is chosen at runtime via ChooseOptionEffect.
  */
 @SerialName("SetCreatureSubtypes")
 @Serializable
 data class SetCreatureSubtypesEffect(
-    val subtypes: Set<String>,
+    val subtypes: Set<String> = emptySet(),
     val target: EffectTarget = EffectTarget.Self,
-    val duration: Duration = Duration.Permanent
+    val duration: Duration = Duration.Permanent,
+    val fromChosenValueKey: String? = null
 ) : Effect {
     override val description: String = buildString {
-        append("${target.description} becomes a ${subtypes.joinToString(" ")}")
+        if (fromChosenValueKey != null) {
+            append("${target.description} becomes the chosen creature type")
+        } else {
+            append("${target.description} becomes a ${subtypes.joinToString(" ")}")
+        }
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
 

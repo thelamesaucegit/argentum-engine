@@ -142,25 +142,29 @@ Eliminates 4-5 bespoke "choose a creature type, then affect that type" executors
 
 ### 3b. Decompose `ChooseCreatureTypeModifyStatsEffect`
 
-- [ ] **Express as pipeline:**
+- [x] **Express as pipeline:**
   ```
   ChooseOption(CREATURE_TYPE)
   → ForEachInGroup(ChosenSubtype, ModifyStats(+X/+Y))
   ```
-- [ ] **Handle optional `grantKeyword`** — compose with `GrantKeywordUntilEndOfTurn` in the
+- [x] **Handle optional `grantKeyword`** — compose with `GrantKeywordUntilEndOfTurn` in the
       ForEachInGroup body
-- [ ] **Migrate card usages** (Defensive Maneuvers, Tribal Unity, Tribal Forcemage)
-- [ ] **Deprecate `ChooseCreatureTypeModifyStatsExecutor`**
+- [x] **Migrate card usages** (Defensive Maneuvers, Tribal Unity, Tribal Forcemage)
+- [x] **Deprecate `ChooseCreatureTypeModifyStatsExecutor`**
 
 ### 3c. Decompose `BecomeChosenTypeAllCreaturesEffect`
 
-- [ ] **Express as pipeline:**
+- [x] **Express as pipeline:**
   ```
   ChooseOption(CREATURE_TYPE, excludedOptions)
   → ForEachInGroup(AllCreatures, SetCreatureSubtypes(fromChosenValue))
   ```
-- [ ] **Migrate card usages** (Standardize, etc.)
-- [ ] **Deprecate `BecomeChosenTypeAllCreaturesExecutor`**
+- [x] **Extended `SetCreatureSubtypesEffect`** with `fromChosenValueKey` field — when non-null,
+      reads subtype from `EffectContext.chosenValues[key]` instead of hardcoded subtypes
+- [x] **Added `EffectPatterns.becomeChosenTypeAllCreatures()`** factory with `excludedTypes`,
+      `controllerOnly`, and `duration` parameters
+- [x] **Migrate card usages** (Standardize, Mistform Wakecaster)
+- [x] **Deprecate `BecomeChosenTypeAllCreaturesExecutor`**
 
 ### 3d. Decompose `ChooseCreatureTypeGainControlEffect`
 
@@ -262,6 +266,6 @@ These effects are irreducibly complex or interact with engine internals that pip
 |-------|-----------|---------------------|---------------|
 | 1 | 0 | 0 (migration only) | Convention alignment |
 | 2 | 2 (`MoveType.Destroy`, `CardSource.BattlefieldMatching`) | 3 (`DestroyAll`, `ReturnAllToHand`, `DestroyAllSharingType`) | ~75% pipeline |
-| 3 | 1 (`GroupFilter.ChosenSubtype`) | 4 (`ChooseCreatureTypeModifyStats`, `BecomeChosenTypeAllCreatures`, `ChooseCreatureTypeGainControl`, `ChooseCreatureTypeMustAttack`) | ~82% pipeline |
+| 3 | 1 (`GroupFilter.ChosenSubtype`) + 1 (`SetCreatureSubtypesEffect.fromChosenValueKey`) | 4 (`ChooseCreatureTypeModifyStats`, `BecomeChosenTypeAllCreatures`, `ChooseCreatureTypeGainControl`, `ChooseCreatureTypeMustAttack`) | ~82% pipeline |
 | 4 | 1-2 (`CardSource.FromLinkedExile`, optional `FilterCollectionEffect`) | 2 (`ExileGroupAndLink`, `ReturnLinkedExile`) | ~85% pipeline |
 | **Total** | **4-5** | **~9** | **~85%** |

@@ -39,6 +39,15 @@ class SetCreatureSubtypesExecutor : EffectExecutor<SetCreatureSubtypesEffect> {
             return ExecutionResult.success(state)
         }
 
+        // Resolve subtypes: from chosen value in context, or from hardcoded field
+        val subtypes = if (effect.fromChosenValueKey != null) {
+            val chosen = context.chosenValues[effect.fromChosenValueKey]
+                ?: return ExecutionResult.success(state)
+            setOf(chosen)
+        } else {
+            effect.subtypes
+        }
+
         val sourceName = context.sourceId?.let { state.getEntity(it)?.get<CardComponent>()?.name }
 
         val floatingEffect = ActiveFloatingEffect(
@@ -46,7 +55,7 @@ class SetCreatureSubtypesExecutor : EffectExecutor<SetCreatureSubtypesEffect> {
             effect = FloatingEffectData(
                 layer = Layer.TYPE,
                 sublayer = null,
-                modification = SerializableModification.SetCreatureSubtypes(effect.subtypes),
+                modification = SerializableModification.SetCreatureSubtypes(subtypes),
                 affectedEntities = setOf(targetId)
             ),
             duration = effect.duration,

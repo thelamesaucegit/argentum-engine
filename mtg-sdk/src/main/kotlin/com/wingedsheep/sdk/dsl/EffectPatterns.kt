@@ -37,6 +37,7 @@ import com.wingedsheep.sdk.scripting.effects.OptionalCostEffect
 import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.RevealUntilEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeEffect
+import com.wingedsheep.sdk.scripting.effects.SetCreatureSubtypesEffect
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.SelectionMode
@@ -1773,6 +1774,39 @@ object EffectPatterns {
             )
         )
     )
+
+    /**
+     * Choose a creature type, then each creature (or each creature you control) becomes
+     * that type until end of turn.
+     *
+     * Pipeline: ChooseOption(creature type, excludedOptions)
+     *         → ForEachInGroup(AllCreatures, SetCreatureSubtypes(fromChosenValue))
+     *
+     * Replaces the monolithic BecomeChosenTypeAllCreaturesEffect.
+     */
+    fun becomeChosenTypeAllCreatures(
+        excludedTypes: List<String> = emptyList(),
+        controllerOnly: Boolean = false,
+        duration: Duration = Duration.EndOfTurn
+    ): CompositeEffect {
+        val key = "chosenCreatureType"
+        val filter = if (controllerOnly) GroupFilter.AllCreaturesYouControl else GroupFilter.AllCreatures
+        return CompositeEffect(listOf(
+            ChooseOptionEffect(
+                optionType = OptionType.CREATURE_TYPE,
+                storeAs = key,
+                excludedOptions = excludedTypes
+            ),
+            ForEachInGroupEffect(
+                filter = filter,
+                effect = SetCreatureSubtypesEffect(
+                    fromChosenValueKey = key,
+                    target = EffectTarget.Self,
+                    duration = duration
+                )
+            )
+        ))
+    }
 
     // =========================================================================
     // Removal + Token Replacement Patterns

@@ -2,9 +2,9 @@ package com.wingedsheep.mtg.sets.definitions.legions.cards
 
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.Costs
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.BecomeChosenTypeAllCreaturesEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureTypeEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -35,7 +35,7 @@ val MistformWakecaster = card("Mistform Wakecaster") {
 
     activatedAbility {
         cost = Costs.Composite(Costs.Mana("{2}{U}{U}"), Costs.Tap)
-        effect = BecomeChosenTypeAllCreaturesEffect(
+        effect = EffectPatterns.becomeChosenTypeAllCreatures(
             controllerOnly = true
         )
     }

@@ -13,12 +13,10 @@ import kotlin.reflect.KClass
 /**
  * Executor for BecomeChosenTypeAllCreaturesEffect.
  *
- * "Choose a creature type other than Wall. Each creature becomes that type until end of turn."
- *
- * This executor:
- * 1. Presents a ChooseOptionDecision with creature types (excluding any in excludedTypes)
- * 2. Pushes a BecomeChosenTypeAllCreaturesContinuation for the next step
+ * @deprecated Use EffectPatterns.becomeChosenTypeAllCreatures() pipeline instead, which composes
+ * ChooseOptionEffect → ForEachInGroupEffect → SetCreatureSubtypesEffect.
  */
+@Deprecated("Use EffectPatterns.becomeChosenTypeAllCreatures() pipeline instead")
 class BecomeChosenTypeAllCreaturesExecutor : EffectExecutor<BecomeChosenTypeAllCreaturesEffect> {
 
     override val effectType: KClass<BecomeChosenTypeAllCreaturesEffect> =
