@@ -7,8 +7,8 @@ import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.effects.ConditionalOnCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
-import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
 /**
@@ -34,12 +34,11 @@ val Dermoplasm = card("Dermoplasm") {
 
     triggeredAbility {
         trigger = Triggers.TurnedFaceUp
-        effect = ReflexiveTriggerEffect(
-            action = EffectPatterns.putFromHand(
-                filter = GameObjectFilter.Creature.withMorph()
-            ),
-            optional = true,
-            reflexiveEffect = MoveToZoneEffect(EffectTarget.Self, Zone.HAND)
+        effect = EffectPatterns.putFromHand(
+            filter = GameObjectFilter.Creature.withMorph()
+        ) then ConditionalOnCollectionEffect(
+            collection = "putting",
+            ifNotEmpty = MoveToZoneEffect(EffectTarget.Self, Zone.HAND)
         )
     }
 

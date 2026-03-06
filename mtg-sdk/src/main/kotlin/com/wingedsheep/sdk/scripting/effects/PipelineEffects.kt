@@ -484,6 +484,40 @@ data class GrantMayPlayFromExileEffect(
 }
 
 /**
+ * Conditionally execute an effect based on whether a named collection is non-empty.
+ *
+ * Used for "if you do" effects where a subsequent action depends on whether
+ * a previous pipeline step actually moved/selected any cards.
+ *
+ * @property collection Name of the collection to check
+ * @property ifNotEmpty Effect to execute if the collection has at least one card
+ * @property ifEmpty Effect to execute if the collection is empty (optional)
+ */
+@SerialName("ConditionalOnCollection")
+@Serializable
+data class ConditionalOnCollectionEffect(
+    val collection: String,
+    val ifNotEmpty: Effect,
+    val ifEmpty: Effect? = null
+) : Effect {
+    override val description: String = buildString {
+        append("If $collection is not empty, ")
+        append(ifNotEmpty.description.replaceFirstChar { it.lowercase() })
+        if (ifEmpty != null) {
+            append(". Otherwise, ")
+            append(ifEmpty.description.replaceFirstChar { it.lowercase() })
+        }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newIfNotEmpty = ifNotEmpty.applyTextReplacement(replacer)
+        val newIfEmpty = ifEmpty?.applyTextReplacement(replacer)
+        return if (newIfNotEmpty !== ifNotEmpty || newIfEmpty !== ifEmpty)
+            copy(ifNotEmpty = newIfNotEmpty, ifEmpty = newIfEmpty) else this
+    }
+}
+
+/**
  * Grant "play without paying mana cost" permission to all cards in a named
  * collection until end of turn. Adds a PlayWithoutPayingCostComponent.
  *

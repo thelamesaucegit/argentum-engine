@@ -576,8 +576,11 @@ class PredicateEvaluator {
             StatePredicate.IsFaceDown -> container.has<FaceDownComponent>()
             StatePredicate.IsFaceUp -> !container.has<FaceDownComponent>()
 
-            // Morph ability
-            StatePredicate.HasMorphAbility -> container.has<MorphDataComponent>()
+            // Morph ability — check both the runtime component (face-down permanents)
+            // and the card definition flag (cards in hand/library/graveyard)
+            StatePredicate.HasMorphAbility ->
+                container.has<MorphDataComponent>() ||
+                container.get<CardComponent>()?.hasMorphAbility == true
 
             // Counter state
             is StatePredicate.HasCounter -> {

@@ -211,7 +211,8 @@ class GameInitializer(
                 ownerId = ownerId,
                 spellEffect = cardDef.spellEffect,
                 imageUri = cardDef.metadata.imageUri,
-                cantBeCountered = cardDef.script.cantBeCountered
+                cantBeCountered = cardDef.script.cantBeCountered,
+                hasMorphAbility = cardDef.keywordAbilities.any { it is KeywordAbility.Morph }
             ),
             OwnerComponent(ownerId),
             ControllerComponent(ownerId)

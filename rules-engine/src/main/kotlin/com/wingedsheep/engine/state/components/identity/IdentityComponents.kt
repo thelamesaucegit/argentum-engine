@@ -32,7 +32,8 @@ data class CardComponent(
     val ownerId: EntityId? = null,  // Original owner of the card
     val spellEffect: Effect? = null,  // Effect for instants/sorceries
     val imageUri: String? = null,  // Optional image URI for card art
-    val cantBeCountered: Boolean = false  // Whether this spell can't be countered
+    val cantBeCountered: Boolean = false,  // Whether this spell can't be countered
+    val hasMorphAbility: Boolean = false  // Whether this card has a morph keyword ability
 ) : Component {
     // Convenience accessors
     val isCreature: Boolean get() = typeLine.isCreature

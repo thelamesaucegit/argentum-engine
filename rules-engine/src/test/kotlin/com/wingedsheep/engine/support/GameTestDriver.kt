@@ -546,7 +546,10 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
-            cantBeCountered = cardDef.script.cantBeCountered
+            cantBeCountered = cardDef.script.cantBeCountered,
+            hasMorphAbility = cardDef.keywordAbilities.any {
+                it is com.wingedsheep.sdk.scripting.KeywordAbility.Morph
+            }
         )
 
         val container = com.wingedsheep.engine.state.ComponentContainer.of(
@@ -664,7 +667,10 @@ class GameTestDriver {
             colors = cardDef.colors,
             ownerId = playerId,
             spellEffect = cardDef.spellEffect,
-            cantBeCountered = cardDef.script.cantBeCountered
+            cantBeCountered = cardDef.script.cantBeCountered,
+            hasMorphAbility = cardDef.keywordAbilities.any {
+                it is com.wingedsheep.sdk.scripting.KeywordAbility.Morph
+            }
         )
 
         var container = com.wingedsheep.engine.state.ComponentContainer.of(
