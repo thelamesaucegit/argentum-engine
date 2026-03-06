@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 139 / 249
+**Implemented:** 140 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -12,7 +12,7 @@
 | Red        | 24    |
 | Green      | 24    |
 | Multicolor | 13    |
-| Colorless  | 3     |
+| Colorless  | 4     |
 | Land       | 3     |
 
 ---
@@ -213,7 +213,7 @@
 - [ ] Sorin, Solemn Visitor
 - [x] Stubborn Denial
 - [ ] Sultai Ascendancy
-- [ ] Sultai Banner
+- [x] Sultai Banner
 - [ ] Sultai Charm
 - [ ] Sultai Flayer
 - [x] Sultai Scavenger

@@ -182,6 +182,7 @@ object KhansOfTarkirSet {
         // Colorless
         AbzanBanner,
         MarduBanner,
+        SultaiBanner,
         WitnessOfTheAges,
 
         // Lands
