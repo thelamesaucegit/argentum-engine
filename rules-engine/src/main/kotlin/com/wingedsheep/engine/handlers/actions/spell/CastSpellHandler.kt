@@ -44,7 +44,6 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.CastRestriction
-import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeModifyStatsEffect
 import com.wingedsheep.sdk.scripting.effects.DividedDamageEffect
 import com.wingedsheep.sdk.scripting.effects.StormCopyEffect
 import com.wingedsheep.sdk.scripting.KeywordAbility
@@ -546,13 +545,6 @@ class CastSpellHandler(
             if (pauseResult != null) return pauseResult
         }
 
-        val spellEffect = cardDef?.script?.spellEffect
-        if (spellEffect is ChooseCreatureTypeModifyStatsEffect) {
-            return pauseForCreatureTypeChoiceForStats(
-                currentState, action, sacrificedPermanentIds, spellTargetRequirements, events
-            )
-        }
-
         // Capture storm count before incrementing (spells cast before this one)
         val stormCount = currentState.spellsCastThisTurn
 
@@ -882,61 +874,6 @@ class CastSpellHandler(
         }
 
         return PaymentResult(currentState, events, null)
-    }
-
-    /**
-     * Pause for creature type choice during casting for ChooseCreatureTypeModifyStatsEffect
-     * (e.g., Tribal Unity, Defensive Maneuvers). Presents all creature types as options.
-     */
-    private fun pauseForCreatureTypeChoiceForStats(
-        currentState: GameState,
-        action: CastSpell,
-        sacrificedPermanentIds: List<EntityId>,
-        spellTargetRequirements: List<com.wingedsheep.sdk.scripting.targets.TargetRequirement>,
-        priorEvents: List<GameEvent>
-    ): ExecutionResult {
-        val allCreatureTypes = com.wingedsheep.sdk.core.Subtype.ALL_CREATURE_TYPES
-        val sourceName = currentState.getEntity(action.cardId)?.get<CardComponent>()?.name
-        val decisionId = java.util.UUID.randomUUID().toString()
-
-        val decision = ChooseOptionDecision(
-            id = decisionId,
-            playerId = action.playerId,
-            prompt = "Choose a creature type",
-            context = DecisionContext(
-                sourceId = action.cardId,
-                sourceName = sourceName,
-                phase = DecisionPhase.CASTING
-            ),
-            options = allCreatureTypes
-        )
-
-        val continuation = CastWithCreatureTypeContinuation(
-            decisionId = decisionId,
-            cardId = action.cardId,
-            casterId = action.playerId,
-            targets = action.targets,
-            xValue = action.xValue,
-            sacrificedPermanents = sacrificedPermanentIds,
-            targetRequirements = spellTargetRequirements,
-            count = 0,
-            creatureTypes = allCreatureTypes
-        )
-
-        val pausedState = currentState
-            .pushContinuation(continuation)
-            .withPendingDecision(decision)
-
-        return ExecutionResult.paused(
-            pausedState.withPriority(action.playerId),
-            decision,
-            priorEvents + DecisionRequestedEvent(
-                decisionId = decisionId,
-                playerId = action.playerId,
-                decisionType = "CHOOSE_OPTION",
-                prompt = decision.prompt
-            )
-        )
     }
 
     /**

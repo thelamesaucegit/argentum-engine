@@ -780,6 +780,30 @@ object Effects {
         excludedOptions: List<String> = emptyList()
     ): Effect = ChooseOptionEffect(optionType, storeAs, prompt, excludedOptions)
 
+    /**
+     * Choose a creature type. Creatures of the chosen type get +X/+Y until end of turn,
+     * optionally gaining a keyword.
+     */
+    fun ChooseCreatureTypeModifyStats(
+        powerModifier: DynamicAmount,
+        toughnessModifier: DynamicAmount,
+        duration: Duration = Duration.EndOfTurn,
+        grantKeyword: Keyword? = null
+    ): Effect = EffectPatterns.chooseCreatureTypeModifyStats(powerModifier, toughnessModifier, duration, grantKeyword)
+
+    /**
+     * Choose a creature type. Creatures of the chosen type get +X/+Y until end of turn,
+     * optionally gaining a keyword. Convenience overload with Int values.
+     */
+    fun ChooseCreatureTypeModifyStats(
+        powerModifier: Int,
+        toughnessModifier: Int,
+        duration: Duration = Duration.EndOfTurn,
+        grantKeyword: Keyword? = null
+    ): Effect = EffectPatterns.chooseCreatureTypeModifyStats(
+        DynamicAmount.Fixed(powerModifier), DynamicAmount.Fixed(toughnessModifier), duration, grantKeyword
+    )
+
     // =========================================================================
     // Chain Copy Effects
     // =========================================================================

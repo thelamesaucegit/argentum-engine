@@ -53,8 +53,8 @@ class TribalUnityScenarioTest : ScenarioTestBase() {
 
                 // Cast Tribal Unity with X=2 (total cost: {2}{2}{G} = 5 mana)
                 game.castXSpell(1, "Tribal Unity", xValue = 2)
-                game.chooseCreatureType("Elf")
                 game.resolveStack()
+                game.chooseCreatureType("Elf")
 
                 // All Elves should get +2/+2
                 val clientState = game.getClientState(1)
@@ -95,8 +95,8 @@ class TribalUnityScenarioTest : ScenarioTestBase() {
                 val elvishWarriorId = game.findPermanent("Elvish Warrior")!!
 
                 game.castXSpell(1, "Tribal Unity", xValue = 0)
-                game.chooseCreatureType("Elf")
                 game.resolveStack()
+                game.chooseCreatureType("Elf")
 
                 val clientState = game.getClientState(1)
                 val elvishWarriorInfo = clientState.cards[elvishWarriorId]
@@ -122,8 +122,8 @@ class TribalUnityScenarioTest : ScenarioTestBase() {
                 val wellwisherId = game.findPermanent("Wellwisher")!!
 
                 game.castXSpell(1, "Tribal Unity", xValue = 3)
-                game.chooseCreatureType("Elf")
                 game.resolveStack()
+                game.chooseCreatureType("Elf")
 
                 val clientState = game.getClientState(1)
 
@@ -157,8 +157,8 @@ class TribalUnityScenarioTest : ScenarioTestBase() {
                 val elvishWarriorId = game.findPermanent("Elvish Warrior")!!
 
                 game.castXSpell(1, "Tribal Unity", xValue = 2)
-                game.chooseCreatureType("Elf")
                 game.resolveStack()
+                game.chooseCreatureType("Elf")
 
                 // Verify buff is active
                 val duringTurn = game.getClientState(1).cards[elvishWarriorId]

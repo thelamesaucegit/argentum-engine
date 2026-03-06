@@ -1,8 +1,8 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeModifyStatsEffect
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
@@ -17,7 +17,7 @@ val TribalUnity = card("Tribal Unity") {
     oracleText = "Creatures of the creature type of your choice get +X/+X until end of turn."
 
     spell {
-        effect = ChooseCreatureTypeModifyStatsEffect(
+        effect = Effects.ChooseCreatureTypeModifyStats(
             powerModifier = DynamicAmount.XValue,
             toughnessModifier = DynamicAmount.XValue
         )

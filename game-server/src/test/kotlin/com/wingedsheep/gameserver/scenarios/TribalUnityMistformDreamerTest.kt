@@ -75,11 +75,9 @@ class TribalUnityMistformDreamerTest : ScenarioTestBase() {
                 // P1 casts Tribal Unity with X=2 (auto-resolves since P2 has no mana left)
                 game.castXSpell(1, "Tribal Unity", xValue = 2)
 
-                // Choose Cleric during casting (creature type is chosen as part of casting)
-                game.chooseCreatureType("Cleric")
-
-                // Resolve the stack — Tribal Unity resolves and applies +X/+X to all Clerics
+                // Resolve the stack — creature type choice happens at resolution
                 game.resolveStack()
+                game.chooseCreatureType("Cleric")
 
                 // Mistform Dreamer (2/1) should now be 4/3 (+2/+2 from Tribal Unity)
                 val clientState = game.getClientState(2)

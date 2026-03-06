@@ -5,7 +5,6 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeModifyStatsEffect
 import com.wingedsheep.sdk.scripting.effects.GainControlByActivePlayerEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -42,7 +41,7 @@ val KaronaFalseGod = card("Karona, False God") {
     // Whenever Karona attacks, creatures of the creature type of your choice get +3/+3 until end of turn.
     triggeredAbility {
         trigger = Triggers.Attacks
-        effect = ChooseCreatureTypeModifyStatsEffect(
+        effect = Effects.ChooseCreatureTypeModifyStats(
             powerModifier = 3,
             toughnessModifier = 3
         )

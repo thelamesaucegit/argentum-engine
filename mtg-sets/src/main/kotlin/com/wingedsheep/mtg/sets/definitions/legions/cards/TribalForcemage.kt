@@ -1,9 +1,10 @@
 package com.wingedsheep.mtg.sets.definitions.legions.cards
 
+import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeModifyStatsEffect
 
 /**
  * Tribal Forcemage
@@ -22,10 +23,10 @@ val TribalForcemage = card("Tribal Forcemage") {
 
     triggeredAbility {
         trigger = Triggers.TurnedFaceUp
-        effect = ChooseCreatureTypeModifyStatsEffect(
+        effect = Effects.ChooseCreatureTypeModifyStats(
             powerModifier = 2,
             toughnessModifier = 2,
-            grantKeyword = "TRAMPLE"
+            grantKeyword = Keyword.TRAMPLE
         )
     }
 

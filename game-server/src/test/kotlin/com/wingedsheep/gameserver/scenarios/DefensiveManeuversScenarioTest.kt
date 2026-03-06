@@ -58,11 +58,9 @@ class DefensiveManeuversScenarioTest : ScenarioTestBase() {
                     result.error shouldBe null
                 }
 
-                // Choose creature type during casting
-                game.chooseCreatureType("Elf")
-
-                // Resolve the spell
+                // Resolve the spell — creature type choice happens at resolution
                 game.resolveStack()
+                game.chooseCreatureType("Elf")
 
                 // All Elves should get +0/+4
                 val clientState = game.getClientState(1)
@@ -130,11 +128,9 @@ class DefensiveManeuversScenarioTest : ScenarioTestBase() {
                 val castResult = game.castSpell(1, "Defensive Maneuvers")
                 withClue("Cast should succeed: ${castResult.error}") { castResult.error shouldBe null }
 
-                // Choose creature type during casting
-                game.chooseCreatureType("Goblin")
-
-                // Resolve the spell (both pass priority)
+                // Resolve the spell — creature type choice happens at resolution
                 game.resolveStack()
+                game.chooseCreatureType("Goblin")
 
                 // Verify the buff is applied (goblins should be 2/5)
                 val clientState = game.getClientState(1)
@@ -215,8 +211,8 @@ class DefensiveManeuversScenarioTest : ScenarioTestBase() {
 
                 // P1 casts DM during their own main phase
                 game.castSpell(1, "Defensive Maneuvers")
-                game.chooseCreatureType("Goblin")
                 game.resolveStack()
+                game.chooseCreatureType("Goblin")
 
                 // Verify buff is active during P1's turn
                 val goblinIds = game.findAllPermanents("Goblin Bully")
@@ -304,8 +300,8 @@ class DefensiveManeuversScenarioTest : ScenarioTestBase() {
                 val glorySeekerID = game.findPermanent("Glory Seeker")!!
 
                 game.castSpell(1, "Defensive Maneuvers")
-                game.chooseCreatureType("Dragon")
                 game.resolveStack()
+                game.chooseCreatureType("Dragon")
 
                 // Glory Seeker should be unaffected
                 val clientState = game.getClientState(1)

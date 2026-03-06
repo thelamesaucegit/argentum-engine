@@ -25,7 +25,6 @@ class CreatureTypeChoiceContinuationResumer(
         resumer(ChooseToCreatureTypeContinuation::class, ::resumeChooseToCreatureType),
         resumer(ChooseOptionPipelineContinuation::class, ::resumeChooseOptionPipeline),
         resumer(BecomeCreatureTypeContinuation::class, ::resumeBecomeCreatureType),
-        resumer(ChooseCreatureTypeModifyStatsContinuation::class, ::resumeChooseCreatureTypeModifyStats),
         resumer(ChooseCreatureTypeGainControlContinuation::class, ::resumeChooseCreatureTypeGainControl),
         resumer(BecomeChosenTypeAllCreaturesContinuation::class, ::resumeBecomeChosenTypeAllCreatures),
         resumer(ChooseCreatureTypeMustAttackContinuation::class, ::resumeChooseCreatureTypeMustAttack),
@@ -250,48 +249,6 @@ class CreatureTypeChoiceContinuationResumer(
         )
 
         return checkForMore(newState, events)
-    }
-
-    /**
-     * Resume after player chose a creature type for stat modification.
-     *
-     * Creates a floating effect that modifies P/T for all creatures of the chosen type.
-     */
-    fun resumeChooseCreatureTypeModifyStats(
-        state: GameState,
-        continuation: ChooseCreatureTypeModifyStatsContinuation,
-        response: DecisionResponse,
-        checkForMore: CheckForMore
-    ): ExecutionResult {
-        if (response !is OptionChosenResponse) {
-            return ExecutionResult.error(state, "Expected option choice response for creature type selection")
-        }
-
-        val chosenType = continuation.creatureTypes.getOrNull(response.optionIndex)
-            ?: return ExecutionResult.error(state, "Invalid creature type index: ${response.optionIndex}")
-
-        val result = com.wingedsheep.engine.handlers.effects.permanent.ChooseCreatureTypeModifyStatsExecutor.applyCreatureTypeModifyStats(
-            state = state,
-            chosenType = chosenType,
-            controllerId = continuation.controllerId,
-            sourceId = continuation.sourceId,
-            sourceName = continuation.sourceName,
-            powerModifier = continuation.powerModifier,
-            toughnessModifier = continuation.toughnessModifier,
-            duration = continuation.duration,
-            grantKeyword = continuation.grantKeyword
-        )
-
-        val events = mutableListOf<GameEvent>(
-            CreatureTypeChosenEvent(
-                playerId = continuation.controllerId,
-                chosenType = chosenType,
-                sourceName = continuation.sourceName
-            )
-        )
-        events.addAll(result.events)
-
-        return checkForMore(result.state, events)
     }
 
     /**

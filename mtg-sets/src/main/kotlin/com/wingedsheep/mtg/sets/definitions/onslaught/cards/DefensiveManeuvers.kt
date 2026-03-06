@@ -1,8 +1,8 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.ChooseCreatureTypeModifyStatsEffect
 
 /**
  * Defensive Maneuvers
@@ -16,7 +16,7 @@ val DefensiveManeuvers = card("Defensive Maneuvers") {
     oracleText = "Creatures of the creature type of your choice get +0/+4 until end of turn."
 
     spell {
-        effect = ChooseCreatureTypeModifyStatsEffect(
+        effect = Effects.ChooseCreatureTypeModifyStats(
             powerModifier = 0,
             toughnessModifier = 4
         )

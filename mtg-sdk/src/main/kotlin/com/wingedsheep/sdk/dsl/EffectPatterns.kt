@@ -1716,6 +1716,45 @@ object EffectPatterns {
     )
 
     /**
+     * Choose a creature type. Creatures of the chosen type get +X/+Y until end of turn,
+     * optionally gaining a keyword.
+     *
+     * Pipeline: ChooseOption(creature type) → ForEachInGroup(ChosenSubtype, ModifyStats [+ GrantKeyword])
+     */
+    fun chooseCreatureTypeModifyStats(
+        powerModifier: DynamicAmount,
+        toughnessModifier: DynamicAmount,
+        duration: Duration = Duration.EndOfTurn,
+        grantKeyword: Keyword? = null
+    ): CompositeEffect {
+        val key = "chosenCreatureType"
+        val modifyStats = ModifyStatsEffect(
+            powerModifier = powerModifier,
+            toughnessModifier = toughnessModifier,
+            target = EffectTarget.Self,
+            duration = duration
+        )
+        val innerEffect: Effect = if (grantKeyword != null) {
+            CompositeEffect(listOf(
+                modifyStats,
+                GrantKeywordUntilEndOfTurnEffect(grantKeyword.name, EffectTarget.Self, duration)
+            ))
+        } else {
+            modifyStats
+        }
+        return CompositeEffect(listOf(
+            ChooseOptionEffect(
+                optionType = OptionType.CREATURE_TYPE,
+                storeAs = key
+            ),
+            ForEachInGroupEffect(
+                filter = GroupFilter.ChosenSubtypeCreatures(key),
+                effect = innerEffect
+            )
+        ))
+    }
+
+    /**
      * Choose a creature type. Untap all creatures of the chosen type.
      *
      * Pipeline: ChooseOption(creature type) → UntapGroup(creatures with chosen type)
