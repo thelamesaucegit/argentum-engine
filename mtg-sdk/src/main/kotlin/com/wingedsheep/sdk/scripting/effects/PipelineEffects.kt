@@ -92,10 +92,12 @@ sealed interface CardSource {
     @Serializable
     data class BattlefieldMatching(
         val filter: GameObjectFilter = GameObjectFilter.Companion.Any,
-        val player: Player = Player.Each
+        val player: Player = Player.Each,
+        val excludeSelf: Boolean = false
     ) : CardSource {
         override val description: String = buildString {
-            append("all ${filter.description} permanents on the battlefield")
+            if (excludeSelf) append("all other ") else append("all ")
+            append("${filter.description} permanents on the battlefield")
             if (player != Player.Each) {
                 append(" ${player.possessive} control")
             }

@@ -355,12 +355,6 @@ object Effects {
         ReturnSelfToBattlefieldAttachedEffect(target)
 
     /**
-     * Return all permanents matching a filter to their owners' hands.
-     */
-    fun ReturnAllToHand(filter: GroupFilter): Effect =
-        EffectPatterns.returnAllToHand(filter)
-
-    /**
      * Take the top card from the source's linked exile pile and put it into your hand.
      * Used by Parallel Thoughts and similar cards.
      */

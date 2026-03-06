@@ -1836,13 +1836,22 @@ object EffectPatterns {
         )
 
     /**
-     * Return all permanents matching a filter to their owners' hands (ForEachInGroup approach).
+     * Return all permanents matching a filter to their owners' hands.
+     * Uses Gather → MoveCollection pipeline.
      */
-    fun returnAllToHand(filter: GroupFilter): ForEachInGroupEffect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = MoveToZoneEffect(EffectTarget.Self, Zone.HAND)
+    fun returnAllToHand(filter: GroupFilter): CompositeEffect = CompositeEffect(listOf(
+        GatherCardsEffect(
+            source = CardSource.BattlefieldMatching(
+                filter = filter.baseFilter,
+                excludeSelf = filter.excludeSelf
+            ),
+            storeAs = "returnAllToHand_gathered"
+        ),
+        MoveCollectionEffect(
+            from = "returnAllToHand_gathered",
+            destination = CardDestination.ToZone(Zone.HAND)
         )
+    ))
 
     /**
      * Destroy all permanents matching a filter (ForEachInGroup approach).

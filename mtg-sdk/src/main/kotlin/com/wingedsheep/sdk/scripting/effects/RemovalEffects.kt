@@ -287,7 +287,7 @@ data class DestroyAllEffect(
  * Return all permanents matching the filter to their owners' hands.
  * Uses GroupFilter to support excludeSelf and any GameObjectFilter predicates.
  */
-@Deprecated("Use Effects.ReturnAllToHand() or EffectPatterns.returnAllToHand() instead")
+@Deprecated("Use EffectPatterns.returnAllToHand() instead")
 @SerialName("ReturnAllToHand")
 @Serializable
 data class ReturnAllToHandEffect(

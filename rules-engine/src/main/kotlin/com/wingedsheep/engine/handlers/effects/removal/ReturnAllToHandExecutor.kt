@@ -24,9 +24,9 @@ import kotlin.reflect.KClass
  * Returns all permanents matching the filter to their owners' hands.
  * Uses projected state for filter matching (type, color, keywords, etc.).
  *
- * @deprecated Use Effects.ReturnAllToHand() which decomposes into ForEachInGroup + MoveToZone pipeline.
+ * @deprecated Use EffectPatterns.returnAllToHand() which decomposes into Gather → MoveCollection pipeline.
  */
-@Deprecated("Use Effects.ReturnAllToHand() or EffectPatterns.returnAllToHand() instead")
+@Deprecated("Use EffectPatterns.returnAllToHand() instead")
 class ReturnAllToHandExecutor : EffectExecutor<ReturnAllToHandEffect> {
 
     override val effectType: KClass<ReturnAllToHandEffect> = ReturnAllToHandEffect::class

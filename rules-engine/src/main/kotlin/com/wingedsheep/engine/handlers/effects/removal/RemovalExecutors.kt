@@ -40,7 +40,7 @@ class RemovalExecutors(
         DestroyAllExecutor(),
         payOrSufferExecutor,
         RegenerateExecutor(),
-        ReturnAllToHandExecutor(),
+
         ReturnLinkedExileExecutor(),
         ReturnOneFromLinkedExileExecutor(),
         SacrificeExecutor(),

@@ -107,12 +107,12 @@ These two additions unlock pipeline decomposition of all "destroy group" and "bo
 
 ### 2d. Decompose `ReturnAllToHandEffect` into Pipeline
 
-- [ ] **Add `EffectPatterns.returnAllToHand(filter)`** factory method
+- [x] **Add `EffectPatterns.returnAllToHand(filter)`** factory method
   ```
   GatherCards(BattlefieldMatching(filter)) → MoveCollection(Hand)
   ```
-- [ ] **Migrate `ReturnAllToHandEffect` usages**
-- [ ] **Deprecate `ReturnAllToHandEffect`** and `ReturnAllToHandExecutor`
+- [x] **Migrate `ReturnAllToHandEffect` usages**
+- [x] **Deprecate `ReturnAllToHandEffect`** and `ReturnAllToHandExecutor`
 
 ### 2e. Decompose `DestroyAllSharingTypeWithSacrificedEffect`
 

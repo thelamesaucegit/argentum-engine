@@ -504,11 +504,12 @@ class MoveCollectionExecutor(
             }
 
             // For sacrifice/destroy, cards always go to their owner's graveyard,
-            // regardless of who controlled them. For all other moves, use the specified player.
-            val actualDestPlayerId = if ((moveType == MoveType.Sacrifice || moveType == MoveType.Destroy) && destZone == Zone.GRAVEYARD) {
-                ownerId
-            } else {
-                destPlayerId
+            // regardless of who controlled them. For return-to-hand, cards go to their
+            // owner's hand (Rule 400.3). For all other moves, use the specified player.
+            val actualDestPlayerId = when {
+                (moveType == MoveType.Sacrifice || moveType == MoveType.Destroy) && destZone == Zone.GRAVEYARD -> ownerId
+                destZone == Zone.HAND && fromZone == Zone.BATTLEFIELD -> ownerId
+                else -> destPlayerId
             }
 
             // Add to destination zone based on placement

@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -30,7 +30,7 @@ val ThousandWinds = card("Thousand Winds") {
 
     triggeredAbility {
         trigger = Triggers.TurnedFaceUp
-        effect = Effects.ReturnAllToHand(
+        effect = EffectPatterns.returnAllToHand(
             GroupFilter(
                 baseFilter = GameObjectFilter.Creature.tapped(),
                 excludeSelf = true
