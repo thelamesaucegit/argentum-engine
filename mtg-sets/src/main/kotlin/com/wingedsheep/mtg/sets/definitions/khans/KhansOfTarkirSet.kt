@@ -191,6 +191,7 @@ object KhansOfTarkirSet {
         ChiefOfTheScale,
         HighspireMantis,
         MantisRider,
+        MarduRoughrider,
         PonybackBrigade,
         SavageKnuckleblade,
         SiegeRhino,

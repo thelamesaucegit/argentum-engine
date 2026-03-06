@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 154 / 249
+**Implemented:** 155 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 26    |
 | Red        | 27    |
 | Green      | 26    |
-| Multicolor | 15    |
+| Multicolor | 16    |
 | Colorless  | 5     |
 | Land       | 3     |
 
@@ -143,7 +143,7 @@
 - [x] Mardu Hateblade
 - [x] Mardu Heart-Piercer
 - [x] Mardu Hordechief
-- [ ] Mardu Roughrider
+- [x] Mardu Roughrider
 - [x] Mardu Skullhunter
 - [ ] Mardu Warshrieker
 - [ ] Master of Pearls
