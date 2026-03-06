@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 128 / 249
+**Implemented:** 129 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 22    |
 | Red        | 22    |
 | Green      | 22    |
-| Multicolor | 11    |
+| Multicolor | 12    |
 | Colorless  | 3     |
 | Land       | 3     |
 
@@ -55,7 +55,7 @@
 - [ ] Briber's Purse
 - [x] Bring Low
 - [x] Burn Away
-- [ ] Butcher of the Horde
+- [x] Butcher of the Horde
 - [x] Cancel
 - [x] Canyon Lurkers
 - [x] Chief of the Edge
