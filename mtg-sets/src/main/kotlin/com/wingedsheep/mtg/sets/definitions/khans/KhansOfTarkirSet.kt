@@ -150,6 +150,7 @@ object KhansOfTarkirSet {
         BloodfireMentor,
         CanyonLurkers,
         DragonStyleTwins,
+        JeeringInstigator,
         LeapingMaster,
         MarduBlazebringer,
         MarduHeartPiercer,
