@@ -16,7 +16,6 @@ import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
@@ -26,19 +25,16 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.ManaSymbol
 import com.wingedsheep.sdk.scripting.AttackTax
 import com.wingedsheep.sdk.scripting.CantBeAttackedWithout
-import com.wingedsheep.sdk.scripting.CanOnlyBlockCreaturesWithKeyword
-import com.wingedsheep.sdk.scripting.CantBeBlockedByPower
-import com.wingedsheep.sdk.scripting.CantBeBlockedByPowerOrLess
-import com.wingedsheep.sdk.scripting.CantBeBlockedExceptByKeyword
-import com.wingedsheep.sdk.scripting.CantBeBlockedUnlessDefenderSharesCreatureType
 import com.wingedsheep.sdk.scripting.CanBlockAnyNumber
 import com.wingedsheep.sdk.scripting.CantAttackUnless
 import com.wingedsheep.sdk.scripting.CantBlock
-import com.wingedsheep.sdk.scripting.CantBlockCreaturesWithGreaterPower
 import com.wingedsheep.sdk.scripting.CantBlockUnless
 import com.wingedsheep.sdk.scripting.CombatCondition
 import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
 import com.wingedsheep.sdk.scripting.StaticTarget
+import com.wingedsheep.engine.mechanics.combat.rules.BlockCheckContext
+import com.wingedsheep.engine.mechanics.combat.rules.BlockEvasionRule
+import com.wingedsheep.engine.mechanics.combat.rules.defaultBlockEvasionRules
 import java.util.UUID
 
 /**
@@ -54,6 +50,7 @@ import java.util.UUID
 class CombatManager(
     private val cardRegistry: CardRegistry? = null,
     private val damageCalculator: DamageCalculator = DamageCalculator(),
+    private val blockEvasionRules: List<BlockEvasionRule> = defaultBlockEvasionRules(),
 ) {
 
     // =========================================================================
@@ -641,23 +638,6 @@ class CombatManager(
             if (cantBlockUnlessError != null) return cantBlockUnlessError
         }
 
-        // Face-down creatures lose all abilities, so keyword/power block restrictions don't apply
-        if (!isFaceDown) {
-            // Check if the blocker can only block creatures with a specific keyword (e.g., Cloud Pirates)
-            val canOnlyBlockValidation = validateCanOnlyBlockWithKeyword(state, cardComponent, attackerIds, projected)
-            if (canOnlyBlockValidation != null) {
-                return canOnlyBlockValidation
-            }
-
-            // Check if blocker can't block creatures with greater power (e.g., Spitfire Handler)
-            val cantBlockGreaterPowerValidation = validateCantBlockCreaturesWithGreaterPower(
-                state, blockerId, cardComponent, attackerIds, projected
-            )
-            if (cantBlockGreaterPowerValidation != null) {
-                return cantBlockGreaterPowerValidation
-            }
-        }
-
         // Check if creature is trying to block multiple attackers without CanBlockAnyNumber
         if (attackerIds.size > 1) {
             val canBlockMultiple = if (!isFaceDown) {
@@ -682,6 +662,7 @@ class CombatManager(
 
     /**
      * Validate that a blocker can block a specific attacker (evasion abilities).
+     * Delegates to registered [BlockEvasionRule] instances.
      */
     private fun validateCanBlock(
         state: GameState,
@@ -689,497 +670,24 @@ class CombatManager(
         attackerId: EntityId,
         blockingPlayer: EntityId
     ): String? {
-        val blockerContainer = state.getEntity(blockerId)!!
-        val attackerContainer = state.getEntity(attackerId)
-            ?: return "Attacker not found: $attackerId"
+        state.getEntity(attackerId) ?: return "Attacker not found: $attackerId"
+        state.getEntity(attackerId)?.get<CardComponent>() ?: return "Not a card: $attackerId"
 
-        val blockerCard = blockerContainer.get<CardComponent>()!!
-        val attackerCard = attackerContainer.get<CardComponent>()
-            ?: return "Not a card: $attackerId"
-
-        // Use projected keywords (includes floating effects)
-        val projected = state.projectedState
-
-        // Unblockable: Cannot be blocked at all
-        if (projected.hasKeyword(attackerId, com.wingedsheep.sdk.core.AbilityFlag.CANT_BE_BLOCKED)) {
-            return "${attackerCard.name} can't be blocked"
-        }
-
-        // Flying: Can only be blocked by creatures with flying or reach
-        if (projected.hasKeyword(attackerId, Keyword.FLYING)) {
-            val canBlockFlying = projected.hasKeyword(blockerId, Keyword.FLYING) ||
-                projected.hasKeyword(blockerId, Keyword.REACH)
-            if (!canBlockFlying) {
-                return "${blockerCard.name} cannot block ${attackerCard.name} (flying)"
-            }
-        }
-
-        // Horsemanship: Can only be blocked by creatures with horsemanship
-        if (projected.hasKeyword(attackerId, Keyword.HORSEMANSHIP)) {
-            if (!projected.hasKeyword(blockerId, Keyword.HORSEMANSHIP)) {
-                return "${blockerCard.name} cannot block ${attackerCard.name} (horsemanship)"
-            }
-        }
-
-        // Shadow: Can only be blocked by creatures with shadow
-        if (projected.hasKeyword(attackerId, Keyword.SHADOW)) {
-            if (!projected.hasKeyword(blockerId, Keyword.SHADOW)) {
-                return "${blockerCard.name} cannot block ${attackerCard.name} (shadow)"
-            }
-        }
-
-        // Landwalk: Cannot be blocked if defending player controls land of that type
-        val landwalkValidation = validateLandwalk(state, attackerId, attackerCard, blockingPlayer, projected)
-        if (landwalkValidation != null) {
-            return landwalkValidation
-        }
-
-        // CantBeBlockedByPower: Cannot be blocked by creatures with power >= N
-        val powerRestrictionValidation = validateCantBeBlockedByPower(
-            attackerId, attackerCard, blockerId, blockerCard, projected
+        val ctx = BlockCheckContext(
+            state = state,
+            projected = state.projectedState,
+            attackerId = attackerId,
+            blockerId = blockerId,
+            blockingPlayer = blockingPlayer,
+            cardRegistry = cardRegistry
         )
-        if (powerRestrictionValidation != null) {
-            return powerRestrictionValidation
-        }
-
-        // CantBeBlockedByPowerOrLess: Cannot be blocked by creatures with power <= N
-        val lowPowerRestrictionValidation = validateCantBeBlockedByPowerOrLess(
-            attackerId, attackerCard, blockerId, blockerCard, projected
-        )
-        if (lowPowerRestrictionValidation != null) {
-            return lowPowerRestrictionValidation
-        }
-
-        // CantBeBlockedExceptByColor: Can only be blocked by creatures of the specified color
-        val colorRestrictionValidation = validateCantBeBlockedExceptByColor(
-            state, attackerId, attackerCard, blockerId, blockerCard
-        )
-        if (colorRestrictionValidation != null) {
-            return colorRestrictionValidation
-        }
-
-        // CantBeBlockedExceptByKeyword: Can only be blocked by creatures with a specific keyword
-        val keywordEvasionValidation = validateCantBeBlockedExceptByKeyword(
-            attackerId, attackerCard, blockerId, blockerCard, projected
-        )
-        if (keywordEvasionValidation != null) {
-            return keywordEvasionValidation
-        }
-
-        // CantBeBlockedExceptBySubtype: Can only be blocked by creatures with a specific subtype
-        val subtypeEvasionValidation = validateCantBeBlockedExceptBySubtype(
-            attackerId, attackerCard, blockerId, blockerCard, projected
-        )
-        if (subtypeEvasionValidation != null) {
-            return subtypeEvasionValidation
-        }
-
-        // CantBeBlockedUnlessDefenderSharesCreatureType: e.g. Graxiplon
-        val sharedTypeRestrictionValidation = validateCantBeBlockedUnlessDefenderSharesCreatureType(
-            state, attackerId, attackerCard, blockingPlayer, projected
-        )
-        if (sharedTypeRestrictionValidation != null) {
-            return sharedTypeRestrictionValidation
-        }
-
-        // Skulk: Cannot be blocked by creatures with greater power
-        // TODO: Implement skulk
-
-        // Fear: Can only be blocked by artifact creatures or black creatures
-        if (projected.hasKeyword(attackerId, Keyword.FEAR)) {
-            val isArtifactCreature = blockerCard.typeLine.isArtifactCreature
-            val isBlackCreature = Color.BLACK in blockerCard.colors
-            if (!isArtifactCreature && !isBlackCreature) {
-                return "${blockerCard.name} cannot block ${attackerCard.name} (fear)"
-            }
-        }
-
-        // Intimidate: Can only be blocked by artifact creatures or creatures sharing a color
-        // TODO: Implement intimidate
-
-        // Protection from color: Can't be blocked by creatures of the stated color (Rule 702.16)
-        for (colorName in projected.getColors(blockerId)) {
-            if (projected.hasKeyword(attackerId, "PROTECTION_FROM_$colorName")) {
-                return "${attackerCard.name} has protection from ${colorName.lowercase()} and can't be blocked by ${blockerCard.name}"
-            }
-        }
-
-        // Protection from creature subtype: Can't be blocked by creatures of the stated subtype
-        for (subtype in projected.getSubtypes(blockerId)) {
-            if (projected.hasKeyword(attackerId, "PROTECTION_FROM_SUBTYPE_${subtype.uppercase()}")) {
-                return "${attackerCard.name} has protection from ${subtype.lowercase()}s and can't be blocked by ${blockerCard.name}"
-            }
-        }
-
-        return null
-    }
-
-    /**
-     * Check if attacker has landwalk and defending player controls the corresponding land type.
-     * Returns an error message if the attacker cannot be blocked due to landwalk, null otherwise.
-     */
-    private fun validateLandwalk(
-        state: GameState,
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockingPlayer: EntityId,
-        projected: com.wingedsheep.engine.mechanics.layers.ProjectedState
-    ): String? {
-        // Map of landwalk keywords to their corresponding land subtypes
-        val landwalkToSubtype = mapOf(
-            Keyword.FORESTWALK to com.wingedsheep.sdk.core.Subtype.FOREST,
-            Keyword.SWAMPWALK to com.wingedsheep.sdk.core.Subtype.SWAMP,
-            Keyword.ISLANDWALK to com.wingedsheep.sdk.core.Subtype.ISLAND,
-            Keyword.MOUNTAINWALK to com.wingedsheep.sdk.core.Subtype.MOUNTAIN,
-            Keyword.PLAINSWALK to com.wingedsheep.sdk.core.Subtype.PLAINS
-        )
-
-        for ((landwalkKeyword, landSubtype) in landwalkToSubtype) {
-            if (projected.hasKeyword(attackerId, landwalkKeyword)) {
-                // Check if defending player controls a land with this subtype
-                if (playerControlsLandWithSubtype(state, blockingPlayer, landSubtype)) {
-                    return "${attackerCard.name} has ${landwalkKeyword.displayName} and cannot be blocked"
-                }
-            }
-        }
-
-        return null
-    }
-
-    /**
-     * Check if a player controls a land with the given subtype.
-     */
-    private fun playerControlsLandWithSubtype(
-        state: GameState,
-        playerId: EntityId,
-        landSubtype: com.wingedsheep.sdk.core.Subtype
-    ): Boolean {
-        val projected = state.projectedState
-        return state.getBattlefield().any { entityId ->
-            val container = state.getEntity(entityId) ?: return@any false
-            val cardComponent = container.get<CardComponent>() ?: return@any false
-            val controller = projected.getController(entityId)
-
-            controller == playerId &&
-                cardComponent.typeLine.isLand &&
-                cardComponent.typeLine.hasSubtype(landSubtype)
-        }
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedByPower restriction and blocker's power meets/exceeds it.
-     * Returns an error message if the blocker cannot block due to power restriction, null otherwise.
-     *
-     * Uses projected power to account for spells that modify power (e.g., Giant Growth).
-     */
-    private fun validateCantBeBlockedByPower(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        blockerCard: CardComponent,
-        projected: ProjectedState
-    ): String? {
-        // Get attacker's static abilities from card definition
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return null
-        val powerRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedByPower>().firstOrNull()
-            ?: return null
-
-        // Get blocker's projected power (includes buffs from spells like Giant Growth)
-        val blockerPower = projected.getPower(blockerId) ?: 0
-
-        if (blockerPower >= powerRestriction.minPower) {
-            return "${blockerCard.name} cannot block ${attackerCard.name} (power $blockerPower or greater)"
-        }
-
-        return null
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedByPower restriction and blocker's power meets/exceeds it.
-     * Returns false if the blocker cannot block due to power restriction.
-     *
-     * Uses projected power to account for spells that modify power.
-     */
-    private fun canBlockDespitePowerRestriction(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        // Get attacker's static abilities from card definition
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return true
-        val powerRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedByPower>().firstOrNull()
-            ?: return true
-
-        // Get blocker's projected power (includes buffs from spells like Giant Growth)
-        val blockerPower = projected.getPower(blockerId) ?: 0
-
-        return blockerPower < powerRestriction.minPower
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedByPowerOrLess restriction and blocker's power is at or below it.
-     * Returns an error message if the blocker cannot block due to power restriction, null otherwise.
-     *
-     * Uses projected power to account for spells that modify power (e.g., Giant Growth).
-     */
-    private fun validateCantBeBlockedByPowerOrLess(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        blockerCard: CardComponent,
-        projected: ProjectedState
-    ): String? {
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return null
-        val powerRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedByPowerOrLess>().firstOrNull()
-            ?: return null
-
-        val blockerPower = projected.getPower(blockerId) ?: 0
-
-        if (blockerPower <= powerRestriction.maxPower) {
-            return "${blockerCard.name} cannot block ${attackerCard.name} (power $blockerPower or less)"
-        }
-
-        return null
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedByPowerOrLess restriction and blocker's power is at or below it.
-     * Returns false if the blocker cannot block due to power restriction.
-     *
-     * Uses projected power to account for spells that modify power.
-     */
-    private fun canBlockDespiteLowPowerRestriction(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return true
-        val powerRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedByPowerOrLess>().firstOrNull()
-            ?: return true
-
-        val blockerPower = projected.getPower(blockerId) ?: 0
-
-        return blockerPower > powerRestriction.maxPower
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedExceptByColor restriction from a floating effect.
-     * Returns an error message if the blocker cannot block due to color restriction, null otherwise.
-     */
-    private fun validateCantBeBlockedExceptByColor(
-        state: GameState,
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        blockerCard: CardComponent
-    ): String? {
-        // Find floating effects with CantBeBlockedExceptByColor that affect this attacker
-        val colorRestriction = state.floatingEffects
-            .filter { floatingEffect ->
-                floatingEffect.effect.modification is SerializableModification.CantBeBlockedExceptByColor &&
-                    attackerId in floatingEffect.effect.affectedEntities
-            }
-            .map { it.effect.modification as SerializableModification.CantBeBlockedExceptByColor }
-            .firstOrNull()
-            ?: return null
-
-        // Check if blocker has the required color
-        val requiredColor = com.wingedsheep.sdk.core.Color.valueOf(colorRestriction.color)
-        if (!blockerCard.colors.contains(requiredColor)) {
-            return "${blockerCard.name} cannot block ${attackerCard.name} (can only be blocked by ${requiredColor.displayName.lowercase()} creatures)"
-        }
-
-        return null
-    }
-
-    /**
-     * Check if blocker has the required color to block an attacker with CantBeBlockedExceptByColor.
-     * Returns true if the blocker can block despite the color restriction.
-     */
-    private fun canBlockDespiteColorRestriction(
-        state: GameState,
-        attackerId: EntityId,
-        blockerId: EntityId
-    ): Boolean {
-        val blockerCard = state.getEntity(blockerId)?.get<CardComponent>() ?: return true
-
-        // Find floating effects with CantBeBlockedExceptByColor that affect this attacker
-        val colorRestriction = state.floatingEffects
-            .filter { floatingEffect ->
-                floatingEffect.effect.modification is SerializableModification.CantBeBlockedExceptByColor &&
-                    attackerId in floatingEffect.effect.affectedEntities
-            }
-            .map { it.effect.modification as SerializableModification.CantBeBlockedExceptByColor }
-            .firstOrNull()
-            ?: return true
-
-        // Check if blocker has the required color
-        val requiredColor = com.wingedsheep.sdk.core.Color.valueOf(colorRestriction.color)
-        return blockerCard.colors.contains(requiredColor)
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedExceptByKeyword restriction and blocker lacks the keyword.
-     * Returns an error message if the blocker cannot block due to keyword evasion, null otherwise.
-     */
-    private fun validateCantBeBlockedExceptByKeyword(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        blockerCard: CardComponent,
-        projected: ProjectedState
-    ): String? {
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return null
-        val keywordRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedExceptByKeyword>().firstOrNull()
-            ?: return null
-
-        val requiredKeyword = keywordRestriction.requiredKeyword
-
-        // Check if blocker has the required keyword
-        if (projected.hasKeyword(blockerId, requiredKeyword)) return null
-
-        // Per MTG rules, reach allows blocking creatures with "can't be blocked except by flying"
-        if (requiredKeyword == Keyword.FLYING && projected.hasKeyword(blockerId, Keyword.REACH)) return null
-
-        return "${blockerCard.name} cannot block ${attackerCard.name} (can only be blocked by creatures with ${requiredKeyword.displayName.lowercase()})"
-    }
-
-    /**
-     * Check if blocker can block despite CantBeBlockedExceptByKeyword evasion.
-     * Returns true if the blocker can block.
-     */
-    private fun canBlockDespiteKeywordEvasion(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return true
-        val keywordRestriction = cardDef.staticAbilities.filterIsInstance<CantBeBlockedExceptByKeyword>().firstOrNull()
-            ?: return true
-
-        val requiredKeyword = keywordRestriction.requiredKeyword
-
-        if (projected.hasKeyword(blockerId, requiredKeyword)) return true
-
-        // Per MTG rules, reach allows blocking creatures with "can't be blocked except by flying"
-        if (requiredKeyword == Keyword.FLYING && projected.hasKeyword(blockerId, Keyword.REACH)) return true
-
-        return false
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedExceptBySubtype restriction from projected state.
-     * Returns an error message if the blocker doesn't have the required subtype, null otherwise.
-     */
-    private fun validateCantBeBlockedExceptBySubtype(
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockerId: EntityId,
-        blockerCard: CardComponent,
-        projected: ProjectedState
-    ): String? {
-        val requiredSubtypes = projected.getCantBeBlockedExceptBySubtypes(attackerId)
-        if (requiredSubtypes.isEmpty()) return null
-
-        for (requiredSubtype in requiredSubtypes) {
-            if (!projected.hasSubtype(blockerId, requiredSubtype)) {
-                return "${blockerCard.name} cannot block ${attackerCard.name} (can only be blocked by ${requiredSubtype}s)"
-            }
+        for (rule in blockEvasionRules) {
+            val error = rule.check(ctx)
+            if (error != null) return error
         }
         return null
     }
 
-    /**
-     * Check if blocker can block despite CantBeBlockedExceptBySubtype restriction.
-     * Returns true if the blocker has all required subtypes.
-     */
-    private fun canBlockDespiteSubtypeRestriction(
-        attackerId: EntityId,
-        blockerId: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val requiredSubtypes = projected.getCantBeBlockedExceptBySubtypes(attackerId)
-        if (requiredSubtypes.isEmpty()) return true
-
-        return requiredSubtypes.all { requiredSubtype ->
-            projected.hasSubtype(blockerId, requiredSubtype)
-        }
-    }
-
-    /**
-     * Check if attacker has CantBeBlockedUnlessDefenderSharesCreatureType restriction.
-     * The attacker can't be blocked unless the defending player controls N or more
-     * creatures that share a creature type (e.g., three Goblins or three Elves).
-     *
-     * Returns an error message if blocking is not allowed, null otherwise.
-     */
-    private fun validateCantBeBlockedUnlessDefenderSharesCreatureType(
-        state: GameState,
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockingPlayer: EntityId,
-        projected: ProjectedState
-    ): String? {
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return null
-        val restriction = cardDef.staticAbilities
-            .filterIsInstance<CantBeBlockedUnlessDefenderSharesCreatureType>().firstOrNull()
-            ?: return null
-
-        if (!defenderHasEnoughSharedCreatureTypes(state, blockingPlayer, restriction.minSharedCount, projected)) {
-            return "${attackerCard.name} can't be blocked unless you control ${restriction.minSharedCount} or more creatures that share a creature type"
-        }
-
-        return null
-    }
-
-    /**
-     * Check if the defending player controls enough creatures sharing a creature type.
-     * Returns true if any creature subtype appears on [minCount] or more creatures
-     * controlled by [playerId].
-     */
-    private fun defenderHasEnoughSharedCreatureTypes(
-        state: GameState,
-        playerId: EntityId,
-        minCount: Int,
-        projected: ProjectedState
-    ): Boolean {
-        val creatures = projected.getBattlefieldControlledBy(playerId).filter { entityId ->
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: return@filter false
-            card.typeLine.isCreature
-        }
-
-        // Count occurrences of each creature subtype
-        val subtypeCounts = mutableMapOf<String, Int>()
-        for (entityId in creatures) {
-            for (subtype in projected.getSubtypes(entityId)) {
-                subtypeCounts[subtype] = (subtypeCounts[subtype] ?: 0) + 1
-            }
-        }
-
-        return subtypeCounts.values.any { it >= minCount }
-    }
-
-    /**
-     * Check if a blocker can block despite CantBeBlockedUnlessDefenderSharesCreatureType.
-     * Returns true if the defending player meets the shared creature type requirement.
-     */
-    private fun canBlockDespiteSharedCreatureTypeRestriction(
-        state: GameState,
-        attackerId: EntityId,
-        attackerCard: CardComponent,
-        blockingPlayer: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: return true
-        val restriction = cardDef.staticAbilities
-            .filterIsInstance<CantBeBlockedUnlessDefenderSharesCreatureType>().firstOrNull()
-            ?: return true
-
-        return defenderHasEnoughSharedCreatureTypes(state, blockingPlayer, restriction.minSharedCount, projected)
-    }
 
     /**
      * Check if a creature has "can't block" ability (e.g., Craven Giant, Jungle Lion).
@@ -1210,117 +718,6 @@ class CombatManager(
         return cantBlockAbility.target == StaticTarget.SourceCreature
     }
 
-    /**
-     * Check if a creature has "can only block creatures with X" restriction.
-     * Returns an error message if any attacker lacks the required keyword, null otherwise.
-     *
-     * Used for Cloud Pirates, Cloud Spirit, etc: "can block only creatures with flying."
-     */
-    private fun validateCanOnlyBlockWithKeyword(
-        state: GameState,
-        blockerCard: CardComponent,
-        attackerIds: List<EntityId>,
-        projected: ProjectedState
-    ): String? {
-        val cardDef = cardRegistry?.getCard(blockerCard.cardDefinitionId) ?: return null
-        val restriction = cardDef.staticAbilities.filterIsInstance<CanOnlyBlockCreaturesWithKeyword>().firstOrNull()
-            ?: return null
-
-        // Check if the restriction applies to this creature
-        if (restriction.target != StaticTarget.SourceCreature) {
-            return null
-        }
-
-        // Check each attacker - all must have the required keyword
-        for (attackerId in attackerIds) {
-            val attackerCard = state.getEntity(attackerId)?.get<CardComponent>() ?: continue
-
-            if (!projected.hasKeyword(attackerId, restriction.keyword)) {
-                return "${blockerCard.name} can block only creatures with ${restriction.keyword.displayName.lowercase()}"
-            }
-        }
-
-        return null
-    }
-
-    /**
-     * Check if a creature can block despite "can only block creatures with X" restriction.
-     * Returns true if there's no restriction or the attacker has the required keyword.
-     */
-    private fun canBlockDespiteKeywordRestriction(
-        state: GameState,
-        blockerId: EntityId,
-        attackerId: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val blockerCard = state.getEntity(blockerId)?.get<CardComponent>() ?: return true
-        val cardDef = cardRegistry?.getCard(blockerCard.cardDefinitionId) ?: return true
-        val restriction = cardDef.staticAbilities.filterIsInstance<CanOnlyBlockCreaturesWithKeyword>().firstOrNull()
-            ?: return true
-
-        if (restriction.target != StaticTarget.SourceCreature) {
-            return true
-        }
-
-        return projected.hasKeyword(attackerId, restriction.keyword)
-    }
-
-    /**
-     * Check if blocker has "can't block creatures with greater power" restriction.
-     * Returns an error message if any attacker has power greater than the blocker's power, null otherwise.
-     *
-     * Used for Spitfire Handler: "This creature can't block creatures with power greater than
-     * this creature's power."
-     */
-    private fun validateCantBlockCreaturesWithGreaterPower(
-        state: GameState,
-        blockerId: EntityId,
-        blockerCard: CardComponent,
-        attackerIds: List<EntityId>,
-        projected: ProjectedState
-    ): String? {
-        val cardDef = cardRegistry?.getCard(blockerCard.cardDefinitionId) ?: return null
-        val restriction = cardDef.staticAbilities.filterIsInstance<CantBlockCreaturesWithGreaterPower>().firstOrNull()
-            ?: return null
-
-        if (restriction.target != StaticTarget.SourceCreature) return null
-
-        val blockerPower = projected.getPower(blockerId) ?: 0
-
-        for (attackerId in attackerIds) {
-            val attackerCard = state.getEntity(attackerId)?.get<CardComponent>() ?: continue
-            val attackerPower = projected.getPower(attackerId) ?: 0
-
-            if (attackerPower > blockerPower) {
-                return "${blockerCard.name} can't block ${attackerCard.name} (power $attackerPower is greater than ${blockerCard.name}'s power $blockerPower)"
-            }
-        }
-
-        return null
-    }
-
-    /**
-     * Check if blocker can block despite "can't block creatures with greater power" restriction.
-     * Returns true if the blocker can block.
-     */
-    private fun canBlockDespiteGreaterPowerRestriction(
-        state: GameState,
-        blockerId: EntityId,
-        attackerId: EntityId,
-        projected: ProjectedState
-    ): Boolean {
-        val blockerCard = state.getEntity(blockerId)?.get<CardComponent>() ?: return true
-        val cardDef = cardRegistry?.getCard(blockerCard.cardDefinitionId) ?: return true
-        val restriction = cardDef.staticAbilities.filterIsInstance<CantBlockCreaturesWithGreaterPower>().firstOrNull()
-            ?: return true
-
-        if (restriction.target != StaticTarget.SourceCreature) return true
-
-        val blockerPower = projected.getPower(blockerId) ?: 0
-        val attackerPower = projected.getPower(attackerId) ?: 0
-
-        return attackerPower <= blockerPower
-    }
 
     /**
      * Validate menace requirements (must be blocked by 2+ creatures).
@@ -2784,7 +2181,8 @@ class CombatManager(
 
     /**
      * Check if a creature can legally block an attacker.
-     * This re-uses the evasion checking logic from validateCanBlock.
+     * Delegates to registered [BlockEvasionRule] instances for evasion checks,
+     * plus blocker-level restrictions (can't block, face-down abilities).
      */
     private fun canCreatureBlockAttacker(
         state: GameState,
@@ -2794,10 +2192,9 @@ class CombatManager(
         projected: ProjectedState
     ): Boolean {
         val blockerContainer = state.getEntity(blockerId) ?: return false
-        val attackerContainer = state.getEntity(attackerId) ?: return false
+        state.getEntity(attackerId) ?: return false
 
         val blockerCard = blockerContainer.get<CardComponent>() ?: return false
-        val attackerCard = attackerContainer.get<CardComponent>() ?: return false
 
         // Check if blocker has "can't block" restriction (face-down creatures have no abilities)
         val isFaceDown = blockerContainer.has<FaceDownComponent>()
@@ -2810,96 +2207,16 @@ class CombatManager(
             return false
         }
 
-        // Face-down creatures lose all abilities, so keyword/power block restrictions don't apply
-        if (!isFaceDown) {
-            // Check if blocker can only block creatures with a specific keyword (e.g., Cloud Pirates)
-            if (!canBlockDespiteKeywordRestriction(state, blockerId, attackerId, projected)) {
-                return false
-            }
-        }
-
-        // CantBlockCreaturesWithGreaterPower: Can't block creatures with power > this creature's power
-        if (!isFaceDown && !canBlockDespiteGreaterPowerRestriction(state, blockerId, attackerId, projected)) {
-            return false
-        }
-
-        // Unblockable: Cannot be blocked at all
-        if (projected.hasKeyword(attackerId, com.wingedsheep.sdk.core.AbilityFlag.CANT_BE_BLOCKED)) {
-            return false
-        }
-
-        // Flying: Can only be blocked by creatures with flying or reach
-        if (projected.hasKeyword(attackerId, Keyword.FLYING)) {
-            val canBlockFlying = projected.hasKeyword(blockerId, Keyword.FLYING) ||
-                projected.hasKeyword(blockerId, Keyword.REACH)
-            if (!canBlockFlying) return false
-        }
-
-        // Horsemanship: Can only be blocked by creatures with horsemanship
-        if (projected.hasKeyword(attackerId, Keyword.HORSEMANSHIP)) {
-            if (!projected.hasKeyword(blockerId, Keyword.HORSEMANSHIP)) return false
-        }
-
-        // Shadow: Can only be blocked by creatures with shadow
-        if (projected.hasKeyword(attackerId, Keyword.SHADOW)) {
-            if (!projected.hasKeyword(blockerId, Keyword.SHADOW)) return false
-        }
-
-        // Fear: Can only be blocked by artifact creatures or black creatures
-        if (projected.hasKeyword(attackerId, Keyword.FEAR)) {
-            val isArtifactCreature = blockerCard.typeLine.isArtifactCreature
-            val isBlackCreature = Color.BLACK in blockerCard.colors
-            if (!isArtifactCreature && !isBlackCreature) return false
-        }
-
-        // Landwalk: Cannot be blocked if defending player controls land of that type
-        val landwalkToSubtype = mapOf(
-            Keyword.FORESTWALK to com.wingedsheep.sdk.core.Subtype.FOREST,
-            Keyword.SWAMPWALK to com.wingedsheep.sdk.core.Subtype.SWAMP,
-            Keyword.ISLANDWALK to com.wingedsheep.sdk.core.Subtype.ISLAND,
-            Keyword.MOUNTAINWALK to com.wingedsheep.sdk.core.Subtype.MOUNTAIN,
-            Keyword.PLAINSWALK to com.wingedsheep.sdk.core.Subtype.PLAINS
+        // Delegate to block evasion rules (flying, shadow, landwalk, power restrictions, etc.)
+        val ctx = BlockCheckContext(
+            state = state,
+            projected = projected,
+            attackerId = attackerId,
+            blockerId = blockerId,
+            blockingPlayer = blockingPlayer,
+            cardRegistry = cardRegistry
         )
-
-        for ((landwalkKeyword, landSubtype) in landwalkToSubtype) {
-            if (projected.hasKeyword(attackerId, landwalkKeyword)) {
-                if (playerControlsLandWithSubtype(state, blockingPlayer, landSubtype)) {
-                    return false
-                }
-            }
-        }
-
-        // CantBeBlockedByPower: Cannot be blocked by creatures with power >= N
-        if (!canBlockDespitePowerRestriction(attackerId, attackerCard, blockerId, projected)) {
-            return false
-        }
-
-        // CantBeBlockedByPowerOrLess: Cannot be blocked by creatures with power <= N
-        if (!canBlockDespiteLowPowerRestriction(attackerId, attackerCard, blockerId, projected)) {
-            return false
-        }
-
-        // CantBeBlockedExceptByColor: Can only be blocked by creatures of the specified color
-        if (!canBlockDespiteColorRestriction(state, attackerId, blockerId)) {
-            return false
-        }
-
-        // CantBeBlockedExceptByKeyword: Can only be blocked by creatures with a specific keyword
-        if (!canBlockDespiteKeywordEvasion(attackerId, attackerCard, blockerId, projected)) {
-            return false
-        }
-
-        // CantBeBlockedExceptBySubtype: Can only be blocked by creatures with a specific subtype
-        if (!canBlockDespiteSubtypeRestriction(attackerId, blockerId, projected)) {
-            return false
-        }
-
-        // CantBeBlockedUnlessDefenderSharesCreatureType: e.g. Graxiplon
-        if (!canBlockDespiteSharedCreatureTypeRestriction(state, attackerId, attackerCard, blockingPlayer, projected)) {
-            return false
-        }
-
-        return true
+        return blockEvasionRules.all { it.check(ctx) == null }
     }
 
     // =========================================================================
