@@ -38,7 +38,7 @@ val AbzanFalconer = card("Abzan Falconer") {
         rarity = Rarity.UNCOMMON
         collectorNumber = "2"
         artist = "Steven Belledin"
-        flavorText = "\"Bows are useless in the shifting desert sands. A falcon can pursue prey wherever it goes.\""
-        imageUri = "https://cards.scryfall.io/normal/front/b/5/b5428992-2108-4067-9e2c-4b0d0d3a663c.jpg?1562791708"
+        flavorText = "\"The fastest way across the dunes is above.\""
+        imageUri = "https://cards.scryfall.io/normal/front/2/1/21ee4f3c-dc94-4156-b0ed-60fe6310451a.jpg?1562783594"
     }
 }
