@@ -30,9 +30,8 @@ val PineWalker = card("Pine Walker") {
 
     metadata {
         rarity = Rarity.UNCOMMON
-        collectorNumber = "149"
-        artist = "Viktor Titov"
-        flavorText = "Its roots reach deep enough to tap into the ancient magic that suffuses Tarkir."
-        imageUri = "https://cards.scryfall.io/normal/front/a/a/aab1f439-39c4-47ed-a5ab-da448e3275db.jpg?1562791541"
+        collectorNumber = "143"
+        artist = "Dave Kendall"
+        imageUri = "https://cards.scryfall.io/normal/front/9/3/93a49d9c-8fe7-494b-9a26-cf4bde71e420.jpg?1562790508"
     }
 }
