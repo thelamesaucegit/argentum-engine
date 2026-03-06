@@ -873,6 +873,7 @@ Set via `staticAbility { ability = ... }`:
 - `CantBlockCreaturesWithGreaterPower(target)`
 - `CanOnlyBlockCreaturesWithKeyword(keyword, target)`
 - `CanBlockAnyNumber(target)` — can block any number of creatures
+- `CanBlockAdditionalForCreatureGroup(count, filter)` — creatures matching filter can block an additional N creatures (cumulative)
 
 ### Evasion
 

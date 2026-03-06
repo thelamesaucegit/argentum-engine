@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 143 / 249
+**Implemented:** 144 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 24    |
+| White      | 25    |
 | Blue       | 24    |
 | Black      | 24    |
 | Red        | 25    |
@@ -51,7 +51,7 @@
 - [ ] Bloodsoaked Champion
 - [ ] Bloodstained Mire
 - [ ] Blossoming Sands
-- [ ] Brave the Sands
+- [x] Brave the Sands
 - [ ] Briber's Purse
 - [x] Bring Low
 - [x] Burn Away

@@ -145,7 +145,8 @@ class StateProjector(
                 cantBlock = v.cantBlock,
                 mustAttack = v.mustAttack,
                 mustBlock = v.mustBlock,
-                cantBeBlockedExceptBySubtypes = v.cantBeBlockedExceptBySubtypes.toSet()
+                cantBeBlockedExceptBySubtypes = v.cantBeBlockedExceptBySubtypes.toSet(),
+                additionalBlockCount = v.additionalBlockCount
             )
         }
 

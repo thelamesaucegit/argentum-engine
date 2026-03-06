@@ -791,6 +791,24 @@ data class CanBlockAnyNumber(
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
 
+/**
+ * Grants "can block an additional N creatures" to a group of creatures.
+ * Used for Brave the Sands and similar cards.
+ * Cumulative: multiple instances stack (e.g., two Brave the Sands = block 3 creatures).
+ *
+ * @property count Number of additional creatures that can be blocked (default 1)
+ * @property filter The group of creatures that gain the ability
+ */
+@SerialName("CanBlockAdditionalForCreatureGroup")
+@Serializable
+data class CanBlockAdditionalForCreatureGroup(
+    val count: Int = 1,
+    val filter: GroupFilter
+) : StaticAbility {
+    override val description: String = "${filter.description} can block an additional $count creature${if (count > 1) "s" else ""} each combat"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
 // =============================================================================
 // Protection Abilities
 // =============================================================================

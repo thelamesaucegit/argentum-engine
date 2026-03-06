@@ -328,6 +328,10 @@ sealed interface Modification {
     @Serializable
     data object SetMustBlock : Modification
 
+    /** Grants "can block an additional N creatures" to affected entities. Cumulative. */
+    @Serializable
+    data class CanBlockAdditional(val count: Int = 1) : Modification
+
     /**
      * Dynamic power/toughness modification based on counters on the source permanent.
      * The actual modification is computed at projection time by reading counter count from source.
@@ -388,5 +392,6 @@ internal data class MutableProjectedValues(
     var cantBlock: Boolean = false,
     var mustAttack: Boolean = false,
     var mustBlock: Boolean = false,
-    val cantBeBlockedExceptBySubtypes: MutableSet<String> = mutableSetOf()
+    val cantBeBlockedExceptBySubtypes: MutableSet<String> = mutableSetOf(),
+    var additionalBlockCount: Int = 0
 )

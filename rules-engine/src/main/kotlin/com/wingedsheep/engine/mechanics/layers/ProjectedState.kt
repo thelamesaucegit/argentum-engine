@@ -21,7 +21,8 @@ data class ProjectedValues(
     val cantBlock: Boolean = false,
     val mustAttack: Boolean = false,
     val mustBlock: Boolean = false,
-    val cantBeBlockedExceptBySubtypes: Set<String> = emptySet()
+    val cantBeBlockedExceptBySubtypes: Set<String> = emptySet(),
+    val additionalBlockCount: Int = 0
 )
 
 /**
@@ -78,6 +79,9 @@ class ProjectedState(
     fun getCantBeBlockedExceptBySubtypes(entityId: EntityId): Set<String> =
         projectedValues[entityId]?.cantBeBlockedExceptBySubtypes ?: emptySet()
 
+    fun getAdditionalBlockCount(entityId: EntityId): Int =
+        projectedValues[entityId]?.additionalBlockCount ?: 0
+
     fun getController(entityId: EntityId): EntityId? = projectedValues[entityId]?.controllerId
 
     fun getProjectedValues(entityId: EntityId): ProjectedValues? = projectedValues[entityId]
@@ -114,7 +118,8 @@ internal fun buildIntermediateProjectedState(
             cantBlock = v.cantBlock,
             mustAttack = v.mustAttack,
             mustBlock = v.mustBlock,
-            cantBeBlockedExceptBySubtypes = v.cantBeBlockedExceptBySubtypes.toSet()
+            cantBeBlockedExceptBySubtypes = v.cantBeBlockedExceptBySubtypes.toSet(),
+            additionalBlockCount = v.additionalBlockCount
         )
     }
     return ProjectedState(state, frozen)

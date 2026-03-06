@@ -41,6 +41,9 @@ object KhansOfTarkirSet {
 
         HighSentinelsOfArashin,
 
+        // White enchantments
+        BraveTheSands,
+
         // White spells
         DefiantStrike,
         Erase,

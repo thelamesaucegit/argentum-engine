@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.scripting.PreventLifeGain
 import com.wingedsheep.sdk.scripting.AddCreatureTypeByCounter
 import com.wingedsheep.sdk.scripting.CantAttack
 import com.wingedsheep.sdk.scripting.CantBlock
+import com.wingedsheep.sdk.scripting.CanBlockAdditionalForCreatureGroup
 import com.wingedsheep.sdk.scripting.CantBlockForCreatureGroup
 import com.wingedsheep.sdk.scripting.MustAttack
 import com.wingedsheep.sdk.scripting.ConditionalStaticAbility
@@ -258,6 +259,14 @@ class StaticAbilityHandler(
                     layer = Layer.ABILITY,
                     sublayer = null,
                     modification = Modification.SetCantBlock,
+                    affectsFilter = convertGroupFilter(ability.filter)
+                )
+            }
+            is CanBlockAdditionalForCreatureGroup -> {
+                ContinuousEffectData(
+                    layer = Layer.ABILITY,
+                    sublayer = null,
+                    modification = Modification.CanBlockAdditional(ability.count),
                     affectsFilter = convertGroupFilter(ability.filter)
                 )
             }

@@ -260,12 +260,17 @@ internal class BlockPhaseManager(
         }
 
         if (attackerIds.size > 1) {
-            val canBlockMultiple = if (!isFaceDown) {
+            val canBlockAny = if (!isFaceDown) {
                 val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
                 cardDef?.staticAbilities?.any { it is CanBlockAnyNumber } == true
             } else false
-            if (!canBlockMultiple) {
-                return "${cardComponent.name} can only block one creature"
+            if (!canBlockAny) {
+                val additionalBlocks = projected.getAdditionalBlockCount(blockerId)
+                val maxBlocks = 1 + additionalBlocks
+                if (attackerIds.size > maxBlocks) {
+                    val countText = if (maxBlocks == 1) "one creature" else "$maxBlocks creatures"
+                    return "${cardComponent.name} can only block $countText"
+                }
             }
         }
 

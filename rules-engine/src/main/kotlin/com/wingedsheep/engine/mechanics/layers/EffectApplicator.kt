@@ -118,6 +118,9 @@ internal class EffectApplicator(
                 is Modification.SetMustBlock -> {
                     values.mustBlock = true
                 }
+                is Modification.CanBlockAdditional -> {
+                    values.additionalBlockCount += mod.count
+                }
                 is Modification.ModifyPowerToughnessPerSourceCounter -> {
                     val counterType = try {
                         CounterType.valueOf(
