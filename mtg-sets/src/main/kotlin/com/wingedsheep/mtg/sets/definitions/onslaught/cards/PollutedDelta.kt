@@ -7,7 +7,7 @@ import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 
 /**
  * Polluted Delta
@@ -21,7 +21,7 @@ val PollutedDelta = card("Polluted Delta") {
 
     activatedAbility {
         cost = Costs.Composite(Costs.Tap, Costs.PayLife(1), Costs.SacrificeSelf)
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = GameObjectFilter(
                 cardPredicates = listOf(
                     CardPredicate.IsLand,
@@ -35,7 +35,7 @@ val PollutedDelta = card("Polluted Delta") {
             ),
             destination = SearchDestination.BATTLEFIELD,
             entersTapped = false,
-            shuffle = true
+            shuffleAfter = true
         )
     }
 

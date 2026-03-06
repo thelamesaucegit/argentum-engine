@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
@@ -37,7 +38,7 @@ val DecreeOfPain = card("Decree of Pain") {
 
     triggeredAbility {
         trigger = Triggers.YouCycleThis
-        effect = Effects.ModifyStatsForAll(-2, -2, GroupFilter.AllCreatures)
+        effect = EffectPatterns.modifyStatsForAll(-2, -2, GroupFilter.AllCreatures)
     }
 
     metadata {

@@ -5,7 +5,7 @@ import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.*
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.CreatureStats
@@ -43,7 +43,7 @@ class RummagingWizardTest : FunSpec({
             ActivatedAbility(
                 id = wizardAbilityId,
                 cost = AbilityCost.Mana(ManaCost.parse("{2}{U}")),
-                effect = Effects.Surveil(1)
+                effect = EffectPatterns.surveil(1)
             )
         )
     )

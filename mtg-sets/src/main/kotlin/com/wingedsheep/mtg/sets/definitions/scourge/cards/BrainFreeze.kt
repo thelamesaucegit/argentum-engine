@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -21,7 +21,7 @@ val BrainFreeze = card("Brain Freeze") {
 
     spell {
         val t = target("target player", Targets.Player)
-        effect = Effects.Mill(3, t)
+        effect = EffectPatterns.mill(3, t)
     }
 
     keywords(Keyword.STORM)

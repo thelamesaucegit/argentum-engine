@@ -585,7 +585,7 @@ class SpellBuilder {
      *             effect = Effects.ReturnToHand(EffectTarget.ContextTarget(0))
      *         }
      *         mode("Tap all creatures your opponents control") {
-     *             effect = Effects.TapAll(CreatureGroupFilter.OpponentsControl)
+     *             effect = EffectPatterns.tapAll(CreatureGroupFilter.OpponentsControl)
      *         }
      *         mode("Draw a card") {
      *             effect = Effects.DrawCards(1)

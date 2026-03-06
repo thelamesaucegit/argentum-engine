@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.targets.TargetOpponent
@@ -18,8 +18,8 @@ val RakshasasSecret = card("Rakshasa's Secret") {
 
     spell {
         val t = target("target opponent", TargetOpponent())
-        effect = Effects.Discard(2, t)
-            .then(Effects.Mill(2))
+        effect = EffectPatterns.discardCards(2, t)
+            .then(EffectPatterns.mill(2))
     }
 
     metadata {

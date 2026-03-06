@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.portal.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 
@@ -15,7 +15,7 @@ val Prosperity = card("Prosperity") {
     typeLine = "Sorcery"
 
     spell {
-        effect = Effects.EachPlayerDrawsX(
+        effect = EffectPatterns.eachPlayerDrawsX(
             includeController = true,
             includeOpponents = true
         )

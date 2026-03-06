@@ -4,7 +4,7 @@ import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 
 /**
  * Sylvan Tutor
@@ -18,7 +18,7 @@ val SylvanTutor = card("Sylvan Tutor") {
     typeLine = "Sorcery"
 
     spell {
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = GameObjectFilter.Creature,
             destination = SearchDestination.TOP_OF_LIBRARY,
             reveal = true

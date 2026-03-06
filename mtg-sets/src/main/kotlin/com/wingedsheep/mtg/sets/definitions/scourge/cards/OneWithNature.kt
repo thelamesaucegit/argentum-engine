@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.Triggers
@@ -27,7 +27,7 @@ val OneWithNature = card("One with Nature") {
     triggeredAbility {
         trigger = Triggers.EnchantedCreatureDealsCombatDamageToPlayer
         effect = MayEffect(
-            Effects.SearchLibrary(
+            EffectPatterns.searchLibrary(
                 filter = Filters.BasicLand,
                 destination = SearchDestination.BATTLEFIELD,
                 entersTapped = true

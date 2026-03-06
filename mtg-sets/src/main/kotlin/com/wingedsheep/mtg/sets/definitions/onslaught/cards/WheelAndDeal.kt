@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -22,7 +23,7 @@ val WheelAndDeal = card("Wheel and Deal") {
         val t = target("target", TargetOpponent())
         effect = CompositeEffect(
             listOf(
-                Effects.DiscardHand(t),
+                EffectPatterns.discardHand(t),
                 Effects.DrawCards(7, t),
                 Effects.DrawCards(1)
             )

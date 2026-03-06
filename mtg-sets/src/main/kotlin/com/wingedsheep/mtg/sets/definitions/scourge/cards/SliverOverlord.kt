@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
 import com.wingedsheep.sdk.dsl.Costs
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -25,7 +26,7 @@ val SliverOverlord = card("Sliver Overlord") {
 
     activatedAbility {
         cost = Costs.Mana("{3}")
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = GameObjectFilter.Any.withSubtype("Sliver"),
             reveal = true
         )

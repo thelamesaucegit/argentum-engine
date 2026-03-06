@@ -8,7 +8,6 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Subtype
-import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.CardDefinition

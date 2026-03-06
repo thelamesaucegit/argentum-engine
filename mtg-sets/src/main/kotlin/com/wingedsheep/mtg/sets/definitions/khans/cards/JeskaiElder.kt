@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -26,7 +26,7 @@ val JeskaiElder = card("Jeskai Elder") {
 
     triggeredAbility {
         trigger = Triggers.DealsCombatDamageToPlayer
-        effect = MayEffect(Effects.Loot())
+        effect = MayEffect(EffectPatterns.loot())
     }
 
     metadata {

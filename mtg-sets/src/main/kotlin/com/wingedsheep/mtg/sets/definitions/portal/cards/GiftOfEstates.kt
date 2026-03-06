@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.portal.cards
 
 import com.wingedsheep.sdk.dsl.Conditions
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -20,7 +20,7 @@ val GiftOfEstates = card("Gift of Estates") {
 
     spell {
         condition = Conditions.OpponentControlsMoreLands
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = Filters.PlainsCard,
             count = 3,
             destination = SearchDestination.HAND,

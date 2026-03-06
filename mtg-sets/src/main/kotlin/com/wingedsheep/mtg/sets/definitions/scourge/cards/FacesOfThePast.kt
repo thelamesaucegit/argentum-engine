@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -39,11 +39,11 @@ val FacesOfThePast = card("Faces of the Past") {
         trigger = Triggers.AnyCreatureDies
         effect = ModalEffect.chooseOne(
             Mode.noTarget(
-                Effects.TapAll(sharesTypeFilter),
+                EffectPatterns.tapAll(sharesTypeFilter),
                 "Tap all creatures that share a creature type with it"
             ),
             Mode.noTarget(
-                Effects.UntapGroup(sharesTypeFilter),
+                EffectPatterns.untapGroup(sharesTypeFilter),
                 "Untap all creatures that share a creature type with it"
             )
         )

@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -21,7 +21,7 @@ val ClawsOfWirewood = card("Claws of Wirewood") {
     oracleText = "Claws of Wirewood deals 3 damage to each creature with flying and each player.\nCycling {2}"
 
     spell {
-        effect = Effects.DealDamageToAll(3, Filters.Group.creatures { withKeyword(Keyword.FLYING) }) then
+        effect = EffectPatterns.dealDamageToAll(3, Filters.Group.creatures { withKeyword(Keyword.FLYING) }) then
             DealDamageToPlayersEffect(3)
     }
 

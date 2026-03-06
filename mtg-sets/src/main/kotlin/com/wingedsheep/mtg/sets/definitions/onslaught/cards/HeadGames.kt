@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.targets.TargetOpponent
@@ -20,7 +20,7 @@ val HeadGames = card("Head Games") {
 
     spell {
         target = TargetOpponent()
-        effect = Effects.HeadGames()
+        effect = EffectPatterns.headGames()
     }
 
     metadata {

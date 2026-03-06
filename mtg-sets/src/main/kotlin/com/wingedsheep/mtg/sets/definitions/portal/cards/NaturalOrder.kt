@@ -6,7 +6,7 @@ import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AdditionalCost
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 
 /**
  * Natural Order
@@ -24,7 +24,7 @@ val NaturalOrder = card("Natural Order") {
     ))
 
     spell {
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = GameObjectFilter.Creature.withColor(Color.GREEN),
             destination = SearchDestination.BATTLEFIELD
         )

@@ -1,6 +1,8 @@
 package com.wingedsheep.sdk.dsl
 
 import com.wingedsheep.sdk.core.*
+import com.wingedsheep.sdk.dsl.EffectPatterns
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.conditions.NotCondition
@@ -477,7 +479,7 @@ class CardDslTest : DescribeSpec({
                 startingLoyalty = 3
 
                 loyaltyAbility(+1) {
-                    effect = Effects.Discard(1)
+                    effect = EffectPatterns.discardCards(1)
                     target = Targets.AllPlayers
                 }
 
@@ -509,7 +511,7 @@ class CardDslTest : DescribeSpec({
                 spell {
                     effect = Effects.Composite(
                         Effects.DrawCards(3),
-                        Effects.Discard(2)
+                        EffectPatterns.discardCards(2)
                     )
                 }
             }
@@ -529,7 +531,7 @@ class CardDslTest : DescribeSpec({
 
                 spell {
                     condition = Conditions.OpponentControlsMoreLands
-                    effect = Effects.SearchLibrary(
+                    effect = EffectPatterns.searchLibrary(
                         filter = Filters.PlainsCard,
                         count = 3,
                         destination = SearchDestination.HAND
@@ -750,7 +752,7 @@ class CardDslTest : DescribeSpec({
                     effect = EffectPatterns.sacrificeFor(
                         filter = GameObjectFilter.Land,
                         countName = "sacrificedLands",
-                        thenEffect = Effects.SearchLibrary(
+                        thenEffect = EffectPatterns.searchLibrary(
                             filter = GameObjectFilter.Land,
                             count = 0, // Engine will read from VariableReference
                             destination = SearchDestination.BATTLEFIELD,

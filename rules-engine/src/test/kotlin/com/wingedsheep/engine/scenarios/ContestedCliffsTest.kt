@@ -11,7 +11,6 @@ import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.Deck

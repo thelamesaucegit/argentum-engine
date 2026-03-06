@@ -2,7 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -27,12 +27,12 @@ val ThundercloudElemental = card("Thundercloud Elemental") {
 
     activatedAbility {
         cost = Costs.Mana("{3}{U}")
-        effect = Effects.TapAll(Filters.Group.creatures { toughnessAtMost(2) })
+        effect = EffectPatterns.tapAll(Filters.Group.creatures { toughnessAtMost(2) })
     }
 
     activatedAbility {
         cost = Costs.Mana("{3}{U}")
-        effect = Effects.RemoveKeywordFromAll(Keyword.FLYING, Filters.Group.otherCreatures)
+        effect = EffectPatterns.removeKeywordFromAll(Keyword.FLYING, Filters.Group.otherCreatures)
     }
 
     metadata {

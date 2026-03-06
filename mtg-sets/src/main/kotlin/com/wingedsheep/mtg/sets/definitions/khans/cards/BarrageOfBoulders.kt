@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -23,7 +24,7 @@ val BarrageOfBoulders = card("Barrage of Boulders") {
     oracleText = "Barrage of Boulders deals 1 damage to each creature you don't control.\nFerocious — If you control a creature with power 4 or greater, creatures can't block this turn."
 
     spell {
-        effect = Effects.DealDamageToAll(1, GroupFilter.AllCreaturesOpponentsControl)
+        effect = EffectPatterns.dealDamageToAll(1, GroupFilter.AllCreaturesOpponentsControl)
             .then(ConditionalEffect(
                 condition = Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Creature.powerAtLeast(4)),
                 effect = Effects.CantBlockGroup(GroupFilter.AllCreatures)

@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
 import com.wingedsheep.sdk.core.Color
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 
@@ -18,7 +18,7 @@ val KamahlsSummons = card("Kamahl's Summons") {
     oracleText = "Each player may reveal any number of creature cards from their hand. Then each player creates a 2/2 green Bear creature token for each card they revealed this way."
 
     spell {
-        effect = Effects.EachPlayerRevealCreaturesCreateTokens(
+        effect = EffectPatterns.eachPlayerRevealCreaturesCreateTokens(
             tokenPower = 2,
             tokenToughness = 2,
             tokenColors = setOf(Color.GREEN),

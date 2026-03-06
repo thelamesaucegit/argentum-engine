@@ -29,7 +29,6 @@ import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.GrantMayPlayFromExileEffect
 import com.wingedsheep.sdk.scripting.effects.GrantPlayWithoutPayingCostEffect
 import com.wingedsheep.sdk.scripting.effects.FightEffect
-import com.wingedsheep.sdk.scripting.effects.ForEachInGroupEffect
 import com.wingedsheep.sdk.scripting.effects.ForceSacrificeEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
 import com.wingedsheep.sdk.scripting.effects.ExchangeControlEffect
@@ -53,7 +52,6 @@ import com.wingedsheep.sdk.scripting.effects.RemoveFromCombatEffect
 import com.wingedsheep.sdk.scripting.effects.RepeatCondition
 import com.wingedsheep.sdk.scripting.effects.RepeatWhileEffect
 import com.wingedsheep.sdk.scripting.effects.ReplaceNextDrawWithEffect
-import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.ChooseOptionEffect
 import com.wingedsheep.sdk.scripting.effects.OptionType
 import com.wingedsheep.sdk.scripting.effects.SelectTargetEffect
@@ -81,7 +79,10 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 
 /**
- * Facade object providing convenient factory methods for creating Effects.
+ * Facade object providing convenient factory methods for creating atomic Effects.
+ *
+ * For composite effect patterns (search, scry, mill, discard, etc.),
+ * use [EffectPatterns] directly.
  *
  * Usage:
  * ```kotlin
@@ -209,44 +210,10 @@ object Effects {
         DrawCardsEffect(count, target)
 
     /**
-     * Discard cards. Default target is target opponent.
-     */
-    fun Discard(count: Int, target: EffectTarget = EffectTarget.PlayerRef(Player.TargetOpponent)): Effect =
-        EffectPatterns.discardCards(count, target)
-
-    /**
-     * Discard cards at random. Default target is target opponent.
-     */
-    fun DiscardRandom(count: Int, target: EffectTarget = EffectTarget.PlayerRef(Player.TargetOpponent)): Effect =
-        EffectPatterns.discardRandom(count, target)
-
-    /**
-     * Target player discards their entire hand.
-     */
-    fun DiscardHand(target: EffectTarget = EffectTarget.Controller): Effect =
-        EffectPatterns.discardHand(target)
-
-    /**
-     * Each player draws X cards, where X is the spell's X value.
-     */
-    fun EachPlayerDrawsX(
-        includeController: Boolean = true,
-        includeOpponents: Boolean = true
-    ): Effect = EffectPatterns.eachPlayerDrawsX(includeController, includeOpponents)
-
-    /**
      * Draw up to N cards. The player chooses how many (0 to maxCards).
      */
     fun DrawUpTo(maxCards: Int, target: EffectTarget = EffectTarget.Controller): Effect =
         DrawUpToEffect(maxCards, target)
-
-    /**
-     * Each player may draw up to N cards. Optionally gain life for each card not drawn.
-     * "Each player may draw up to two cards. For each card less than two a player
-     * draws this way, that player gains 2 life."
-     */
-    fun EachPlayerMayDraw(maxCards: Int, lifePerCardNotDrawn: Int = 0): Effect =
-        EffectPatterns.eachPlayerMayDraw(maxCards, lifePerCardNotDrawn)
 
     /**
      * Draw X cards, then for each card drawn, discard a card unless you sacrifice a permanent.
@@ -272,20 +239,11 @@ object Effects {
     /**
      * Replace the next draw this turn with the given effect instead.
      * Used by the "Words of" enchantment cycle.
-     *
-     * Examples:
-     * ```kotlin
-     * ReplaceNextDraw(Effects.GainLife(5))                                   // Words of Worship
-     * ReplaceNextDraw(Effects.EachPlayerReturnPermanentToHand())             // Words of Wind
-     * ReplaceNextDraw(Effects.EachOpponentDiscards(1))                       // Words of Waste
-     * ReplaceNextDraw(Effects.DealDamage(2, EffectTarget.ContextTarget(0)))  // Words of War
-     * ReplaceNextDraw(Effects.CreateToken(2, 2, setOf(Color.GREEN), setOf("Bear")))  // Words of Wilding
-     * ```
      */
     fun ReplaceNextDraw(effect: Effect): Effect = ReplaceNextDrawWithEffect(effect)
 
     // =========================================================================
-    // Destruction Effects
+    // Zone Movement Effects
     // =========================================================================
 
     /**
@@ -299,13 +257,6 @@ object Effects {
      */
     fun Exile(target: EffectTarget): Effect =
         MoveToZoneEffect(target, Zone.EXILE)
-
-    /**
-     * Exile a target until the beginning of the next end step.
-     * Used by Astral Slide-style effects.
-     */
-    fun ExileUntilEndStep(target: EffectTarget): Effect =
-        EffectPatterns.exileUntilEndStep(target)
 
     /**
      * Exile all permanents matching a filter that the controller controls and link
@@ -371,13 +322,6 @@ object Effects {
     fun GrantPlayWithoutPayingCost(from: String): Effect = GrantPlayWithoutPayingCostEffect(from)
 
     /**
-     * Shuffle your library, then exile the top card. Until end of turn,
-     * you may play that card without paying its mana cost.
-     * Used by Mind's Desire.
-     */
-    fun ShuffleAndExileTopPlayFree(): Effect = EffectPatterns.shuffleAndExileTopPlayFree()
-
-    /**
      * Put onto the battlefield.
      */
     fun PutOntoBattlefield(target: EffectTarget, tapped: Boolean = false): Effect =
@@ -395,6 +339,18 @@ object Effects {
      */
     fun ReturnSelfToBattlefieldAttached(target: EffectTarget = EffectTarget.TriggeringEntity): Effect =
         ReturnSelfToBattlefieldAttachedEffect(target)
+
+    /**
+     * Return all permanents matching a filter to their owners' hands.
+     */
+    fun ReturnAllToHand(filter: GroupFilter): Effect =
+        ReturnAllToHandEffect(filter)
+
+    /**
+     * Take the top card from the source's linked exile pile and put it into your hand.
+     * Used by Parallel Thoughts and similar cards.
+     */
+    fun TakeFromLinkedExile(): Effect = TakeFromLinkedExileEffect
 
     // =========================================================================
     // Stat Modification Effects
@@ -458,6 +414,16 @@ object Effects {
     fun DistributeCountersFromSelf(counterType: String = "+1/+1"): Effect =
         com.wingedsheep.sdk.scripting.effects.DistributeCountersFromSelfEffect(counterType)
 
+    /**
+     * Set a creature's base power to a dynamic value.
+     * "Change this creature's base power to target creature's power."
+     */
+    fun SetBasePower(
+        target: EffectTarget = EffectTarget.Self,
+        power: DynamicAmount,
+        duration: Duration = Duration.Permanent
+    ): Effect = SetBasePowerEffect(target, power, duration)
+
     // =========================================================================
     // Mana Effects
     // =========================================================================
@@ -518,133 +484,6 @@ object Effects {
     fun CreateTreasure(count: Int = 1): Effect =
         CreateTreasureTokensEffect(count)
 
-    /**
-     * Exile target permanent, and its controller gets a token. (e.g., Crib Swap)
-     */
-    fun ExileAndReplaceWithToken(
-        target: EffectTarget,
-        power: Int,
-        toughness: Int,
-        colors: Set<Color> = emptySet(),
-        creatureTypes: Set<String>,
-        keywords: Set<Keyword> = emptySet()
-    ): Effect = EffectPatterns.exileAndReplaceWithToken(target, power, toughness, colors, creatureTypes, keywords)
-
-    /**
-     * Destroy target permanent, and its controller gets a token. (e.g., Beast Within, Pongify)
-     */
-    fun DestroyAndReplaceWithToken(
-        target: EffectTarget,
-        power: Int,
-        toughness: Int,
-        colors: Set<Color> = emptySet(),
-        creatureTypes: Set<String>,
-        keywords: Set<Keyword> = emptySet()
-    ): Effect = EffectPatterns.destroyAndReplaceWithToken(target, power, toughness, colors, creatureTypes, keywords)
-
-    // =========================================================================
-    // Library Effects
-    // =========================================================================
-
-    /**
-     * Shuffle a player's graveyard into their library.
-     */
-    fun ShuffleGraveyardIntoLibrary(target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
-        EffectPatterns.shuffleGraveyardIntoLibrary(target)
-
-    /**
-     * Search library for cards.
-     */
-    fun SearchLibrary(
-        filter: GameObjectFilter,
-        count: Int = 1,
-        destination: SearchDestination = SearchDestination.HAND,
-        entersTapped: Boolean = false,
-        shuffle: Boolean = true,
-        reveal: Boolean = false
-    ): Effect = EffectPatterns.searchLibrary(filter, count, destination, entersTapped, shuffle, reveal)
-
-    /**
-     * Search multiple zones for a card matching a filter and put it into a destination zone.
-     * Shuffles library afterward if library is among the searched zones.
-     */
-    fun SearchMultipleZones(
-        zones: List<Zone>,
-        filter: GameObjectFilter,
-        count: Int = 1,
-        destination: SearchDestination = SearchDestination.BATTLEFIELD,
-        entersTapped: Boolean = false
-    ): Effect = EffectPatterns.searchMultipleZones(zones, filter, count, destination, entersTapped)
-
-    /**
-     * Search library for a card, shuffle, and put it Nth from the top.
-     * E.g., positionFromTop = 2 for "third from the top" (Long-Term Plans).
-     */
-    fun SearchLibraryNthFromTop(
-        filter: GameObjectFilter = GameObjectFilter.Any,
-        positionFromTop: Int = 2
-    ): Effect = EffectPatterns.searchLibraryNthFromTop(filter, positionFromTop)
-
-    /**
-     * Take the top card from the source's linked exile pile and put it into your hand.
-     * Used by Parallel Thoughts and similar cards.
-     */
-    fun TakeFromLinkedExile(): Effect = TakeFromLinkedExileEffect
-
-    /**
-     * Scry N.
-     */
-    fun Scry(count: Int): Effect =
-        EffectPatterns.scry(count)
-
-    /**
-     * Surveil N.
-     */
-    fun Surveil(count: Int): Effect =
-        EffectPatterns.surveil(count)
-
-    /**
-     * Mill N cards.
-     */
-    fun Mill(count: Int, target: EffectTarget = EffectTarget.Controller): Effect =
-        EffectPatterns.mill(count, target)
-
-    /**
-     * Mill a dynamic number of cards.
-     */
-    fun Mill(count: DynamicAmount, target: EffectTarget = EffectTarget.Controller): Effect =
-        EffectPatterns.mill(count, target)
-
-    /**
-     * Head Games — Target opponent puts cards from their hand on top of their library.
-     * Search that player's library for that many cards. The player puts those cards
-     * into their hand, then shuffles.
-     */
-    fun HeadGames(target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
-        EffectPatterns.headGames(target)
-
-    /**
-     * Each player may reveal any number of creature cards from their hand.
-     * Then each player creates tokens for each card they revealed.
-     */
-    fun EachPlayerRevealCreaturesCreateTokens(
-        tokenPower: Int,
-        tokenToughness: Int,
-        tokenColors: Set<Color>,
-        tokenCreatureTypes: Set<String>,
-        tokenImageUri: String? = null
-    ): Effect = EffectPatterns.eachPlayerRevealCreaturesCreateTokens(
-        tokenPower, tokenToughness, tokenColors, tokenCreatureTypes, tokenImageUri
-    )
-
-    /**
-     * Each player may search their library for up to X cards matching a filter.
-     */
-    fun EachPlayerSearchesLibrary(
-        filter: GameObjectFilter,
-        count: DynamicAmount
-    ): Effect = EffectPatterns.eachPlayerSearchesLibrary(filter, count)
-
     // =========================================================================
     // Protection Effects
     // =========================================================================
@@ -692,15 +531,6 @@ object Effects {
         GainControlByMostOfSubtypeEffect(subtype, target)
 
     /**
-     * Gain control of all creatures matching a filter until end of turn.
-     */
-    fun GainControlOfGroup(filter: GroupFilter = GroupFilter.AllCreatures, duration: Duration = Duration.EndOfTurn): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = GainControlEffect(EffectTarget.Self, duration)
-        )
-
-    /**
      * Choose a creature type. If you control more creatures of that type than each
      * other player, gain control of all creatures of that type.
      */
@@ -725,17 +555,6 @@ object Effects {
 
     /**
      * Repeat a body effect in a do-while loop controlled by a repeat condition.
-     *
-     * The body executes at least once. After each iteration, the condition determines
-     * whether to repeat.
-     *
-     * Example (Trade Secrets):
-     * ```kotlin
-     * RepeatWhile(
-     *     body = Composite(DrawCards(2, target), DrawUpTo(4)),
-     *     repeatCondition = RepeatCondition.PlayerChooses(target, "Repeat?")
-     * )
-     * ```
      */
     fun RepeatWhile(body: Effect, repeatCondition: RepeatCondition): Effect =
         RepeatWhileEffect(body, repeatCondition)
@@ -780,21 +599,18 @@ object Effects {
 
     /**
      * Change the target of a spell to another creature.
-     * "If target spell has only one target and that target is a creature, change that spell's target to another creature."
      */
     fun ChangeSpellTarget(targetMustBeSource: Boolean = false): Effect =
         ChangeSpellTargetEffect(targetMustBeSource)
 
     /**
      * Change the target of target spell or ability with a single target.
-     * "Change the target of target spell or ability with a single target."
      */
     fun ChangeTarget(): Effect =
         ChangeTargetEffect
 
     /**
      * Reselect the target of the triggering spell or ability at random.
-     * "If it has a single target, reselect its target at random."
      */
     fun ReselectTargetRandomly(): Effect =
         ReselectTargetRandomlyEffect
@@ -838,113 +654,9 @@ object Effects {
     fun Untap(target: EffectTarget): Effect =
         TapUntapEffect(target, tap = false)
 
-    /**
-     * Untap all creatures matching a filter.
-     */
-    fun UntapGroup(filter: GroupFilter = GroupFilter.AllCreatures): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = TapUntapEffect(EffectTarget.Self, tap = false)
-        )
-
-    /**
-     * Tap all creatures matching a filter.
-     */
-    fun TapAll(filter: GroupFilter): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = TapUntapEffect(EffectTarget.Self, tap = true)
-        )
-
-    /**
-     * Destroy all permanents matching a filter.
-     */
-    fun DestroyAll(filter: GroupFilter, noRegenerate: Boolean = false): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = MoveToZoneEffect(EffectTarget.Self, Zone.GRAVEYARD, byDestruction = true),
-            noRegenerate = noRegenerate
-        )
-
-    /**
-     * Return all permanents matching a filter to their owners' hands.
-     */
-    fun ReturnAllToHand(filter: GroupFilter): Effect =
-        ReturnAllToHandEffect(filter)
-
-    /**
-     * Grant a keyword to all creatures matching a filter.
-     */
-    fun GrantKeywordToAll(
-        keyword: Keyword,
-        filter: GroupFilter,
-        duration: Duration = Duration.EndOfTurn
-    ): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = GrantKeywordUntilEndOfTurnEffect(keyword.name, EffectTarget.Self, duration)
-        )
-
-    /**
-     * Remove a keyword from all creatures matching a filter.
-     * "All other creatures lose flying until end of turn."
-     */
-    fun RemoveKeywordFromAll(
-        keyword: Keyword,
-        filter: GroupFilter,
-        duration: Duration = Duration.EndOfTurn
-    ): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = RemoveKeywordUntilEndOfTurnEffect(keyword.name, EffectTarget.Self, duration)
-        )
-
-    /**
-     * Modify stats for all creatures matching a filter.
-     */
-    fun ModifyStatsForAll(
-        power: Int,
-        toughness: Int,
-        filter: GroupFilter,
-        duration: Duration = Duration.EndOfTurn
-    ): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = ModifyStatsEffect(power, toughness, EffectTarget.Self, duration)
-        )
-
-    /**
-     * Modify stats for all creatures matching a filter using dynamic amounts.
-     * "All creatures get -X/-X until end of turn."
-     */
-    fun ModifyStatsForAll(
-        power: DynamicAmount,
-        toughness: DynamicAmount,
-        filter: GroupFilter,
-        duration: Duration = Duration.EndOfTurn
-    ): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = ModifyStatsEffect(power, toughness, EffectTarget.Self, duration)
-        )
-
-    /**
-     * Deal damage to all creatures matching a filter.
-     */
-    fun DealDamageToAll(amount: Int, filter: GroupFilter): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = DealDamageEffect(amount, EffectTarget.Self)
-        )
-
-    /**
-     * Deal dynamic damage to all creatures matching a filter.
-     */
-    fun DealDamageToAll(amount: DynamicAmount, filter: GroupFilter): Effect =
-        ForEachInGroupEffect(
-            filter = filter,
-            effect = DealDamageEffect(amount, EffectTarget.Self)
-        )
+    // =========================================================================
+    // Group Effects (atomic effect classes)
+    // =========================================================================
 
     /**
      * All creatures matching a filter can't block this turn.
@@ -1022,16 +734,6 @@ object Effects {
     /**
      * Target land becomes an X/Y creature until end of turn. It's still a land.
      */
-    /**
-     * Set a creature's base power to a dynamic value.
-     * "Change this creature's base power to target creature's power."
-     */
-    fun SetBasePower(
-        target: EffectTarget = EffectTarget.Self,
-        power: DynamicAmount,
-        duration: Duration = Duration.Permanent
-    ): Effect = SetBasePowerEffect(target, power, duration)
-
     fun AnimateLand(
         target: EffectTarget = EffectTarget.ContextTarget(0),
         power: Int = 1,
@@ -1054,8 +756,6 @@ object Effects {
     /**
      * Generic pipeline step: choose an option from a set (creature type, color, etc.)
      * and store the result in EffectContext.chosenValues[storeAs].
-     *
-     * Downstream pipeline effects can read the chosen value to condition their behavior.
      */
     fun ChooseOption(
         optionType: OptionType,
@@ -1063,32 +763,6 @@ object Effects {
         prompt: String? = null,
         excludedOptions: List<String> = emptyList()
     ): Effect = ChooseOptionEffect(optionType, storeAs, prompt, excludedOptions)
-
-    // =========================================================================
-    // Composite Effect Helpers
-    // =========================================================================
-
-    /**
-     * Draw cards then discard cards (looting).
-     * "Draw a card, then discard a card."
-     */
-    fun Loot(draw: Int = 1, discard: Int = 1): Effect = CompositeEffect(
-        listOf(
-            DrawCardsEffect(draw, EffectTarget.Controller),
-            EffectPatterns.discardCards(discard)
-        )
-    )
-
-    /**
-     * Deal damage to target and gain that much life.
-     * "Deal X damage to target and you gain X life."
-     */
-    fun Drain(amount: Int, target: EffectTarget): Effect = CompositeEffect(
-        listOf(
-            DealDamageEffect(amount, target),
-            GainLifeEffect(amount, EffectTarget.Controller)
-        )
-    )
 
     // =========================================================================
     // Chain Copy Effects
@@ -1181,20 +855,4 @@ object Effects {
         copyTargetRequirement = com.wingedsheep.sdk.scripting.targets.TargetObject(filter = targetFilter),
         spellName = spellName
     )
-
-    // =========================================================================
-    // Creature Type Choice Patterns (Pipeline)
-    // =========================================================================
-
-    /**
-     * Each player chooses a creature type. Each player returns all creature cards
-     * of a type chosen this way from their graveyard to the battlefield.
-     */
-    fun PatriarchsBidding(): Effect = EffectPatterns.patriarchsBidding()
-
-    /**
-     * Choose a creature type. Untap all creatures of the chosen type.
-     */
-    fun ChooseCreatureTypeUntap(): Effect = EffectPatterns.chooseCreatureTypeUntap()
-
 }

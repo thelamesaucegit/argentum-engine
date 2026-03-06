@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -19,7 +19,7 @@ val SeekTheHorizon = card("Seek the Horizon") {
     oracleText = "Search your library for up to three basic land cards, reveal them, put them into your hand, then shuffle."
 
     spell {
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = GameObjectFilter.BasicLand,
             count = 3,
             destination = SearchDestination.HAND,

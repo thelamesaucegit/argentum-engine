@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 
 val LongTermPlans = card("Long-Term Plans") {
@@ -10,7 +10,7 @@ val LongTermPlans = card("Long-Term Plans") {
     oracleText = "Search your library for a card, then shuffle and put that card third from the top."
 
     spell {
-        effect = Effects.SearchLibraryNthFromTop(positionFromTop = 2)
+        effect = EffectPatterns.searchLibraryNthFromTop(positionFromTop = 2)
     }
 
     metadata {

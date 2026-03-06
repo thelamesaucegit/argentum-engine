@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.KeywordAbility
@@ -20,7 +20,7 @@ val Unburden = card("Unburden") {
 
     spell {
         val t = target("target", TargetPlayer())
-        effect = Effects.Discard(2, t)
+        effect = EffectPatterns.discardCards(2, t)
     }
 
     keywordAbility(KeywordAbility.cycling("{2}"))

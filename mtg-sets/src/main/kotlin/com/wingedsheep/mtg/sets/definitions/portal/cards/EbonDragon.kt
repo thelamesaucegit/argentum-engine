@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.portal.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.targets.TargetOpponent
@@ -26,7 +26,7 @@ val EbonDragon = card("Ebon Dragon") {
         trigger = Triggers.EntersBattlefield
         optional = true
         val t = target("target", TargetOpponent())
-        effect = Effects.Discard(1, t)
+        effect = EffectPatterns.discardCards(1, t)
     }
 
     metadata {

@@ -1,6 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
@@ -30,7 +31,7 @@ val ForceAway = card("Force Away") {
         effect = Effects.ReturnToHand(creature)
             .then(ConditionalEffect(
                 condition = Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Creature.powerAtLeast(4)),
-                effect = MayEffect(Effects.Loot())
+                effect = MayEffect(EffectPatterns.loot())
             ))
     }
 

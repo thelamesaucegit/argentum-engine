@@ -13,6 +13,9 @@ import com.wingedsheep.sdk.scripting.effects.ChooseOptionEffect
 import com.wingedsheep.sdk.scripting.effects.Chooser
 import com.wingedsheep.sdk.scripting.effects.EachPlayerChoosesCreatureTypeEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
+import com.wingedsheep.sdk.scripting.effects.GainControlEffect
+import com.wingedsheep.sdk.scripting.effects.GrantKeywordUntilEndOfTurnEffect
+import com.wingedsheep.sdk.scripting.effects.RemoveKeywordUntilEndOfTurnEffect
 import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
@@ -94,7 +97,7 @@ object EffectPatterns {
      * mayPayOrElse(
      *     PayLifeEffect(3),
      *     ifPaid = DrawCardsEffect(2),
-     *     ifNotPaid = Effects.Discard(1)
+     *     ifNotPaid = EffectPatterns.discardCards(1)
      * )
      * ```
      */
@@ -396,7 +399,7 @@ object EffectPatterns {
      * ```kotlin
      * sequence(
      *     DrawCardsEffect(3),
-     *     Effects.Discard(2)
+     *     EffectPatterns.discardCards(2)
      * )
      * ```
      */
@@ -1005,7 +1008,7 @@ object EffectPatterns {
      *
      * @param target The opponent whose hand is being replaced (resolved from spell target)
      */
-    fun headGames(target: EffectTarget): CompositeEffect = CompositeEffect(
+    fun headGames(target: EffectTarget = EffectTarget.ContextTarget(0)): CompositeEffect = CompositeEffect(
         listOf(
             // Step 1: Gather opponent's hand (stores count as "opponentHand_count")
             GatherCardsEffect(
@@ -1054,8 +1057,8 @@ object EffectPatterns {
      *
      * Example: "Mill 3" or "Target player mills 3 cards"
      * ```kotlin
-     * Effects.Mill(3)
-     * Effects.Mill(3, EffectTarget.ContextTarget(0))
+     * EffectPatterns.mill(3)
+     * EffectPatterns.mill(3, EffectTarget.ContextTarget(0))
      * ```
      *
      * @param count How many cards to mill
@@ -1069,7 +1072,7 @@ object EffectPatterns {
      *
      * Example: "That player mills X cards, where X is the number of cards in their hand."
      * ```kotlin
-     * Effects.Mill(DynamicAmount.Count(Player.TriggeringPlayer, Zone.HAND), EffectTarget.PlayerRef(Player.TriggeringPlayer))
+     * EffectPatterns.mill(DynamicAmount.Count(Player.TriggeringPlayer, Zone.HAND), EffectTarget.PlayerRef(Player.TriggeringPlayer))
      * ```
      *
      * @param count Dynamic amount of cards to mill
@@ -1103,7 +1106,7 @@ object EffectPatterns {
      * Creates a Gather → Move(Shuffled) pipeline.
      *
      * ```kotlin
-     * Effects.ShuffleGraveyardIntoLibrary(EffectTarget.ContextTarget(0))
+     * EffectPatterns.shuffleGraveyardIntoLibrary(EffectTarget.ContextTarget(0))
      * ```
      *
      * @param target Whose graveyard to shuffle in (default: target player)
@@ -1785,4 +1788,141 @@ object EffectPatterns {
             )
         )
     )
+
+    // =========================================================================
+    // Group Effect Patterns
+    // =========================================================================
+
+    /**
+     * Draw cards then discard cards (looting).
+     * "Draw a card, then discard a card."
+     */
+    fun loot(draw: Int = 1, discard: Int = 1): CompositeEffect = CompositeEffect(
+        listOf(
+            DrawCardsEffect(draw, EffectTarget.Controller),
+            discardCards(discard)
+        )
+    )
+
+    /**
+     * Deal damage to target and gain that much life.
+     * "Deal X damage to target and you gain X life."
+     */
+    fun drain(amount: Int, target: EffectTarget): CompositeEffect = CompositeEffect(
+        listOf(
+            DealDamageEffect(amount, target),
+            GainLifeEffect(amount, EffectTarget.Controller)
+        )
+    )
+
+    /**
+     * Untap all creatures matching a filter.
+     */
+    fun untapGroup(filter: GroupFilter = GroupFilter.AllCreatures): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = TapUntapEffect(EffectTarget.Self, tap = false)
+        )
+
+    /**
+     * Tap all creatures matching a filter.
+     */
+    fun tapAll(filter: GroupFilter): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = TapUntapEffect(EffectTarget.Self, tap = true)
+        )
+
+    /**
+     * Destroy all permanents matching a filter.
+     */
+    fun destroyAll(filter: GroupFilter, noRegenerate: Boolean = false): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = MoveToZoneEffect(EffectTarget.Self, Zone.GRAVEYARD, byDestruction = true),
+            noRegenerate = noRegenerate
+        )
+
+    /**
+     * Grant a keyword to all creatures matching a filter.
+     */
+    fun grantKeywordToAll(
+        keyword: Keyword,
+        filter: GroupFilter,
+        duration: Duration = Duration.EndOfTurn
+    ): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = GrantKeywordUntilEndOfTurnEffect(keyword.name, EffectTarget.Self, duration)
+        )
+
+    /**
+     * Remove a keyword from all creatures matching a filter.
+     * "All other creatures lose flying until end of turn."
+     */
+    fun removeKeywordFromAll(
+        keyword: Keyword,
+        filter: GroupFilter,
+        duration: Duration = Duration.EndOfTurn
+    ): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = RemoveKeywordUntilEndOfTurnEffect(keyword.name, EffectTarget.Self, duration)
+        )
+
+    /**
+     * Modify stats for all creatures matching a filter.
+     */
+    fun modifyStatsForAll(
+        power: Int,
+        toughness: Int,
+        filter: GroupFilter,
+        duration: Duration = Duration.EndOfTurn
+    ): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = ModifyStatsEffect(power, toughness, EffectTarget.Self, duration)
+        )
+
+    /**
+     * Modify stats for all creatures matching a filter using dynamic amounts.
+     * "All creatures get -X/-X until end of turn."
+     */
+    fun modifyStatsForAll(
+        power: DynamicAmount,
+        toughness: DynamicAmount,
+        filter: GroupFilter,
+        duration: Duration = Duration.EndOfTurn
+    ): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = ModifyStatsEffect(power, toughness, EffectTarget.Self, duration)
+        )
+
+    /**
+     * Deal damage to all creatures matching a filter.
+     */
+    fun dealDamageToAll(amount: Int, filter: GroupFilter): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = DealDamageEffect(amount, EffectTarget.Self)
+        )
+
+    /**
+     * Deal dynamic damage to all creatures matching a filter.
+     */
+    fun dealDamageToAll(amount: DynamicAmount, filter: GroupFilter): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = DealDamageEffect(amount, EffectTarget.Self)
+        )
+
+    /**
+     * Gain control of all creatures matching a filter until end of turn.
+     */
+    fun gainControlOfGroup(filter: GroupFilter = GroupFilter.AllCreatures, duration: Duration = Duration.EndOfTurn): ForEachInGroupEffect =
+        ForEachInGroupEffect(
+            filter = filter,
+            effect = GainControlEffect(EffectTarget.Self, duration)
+        )
 }

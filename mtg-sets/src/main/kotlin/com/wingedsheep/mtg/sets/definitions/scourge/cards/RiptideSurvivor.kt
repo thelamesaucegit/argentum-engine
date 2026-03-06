@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
@@ -23,7 +24,7 @@ val RiptideSurvivor = card("Riptide Survivor") {
 
     triggeredAbility {
         trigger = Triggers.TurnedFaceUp
-        effect = Effects.Discard(2, EffectTarget.Controller)
+        effect = EffectPatterns.discardCards(2, EffectTarget.Controller)
             .then(Effects.DrawCards(3))
     }
 

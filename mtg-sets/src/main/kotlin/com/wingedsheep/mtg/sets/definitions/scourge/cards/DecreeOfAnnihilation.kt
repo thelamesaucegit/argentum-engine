@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
 import com.wingedsheep.sdk.core.Zone
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -60,7 +60,7 @@ val DecreeOfAnnihilation = card("Decree of Annihilation") {
 
     triggeredAbility {
         trigger = Triggers.YouCycleThis
-        effect = Effects.DestroyAll(GroupFilter.AllLands)
+        effect = EffectPatterns.destroyAll(GroupFilter.AllLands)
     }
 
     metadata {

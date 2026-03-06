@@ -10,7 +10,7 @@ import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.MayEffect
 import com.wingedsheep.sdk.scripting.effects.ModifyStatsEffect
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 
 /**
  * Avarax
@@ -34,12 +34,12 @@ val Avarax = card("Avarax") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         effect = MayEffect(
-            Effects.SearchLibrary(
+            EffectPatterns.searchLibrary(
                 filter = GameObjectFilter.Any.named("Avarax"),
                 count = 1,
                 destination = SearchDestination.HAND,
                 reveal = true,
-                shuffle = true
+                shuffleAfter = true
             )
         )
     }

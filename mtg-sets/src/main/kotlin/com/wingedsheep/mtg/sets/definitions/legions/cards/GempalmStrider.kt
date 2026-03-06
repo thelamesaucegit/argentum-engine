@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.legions.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -26,7 +26,7 @@ val GempalmStrider = card("Gempalm Strider") {
 
     triggeredAbility {
         trigger = Triggers.YouCycleThis
-        effect = Effects.ModifyStatsForAll(2, 2, GroupFilter.allCreaturesWithSubtype("Elf"))
+        effect = EffectPatterns.modifyStatsForAll(2, 2, GroupFilter.allCreaturesWithSubtype("Elf"))
     }
 
     metadata {

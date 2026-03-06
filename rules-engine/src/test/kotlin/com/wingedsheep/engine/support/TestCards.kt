@@ -4,7 +4,7 @@ import com.wingedsheep.mtg.sets.definitions.onslaught.OnslaughtSet
 import com.wingedsheep.mtg.sets.definitions.portal.PortalSet
 import com.wingedsheep.mtg.sets.definitions.scourge.ScourgeSet
 import com.wingedsheep.sdk.core.*
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.model.CardScript
 import com.wingedsheep.sdk.model.CreatureStats
@@ -298,7 +298,7 @@ object TestCards {
             effect = CompositeEffect(
                 listOf(
                     DrawCardsEffect(1, EffectTarget.Controller),
-                    Effects.Discard(1, EffectTarget.Controller)
+                    EffectPatterns.discardCards(1, EffectTarget.Controller)
                 )
             )
         )

@@ -1,5 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -18,7 +19,7 @@ val BlindingSpray = card("Blinding Spray") {
     oracleText = "Creatures your opponents control get -4/-0 until end of turn.\nDraw a card."
 
     spell {
-        effect = Effects.ModifyStatsForAll(
+        effect = EffectPatterns.modifyStatsForAll(
             power = -4,
             toughness = 0,
             filter = GroupFilter.AllCreaturesOpponentsControl

@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -24,7 +24,7 @@ val EmbodimentOfSpring = card("Embodiment of Spring") {
 
     activatedAbility {
         cost = Costs.Composite(Costs.Mana("{1}{G}"), Costs.Tap, Costs.SacrificeSelf)
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = Filters.BasicLand,
             destination = SearchDestination.BATTLEFIELD,
             entersTapped = true

@@ -9,7 +9,7 @@ import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.MayEffect
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 
 /**
  * Embermage Goblin
@@ -31,12 +31,12 @@ val EmbermageGoblin = card("Embermage Goblin") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         effect = MayEffect(
-            Effects.SearchLibrary(
+            EffectPatterns.searchLibrary(
                 filter = GameObjectFilter.Any.named("Embermage Goblin"),
                 count = 1,
                 destination = SearchDestination.HAND,
                 reveal = true,
-                shuffle = true
+                shuffleAfter = true
             )
         )
     }

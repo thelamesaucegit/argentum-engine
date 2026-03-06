@@ -3,7 +3,7 @@ package com.wingedsheep.mtg.sets.definitions.scourge.cards
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -49,7 +49,7 @@ val BladewingTheRisen = card("Bladewing the Risen") {
 
     activatedAbility {
         cost = Costs.Mana("{B}{R}")
-        effect = Effects.ModifyStatsForAll(
+        effect = EffectPatterns.modifyStatsForAll(
             power = 1,
             toughness = 1,
             filter = GroupFilter.allCreaturesWithSubtype("Dragon")

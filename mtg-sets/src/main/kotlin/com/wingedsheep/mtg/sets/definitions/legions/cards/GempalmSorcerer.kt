@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.legions.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.core.Keyword
@@ -27,7 +27,7 @@ val GempalmSorcerer = card("Gempalm Sorcerer") {
 
     triggeredAbility {
         trigger = Triggers.YouCycleThis
-        effect = Effects.GrantKeywordToAll(Keyword.FLYING, GroupFilter.allCreaturesWithSubtype("Wizard"))
+        effect = EffectPatterns.grantKeywordToAll(Keyword.FLYING, GroupFilter.allCreaturesWithSubtype("Wizard"))
     }
 
     metadata {

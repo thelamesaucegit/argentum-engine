@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -32,7 +32,7 @@ val MarduSkullhunter = card("Mardu Skullhunter") {
         val t = target("target opponent", TargetOpponent())
         effect = ConditionalEffect(
             condition = YouAttackedThisTurn,
-            effect = Effects.Discard(1, t)
+            effect = EffectPatterns.discardCards(1, t)
         )
     }
 

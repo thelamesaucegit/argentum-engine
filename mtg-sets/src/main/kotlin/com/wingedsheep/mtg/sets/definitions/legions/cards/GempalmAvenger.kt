@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.legions.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.core.Keyword
@@ -30,8 +30,8 @@ val GempalmAvenger = card("Gempalm Avenger") {
         trigger = Triggers.YouCycleThis
         effect = CompositeEffect(
             listOf(
-                Effects.ModifyStatsForAll(1, 1, GroupFilter.allCreaturesWithSubtype("Soldier")),
-                Effects.GrantKeywordToAll(Keyword.FIRST_STRIKE, GroupFilter.allCreaturesWithSubtype("Soldier"))
+                EffectPatterns.modifyStatsForAll(1, 1, GroupFilter.allCreaturesWithSubtype("Soldier")),
+                EffectPatterns.grantKeywordToAll(Keyword.FIRST_STRIKE, GroupFilter.allCreaturesWithSubtype("Soldier"))
             )
         )
     }

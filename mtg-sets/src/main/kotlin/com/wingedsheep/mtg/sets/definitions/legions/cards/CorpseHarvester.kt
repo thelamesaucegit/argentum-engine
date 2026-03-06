@@ -2,7 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.legions.cards
 
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -29,18 +29,18 @@ val CorpseHarvester = card("Corpse Harvester") {
             Costs.Tap,
             Costs.Sacrifice(GameObjectFilter.Creature)
         )
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = GameObjectFilter(
                 cardPredicates = listOf(CardPredicate.HasSubtype(Subtype("Zombie")))
             ),
             reveal = true,
-            shuffle = false
-        ) then Effects.SearchLibrary(
+            shuffleAfter = false
+        ) then EffectPatterns.searchLibrary(
             filter = GameObjectFilter(
                 cardPredicates = listOf(CardPredicate.HasSubtype(Subtype("Swamp")))
             ),
             reveal = true,
-            shuffle = true
+            shuffleAfter = true
         )
     }
 

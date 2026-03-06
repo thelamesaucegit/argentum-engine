@@ -2,7 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
 import com.wingedsheep.sdk.dsl.Conditions
 import com.wingedsheep.sdk.dsl.Costs
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -26,7 +26,7 @@ val WeatheredWayfarer = card("Weathered Wayfarer") {
 
     activatedAbility {
         cost = Costs.Composite(Costs.Mana("{W}"), Costs.Tap)
-        effect = Effects.SearchLibrary(
+        effect = EffectPatterns.searchLibrary(
             filter = Filters.Land,
             count = 1,
             destination = SearchDestination.HAND,

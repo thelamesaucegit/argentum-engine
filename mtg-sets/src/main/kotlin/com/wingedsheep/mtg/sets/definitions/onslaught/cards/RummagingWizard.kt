@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
 import com.wingedsheep.sdk.core.ManaCost
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AbilityCost
@@ -23,7 +23,7 @@ val RummagingWizard = card("Rummaging Wizard") {
 
     activatedAbility {
         cost = AbilityCost.Mana(ManaCost.parse("{2}{U}"))
-        effect = Effects.Surveil(1)
+        effect = EffectPatterns.surveil(1)
     }
 
     metadata {

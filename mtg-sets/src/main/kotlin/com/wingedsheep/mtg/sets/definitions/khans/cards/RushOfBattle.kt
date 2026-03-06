@@ -1,7 +1,7 @@
 package com.wingedsheep.mtg.sets.definitions.khans.cards
 
 import com.wingedsheep.sdk.core.Keyword
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
@@ -19,12 +19,12 @@ val RushOfBattle = card("Rush of Battle") {
     oracleText = "Creatures you control get +2/+1 until end of turn. Warrior creatures you control gain lifelink until end of turn."
 
     spell {
-        effect = Effects.ModifyStatsForAll(
+        effect = EffectPatterns.modifyStatsForAll(
             power = 2,
             toughness = 1,
             filter = GroupFilter.AllCreaturesYouControl
         ).then(
-            Effects.GrantKeywordToAll(
+            EffectPatterns.grantKeywordToAll(
                 keyword = Keyword.LIFELINK,
                 filter = GroupFilter.AllCreaturesYouControl.withSubtype("Warrior")
             )

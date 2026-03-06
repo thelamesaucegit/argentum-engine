@@ -1,6 +1,6 @@
 package com.wingedsheep.mtg.sets.definitions.scourge.cards
 
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
@@ -26,12 +26,12 @@ val FierceEmpath = card("Fierce Empath") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         effect = MayEffect(
-            Effects.SearchLibrary(
+            EffectPatterns.searchLibrary(
                 filter = GameObjectFilter.Creature.manaValueAtLeast(6),
                 count = 1,
                 destination = SearchDestination.HAND,
                 reveal = true,
-                shuffle = true
+                shuffleAfter = true
             )
         )
     }

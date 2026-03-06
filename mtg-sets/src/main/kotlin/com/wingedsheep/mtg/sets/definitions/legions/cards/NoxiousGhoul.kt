@@ -2,7 +2,7 @@ package com.wingedsheep.mtg.sets.definitions.legions.cards
 
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
-import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameEvent.ZoneChangeEvent
@@ -33,7 +33,7 @@ val NoxiousGhoul = card("Noxious Ghoul") {
             ),
             binding = TriggerBinding.ANY
         )
-        effect = Effects.ModifyStatsForAll(
+        effect = EffectPatterns.modifyStatsForAll(
             power = -1,
             toughness = -1,
             filter = GroupFilter(GameObjectFilter.Creature.notSubtype(Subtype.ZOMBIE))
