@@ -363,6 +363,7 @@ data class ReturnSelfToBattlefieldAttachedEffect(
  * @property filter Which permanents to exile (matched against projected state)
  * @property storeAs Collection name for storing exiled IDs (default "linked_exile")
  */
+@Deprecated("Use Effects.ExileGroupAndLink() or EffectPatterns.exileGroupAndLink() instead")
 @SerialName("ExileGroupAndLink")
 @Serializable
 data class ExileGroupAndLinkEffect(

@@ -509,6 +509,7 @@ class MoveCollectionExecutor(
             val actualDestPlayerId = when {
                 (moveType == MoveType.Sacrifice || moveType == MoveType.Destroy) && destZone == Zone.GRAVEYARD -> ownerId
                 destZone == Zone.HAND && fromZone == Zone.BATTLEFIELD -> ownerId
+                destZone == Zone.EXILE && fromZone == Zone.BATTLEFIELD -> ownerId
                 else -> destPlayerId
             }
 

@@ -11,11 +11,13 @@ import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.effects.CardSource
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
 import com.wingedsheep.sdk.scripting.references.Player
+import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import kotlin.reflect.KClass
 
 /**
@@ -118,6 +120,23 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                     filtered.filter { it != context.sourceId }
                 } else {
                     filtered
+                }
+            }
+
+            is CardSource.FromLinkedExile -> {
+                val sourceId = context.sourceId
+                    ?: return ExecutionResult.error(state, "No source entity for FromLinkedExile")
+                val sourceContainer = state.getEntity(sourceId)
+                    ?: return ExecutionResult.error(state, "Source entity not found for FromLinkedExile")
+                val linked = sourceContainer.get<LinkedExileComponent>()
+                    ?: return ExecutionResult.success(state).copy(
+                        updatedCollections = mapOf(effect.storeAs to emptyList())
+                    )
+                // Filter to only entities currently in exile
+                linked.exiledIds.filter { entityId ->
+                    val ownerId = state.getEntity(entityId)?.get<OwnerComponent>()?.playerId
+                        ?: context.controllerId
+                    entityId in state.getZone(ZoneKey(ownerId, Zone.EXILE))
                 }
             }
         }

@@ -103,6 +103,17 @@ sealed interface CardSource {
             }
         }
     }
+
+    /**
+     * Cards from the source permanent's linked exile (LinkedExileComponent).
+     * Returns the entity IDs stored in the component, filtered to only those
+     * currently in exile.
+     */
+    @SerialName("FromLinkedExile")
+    @Serializable
+    data object FromLinkedExile : CardSource {
+        override val description: String = "cards exiled by this permanent"
+    }
 }
 
 /**
