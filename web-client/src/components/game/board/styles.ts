@@ -922,6 +922,21 @@ export const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     zIndex: 5,
   } as React.CSSProperties,
+  // Trap counter badge (for Trap Digger etc.)
+  trapCounterBadge: {
+    position: 'absolute',
+    bottom: 34,
+    left: 4,
+    backgroundColor: 'rgba(80, 60, 20, 0.95)',
+    borderRadius: 4,
+    border: '1px solid rgba(180, 140, 60, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    color: '#e0c060',
+    fontWeight: 700,
+    zIndex: 5,
+  } as React.CSSProperties,
   // Enhanced preview stats box styles
   cardPreviewStatsBox: {
     display: 'flex',

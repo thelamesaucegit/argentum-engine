@@ -137,6 +137,13 @@ export function getDepletionCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of trap counters on a card.
+ */
+export function getTrapCounters(card: ClientCard): number {
+  return card.counters[CounterType.TRAP] ?? 0
+}
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {

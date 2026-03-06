@@ -14,6 +14,7 @@ import {
   getPlagueCounters,
   getChargeCounters,
   getDepletionCounters,
+  getTrapCounters,
   getTokenFrameGradient,
   getTokenFrameTextColor,
   getCardFallbackColor,
@@ -859,6 +860,20 @@ export function GameCard({
           <span style={{ fontSize: responsive.isMobile ? 8 : 10 }}>&#x25C9;</span>
           <span style={{ fontWeight: 700 }}>
             {getDepletionCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Trap counter badge */}
+      {battlefield && !faceDown && getTrapCounters(card) > 0 && (
+        <div style={{
+          ...styles.trapCounterBadge,
+          fontSize: responsive.isMobile ? 9 : 11,
+          padding: responsive.isMobile ? '1px 4px' : '2px 6px',
+        }}>
+          <span style={{ fontSize: responsive.isMobile ? 8 : 10 }}>&#x26A0;</span>
+          <span style={{ fontWeight: 700 }}>
+            {getTrapCounters(card)}
           </span>
         </div>
       )}
