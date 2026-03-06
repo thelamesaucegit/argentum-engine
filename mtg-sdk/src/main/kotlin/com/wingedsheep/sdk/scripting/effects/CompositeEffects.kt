@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.costs.PayCost
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.values.EffectVariable
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 import com.wingedsheep.sdk.scripting.text.TextReplacer
@@ -28,6 +29,9 @@ data class CompositeEffect(
     val effects: List<Effect>
 ) : Effect {
     override val description: String = effects.joinToString(". ") { it.description }
+
+    override fun runtimeDescription(resolver: (DynamicAmount) -> Int): String =
+        effects.joinToString(". ") { it.runtimeDescription(resolver) }
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         var changed = false

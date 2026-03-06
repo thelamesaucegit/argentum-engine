@@ -68,6 +68,13 @@ data class ModifyStatsEffect(
         if (duration.description.isNotEmpty()) append(" ${duration.description}")
     }
 
+    override fun runtimeDescription(resolver: (DynamicAmount) -> Int): String = buildString {
+        append("${target.description} gets ")
+        fun fmt(v: Int) = if (v >= 0) "+$v" else "$v"
+        append("${fmt(resolver(powerModifier))}/${fmt(resolver(toughnessModifier))}")
+        if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         val newPower = powerModifier.applyTextReplacement(replacer)
         val newToughness = toughnessModifier.applyTextReplacement(replacer)

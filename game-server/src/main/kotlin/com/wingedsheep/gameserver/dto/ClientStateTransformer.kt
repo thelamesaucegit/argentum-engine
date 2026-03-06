@@ -19,9 +19,12 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.state.components.stack.ActivatedAbilityOnStackComponent
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
+import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
+import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.registry.CardRegistry
+import com.wingedsheep.sdk.model.CardDefinition
 import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.conditions.Compare
 import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
@@ -691,15 +694,43 @@ class ClientStateTransformer(
                     spellOnStack.castFaceDown -> "Cast as a face-down 2/2 creature"
                     // Instants/sorceries always show their spell effect description
                     cardDef.typeLine.cardTypes.any { it == CardType.INSTANT || it == CardType.SORCERY } ->
-                        cardDef.script.spellEffect?.description
+                        runtimeStackText(state, entityId, spellOnStack, cardDef)
                     // Permanents only show text when ambiguous (card has alternate cast modes like cycling or morph)
                     cardDef.keywordAbilities.any { it is KeywordAbility.Cycling || it is KeywordAbility.Morph } ->
-                        cardDef.script.spellEffect?.description ?: cardComponent.oracleText
+                        runtimeStackText(state, entityId, spellOnStack, cardDef) ?: cardComponent.oracleText
                     // Unambiguous permanent cast — no text needed
                     else -> null
                 }
             } else null
         )
+    }
+
+    /**
+     * Generate stack text with dynamic amounts evaluated to concrete values.
+     * Falls back to static description if evaluation fails.
+     */
+    private fun runtimeStackText(
+        state: GameState,
+        spellEntityId: EntityId,
+        spellOnStack: SpellOnStackComponent,
+        cardDef: CardDefinition
+    ): String? {
+        val effect = cardDef.script.spellEffect ?: return null
+        return try {
+            val evaluator = DynamicAmountEvaluator()
+            val context = EffectContext(
+                sourceId = spellEntityId,
+                controllerId = spellOnStack.casterId,
+                opponentId = state.getOpponent(spellOnStack.casterId),
+                xValue = spellOnStack.xValue,
+                sacrificedPermanents = spellOnStack.sacrificedPermanents,
+                sacrificedPermanentSubtypes = spellOnStack.sacrificedPermanentSubtypes,
+                exiledCardCount = spellOnStack.exiledCardCount
+            )
+            effect.runtimeDescription { amount -> evaluator.evaluate(state, amount, context) }
+        } catch (_: Exception) {
+            effect.description
+        }
     }
 
     /**

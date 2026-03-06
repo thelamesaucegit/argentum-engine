@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.scripting.effects
 import kotlinx.serialization.Serializable
 import com.wingedsheep.sdk.scripting.text.TextReplaceable
 import com.wingedsheep.sdk.scripting.text.TextReplacer
+import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
  * Sealed hierarchy of effects.
@@ -33,6 +34,12 @@ import com.wingedsheep.sdk.scripting.text.TextReplacer
 sealed interface Effect : TextReplaceable<Effect> {
     /** Human-readable description of the effect */
     val description: String
+
+    /**
+     * Returns a description with dynamic amounts evaluated to concrete values.
+     * Override in effects that use [DynamicAmount] to show runtime values on the stack.
+     */
+    fun runtimeDescription(resolver: (DynamicAmount) -> Int): String = description
 
     /**
      * Operator to chain effects.

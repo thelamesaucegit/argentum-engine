@@ -41,6 +41,16 @@ data class DealDamageEffect(
         if (cantBePrevented) append(". This damage can't be prevented")
     }
 
+    override fun runtimeDescription(resolver: (DynamicAmount) -> Int): String = buildString {
+        val resolved = resolver(amount)
+        if (damageSource != null) {
+            append("${damageSource.description} deals $resolved damage to ${target.description}")
+        } else {
+            append("Deal $resolved damage to ${target.description}")
+        }
+        if (cantBePrevented) append(". This damage can't be prevented")
+    }
+
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         val newAmount = amount.applyTextReplacement(replacer)
         return if (newAmount !== amount) copy(amount = newAmount) else this
