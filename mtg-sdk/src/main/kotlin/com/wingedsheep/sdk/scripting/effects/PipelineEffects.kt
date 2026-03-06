@@ -80,6 +80,27 @@ sealed interface CardSource {
     ) : CardSource {
         override val description: String = "permanents ${player.possessive} control"
     }
+
+    /**
+     * All permanents on the battlefield matching a filter (any controller by default).
+     * Uses projected state for type/color/keyword checks to correctly handle continuous effects.
+     *
+     * When [player] is [Player.Each], gathers from all players' battlefields.
+     * When [player] is a specific player, gathers only permanents that player controls (projected).
+     */
+    @SerialName("BattlefieldMatching")
+    @Serializable
+    data class BattlefieldMatching(
+        val filter: GameObjectFilter = GameObjectFilter.Companion.Any,
+        val player: Player = Player.Each
+    ) : CardSource {
+        override val description: String = buildString {
+            append("all ${filter.description} permanents on the battlefield")
+            if (player != Player.Each) {
+                append(" ${player.possessive} control")
+            }
+        }
+    }
 }
 
 /**

@@ -96,6 +96,25 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
                     controlled
                 }
             }
+
+            is CardSource.BattlefieldMatching -> {
+                val projected = state.projectedState
+                val allPermanents = if (source.player == Player.Each) {
+                    state.getBattlefield()
+                } else {
+                    val playerId = resolvePlayer(source.player, context, state)
+                        ?: return ExecutionResult.error(state, "Could not resolve player for GatherCards BattlefieldMatching")
+                    projected.getBattlefieldControlledBy(playerId)
+                }
+                if (source.filter != GameObjectFilter.Any) {
+                    val predicateContext = PredicateContext.fromEffectContext(context)
+                    allPermanents.filter { cardId ->
+                        predicateEvaluator.matchesWithProjection(state, projected, cardId, source.filter, predicateContext)
+                    }
+                } else {
+                    allPermanents
+                }
+            }
         }
 
         if (cards.isEmpty()) {

@@ -82,13 +82,13 @@ These two additions unlock pipeline decomposition of all "destroy group" and "bo
 
 ### 2b. Add `CardSource.BattlefieldMatching`
 
-- [ ] **Add `BattlefieldMatching` variant to `CardSource`** in `PipelineEffects.kt`
+- [x] **Add `BattlefieldMatching` variant to `CardSource`** in `PipelineEffects.kt`
   - Parameters: `filter: GameObjectFilter`, `player: Player = Player.Each`
   - Gathers all permanents on the battlefield matching the filter (any controller)
   - Must use projected state for type/color/keyword checks
-- [ ] **Update `GatherCardsExecutor`** to handle `CardSource.BattlefieldMatching`
+- [x] **Update `GatherCardsExecutor`** to handle `CardSource.BattlefieldMatching`
   - Use `predicateEvaluator.matchesWithProjection()` (not base state)
-- [ ] **Add tests** for `CardSource.BattlefieldMatching`
+- [x] **Add tests** for `CardSource.BattlefieldMatching`
 
 ### 2c. Decompose `DestroyAllEffect` into Pipeline
 
