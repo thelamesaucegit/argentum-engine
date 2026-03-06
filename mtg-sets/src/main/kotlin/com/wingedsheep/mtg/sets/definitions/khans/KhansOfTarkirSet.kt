@@ -62,6 +62,7 @@ object KhansOfTarkirSet {
         ScionOfGlaciers,
         WetlandSambar,
         WhirlwindAdept,
+        MistfireWeaver,
 
         // Blue spells
         BlindingSpray,

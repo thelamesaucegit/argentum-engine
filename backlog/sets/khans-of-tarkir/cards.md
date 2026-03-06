@@ -2,12 +2,12 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 137 / 249
+**Implemented:** 138 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 24    |
-| Blue       | 23    |
+| Blue       | 24    |
 | Black      | 23    |
 | Red        | 24    |
 | Green      | 24    |
@@ -151,7 +151,7 @@
 - [ ] Meandering Towershell
 - [x] Mer-Ek Nightblade
 - [ ] Mindswipe
-- [ ] Mistfire Weaver
+- [x] Mistfire Weaver
 - [ ] Molting Snakeskin
 - [x] Monastery Flock
 - [x] Monastery Swiftspear
