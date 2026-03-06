@@ -116,12 +116,12 @@ These two additions unlock pipeline decomposition of all "destroy group" and "bo
 
 ### 2e. Decompose `DestroyAllSharingTypeWithSacrificedEffect`
 
-- [ ] **Add `EffectPatterns.destroyAllSharingTypeWithSacrificed()`** factory method
+- [x] **Add `EffectPatterns.destroyAllSharingTypeWithSacrificed()`** factory method
   - Read sacrificed creature's subtypes from context
   - Gather battlefield creatures matching those subtypes
   - Move to graveyard with `MoveType.Destroy`
-- [ ] **Migrate `DestroyAllSharingTypeWithSacrificedEffect` usages**
-- [ ] **Deprecate executor**
+- [x] **Migrate `DestroyAllSharingTypeWithSacrificedEffect` usages**
+- [x] **Deprecate executor**
 
 ---
 

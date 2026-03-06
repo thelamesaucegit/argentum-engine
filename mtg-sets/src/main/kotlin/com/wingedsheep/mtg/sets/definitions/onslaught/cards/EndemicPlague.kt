@@ -1,9 +1,9 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
+import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.AdditionalCost
-import com.wingedsheep.sdk.scripting.effects.DestroyAllSharingTypeWithSacrificedEffect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 
 /**
@@ -22,7 +22,7 @@ val EndemicPlague = card("Endemic Plague") {
     additionalCost(AdditionalCost.SacrificePermanent(GameObjectFilter.Creature))
 
     spell {
-        effect = DestroyAllSharingTypeWithSacrificedEffect(noRegenerate = true)
+        effect = Effects.DestroyAllSharingTypeWithSacrificed(noRegenerate = true)
     }
 
     metadata {

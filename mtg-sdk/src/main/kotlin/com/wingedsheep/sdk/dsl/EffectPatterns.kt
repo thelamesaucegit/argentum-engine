@@ -1921,6 +1921,34 @@ object EffectPatterns {
     ))
 
     /**
+     * Destroy all creatures that share a creature type with the sacrificed creature.
+     * Gather → Filter(shares subtype with sacrificed) → Move(destroy).
+     *
+     * Requires a creature sacrificed as additional cost (context.sacrificedPermanentSubtypes).
+     *
+     * @param noRegenerate If true, destroyed creatures can't be regenerated
+     */
+    fun destroyAllSharingTypeWithSacrificed(
+        noRegenerate: Boolean = false
+    ): CompositeEffect = CompositeEffect(listOf(
+        GatherCardsEffect(
+            source = CardSource.BattlefieldMatching(filter = GameObjectFilter.Creature),
+            storeAs = "sharingType_gathered"
+        ),
+        FilterCollectionEffect(
+            from = "sharingType_gathered",
+            filter = CollectionFilter.SharesSubtypeWithSacrificed,
+            storeMatching = "sharingType_filtered"
+        ),
+        MoveCollectionEffect(
+            from = "sharingType_filtered",
+            destination = CardDestination.ToZone(Zone.GRAVEYARD),
+            moveType = MoveType.Destroy,
+            noRegenerate = noRegenerate
+        )
+    ))
+
+    /**
      * Grant a keyword to all creatures matching a filter.
      */
     fun grantKeywordToAll(

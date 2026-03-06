@@ -89,6 +89,7 @@ data class MarkExileControllerGraveyardOnDeathEffect(
  *
  * @param noRegenerate If true, destroyed creatures can't be regenerated
  */
+@Deprecated("Use Effects.DestroyAllSharingTypeWithSacrificed() or EffectPatterns.destroyAllSharingTypeWithSacrificed() instead")
 @SerialName("DestroyAllSharingTypeWithSacrificed")
 @Serializable
 data class DestroyAllSharingTypeWithSacrificedEffect(

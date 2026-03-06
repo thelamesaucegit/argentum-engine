@@ -267,6 +267,14 @@ object Effects {
     ): Effect = EffectPatterns.destroyAllPipeline(filter, noRegenerate, storeDestroyedAs)
 
     /**
+     * Destroy all creatures sharing a creature type with the sacrificed creature.
+     * Requires a creature sacrificed as additional cost.
+     */
+    fun DestroyAllSharingTypeWithSacrificed(
+        noRegenerate: Boolean = false
+    ): Effect = EffectPatterns.destroyAllSharingTypeWithSacrificed(noRegenerate)
+
+    /**
      * Exile a target.
      */
     fun Exile(target: EffectTarget): Effect =

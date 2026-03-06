@@ -6,6 +6,7 @@ import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.CollectionFilter
 import com.wingedsheep.sdk.scripting.effects.FilterCollectionEffect
 import kotlin.reflect.KClass
@@ -29,6 +30,7 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
             ?: return ExecutionResult.error(state, "No collection named '${effect.from}' in storedCollections")
 
         val filter = effect.filter
+        val projected = state.projectedState
         val (matching, nonMatching) = when (filter) {
             is CollectionFilter.ExcludeSubtypesFromStored -> {
                 val excludedSubtypes = context.storedStringLists[filter.storedKey]
@@ -39,6 +41,23 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
                     val subtypes = cardComponent?.typeLine?.subtypes ?: emptyList()
                     // "Matching" = does NOT have any excluded subtype (passes through the filter)
                     subtypes.none { it in excludedSubtypes }
+                }
+            }
+
+            is CollectionFilter.SharesSubtypeWithSacrificed -> {
+                val sacrificedId = context.sacrificedPermanents.firstOrNull()
+                if (sacrificedId == null) {
+                    emptyList<EntityId>() to cards
+                } else {
+                    val sacrificedSubtypes = context.sacrificedPermanentSubtypes[sacrificedId]
+                        ?: state.getEntity(sacrificedId)?.get<CardComponent>()
+                            ?.typeLine?.subtypes?.map { it.value }?.toSet()
+                        ?: emptySet()
+
+                    cards.partition { cardId ->
+                        val creatureSubtypes = projected.getSubtypes(cardId)
+                        creatureSubtypes.intersect(sacrificedSubtypes).isNotEmpty()
+                    }
                 }
             }
         }

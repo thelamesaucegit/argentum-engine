@@ -235,7 +235,7 @@ constructors.
 | `SeparatePermanentsIntoPilesEffect`         | `target`                                              | Separate into piles      |
 | `DestroyAtEndOfCombatEffect`                | `target`                                              | Destroy at end of combat |
 | `SacrificeAtEndOfCombatEffect`              | `target`                                              | Sacrifice at end of combat |
-| `DestroyAllSharingTypeWithSacrificedEffect` | `noRegenerate`                                        | Destroy all sharing type |
+| ~~`DestroyAllSharingTypeWithSacrificedEffect`~~ | `noRegenerate` — **Deprecated**: use `Effects.DestroyAllSharingTypeWithSacrificed()` | Destroy all sharing type |
 | `HarshMercyEffect`                          | (object)                                              | Harsh Mercy              |
 | `Effects.PatriarchsBidding()`               | (pipeline pattern)                                    | Patriarch's Bidding      |
 | `ExileGroupAndLinkEffect`                   | `filter: GroupFilter, storeAs`                        | Exile group + link to source |
