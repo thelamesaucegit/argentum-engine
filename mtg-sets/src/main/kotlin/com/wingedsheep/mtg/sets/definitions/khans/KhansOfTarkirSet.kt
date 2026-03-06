@@ -103,6 +103,9 @@ object KhansOfTarkirSet {
         SwarmOfBloodflies,
         UnyieldingKrumar,
 
+        // Black enchantments
+        RaidersSpoils,
+
         // Black spells
         BitterRevelation,
         MoltingSnakeskin,

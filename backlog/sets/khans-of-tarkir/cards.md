@@ -2,13 +2,13 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 152 / 249
+**Implemented:** 153 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 26    |
 | Blue       | 26    |
-| Black      | 25    |
+| Black      | 26    |
 | Red        | 26    |
 | Green      | 26    |
 | Multicolor | 15    |
@@ -168,7 +168,7 @@
 - [ ] Polluted Delta
 - [x] Ponyback Brigade
 - [ ] Quiet Contemplation
-- [ ] Raiders' Spoils
+- [x] Raiders' Spoils
 - [ ] Rakshasa Deathdealer
 - [x] Rakshasa's Secret
 - [ ] Rakshasa Vizier
