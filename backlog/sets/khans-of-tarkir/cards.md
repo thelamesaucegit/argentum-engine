@@ -2,14 +2,14 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 134 / 249
+**Implemented:** 135 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 23    |
 | Blue       | 23    |
 | Black      | 23    |
-| Red        | 23    |
+| Red        | 24    |
 | Green      | 23    |
 | Multicolor | 13    |
 | Colorless  | 3     |
@@ -141,7 +141,7 @@
 - [x] Mardu Blazebringer
 - [ ] Mardu Charm
 - [x] Mardu Hateblade
-- [ ] Mardu Heart-Piercer
+- [x] Mardu Heart-Piercer
 - [x] Mardu Hordechief
 - [ ] Mardu Roughrider
 - [x] Mardu Skullhunter
