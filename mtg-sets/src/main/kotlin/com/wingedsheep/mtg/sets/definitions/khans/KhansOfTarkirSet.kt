@@ -75,6 +75,7 @@ object KhansOfTarkirSet {
         CripplingChill,
         DigThroughTime,
         DisdainfulStroke,
+        SetAdrift,
         StubbornDenial,
         TaigamsScheming,
         ThousandWinds,

@@ -2,12 +2,12 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 150 / 249
+**Implemented:** 151 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 26    |
-| Blue       | 25    |
+| Blue       | 26    |
 | Black      | 25    |
 | Red        | 26    |
 | Green      | 25    |
@@ -199,7 +199,7 @@
 - [x] Seeker of the Way
 - [x] Seek the Horizon
 - [ ] See the Unwritten
-- [ ] Set Adrift
+- [x] Set Adrift
 - [x] Shambling Attendants
 - [x] Shatter
 - [ ] Sidisi, Brood Tyrant
