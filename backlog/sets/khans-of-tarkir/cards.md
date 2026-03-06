@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 135 / 249
+**Implemented:** 136 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 23    |
+| White      | 24    |
 | Blue       | 23    |
 | Black      | 23    |
 | Red        | 24    |
@@ -20,7 +20,7 @@
 - [ ] Abomination of Gudul
 - [ ] Abzan Ascendancy
 - [x] Abzan Banner
-- [ ] Abzan Battle Priest
+- [x] Abzan Battle Priest
 - [ ] Abzan Charm
 - [x] Abzan Falconer
 - [ ] Abzan Guide

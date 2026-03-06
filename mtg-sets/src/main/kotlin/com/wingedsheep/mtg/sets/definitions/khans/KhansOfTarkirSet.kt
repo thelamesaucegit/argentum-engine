@@ -22,6 +22,7 @@ object KhansOfTarkirSet {
      */
     val allCards = listOf(
         // White creatures
+        AbzanBattlePriest,
         AbzanFalconer,
         AinokBondKin,
         AlabasterKirin,
