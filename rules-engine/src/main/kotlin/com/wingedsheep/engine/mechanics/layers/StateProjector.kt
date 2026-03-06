@@ -262,9 +262,19 @@ class StateProjector(
                 }
             }
 
-            val validAffectedEntities = floating.effect.affectedEntities.filter { entityId ->
-                state.getBattlefield().contains(entityId)
-            }.toSet()
+            val validAffectedEntities = if (floating.effect.dynamicGroupFilter != null) {
+                // Rule 611.2c: re-evaluate filter dynamically to include entities that entered later
+                filterResolver.resolveAffectedEntities(
+                    state,
+                    floating.sourceId ?: EntityId("floating-${floating.id}"),
+                    AffectsFilter.Generic(floating.effect.dynamicGroupFilter),
+                    projectedValues
+                )
+            } else {
+                floating.effect.affectedEntities.filter { entityId ->
+                    state.getBattlefield().contains(entityId)
+                }.toSet()
+            }
 
             if (validAffectedEntities.isNotEmpty()) {
                 effects.add(

@@ -5,6 +5,7 @@ import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import kotlinx.serialization.Serializable
 
 /**
@@ -68,7 +69,16 @@ data class FloatingEffectData(
     val modification: SerializableModification,
 
     /** The specific entities this effect applies to (resolved at creation) */
-    val affectedEntities: Set<EntityId>
+    val affectedEntities: Set<EntityId>,
+
+    /**
+     * Optional dynamic filter for resolving affected entities at projection time.
+     * When set, the StateProjector re-evaluates which entities match on every projection
+     * instead of using the locked-in [affectedEntities] set. This is required for
+     * rule-modifying effects like "creatures can't block this turn" (Rule 611.2c)
+     * which apply to all matching objects, including those entering later.
+     */
+    val dynamicGroupFilter: GroupFilter? = null
 )
 
 /**

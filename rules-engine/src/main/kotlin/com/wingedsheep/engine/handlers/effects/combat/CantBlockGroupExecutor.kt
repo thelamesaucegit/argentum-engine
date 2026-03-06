@@ -2,8 +2,6 @@ package com.wingedsheep.engine.handlers.effects.combat
 
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
@@ -19,50 +17,27 @@ import kotlin.reflect.KClass
  * Executor for CantBlockGroupEffect.
  * "Creatures can't block this turn." / "[filter] creatures can't block this turn."
  *
- * Creates a floating effect with SetCantBlock for all creatures matching the filter.
+ * Creates a floating effect with SetCantBlock that dynamically applies to all creatures
+ * matching the filter. Per Rule 611.2c, rule-modifying effects like "can't block" apply
+ * to all matching objects including those entering the battlefield after the effect resolves.
  */
 class CantBlockGroupExecutor : EffectExecutor<CantBlockGroupEffect> {
 
     override val effectType: KClass<CantBlockGroupEffect> = CantBlockGroupEffect::class
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     override fun execute(
         state: GameState,
         effect: CantBlockGroupEffect,
         context: EffectContext
     ): ExecutionResult {
-        val affectedEntities = mutableSetOf<EntityId>()
-        val filter = effect.filter
-        val predicateContext = PredicateContext.fromEffectContext(context)
-        val projected = state.projectedState
-
-        for (entityId in state.getBattlefield()) {
-            val container = state.getEntity(entityId) ?: continue
-            container.get<CardComponent>() ?: continue
-
-            if (!projected.isCreature(entityId)) continue
-
-            if (filter.excludeSelf && entityId == context.sourceId) continue
-
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, filter.baseFilter, predicateContext)) {
-                continue
-            }
-
-            affectedEntities.add(entityId)
-        }
-
-        if (affectedEntities.isEmpty()) {
-            return ExecutionResult.success(state)
-        }
-
         val floatingEffect = ActiveFloatingEffect(
             id = EntityId.generate(),
             effect = FloatingEffectData(
                 layer = Layer.ABILITY,
                 sublayer = null,
                 modification = SerializableModification.SetCantBlock,
-                affectedEntities = affectedEntities
+                affectedEntities = emptySet(),
+                dynamicGroupFilter = effect.filter
             ),
             duration = effect.duration,
             sourceId = context.sourceId,

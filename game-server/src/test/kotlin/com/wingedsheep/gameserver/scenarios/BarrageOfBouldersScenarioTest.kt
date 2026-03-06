@@ -100,6 +100,63 @@ class BarrageOfBouldersScenarioTest : ScenarioTestBase() {
                 }
             }
 
+            test("creatures entering after Ferocious resolves still can't block (Rule 611.2c)") {
+                val game = scenario()
+                    .withPlayers("Caster", "Opponent")
+                    .withCardOnBattlefield(1, "Tusked Colossodon")  // 6/5 - enables Ferocious
+                    .withCardInHand(1, "Barrage of Boulders")
+                    .withCardInHand(2, "Take Up Arms")               // creates 3 tokens
+                    .withLandsOnBattlefield(1, "Mountain", 3)
+                    .withLandsOnBattlefield(2, "Plains", 5)
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Cast Barrage of Boulders with Ferocious active
+                game.castSpell(1, "Barrage of Boulders")
+                game.resolveStack()
+
+                // P1 passes priority so P2 can cast an instant
+                game.passPriority()
+
+                // Opponent casts Take Up Arms (instant) to create tokens after the effect
+                val castResult2 = game.castSpell(2, "Take Up Arms")
+                withClue("Take Up Arms should cast successfully: ${castResult2.error}") {
+                    castResult2.error shouldBe null
+                }
+                game.resolveStack()
+
+                // Tokens should now be on the battlefield
+                val tokens = game.findAllPermanents("Warrior Token")
+                withClue("Take Up Arms should create 3 Warrior tokens") {
+                    tokens.size shouldBe 3
+                }
+
+                // Advance to combat - attack with Tusked Colossodon
+                game.passUntilPhase(Phase.COMBAT, Step.DECLARE_ATTACKERS)
+                game.declareAttackers(mapOf("Tusked Colossodon" to 2))
+
+                game.passUntilPhase(Phase.COMBAT, Step.DECLARE_BLOCKERS)
+
+                // Tokens created AFTER Barrage of Boulders should still not be able to block
+                val tokenId = tokens.first()
+                val attackerId = game.state.getBattlefield().find { entityId ->
+                    val container = game.state.getEntity(entityId)
+                    val card = container?.get<com.wingedsheep.engine.state.components.identity.CardComponent>()
+                    card?.name == "Tusked Colossodon"
+                }!!
+
+                val blockResult = game.execute(
+                    com.wingedsheep.engine.core.DeclareBlockers(
+                        game.player2Id,
+                        mapOf(tokenId to listOf(attackerId))
+                    )
+                )
+                withClue("Tokens created after Ferocious should not be able to block") {
+                    blockResult.error shouldNotBe null
+                }
+            }
+
             test("creatures CAN block when caster does NOT control creature with power 4+") {
                 val game = scenario()
                     .withPlayers("Caster", "Opponent")
