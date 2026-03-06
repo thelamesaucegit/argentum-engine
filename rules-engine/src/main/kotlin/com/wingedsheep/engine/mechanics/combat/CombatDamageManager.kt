@@ -22,20 +22,32 @@ import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
 import java.util.UUID
 
 /**
- * Handles combat damage calculation and application.
+ * Handles combat damage using a three-phase pipeline:
  *
- * Responsibilities:
- * - First strike and regular combat damage steps
- * - Damage assignment decisions (manual, trample, divide freely)
- * - Damage prevention (shields, group filters, combat-specific)
- * - Damage redirection and reflection
- * - Lifelink processing
- * - Lethal damage detection
+ * 1. **Propose** — Generate [CombatDamageAssignment]s from attackers/blockers
+ * 2. **Modify** — Transform assignments via [CombatDamageModifier] plugins
+ *    (prevention, protection, redirection)
+ * 3. **Apply** — Deal damage, handling amplification, shields, lifelink
+ *
+ * Also handles pre-damage decisions:
+ * - DivideCombatDamageFreely (Butcher Orgg) damage distribution
+ * - Manual damage assignment (trample, multiple blockers)
+ * - Damage prevention choice (CR 615.7)
  */
 internal class CombatDamageManager(
     private val cardRegistry: CardRegistry?,
     private val damageCalculator: DamageCalculator,
 ) {
+
+    private val damageModifiers: List<CombatDamageModifier> = listOf(
+        PreventAllCombatDamageModifier(),
+        PreventAllDamageFromSourceModifier(),
+        PreventCombatDamageToAndByModifier(),
+        PreventCombatDamageFromGroupModifier(),
+        PreventDamageFromAttackingCreaturesModifier(),
+        ProtectionModifier(),
+        RedirectToControllerModifier()
+    )
 
     /**
      * Calculate and apply combat damage.
@@ -46,9 +58,6 @@ internal class CombatDamageManager(
         if (isAllCombatDamagePrevented(state)) {
             return ExecutionResult.success(state)
         }
-
-        var newState = state
-        val events = mutableListOf<GameEvent>()
 
         val projected = state.projectedState
         val attackers = state.findEntitiesWith<AttackingComponent>()
@@ -218,70 +227,28 @@ internal class CombatDamageManager(
         val preventionResult = checkDamagePreventionChoice(state, attackers, projected, firstStrike)
         if (preventionResult != null) return preventionResult
 
-        for ((attackerId, attackingComponent) in attackers) {
-            if (attackerId !in state.getBattlefield()) continue
+        // =====================================================================
+        // DAMAGE PIPELINE
+        // =====================================================================
 
-            val attackerContainer = state.getEntity(attackerId) ?: continue
-            attackerContainer.get<CardComponent>() ?: continue
+        // Phase 1: Propose
+        val proposedAssignments = proposeDamageAssignments(state, projected, firstStrike)
 
-            val hasFirstStrike = projected.hasKeyword(attackerId, Keyword.FIRST_STRIKE)
-            val hasDoubleStrike = projected.hasKeyword(attackerId, Keyword.DOUBLE_STRIKE)
-
-            val attackerDealsDamageThisStep = if (firstStrike) {
-                hasFirstStrike || hasDoubleStrike
-            } else {
-                !hasFirstStrike || hasDoubleStrike
-            }
-
-            val blockedBy = attackerContainer.get<BlockedComponent>()
-
-            val attackerCard = attackerContainer.get<CardComponent>()!!
-            val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId)
-            val hasDivideDamageFreely = cardDef?.staticAbilities?.any { it is DivideCombatDamageFreely } == true
-
-            if (hasDivideDamageFreely) {
-                val blockerIdList = blockedBy?.blockerIds ?: emptyList()
-                val (dmgState, dmgEvents) = dealDividedCombatDamage(
-                    newState, attackerId, blockerIdList,
-                    attackingComponent.defenderId, firstStrike, attackerDealsDamageThisStep
-                )
-                newState = dmgState
-                events.addAll(dmgEvents)
-            } else if (blockedBy == null) {
-                if (!attackerDealsDamageThisStep) continue
-
-                val power = projected.getPower(attackerId) ?: 0
-                if (power <= 0) continue
-
-                val defenderId = attackingComponent.defenderId
-
-                val allDamagePrevented = EffectExecutorUtils.isAllDamageFromSourcePrevented(newState, attackerId)
-                val isProtected = isProtectedFromAttackingCreatureDamage(newState, defenderId)
-                val groupPrevented = isCombatDamagePreventedByGroupFilter(newState, attackerId, projected)
-                val toAndByPrevented = isCombatDamageToAndByPrevented(newState, attackerId)
-                if (!isProtected && !allDamagePrevented && !groupPrevented && !toAndByPrevented) {
-                    val redirectToController = hasCombatDamageRedirectToController(newState, attackerId)
-                    val damageTargetId = if (redirectToController) {
-                        projected.getController(attackerId) ?: defenderId
-                    } else {
-                        defenderId
-                    }
-                    val damageResult = dealDamageToPlayer(newState, damageTargetId, power, attackerId)
-                    newState = damageResult.newState
-                    events.addAll(damageResult.events)
-                    if (redirectToController) {
-                        newState = consumeRedirectCombatDamageToController(newState, attackerId)
-                    }
-                }
-            } else {
-                val liveBlockerIds = blockedBy.blockerIds.filter { it in newState.getBattlefield() }
-                val (attackerDamageState, attackerEvents) = dealCombatDamageBetweenCreatures(
-                    newState, attackerId, liveBlockerIds, firstStrike, attackerDealsDamageThisStep
-                )
-                newState = attackerDamageState
-                events.addAll(attackerEvents)
-            }
+        // Phase 2: Modify
+        var finalAssignments = proposedAssignments
+        for (modifier in damageModifiers) {
+            finalAssignments = modifier.modify(state, projected, finalAssignments)
         }
+
+        // Phase 3: Apply
+        var newState = state
+        val events = mutableListOf<GameEvent>()
+        for (assignment in finalAssignments) {
+            newState = applySingleAssignment(newState, assignment, events)
+        }
+
+        // Consume one-shot redirect effects for creatures that dealt damage
+        newState = consumeUsedRedirectEffects(newState, finalAssignments)
 
         // Lifelink
         val lifelinkResult = applyLifelinkFromDamageEvents(newState, events, projected)
@@ -294,6 +261,287 @@ internal class CombatDamageManager(
         events.addAll(deathEvents)
 
         return ExecutionResult.success(newState, events)
+    }
+
+    // =========================================================================
+    // Phase 1: Propose Damage Assignments
+    // =========================================================================
+
+    private fun proposeDamageAssignments(
+        state: GameState,
+        projected: ProjectedState,
+        firstStrike: Boolean
+    ): List<CombatDamageAssignment> {
+        val assignments = mutableListOf<CombatDamageAssignment>()
+        val attackers = state.findEntitiesWith<AttackingComponent>()
+
+        for ((attackerId, attackingComponent) in attackers) {
+            if (attackerId !in state.getBattlefield()) continue
+            val attackerContainer = state.getEntity(attackerId) ?: continue
+            attackerContainer.get<CardComponent>() ?: continue
+
+            val blockedBy = attackerContainer.get<BlockedComponent>()
+            val orderedBlockers = attackerContainer.get<DamageAssignmentOrderComponent>()?.orderedBlockers
+                ?: blockedBy?.blockerIds
+                ?: emptyList()
+
+            // Attacker damage
+            if (dealsDamageThisStep(projected, attackerId, firstStrike)) {
+                val power = projected.getPower(attackerId) ?: 0
+                if (power > 0) {
+                    val manualAssignment = attackerContainer.get<DamageAssignmentComponent>()
+                    when {
+                        manualAssignment != null -> {
+                            for ((targetId, damage) in manualAssignment.assignments) {
+                                if (damage > 0) {
+                                    assignments.add(CombatDamageAssignment(attackerId, targetId, damage))
+                                }
+                            }
+                        }
+                        blockedBy == null -> {
+                            assignments.add(CombatDamageAssignment(attackerId, attackingComponent.defenderId, power))
+                        }
+                        else -> {
+                            val liveBlockers = blockedBy.blockerIds.filter { it in state.getBattlefield() }
+                            if (liveBlockers.isNotEmpty()) {
+                                val autoDist = damageCalculator.calculateAutoDamageDistribution(state, attackerId)
+                                for ((targetId, damage) in autoDist.assignments) {
+                                    if (damage > 0) {
+                                        assignments.add(CombatDamageAssignment(attackerId, targetId, damage))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Blocker counterattacks
+            if (attackerId in state.getBattlefield()) {
+                for (blockerId in orderedBlockers) {
+                    if (blockerId !in state.getBattlefield()) continue
+                    state.getEntity(blockerId)?.get<CardComponent>() ?: continue
+                    if (!dealsDamageThisStep(projected, blockerId, firstStrike)) continue
+                    val blockerPower = projected.getPower(blockerId) ?: 0
+                    if (blockerPower > 0) {
+                        assignments.add(CombatDamageAssignment(blockerId, attackerId, blockerPower))
+                    }
+                }
+            }
+        }
+
+        return assignments
+    }
+
+    private fun dealsDamageThisStep(projected: ProjectedState, creatureId: EntityId, firstStrike: Boolean): Boolean {
+        val hasFirstStrike = projected.hasKeyword(creatureId, Keyword.FIRST_STRIKE)
+        val hasDoubleStrike = projected.hasKeyword(creatureId, Keyword.DOUBLE_STRIKE)
+        return if (firstStrike) {
+            hasFirstStrike || hasDoubleStrike
+        } else {
+            !hasFirstStrike || hasDoubleStrike
+        }
+    }
+
+    // =========================================================================
+    // Phase 3: Apply Damage Assignments
+    // =========================================================================
+
+    private fun applySingleAssignment(
+        state: GameState,
+        assignment: CombatDamageAssignment,
+        events: MutableList<GameEvent>
+    ): GameState {
+        if (assignment.amount <= 0) return state
+
+        val targetContainer = state.getEntity(assignment.targetId) ?: return state
+        val isPlayer = targetContainer.get<LifeTotalComponent>() != null &&
+                       targetContainer.get<CardComponent>() == null
+
+        val amplifiedAmount = EffectExecutorUtils.applyStaticDamageAmplification(
+            state, assignment.targetId, assignment.amount, assignment.sourceId
+        )
+
+        return if (isPlayer) {
+            applyDamageToPlayer(state, assignment.sourceId, assignment.targetId, amplifiedAmount, assignment.amount, events)
+        } else {
+            applyDamageToCreature(state, assignment.sourceId, assignment.targetId, amplifiedAmount, events)
+        }
+    }
+
+    private fun applyDamageToPlayer(
+        state: GameState,
+        sourceId: EntityId,
+        targetId: EntityId,
+        amplifiedAmount: Int,
+        originalAmount: Int,
+        events: MutableList<GameEvent>
+    ): GameState {
+        var newState = state
+
+        // Replace with counters (Force Bubble)
+        val counterResult = EffectExecutorUtils.applyReplaceDamageWithCounters(newState, targetId, amplifiedAmount, sourceId)
+        if (counterResult != null) {
+            newState = counterResult.state
+            events.addAll(counterResult.events)
+            return newState
+        }
+
+        // Prevention shields
+        val (shieldState, effectiveAmount) = EffectExecutorUtils.applyDamagePreventionShields(
+            newState, targetId, amplifiedAmount, isCombatDamage = true, sourceId = sourceId
+        )
+        newState = shieldState
+        if (effectiveAmount <= 0) return newState
+
+        // Reduce life
+        val currentLife = newState.getEntity(targetId)?.get<LifeTotalComponent>()?.life ?: return newState
+        val newLife = currentLife - effectiveAmount
+        newState = newState.updateEntity(targetId) { container ->
+            container.with(LifeTotalComponent(newLife))
+        }
+        newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, targetId, effectiveAmount)
+
+        val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
+        events.add(DamageDealtEvent(sourceId, targetId, effectiveAmount, true,
+            sourceName = sourceName, targetName = "Player", targetIsPlayer = true))
+        events.add(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.DAMAGE))
+
+        // Reflection (Harsh Justice)
+        newState = applyDamageReflection(newState, sourceId, targetId, originalAmount, events)
+
+        return newState
+    }
+
+    private fun applyDamageToCreature(
+        state: GameState,
+        sourceId: EntityId,
+        targetId: EntityId,
+        amplifiedAmount: Int,
+        events: MutableList<GameEvent>
+    ): GameState {
+        if (targetId !in state.getBattlefield()) return state
+        var newState = state
+
+        // Prevention shields
+        val (shieldState, effectiveAmount) = EffectExecutorUtils.applyDamagePreventionShields(
+            newState, targetId, amplifiedAmount, isCombatDamage = true, sourceId = sourceId
+        )
+        newState = shieldState
+        if (effectiveAmount <= 0) return newState
+
+        // Damage redirection (Glarecaster, Zealous Inquisitor)
+        val (redirectState, redirectTargetId, redirectAmount) = EffectExecutorUtils.checkDamageRedirection(
+            newState, targetId, effectiveAmount
+        )
+        newState = redirectState
+        if (redirectTargetId != null && redirectAmount > 0) {
+            newState = dealFinalDamage(newState, sourceId, redirectTargetId, redirectAmount, events)
+            val remaining = effectiveAmount - redirectAmount
+            if (remaining > 0) {
+                newState = dealFinalDamage(newState, sourceId, targetId, remaining, events)
+            }
+            return newState
+        }
+
+        return dealFinalDamage(newState, sourceId, targetId, effectiveAmount, events)
+    }
+
+    /**
+     * Final damage dealing — no more modification. Marks damage on creature or reduces player life.
+     * Handles both player and creature targets (needed for damage redirection to players).
+     */
+    private fun dealFinalDamage(
+        state: GameState,
+        sourceId: EntityId,
+        targetId: EntityId,
+        amount: Int,
+        events: MutableList<GameEvent>
+    ): GameState {
+        if (amount <= 0) return state
+        var newState = state
+
+        val targetContainer = newState.getEntity(targetId) ?: return newState
+        val isPlayer = targetContainer.get<LifeTotalComponent>() != null &&
+                       targetContainer.get<CardComponent>() == null
+
+        if (isPlayer) {
+            val currentLife = targetContainer.get<LifeTotalComponent>()?.life ?: return newState
+            val newLife = currentLife - amount
+            newState = newState.updateEntity(targetId) { container ->
+                container.with(LifeTotalComponent(newLife))
+            }
+            newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, targetId, amount)
+            val sourceName = newState.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
+            events.add(DamageDealtEvent(sourceId, targetId, amount, true,
+                sourceName = sourceName, targetName = "Player", targetIsPlayer = true))
+            events.add(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.DAMAGE))
+        } else {
+            if (targetId !in newState.getBattlefield()) return newState
+            val currentDamage = newState.getEntity(targetId)?.get<DamageComponent>()?.amount ?: 0
+            newState = newState.updateEntity(targetId) { container ->
+                container.with(DamageComponent(currentDamage + amount))
+            }
+            newState = EffectExecutorUtils.trackDamageDealtToCreature(newState, sourceId, targetId)
+            val sourceName = newState.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
+            val targetName = newState.getEntity(targetId)?.get<CardComponent>()?.name ?: "Creature"
+            val targetIsFaceDown = newState.getEntity(targetId)?.has<FaceDownComponent>() == true
+            events.add(DamageDealtEvent(sourceId, targetId, amount, true,
+                sourceName = sourceName, targetName = targetName, targetIsPlayer = false, targetWasFaceDown = targetIsFaceDown))
+        }
+
+        return newState
+    }
+
+    // =========================================================================
+    // Damage Reflection (Harsh Justice)
+    // =========================================================================
+
+    private fun applyDamageReflection(
+        state: GameState,
+        sourceId: EntityId,
+        targetPlayerId: EntityId,
+        originalAmount: Int,
+        events: MutableList<GameEvent>
+    ): GameState {
+        if (!hasReflectCombatDamage(state, targetPlayerId)) return state
+
+        val projected = state.projectedState
+        val attackerController = projected.getController(sourceId) ?: return state
+        if (attackerController == targetPlayerId) return state
+
+        val attackerControllerLife = state.getEntity(attackerController)?.get<LifeTotalComponent>()?.life ?: return state
+        val newLife = attackerControllerLife - originalAmount
+        var newState = state.updateEntity(attackerController) { container ->
+            container.with(LifeTotalComponent(newLife))
+        }
+        newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, attackerController, originalAmount)
+        val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
+        events.add(DamageDealtEvent(sourceId, attackerController, originalAmount, true,
+            sourceName = sourceName, targetName = "Player", targetIsPlayer = true))
+        events.add(LifeChangedEvent(attackerController, attackerControllerLife, newLife, LifeChangeReason.DAMAGE))
+
+        return newState
+    }
+
+    // =========================================================================
+    // Redirect Effect Cleanup
+    // =========================================================================
+
+    private fun consumeUsedRedirectEffects(state: GameState, assignments: List<CombatDamageAssignment>): GameState {
+        val sourcesWithDamage = assignments.filter { it.amount > 0 }.map { it.sourceId }.toSet()
+        val redirectedCreatures = state.floatingEffects
+            .filter { it.effect.modification is SerializableModification.RedirectCombatDamageToController }
+            .flatMap { it.effect.affectedEntities }
+            .filter { it in sourcesWithDamage }
+            .toSet()
+        if (redirectedCreatures.isEmpty()) return state
+
+        var newState = state
+        for (creatureId in redirectedCreatures) {
+            newState = consumeRedirectCombatDamageToController(newState, creatureId)
+        }
+        return newState
     }
 
     // =========================================================================
@@ -421,66 +669,6 @@ internal class CombatDamageManager(
     }
 
     // =========================================================================
-    // Damage to Players
-    // =========================================================================
-
-    private fun dealDamageToPlayer(
-        state: GameState,
-        playerId: EntityId,
-        amount: Int,
-        sourceId: EntityId
-    ): ExecutionResult {
-        val amplifiedAmount = EffectExecutorUtils.applyStaticDamageAmplification(state, playerId, amount, sourceId)
-        val counterResult = EffectExecutorUtils.applyReplaceDamageWithCounters(state, playerId, amplifiedAmount, sourceId)
-        if (counterResult != null) return counterResult
-        val (shieldState, effectiveAmount) = EffectExecutorUtils.applyDamagePreventionShields(state, playerId, amplifiedAmount, isCombatDamage = true, sourceId = sourceId)
-        if (effectiveAmount <= 0) return ExecutionResult.success(shieldState)
-
-        val playerContainer = shieldState.getEntity(playerId)
-            ?: return ExecutionResult.error(shieldState, "Player not found: $playerId")
-
-        val currentLife = playerContainer.get<LifeTotalComponent>()?.life
-            ?: return ExecutionResult.error(shieldState, "Player has no life total")
-
-        val newLife = currentLife - effectiveAmount
-        var newState = shieldState.updateEntity(playerId) { container ->
-            container.with(LifeTotalComponent(newLife))
-        }
-        newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, playerId, effectiveAmount)
-
-        val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
-        val events = mutableListOf<GameEvent>(
-            DamageDealtEvent(sourceId, playerId, effectiveAmount, true, sourceName = sourceName, targetName = "Player", targetIsPlayer = true),
-            LifeChangedEvent(playerId, currentLife, newLife, LifeChangeReason.DAMAGE)
-        )
-
-        // Check for damage reflection (Harsh Justice)
-        val hasReflection = hasReflectCombatDamage(state, playerId)
-        if (hasReflection) {
-            val projected = state.projectedState
-            val attackerController = projected.getController(sourceId)
-
-            if (attackerController != null && attackerController != playerId) {
-                val attackerControllerContainer = newState.getEntity(attackerController)
-                val attackerControllerLife = attackerControllerContainer?.get<LifeTotalComponent>()?.life
-
-                if (attackerControllerLife != null) {
-                    val reflectedNewLife = attackerControllerLife - amount
-                    newState = newState.updateEntity(attackerController) { container ->
-                        container.with(LifeTotalComponent(reflectedNewLife))
-                    }
-                    newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, attackerController, amount)
-                    val reflectSourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
-                    events.add(DamageDealtEvent(sourceId, attackerController, amount, true, sourceName = reflectSourceName, targetName = "Player", targetIsPlayer = true))
-                    events.add(LifeChangedEvent(attackerController, attackerControllerLife, reflectedNewLife, LifeChangeReason.DAMAGE))
-                }
-            }
-        }
-
-        return ExecutionResult.success(newState, events)
-    }
-
-    // =========================================================================
     // Lifelink
     // =========================================================================
 
@@ -518,420 +706,6 @@ internal class CombatDamageManager(
     }
 
     // =========================================================================
-    // Damage Between Creatures (Blocked Combat)
-    // =========================================================================
-
-    private fun dealCombatDamageBetweenCreatures(
-        state: GameState,
-        attackerId: EntityId,
-        blockerIds: List<EntityId>,
-        firstStrike: Boolean,
-        attackerDealsDamageThisStep: Boolean
-    ): Pair<GameState, List<GameEvent>> {
-        var newState = state
-        val events = mutableListOf<GameEvent>()
-
-        val attackerContainer = newState.getEntity(attackerId) ?: return newState to events
-        attackerContainer.get<CardComponent>() ?: return newState to events
-
-        val projected = newState.projectedState
-
-        val orderedBlockers = attackerContainer.get<DamageAssignmentOrderComponent>()?.orderedBlockers
-            ?: blockerIds
-
-        val manualAssignment = attackerContainer.get<DamageAssignmentComponent>()
-
-        val damageDistribution = if (manualAssignment != null) {
-            manualAssignment.assignments
-        } else {
-            damageCalculator.calculateAutoDamageDistribution(newState, attackerId).assignments
-        }
-
-        // Apply attacker's damage to blockers
-        val attackerDamagePrevented = EffectExecutorUtils.isAllDamageFromSourcePrevented(newState, attackerId)
-        val attackerGroupPrevented = isCombatDamagePreventedByGroupFilter(newState, attackerId, projected)
-        val attackerToAndByPrevented = isCombatDamageToAndByPrevented(newState, attackerId)
-        if (attackerDealsDamageThisStep && !attackerDamagePrevented && !attackerGroupPrevented && !attackerToAndByPrevented) {
-            val attackerRedirectToController = hasCombatDamageRedirectToController(newState, attackerId)
-            if (attackerRedirectToController) {
-                val totalDamage = damageDistribution.values.sum()
-                if (totalDamage > 0) {
-                    val controllerId = projected.getController(attackerId)
-                    if (controllerId != null) {
-                        val amplifiedDamage = EffectExecutorUtils.applyStaticDamageAmplification(newState, controllerId, totalDamage, attackerId)
-                        val (shieldState, effectiveDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, controllerId, amplifiedDamage, isCombatDamage = true, sourceId = attackerId)
-                        newState = shieldState
-                        if (effectiveDamage > 0) {
-                            val currentLife = newState.getEntity(controllerId)?.get<LifeTotalComponent>()?.life ?: 0
-                            val newLife = currentLife - effectiveDamage
-                            newState = newState.updateEntity(controllerId) { container ->
-                                container.with(LifeTotalComponent(newLife))
-                            }
-                            newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, controllerId, effectiveDamage)
-                            val sourceName = newState.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
-                            events.add(DamageDealtEvent(attackerId, controllerId, effectiveDamage, true, sourceName = sourceName, targetName = "Player", targetIsPlayer = true))
-                            events.add(LifeChangedEvent(controllerId, currentLife, newLife, LifeChangeReason.DAMAGE))
-                        }
-                    }
-                }
-                newState = consumeRedirectCombatDamageToController(newState, attackerId)
-            } else {
-            for ((targetId, damage) in damageDistribution) {
-                if (damage <= 0) continue
-
-                val targetContainer = newState.getEntity(targetId)
-                val isPlayer = targetContainer?.get<LifeTotalComponent>() != null &&
-                               targetContainer.get<CardComponent>() == null
-
-                if (isPlayer) {
-                    val amplifiedTrampleDamage = EffectExecutorUtils.applyStaticDamageAmplification(newState, targetId, damage, attackerId)
-                    val (shieldState, effectiveTrampleDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, targetId, amplifiedTrampleDamage, isCombatDamage = true, sourceId = attackerId)
-                    newState = shieldState
-                    if (effectiveTrampleDamage > 0) {
-                        val currentLife = newState.getEntity(targetId)?.get<LifeTotalComponent>()?.life ?: 0
-                        val newLife = currentLife - effectiveTrampleDamage
-                        newState = newState.updateEntity(targetId) { container ->
-                            container.with(LifeTotalComponent(newLife))
-                        }
-                        newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, targetId, effectiveTrampleDamage)
-                        val trampleSourceName = newState.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
-                        events.add(DamageDealtEvent(attackerId, targetId, effectiveTrampleDamage, true, sourceName = trampleSourceName, targetName = "Player", targetIsPlayer = true))
-                        events.add(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.DAMAGE))
-                    }
-                } else {
-                    val blockerTargetToAndByPrevented = isCombatDamageToAndByPrevented(newState, targetId)
-                    val attackerColors = projected.getColors(attackerId)
-                    val attackerSubtypes = projected.getSubtypes(attackerId)
-                    val blockerProtected = attackerColors.any { colorName ->
-                        projected.hasKeyword(targetId, "PROTECTION_FROM_$colorName")
-                    } || attackerSubtypes.any { subtype ->
-                        projected.hasKeyword(targetId, "PROTECTION_FROM_SUBTYPE_${subtype.uppercase()}")
-                    }
-                    if (!blockerProtected && !blockerTargetToAndByPrevented) {
-                        val amplifiedDamage = EffectExecutorUtils.applyStaticDamageAmplification(newState, targetId, damage, attackerId)
-                        val (shieldState, effectiveDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, targetId, amplifiedDamage, isCombatDamage = true, sourceId = attackerId)
-                        newState = shieldState
-                        if (effectiveDamage > 0) {
-                            newState = dealCombatDamageToCreature(newState, targetId, effectiveDamage, attackerId, events)
-                        }
-                    }
-                }
-            }
-            } // end else (no redirect to controller)
-        }
-
-        // Each blocker deals damage to attacker
-        if (attackerId !in newState.getBattlefield()) {
-            return newState to events
-        }
-
-        for (blockerId in orderedBlockers) {
-            val blockerContainer = newState.getEntity(blockerId) ?: continue
-            blockerContainer.get<CardComponent>() ?: continue
-
-            if (blockerId !in newState.getBattlefield()) continue
-
-            val hasFirstStrike = projected.hasKeyword(blockerId, Keyword.FIRST_STRIKE)
-            val hasDoubleStrike = projected.hasKeyword(blockerId, Keyword.DOUBLE_STRIKE)
-
-            val dealsDamageThisStep = if (firstStrike) {
-                hasFirstStrike || hasDoubleStrike
-            } else {
-                !hasFirstStrike || hasDoubleStrike
-            }
-
-            if (!dealsDamageThisStep) continue
-
-            val blockerPower = projected.getPower(blockerId) ?: 0
-            if (blockerPower > 0) {
-                val blockerDamagePrevented = EffectExecutorUtils.isAllDamageFromSourcePrevented(newState, blockerId)
-                val blockerGroupPrevented = isCombatDamagePreventedByGroupFilter(newState, blockerId, projected)
-                val blockerToAndByPrevented = isCombatDamageToAndByPrevented(newState, blockerId)
-                val attackerToAndByPrevented = isCombatDamageToAndByPrevented(newState, attackerId)
-
-                val blockerColors = projected.getColors(blockerId)
-                val blockerSubtypes = projected.getSubtypes(blockerId)
-                val attackerProtected = blockerColors.any { colorName ->
-                    projected.hasKeyword(attackerId, "PROTECTION_FROM_$colorName")
-                } || blockerSubtypes.any { subtype ->
-                    projected.hasKeyword(attackerId, "PROTECTION_FROM_SUBTYPE_${subtype.uppercase()}")
-                }
-                if (!attackerProtected && !blockerDamagePrevented && !blockerGroupPrevented && !blockerToAndByPrevented && !attackerToAndByPrevented) {
-                    val blockerRedirectToController = hasCombatDamageRedirectToController(newState, blockerId)
-                    if (blockerRedirectToController) {
-                        val blockerControllerId = projected.getController(blockerId)
-                        if (blockerControllerId != null) {
-                            val amplifiedDamage = EffectExecutorUtils.applyStaticDamageAmplification(newState, blockerControllerId, blockerPower, blockerId)
-                            val (shieldState, effectiveDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, blockerControllerId, amplifiedDamage, isCombatDamage = true, sourceId = blockerId)
-                            newState = shieldState
-                            if (effectiveDamage > 0) {
-                                val currentLife = newState.getEntity(blockerControllerId)?.get<LifeTotalComponent>()?.life ?: 0
-                                val newLife = currentLife - effectiveDamage
-                                newState = newState.updateEntity(blockerControllerId) { container ->
-                                    container.with(LifeTotalComponent(newLife))
-                                }
-                                newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, blockerControllerId, effectiveDamage)
-                                val blockerSourceName = newState.getEntity(blockerId)?.get<CardComponent>()?.name ?: "Creature"
-                                events.add(DamageDealtEvent(blockerId, blockerControllerId, effectiveDamage, true, sourceName = blockerSourceName, targetName = "Player", targetIsPlayer = true))
-                                events.add(LifeChangedEvent(blockerControllerId, currentLife, newLife, LifeChangeReason.DAMAGE))
-                            }
-                        }
-                        newState = consumeRedirectCombatDamageToController(newState, blockerId)
-                    } else {
-                    val amplifiedBlockerDamage = EffectExecutorUtils.applyStaticDamageAmplification(newState, attackerId, blockerPower, blockerId)
-                    val (shieldState, effectiveBlockerDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, attackerId, amplifiedBlockerDamage, isCombatDamage = true, sourceId = blockerId)
-                    newState = shieldState
-                    if (effectiveBlockerDamage > 0) {
-                        newState = dealCombatDamageToCreature(newState, attackerId, effectiveBlockerDamage, blockerId, events)
-                    }
-                    }
-                }
-            }
-        }
-
-        return newState to events
-    }
-
-    // =========================================================================
-    // Divided Combat Damage (Butcher Orgg)
-    // =========================================================================
-
-    private fun dealDividedCombatDamage(
-        state: GameState,
-        attackerId: EntityId,
-        blockerIds: List<EntityId>,
-        defenderId: EntityId,
-        firstStrike: Boolean,
-        attackerDealsDamageThisStep: Boolean
-    ): Pair<GameState, List<GameEvent>> {
-        var newState = state
-        val events = mutableListOf<GameEvent>()
-
-        val attackerContainer = newState.getEntity(attackerId) ?: return newState to events
-        attackerContainer.get<CardComponent>() ?: return newState to events
-
-        val projected = newState.projectedState
-
-        val orderedBlockers = attackerContainer.get<DamageAssignmentOrderComponent>()?.orderedBlockers
-            ?: blockerIds
-
-        val damageAssignment = attackerContainer.get<DamageAssignmentComponent>()
-
-        if (attackerDealsDamageThisStep) {
-            val attackerPower = projected.getPower(attackerId) ?: 0
-            if (attackerPower > 0) {
-
-                if (blockerIds.isNotEmpty()) {
-                    val hasBlockerOnBattlefield = orderedBlockers.any { it in newState.getBattlefield() }
-                    if (!hasBlockerOnBattlefield) {
-                        return dealBlockerCounterattack(newState, events, attackerId, orderedBlockers, firstStrike, projected)
-                    }
-                }
-
-                val attackerGroupPrevented = isCombatDamagePreventedByGroupFilter(newState, attackerId, projected)
-                val attackerAllDamagePrevented = EffectExecutorUtils.isAllDamageFromSourcePrevented(newState, attackerId)
-                val attackerToAndByPrevented = isCombatDamageToAndByPrevented(newState, attackerId)
-
-                if (attackerGroupPrevented || attackerAllDamagePrevented || attackerToAndByPrevented) {
-                    // Combat damage from this attacker is prevented
-                } else if (damageAssignment != null) {
-                    for ((targetId, damage) in damageAssignment.assignments) {
-                        if (damage <= 0) continue
-
-                        val targetContainer = newState.getEntity(targetId)
-                        val isPlayer = targetContainer?.get<LifeTotalComponent>() != null &&
-                            targetContainer.get<CardComponent>() == null
-
-                        if (isPlayer) {
-                            val isProtected = isProtectedFromAttackingCreatureDamage(newState, targetId)
-                            if (!isProtected) {
-                                val amplifiedPlayerDmg = EffectExecutorUtils.applyStaticDamageAmplification(newState, targetId, damage, attackerId)
-                                val (shieldState, effectivePlayerDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, targetId, amplifiedPlayerDmg, isCombatDamage = true, sourceId = attackerId)
-                                newState = shieldState
-                                if (effectivePlayerDamage > 0) {
-                                    val currentLife = newState.getEntity(targetId)?.get<LifeTotalComponent>()?.life ?: 0
-                                    val newLife = currentLife - effectivePlayerDamage
-                                    newState = newState.updateEntity(targetId) { container ->
-                                        container.with(LifeTotalComponent(newLife))
-                                    }
-                                    newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, targetId, effectivePlayerDamage)
-                                    val freeSourceName = newState.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
-                                    events.add(DamageDealtEvent(attackerId, targetId, effectivePlayerDamage, true, sourceName = freeSourceName, targetName = "Player", targetIsPlayer = true))
-                                    events.add(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.DAMAGE))
-                                }
-                            }
-                        } else if (targetId in newState.getBattlefield()) {
-                            val attackerColors = projected.getColors(attackerId)
-                            val attackerSubtypes = projected.getSubtypes(attackerId)
-                            val creatureProtected = attackerColors.any { colorName ->
-                                projected.hasKeyword(targetId, "PROTECTION_FROM_$colorName")
-                            } || attackerSubtypes.any { subtype ->
-                                projected.hasKeyword(targetId, "PROTECTION_FROM_SUBTYPE_${subtype.uppercase()}")
-                            }
-
-                            if (!creatureProtected) {
-                                val amplifiedCreatureDmg = EffectExecutorUtils.applyStaticDamageAmplification(newState, targetId, damage, attackerId)
-                                val (shieldState, effectiveDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, targetId, amplifiedCreatureDmg, isCombatDamage = true, sourceId = attackerId)
-                                newState = shieldState
-                                if (effectiveDamage > 0) {
-                                    newState = dealCombatDamageToCreature(newState, targetId, effectiveDamage, attackerId, events)
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    var remainingDamage = attackerPower
-
-                    for (blockerId in orderedBlockers) {
-                        if (remainingDamage <= 0) break
-                        if (blockerId !in newState.getBattlefield()) continue
-
-                        val lethalInfo = damageCalculator.calculateLethalDamage(newState, blockerId, attackerId)
-                        val damageToAssign = minOf(remainingDamage, lethalInfo.lethalAmount)
-
-                        val attackerColors = projected.getColors(attackerId)
-                        val attackerSubtypes = projected.getSubtypes(attackerId)
-                        val blockerProtected = attackerColors.any { colorName ->
-                            projected.hasKeyword(blockerId, "PROTECTION_FROM_$colorName")
-                        } || attackerSubtypes.any { subtype ->
-                            projected.hasKeyword(blockerId, "PROTECTION_FROM_SUBTYPE_${subtype.uppercase()}")
-                        }
-
-                        if (!blockerProtected) {
-                            val amplifiedBlockerDmg = EffectExecutorUtils.applyStaticDamageAmplification(newState, blockerId, damageToAssign, attackerId)
-                            val (shieldState, effectiveDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, blockerId, amplifiedBlockerDmg, isCombatDamage = true, sourceId = attackerId)
-                            newState = shieldState
-                            if (effectiveDamage > 0) {
-                                newState = dealCombatDamageToCreature(newState, blockerId, effectiveDamage, attackerId, events)
-                            }
-                        }
-
-                        remainingDamage -= damageToAssign
-                    }
-
-                    if (remainingDamage > 0) {
-                        val isProtected = isProtectedFromAttackingCreatureDamage(newState, defenderId)
-                        if (!isProtected) {
-                            val amplifiedRemainDmg = EffectExecutorUtils.applyStaticDamageAmplification(newState, defenderId, remainingDamage, attackerId)
-                            val (shieldState, effectivePlayerDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, defenderId, amplifiedRemainDmg, isCombatDamage = true, sourceId = attackerId)
-                            newState = shieldState
-                            if (effectivePlayerDamage > 0) {
-                                val currentLife = newState.getEntity(defenderId)?.get<LifeTotalComponent>()?.life ?: 0
-                                val newLife = currentLife - effectivePlayerDamage
-                                newState = newState.updateEntity(defenderId) { container ->
-                                    container.with(LifeTotalComponent(newLife))
-                                }
-                                newState = EffectExecutorUtils.trackDamageReceivedByPlayer(newState, defenderId, effectivePlayerDamage)
-                                val remainAtkName = newState.getEntity(attackerId)?.get<CardComponent>()?.name ?: "Creature"
-                                events.add(DamageDealtEvent(attackerId, defenderId, effectivePlayerDamage, true, sourceName = remainAtkName, targetName = "Player", targetIsPlayer = true))
-                                events.add(LifeChangedEvent(defenderId, currentLife, newLife, LifeChangeReason.DAMAGE))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return dealBlockerCounterattack(newState, events, attackerId, orderedBlockers, firstStrike, projected)
-    }
-
-    // =========================================================================
-    // Blocker Counterattack
-    // =========================================================================
-
-    private fun dealBlockerCounterattack(
-        state: GameState,
-        events: MutableList<GameEvent>,
-        attackerId: EntityId,
-        orderedBlockers: List<EntityId>,
-        firstStrike: Boolean,
-        projected: ProjectedState
-    ): Pair<GameState, List<GameEvent>> {
-        var newState = state
-
-        if (attackerId !in newState.getBattlefield()) {
-            return newState to events
-        }
-
-        for (blockerId in orderedBlockers) {
-            val blockerContainer = newState.getEntity(blockerId) ?: continue
-            blockerContainer.get<CardComponent>() ?: continue
-
-            if (blockerId !in newState.getBattlefield()) continue
-
-            val hasFirstStrike = projected.hasKeyword(blockerId, Keyword.FIRST_STRIKE)
-            val hasDoubleStrike = projected.hasKeyword(blockerId, Keyword.DOUBLE_STRIKE)
-
-            val dealsDamageThisStep = if (firstStrike) {
-                hasFirstStrike || hasDoubleStrike
-            } else {
-                !hasFirstStrike || hasDoubleStrike
-            }
-
-            if (!dealsDamageThisStep) continue
-
-            val blockerPower = projected.getPower(blockerId) ?: 0
-            if (blockerPower > 0) {
-                val counterGroupPrevented = isCombatDamagePreventedByGroupFilter(newState, blockerId, projected)
-                val blockerColors = projected.getColors(blockerId)
-                val blockerSubtypes = projected.getSubtypes(blockerId)
-                val attackerProtected = blockerColors.any { colorName ->
-                    projected.hasKeyword(attackerId, "PROTECTION_FROM_$colorName")
-                } || blockerSubtypes.any { subtype ->
-                    projected.hasKeyword(attackerId, "PROTECTION_FROM_SUBTYPE_${subtype.uppercase()}")
-                }
-                if (!attackerProtected && !counterGroupPrevented) {
-                    val amplifiedCounterDmg = EffectExecutorUtils.applyStaticDamageAmplification(newState, attackerId, blockerPower, blockerId)
-                    val (shieldState, effectiveBlockerDamage) = EffectExecutorUtils.applyDamagePreventionShields(newState, attackerId, amplifiedCounterDmg, isCombatDamage = true, sourceId = blockerId)
-                    newState = shieldState
-                    if (effectiveBlockerDamage > 0) {
-                        newState = dealCombatDamageToCreature(newState, attackerId, effectiveBlockerDamage, blockerId, events)
-                    }
-                }
-            }
-        }
-
-        return newState to events
-    }
-
-    // =========================================================================
-    // Damage to Creatures
-    // =========================================================================
-
-    private fun dealCombatDamageToCreature(
-        state: GameState,
-        targetId: EntityId,
-        damage: Int,
-        sourceId: EntityId,
-        events: MutableList<GameEvent>
-    ): GameState {
-        var newState = state
-
-        val (redirectState, redirectTargetId, redirectAmount) = EffectExecutorUtils.checkDamageRedirection(newState, targetId, damage)
-        newState = redirectState
-
-        if (redirectTargetId != null && redirectAmount > 0) {
-            newState = dealCombatDamageToCreature(newState, redirectTargetId, redirectAmount, sourceId, events)
-            val remainingDamage = damage - redirectAmount
-            if (remainingDamage <= 0) return newState
-            return dealCombatDamageToCreature(newState, targetId, remainingDamage, sourceId, events)
-        }
-
-        val currentDamage = newState.getEntity(targetId)?.get<DamageComponent>()?.amount ?: 0
-        newState = newState.updateEntity(targetId) { container ->
-            container.with(DamageComponent(currentDamage + damage))
-        }
-        newState = EffectExecutorUtils.trackDamageDealtToCreature(newState, sourceId, targetId)
-        val sourceName = newState.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"
-        val targetContainer = newState.getEntity(targetId)
-        val targetName = targetContainer?.get<CardComponent>()?.name ?: "Creature"
-        val targetIsFaceDown = targetContainer?.has<FaceDownComponent>() == true
-        events.add(DamageDealtEvent(sourceId, targetId, damage, true, sourceName = sourceName, targetName = targetName, targetIsPlayer = false, targetWasFaceDown = targetIsFaceDown))
-
-        return newState
-    }
-
-    // =========================================================================
     // Lethal Damage Check
     // =========================================================================
 
@@ -956,7 +730,7 @@ internal class CombatDamageManager(
     }
 
     // =========================================================================
-    // Damage Prevention Helpers
+    // Damage Prevention Helpers (used by pre-checks)
     // =========================================================================
 
     private fun isAllCombatDamagePrevented(state: GameState): Boolean {
