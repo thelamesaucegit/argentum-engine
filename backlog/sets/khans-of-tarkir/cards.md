@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 133 / 249
+**Implemented:** 134 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 23    |
 | Red        | 23    |
 | Green      | 23    |
-| Multicolor | 12    |
+| Multicolor | 13    |
 | Colorless  | 3     |
 | Land       | 3     |
 
@@ -40,7 +40,7 @@
 - [ ] Avalanche Tusker
 - [x] Awaken the Bear
 - [x] Barrage of Boulders
-- [ ] Bear's Companion
+- [x] Bear's Companion
 - [x] Become Immense
 - [x] Bellowing Saddlebrute
 - [x] Bitter Revelation

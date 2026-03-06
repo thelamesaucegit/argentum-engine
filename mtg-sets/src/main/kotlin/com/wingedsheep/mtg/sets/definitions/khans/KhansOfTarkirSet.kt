@@ -160,6 +160,7 @@ object KhansOfTarkirSet {
         TrumpetBlast,
 
         // Multicolor
+        BearsCompanion,
         ButcherOfTheHorde,
         ChiefOfTheEdge,
         ChiefOfTheScale,
