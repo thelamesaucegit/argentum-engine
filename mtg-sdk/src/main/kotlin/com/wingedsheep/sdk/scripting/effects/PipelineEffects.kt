@@ -108,11 +108,19 @@ sealed interface CardSource {
      * Cards from the source permanent's linked exile (LinkedExileComponent).
      * Returns the entity IDs stored in the component, filtered to only those
      * currently in exile.
+     *
+     * @property count When set, only gather the first [count] cards from the ordered pile.
+     *   When null (default), gather all linked exile cards.
      */
     @SerialName("FromLinkedExile")
     @Serializable
-    data object FromLinkedExile : CardSource {
-        override val description: String = "cards exiled by this permanent"
+    data class FromLinkedExile(
+        val count: Int? = null
+    ) : CardSource {
+        override val description: String = buildString {
+            if (count != null) append("the top $count of ") else append("")
+            append("cards exiled by this permanent")
+        }
     }
 }
 
@@ -612,6 +620,17 @@ sealed interface CollectionFilter {
     @SerialName("MatchesFilter")
     @Serializable
     data class MatchesFilter(val filter: GameObjectFilter) : CollectionFilter
+
+    /**
+     * Keep only creatures with the greatest power in the collection.
+     * Uses projected state to determine power (respects continuous effects).
+     * If multiple creatures are tied for the greatest power, all of them are kept.
+     *
+     * Used for Crackling Doom and similar "sacrifice the creature with the greatest power" effects.
+     */
+    @SerialName("GreatestPower")
+    @Serializable
+    data object GreatestPower : CollectionFilter
 }
 
 /**

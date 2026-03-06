@@ -717,7 +717,11 @@ CompositeEffect(
 | `MoveCollectionEffect(from, destination, order, revealed, moveType, linkToSource)`                                            | Move a collection to a zone                      |
 | `RevealUntilEffect(source, matchFilter, storeMatch, storeRevealed, matchChosenCreatureType)`                                   | Reveal until filter matches                      |
 | `ChooseCreatureTypeEffect`                                                                                                     | Choose a creature type (data object)             |
+| `FilterCollectionEffect(from, filter, storeMatching, storeNonMatching?)`                                                       | Filter collection into matching/non-matching     |
 | `SelectTargetEffect(requirement, storeAs)`                                                                                     | Select and store a target                        |
+
+Filters: `CollectionFilter.MatchesFilter(filter)`, `CollectionFilter.ExcludeSubtypesFromStored(key)`,
+`CollectionFilter.SharesSubtypeWithSacrificed`, `CollectionFilter.GreatestPower` — keep only creatures with highest power
 
 Sources: `CardSource.TopOfLibrary(count, player)`, `CardSource.FromZone(zone, player, filter)`,
 `CardSource.FromVariable(name)`, `CardSource.ControlledPermanents(player, filter)`,

@@ -175,6 +175,7 @@ object KhansOfTarkirSet {
         TrumpetBlast,
 
         // Multicolor
+        CracklingDoom,
         BearsCompanion,
         ButcherOfTheHorde,
         ChiefOfTheEdge,

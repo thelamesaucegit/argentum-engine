@@ -71,6 +71,15 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
                     predicateEvaluator.matchesWithProjection(state, projected, cardId, filter.filter, predicateContext)
                 }
             }
+
+            is CollectionFilter.GreatestPower -> {
+                val maxPower = cards.maxOfOrNull { projected.getPower(it) ?: Int.MIN_VALUE }
+                if (maxPower == null || maxPower == Int.MIN_VALUE) {
+                    emptyList<EntityId>() to cards
+                } else {
+                    cards.partition { (projected.getPower(it) ?: Int.MIN_VALUE) == maxPower }
+                }
+            }
         }
 
         val updatedCollections = mutableMapOf(effect.storeMatching to matching)
