@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 173 / 249
+**Implemented:** 174 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -10,7 +10,7 @@
 | Blue       | 28    |
 | Black      | 28    |
 | Red        | 29    |
-| Green      | 28    |
+| Green      | 29    |
 | Multicolor | 21    |
 | Colorless  | 7     |
 | Land       | 3     |
@@ -177,7 +177,7 @@
 - [ ] Ride Down
 - [x] Rite of the Serpent
 - [x] Riverwheel Aerialists
-- [ ] Roar of Challenge
+- [x] Roar of Challenge
 - [x] Rotting Mastodon
 - [x] Rugged Highlands
 - [x] Rush of Battle

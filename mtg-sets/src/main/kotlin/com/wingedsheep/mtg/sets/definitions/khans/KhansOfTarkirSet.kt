@@ -149,11 +149,12 @@ object KhansOfTarkirSet {
 
         // Green spells
         AwakenTheBear,
-        IncrementalGrowth,
         BecomeImmense,
         DragonscaleBoon,
         FeedTheClan,
+        IncrementalGrowth,
         Naturalize,
+        RoarOfChallenge,
         SavagePunch,
         ScoutTheBorders,
         SeekTheHorizon,
