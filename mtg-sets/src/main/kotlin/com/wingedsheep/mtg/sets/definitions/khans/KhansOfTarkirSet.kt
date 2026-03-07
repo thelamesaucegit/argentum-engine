@@ -132,6 +132,7 @@ object KhansOfTarkirSet {
         SaguArcher,
         SmokeTeller,
         SultaiFlayer,
+        TemurCharger,
         TuskedColossodon,
         TuskguardCaptain,
         PineWalker,
