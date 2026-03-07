@@ -2,12 +2,12 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 175 / 249
+**Implemented:** 176 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 29    |
-| Blue       | 28    |
+| Blue       | 29    |
 | Black      | 29    |
 | Red        | 29    |
 | Green      | 29    |
@@ -113,7 +113,7 @@
 - [x] Hordeling Outburst
 - [ ] Howl of the Horde
 - [x] Icefeather Aven
-- [ ] Icy Blast
+- [x] Icy Blast
 - [x] Incremental Growth
 - [ ] Ivorytusk Fortress
 - [x] Jeering Instigator
