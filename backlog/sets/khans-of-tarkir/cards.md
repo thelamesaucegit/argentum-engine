@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 180 / 249
+**Implemented:** 181 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 29    |
 | Red        | 29    |
 | Green      | 29    |
-| Multicolor | 24    |
+| Multicolor | 25    |
 | Colorless  | 8     |
 | Land       | 3     |
 
@@ -226,7 +226,7 @@
 - [ ] Swiftwater Cliffs
 - [x] Taigam's Scheming
 - [x] Take Up Arms
-- [ ] Temur Ascendancy
+- [x] Temur Ascendancy
 - [x] Temur Banner
 - [x] Temur Charger
 - [ ] Temur Charm

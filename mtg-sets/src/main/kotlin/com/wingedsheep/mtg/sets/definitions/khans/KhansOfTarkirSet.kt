@@ -219,6 +219,7 @@ object KhansOfTarkirSet {
         SnowhornRider,
         SultaiAscendancy,
         SultaiSoothsayer,
+        TemurAscendancy,
         UtterEnd,
         WardenOfTheEye,
         Winterflame,
