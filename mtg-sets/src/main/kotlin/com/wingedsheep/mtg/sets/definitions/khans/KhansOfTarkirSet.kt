@@ -98,6 +98,7 @@ object KhansOfTarkirSet {
         MarduSkullhunter,
         MerEkNightblade,
         RottingMastodon,
+        RuthlessRipper,
         SidisisPet,
         ShamblingAttendants,
         SultaiScavenger,
