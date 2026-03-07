@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 172 / 249
+**Implemented:** 173 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 28    |
 | Red        | 29    |
 | Green      | 28    |
-| Multicolor | 20    |
+| Multicolor | 21    |
 | Colorless  | 7     |
 | Land       | 3     |
 
@@ -217,7 +217,7 @@
 - [ ] Sultai Charm
 - [x] Sultai Flayer
 - [x] Sultai Scavenger
-- [ ] Sultai Soothsayer
+- [x] Sultai Soothsayer
 - [x] Summit Prowler
 - [ ] Surrak Dragonclaw
 - [x] Suspension Field
