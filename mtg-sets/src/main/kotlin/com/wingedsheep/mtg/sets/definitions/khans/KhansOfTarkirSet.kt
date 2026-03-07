@@ -139,6 +139,7 @@ object KhansOfTarkirSet {
 
         // Green enchantments
         HardenedScales,
+        TrailOfMystery,
 
         // Green spells
         AwakenTheBear,

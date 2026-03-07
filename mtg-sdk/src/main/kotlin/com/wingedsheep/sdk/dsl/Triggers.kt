@@ -49,6 +49,18 @@ object Triggers {
     )
 
     /**
+     * When a face-down creature you control enters the battlefield.
+     * Used by Trail of Mystery.
+     */
+    val FaceDownCreatureYouControlEnters: TriggerSpec = TriggerSpec(
+        event = ZoneChangeEvent(
+            filter = GameObjectFilter.Creature.faceDown().youControl(),
+            to = Zone.BATTLEFIELD
+        ),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * When another creature you control enters the battlefield.
      */
     val OtherCreatureEnters: TriggerSpec = TriggerSpec(

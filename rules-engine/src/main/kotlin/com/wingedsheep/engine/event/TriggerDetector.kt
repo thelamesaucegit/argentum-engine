@@ -1551,6 +1551,16 @@ class TriggerDetector(
                     }
                 }
             }
+            // Check state predicates (face-down, tapped, etc.)
+            for (predicate in trigger.filter.statePredicates) {
+                when (predicate) {
+                    is com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsFaceDown -> {
+                        val entity = state.getEntity(event.entityId) ?: return false
+                        if (!entity.has<FaceDownComponent>()) return false
+                    }
+                    else -> {}
+                }
+            }
             // Check controller predicate (youControl)
             if (trigger.filter.controllerPredicate != null) {
                 when (trigger.filter.controllerPredicate) {
