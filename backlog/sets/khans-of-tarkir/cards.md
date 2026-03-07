@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 164 / 249
+**Implemented:** 165 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -12,7 +12,7 @@
 | Red        | 28    |
 | Green      | 28    |
 | Multicolor | 16    |
-| Colorless  | 5     |
+| Colorless  | 6     |
 | Land       | 3     |
 
 ---
@@ -101,7 +101,7 @@
 - [x] Grim Haruspex
 - [x] Gurmag Swiftwing
 - [x] Hardened Scales
-- [ ] Heart-Piercer Bow
+- [x] Heart-Piercer Bow
 - [x] Heir of the Wilds
 - [ ] Herald of Anafenza
 - [x] Highland Game

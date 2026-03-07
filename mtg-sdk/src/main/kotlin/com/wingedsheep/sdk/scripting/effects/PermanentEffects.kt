@@ -645,6 +645,41 @@ data class SetCreatureSubtypesEffect(
 }
 
 /**
+ * Add a creature subtype to a target in addition to its other types.
+ * "Target creature becomes a Zombie in addition to its other types until end of turn."
+ *
+ * Creates a floating effect on Layer.TYPE that adds the subtype.
+ *
+ * @property subtype The creature subtype to add (e.g., "Zombie", "Warrior")
+ * @property target Which entity to modify
+ * @property duration How long the effect lasts
+ * @property fromChosenValueKey When non-null, reads the subtype from EffectContext.chosenValues[key]
+ *   instead of using the hardcoded [subtype] field.
+ */
+@SerialName("AddCreatureType")
+@Serializable
+data class AddCreatureTypeEffect(
+    val subtype: String = "",
+    val target: EffectTarget = EffectTarget.Self,
+    val duration: Duration = Duration.Permanent,
+    val fromChosenValueKey: String? = null
+) : Effect {
+    override val description: String = buildString {
+        if (fromChosenValueKey != null) {
+            append("${target.description} becomes the chosen creature type in addition to its other types")
+        } else {
+            append("${target.description} becomes a $subtype in addition to its other types")
+        }
+        if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect {
+        val newSubtype = replacer.replaceCreatureType(subtype)
+        return if (newSubtype != subtype) copy(subtype = newSubtype) else this
+    }
+}
+
+/**
  * Change color for a group of creatures.
  * "Each creature you control becomes black until end of turn."
  *
@@ -772,6 +807,22 @@ data class SetBasePowerEffect(
         val newPower = power.applyTextReplacement(replacer)
         return if (newPower !== power) copy(power = newPower) else this
     }
+}
+
+/**
+ * Attach this equipment to a target creature.
+ * Detaches from the currently equipped creature (if any) before attaching to the new one.
+ * "Attach to target creature you control."
+ *
+ * @property target The creature to attach to
+ */
+@SerialName("AttachEquipment")
+@Serializable
+data class AttachEquipmentEffect(
+    val target: EffectTarget = EffectTarget.ContextTarget(0)
+) : Effect {
+    override val description: String = "Attach this equipment to ${target.description}"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
 
 /**

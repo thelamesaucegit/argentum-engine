@@ -66,6 +66,7 @@ import com.wingedsheep.sdk.scripting.effects.ChangeSpellTargetEffect
 import com.wingedsheep.sdk.scripting.effects.ChangeTargetEffect
 import com.wingedsheep.sdk.scripting.effects.ReselectTargetRandomlyEffect
 import com.wingedsheep.sdk.scripting.effects.CopyTargetSpellEffect
+import com.wingedsheep.sdk.scripting.effects.AddCreatureTypeEffect
 import com.wingedsheep.sdk.scripting.effects.SetCreatureSubtypesEffect
 import com.wingedsheep.sdk.scripting.effects.LoseGameEffect
 import com.wingedsheep.sdk.scripting.effects.SkipNextTurnEffect
@@ -422,6 +423,13 @@ object Effects {
         SetCreatureSubtypesEffect(subtypes, target, duration)
 
     /**
+     * Add a creature subtype in addition to other types.
+     * "It becomes a Zombie in addition to its other types."
+     */
+    fun AddCreatureType(subtype: String, target: EffectTarget = EffectTarget.Self, duration: Duration = Duration.Permanent): Effect =
+        AddCreatureTypeEffect(subtype, target, duration)
+
+    /**
      * Add counters.
      */
     fun AddCounters(counterType: String, count: Int, target: EffectTarget): Effect =
@@ -746,6 +754,17 @@ object Effects {
     ): Effect = com.wingedsheep.sdk.scripting.effects.GrantAttackBlockTaxPerCreatureTypeEffect(
         target, creatureType, manaCostPer, duration
     )
+
+    // =========================================================================
+    // Equipment Effects
+    // =========================================================================
+
+    /**
+     * Attach this equipment to a target creature.
+     * Detaches from the currently equipped creature first.
+     */
+    fun AttachEquipment(target: EffectTarget = EffectTarget.ContextTarget(0)): Effect =
+        com.wingedsheep.sdk.scripting.effects.AttachEquipmentEffect(target)
 
     // =========================================================================
     // Animate Effects

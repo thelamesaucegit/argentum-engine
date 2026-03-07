@@ -159,6 +159,7 @@ constructors.
 - `Effects.RemoveFromCombat(target)` — remove creature from combat
 - `Effects.GrantAttackBlockTaxPerCreatureType(target, creatureType, manaCostPer, duration)` — grant "can't attack or block unless pays {X} per creature type" (Whipgrass Entangler)
 - `RedirectCombatDamageToControllerEffect(target)` — next time creature deals combat damage this turn, deals it to controller instead (Goblin Psychopath)
+- `Effects.AttachEquipment(target)` — attach this equipment to target creature (for equip abilities)
 
 ### Chain Copy (Chain of X)
 
@@ -487,7 +488,8 @@ constructors.
 - `Triggers.DealsCombatDamageToPlayer` / `Triggers.DealsCombatDamageToCreature`
 - `Triggers.CreatureDealtDamageByThisDies` — whenever a creature dealt damage by this creature this turn dies
 - `Triggers.EnchantedCreatureDealsCombatDamageToPlayer` — enchanted creature deals combat damage to a player (aura trigger)
-- `Triggers.EnchantedCreatureAttacks` — enchanted creature attacks (aura trigger, e.g., Extra Arms)
+- `Triggers.EnchantedCreatureAttacks` — attached creature attacks (aura trigger, e.g., Extra Arms)
+- `Triggers.EquippedCreatureAttacks` — attached creature attacks (equipment trigger, e.g., Heart-Piercer Bow)
 - `Triggers.EnchantedCreatureDealsDamage` — enchanted creature deals any damage (aura trigger, e.g., Guilty Conscience)
 
 ### Phase/Step
@@ -1027,6 +1029,7 @@ All target references for effects (sealed interface):
 - `EffectTarget.Controller` — controller of the source
 - `EffectTarget.Self` — the source permanent (or iteration target in group effects)
 - `EffectTarget.EnchantedCreature` — creature this aura enchants
+- `EffectTarget.EquippedCreature` — creature this equipment is attached to
 - `EffectTarget.TargetController` — controller of the target
 - `EffectTarget.ContextTarget(index)` — cast-time target at position
 - `EffectTarget.BoundVariable(name)` — named cast-time target (matches `TargetRequirement.id`)

@@ -659,9 +659,9 @@ class TriggerDetector(
             detectEnchantedCreatureDealsDamageAnyTriggers(state, event, triggers, projected, index)
         }
 
-        // Handle "when enchanted creature attacks" triggers on auras (e.g., Extra Arms)
+        // Handle "when attached creature attacks" triggers for auras/equipment (e.g., Extra Arms, Heart-Piercer Bow)
         if (event is AttackersDeclaredEvent) {
-            detectEnchantedCreatureAttacksTriggers(state, event, triggers, projected, index)
+            detectAttachedCreatureAttacksTriggers(state, event, triggers, projected, index)
         }
 
         // Handle "when enchanted creature is turned face up" triggers on auras (e.g., Fatal Mutation)
@@ -1042,10 +1042,11 @@ class TriggerDetector(
     }
 
     /**
-     * Detect "when enchanted creature attacks" triggers on auras.
-     * Uses pre-indexed auras-by-target instead of scanning all battlefield permanents.
+     * Detect "when attached creature attacks" triggers on auras and equipment.
+     * Uses pre-indexed auras-by-target (which includes equipment) instead of scanning all battlefield permanents.
+     * Matches AttachedCreatureAttacksEvent — the generalized event for both auras and equipment.
      */
-    private fun detectEnchantedCreatureAttacksTriggers(
+    private fun detectAttachedCreatureAttacksTriggers(
         state: GameState,
         event: AttackersDeclaredEvent,
         triggers: MutableList<PendingTrigger>,
@@ -1055,7 +1056,7 @@ class TriggerDetector(
         for (attackerId in event.attackers) {
             for (entry in index.aurasByTarget[attackerId].orEmpty()) {
                 for (ability in entry.abilities) {
-                    if (ability.trigger is GameEvent.EnchantedCreatureAttacksEvent) {
+                    if (ability.trigger is GameEvent.AttachedCreatureAttacksEvent) {
                         triggers.add(
                             PendingTrigger(
                                 ability = ability,
@@ -1477,8 +1478,8 @@ class TriggerDetector(
             // Phase/step triggers are handled separately
             is GameEvent.StepEvent -> false
             is GameEvent.EnchantedCreatureControllerStepEvent -> false
-            // Enchanted creature triggers are handled separately
-            is GameEvent.EnchantedCreatureAttacksEvent -> false
+            // Attached creature triggers are handled separately
+            is GameEvent.AttachedCreatureAttacksEvent -> false
             is GameEvent.EnchantedCreatureDamageReceivedEvent -> false
             is GameEvent.EnchantedCreatureDealsCombatDamageToPlayerEvent -> false
             is GameEvent.EnchantedCreatureDealsDamageEvent -> false

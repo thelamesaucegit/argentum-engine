@@ -35,6 +35,13 @@ sealed interface EffectTarget {
         override val description: String = "enchanted creature"
     }
 
+    /** The creature this equipment is attached to */
+    @SerialName("EquippedCreature")
+    @Serializable
+    data object EquippedCreature : EffectTarget {
+        override val description: String = "equipped creature"
+    }
+
     /** The controller of the target (used for effects like "its controller gains 4 life") */
     @SerialName("TargetController")
     @Serializable

@@ -480,9 +480,20 @@ object Triggers {
     /**
      * Whenever the enchanted creature attacks.
      * Used for auras like Extra Arms.
+     * DSL alias — uses the generalized [AttachedCreatureAttacksEvent].
      */
     val EnchantedCreatureAttacks: TriggerSpec = TriggerSpec(
-        event = EnchantedCreatureAttacksEvent,
+        event = AttachedCreatureAttacksEvent,
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * Whenever the equipped creature attacks.
+     * Used for equipment like Heart-Piercer Bow.
+     * DSL alias — uses the generalized [AttachedCreatureAttacksEvent].
+     */
+    val EquippedCreatureAttacks: TriggerSpec = TriggerSpec(
+        event = AttachedCreatureAttacksEvent,
         binding = TriggerBinding.ANY
     )
 

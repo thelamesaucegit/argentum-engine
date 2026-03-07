@@ -526,13 +526,14 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     }
 
     /**
-     * When the enchanted creature attacks.
-     * Special case for auras like Extra Arms.
+     * When a creature that this permanent is attached to attacks.
+     * Generalized trigger for both auras (Extra Arms) and equipment (Heart-Piercer Bow).
+     * Both use AttachedToComponent, so detection logic is identical.
      */
-    @SerialName("EnchantedCreatureAttacksEvent")
+    @SerialName("AttachedCreatureAttacksEvent")
     @Serializable
-    data object EnchantedCreatureAttacksEvent : GameEvent {
-        override val description: String = "when enchanted creature attacks"
+    data object AttachedCreatureAttacksEvent : GameEvent {
+        override val description: String = "when attached creature attacks"
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
 
@@ -546,6 +547,7 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
         override val description: String = "when enchanted permanent becomes tapped"
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
     }
+
 
     // ---- Spell/Card Triggers ----
 

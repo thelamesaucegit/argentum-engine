@@ -39,11 +39,13 @@ class PermanentExecutors(
         BecomeChosenTypeAllCreaturesExecutor(),
         SetGroupCreatureSubtypesExecutor(),
         SetCreatureSubtypesExecutor(),
+        AddCreatureTypeExecutor(),
         ChangeGroupColorExecutor(),
         GrantActivatedAbilityToGroupExecutor(),
         ChooseCreatureTypeGainControlExecutor(),
         AnimateLandExecutor(),
         SetBasePowerExecutor(amountEvaluator),
-        DistributeCountersFromSelfExecutor()
+        DistributeCountersFromSelfExecutor(),
+        AttachEquipmentExecutor()
     )
 }
