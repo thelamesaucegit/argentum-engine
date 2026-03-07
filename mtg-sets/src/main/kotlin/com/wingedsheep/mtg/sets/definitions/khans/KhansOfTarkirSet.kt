@@ -48,6 +48,7 @@ object KhansOfTarkirSet {
         // White spells
         DefiantStrike,
         Erase,
+        FeatOfResistance,
         KillShot,
         RushOfBattle,
         Siegecraft,

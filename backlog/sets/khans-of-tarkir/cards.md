@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 155 / 249
+**Implemented:** 156 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 26    |
+| White      | 27    |
 | Blue       | 26    |
 | Black      | 26    |
 | Red        | 27    |
@@ -88,7 +88,7 @@
 - [ ] Empty the Pits
 - [ ] End Hostilities
 - [x] Erase
-- [ ] Feat of Resistance
+- [x] Feat of Resistance
 - [x] Feed the Clan
 - [x] Firehoof Cavalry
 - [ ] Flooded Strand
