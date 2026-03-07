@@ -60,12 +60,15 @@ class CreateTokenExecutor(
             // Create token entity
             val defaultName = "${effect.creatureTypes.joinToString(" ")} Token"
             val tokenName = effect.name ?: defaultName
+            val tokenPower = effect.dynamicPower?.let { amountEvaluator.evaluate(state, it, context) } ?: effect.power
+            val tokenToughness = effect.dynamicToughness?.let { amountEvaluator.evaluate(state, it, context) } ?: effect.toughness
+
             val tokenComponent = CardComponent(
                 cardDefinitionId = "token:${effect.creatureTypes.joinToString("-")}",
                 name = tokenName,
                 manaCost = ManaCost.ZERO,
                 typeLine = TypeLine.parse("Creature - ${effect.creatureTypes.joinToString(" ")}"),
-                baseStats = CreatureStats(effect.power, effect.toughness),
+                baseStats = CreatureStats(tokenPower, tokenToughness),
                 baseKeywords = effect.keywords,
                 colors = effect.colors,
                 ownerId = tokenControllerId,

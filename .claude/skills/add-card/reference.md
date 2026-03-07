@@ -114,6 +114,7 @@ constructors.
 ### Tokens
 
 - `Effects.CreateToken(power, toughness, colors, creatureTypes, keywords, count = 1)`
+- `Effects.CreateDynamicToken(dynamicPower, dynamicToughness, colors, creatureTypes, keywords, count = 1)` — token with P/T evaluated at resolution time
 - `Effects.CreateTreasure(count = 1)`
 
 ### Library

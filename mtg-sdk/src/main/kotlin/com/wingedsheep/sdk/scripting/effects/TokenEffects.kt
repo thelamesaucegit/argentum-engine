@@ -72,7 +72,9 @@ data class CreateTokenEffect(
     val keywords: Set<Keyword> = emptySet(),
     val name: String? = null,
     val imageUri: String? = null,
-    val controller: EffectTarget? = null
+    val controller: EffectTarget? = null,
+    val dynamicPower: DynamicAmount? = null,
+    val dynamicToughness: DynamicAmount? = null
 ) : Effect {
     constructor(
         count: Int,

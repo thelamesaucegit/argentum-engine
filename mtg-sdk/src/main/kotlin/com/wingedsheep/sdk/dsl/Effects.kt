@@ -516,6 +516,26 @@ object Effects {
     ): Effect = CreateTokenEffect(count, power, toughness, colors, creatureTypes, keywords, controller = controller)
 
     /**
+     * Create creature tokens with dynamic power/toughness evaluated at resolution time.
+     * Used for cards like Kin-Tree Invocation where P/T depends on game state.
+     */
+    fun CreateDynamicToken(
+        dynamicPower: DynamicAmount,
+        dynamicToughness: DynamicAmount,
+        colors: Set<Color> = emptySet(),
+        creatureTypes: Set<String>,
+        keywords: Set<Keyword> = emptySet(),
+        count: Int = 1,
+        controller: EffectTarget? = null
+    ): Effect = CreateTokenEffect(
+        count = DynamicAmount.Fixed(count),
+        power = 0, toughness = 0,
+        colors = colors, creatureTypes = creatureTypes, keywords = keywords,
+        controller = controller,
+        dynamicPower = dynamicPower, dynamicToughness = dynamicToughness
+    )
+
+    /**
      * Create Treasure tokens.
      */
     fun CreateTreasure(count: Int = 1): Effect =

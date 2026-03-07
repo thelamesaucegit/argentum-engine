@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 177 / 249
+**Implemented:** 178 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 29    |
 | Red        | 29    |
 | Green      | 29    |
-| Multicolor | 22    |
+| Multicolor | 23    |
 | Colorless  | 7     |
 | Land       | 3     |
 
@@ -129,7 +129,7 @@
 - [ ] Kheru Lich Lord
 - [ ] Kheru Spellsnatcher
 - [x] Kill Shot
-- [ ] Kin-Tree Invocation
+- [x] Kin-Tree Invocation
 - [x] Kin-Tree Warden
 - [x] Krumar Bond-Kin
 - [x] Leaping Master
