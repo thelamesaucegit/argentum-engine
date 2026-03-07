@@ -160,12 +160,12 @@ function applyGameStateDelta(
   if (delta.updatedZones && delta.updatedZones.length > 0) {
     const zoneMap = new Map<string, unknown>()
     for (const zone of prev.zones) {
-      const z = zone as { zoneId: string }
-      zoneMap.set(z.zoneId, zone)
+      const z = zone as { zoneId: unknown }
+      zoneMap.set(JSON.stringify(z.zoneId), zone)
     }
     for (const zone of delta.updatedZones) {
-      const z = zone as { zoneId: string }
-      zoneMap.set(z.zoneId, zone)
+      const z = zone as { zoneId: unknown }
+      zoneMap.set(JSON.stringify(z.zoneId), zone)
     }
     zones = Array.from(zoneMap.values())
   }
