@@ -2,12 +2,12 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 162 / 249
+**Implemented:** 163 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 28    |
-| Blue       | 27    |
+| Blue       | 28    |
 | Black      | 27    |
 | Red        | 28    |
 | Green      | 28    |
@@ -167,7 +167,7 @@
 - [x] Pine Walker
 - [ ] Polluted Delta
 - [x] Ponyback Brigade
-- [ ] Quiet Contemplation
+- [x] Quiet Contemplation
 - [x] Raiders' Spoils
 - [ ] Rakshasa Deathdealer
 - [x] Rakshasa's Secret

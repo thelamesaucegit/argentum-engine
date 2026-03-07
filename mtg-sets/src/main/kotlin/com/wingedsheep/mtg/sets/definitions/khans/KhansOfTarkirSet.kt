@@ -87,6 +87,7 @@ object KhansOfTarkirSet {
         WeaveFate,
 
         // Blue enchantments
+        QuietContemplation,
         SingingBellStrike,
 
         // Black creatures
