@@ -89,7 +89,7 @@ class StateBasedActionChecker {
         events.addAll(lethalDamageResults.events)
 
         // 704.5h - Creature dealt damage by deathtouch source goes to graveyard
-        // (Deathtouch tracking would need additional component)
+        // (Handled in checkLethalDamage via DamageComponent.deathtouchDamageReceived)
 
         // 704.5i - Planeswalker with 0 loyalty goes to graveyard
         val planeswalkerResults = checkPlaneswalkerLoyalty(newState)
@@ -210,6 +210,7 @@ class StateBasedActionChecker {
 
     /**
      * 704.5g - A creature that's been dealt lethal damage is destroyed.
+     * 704.5h - A creature that's been dealt damage by a source with deathtouch is destroyed.
      * Note: Indestructible creatures are not destroyed by lethal damage (Rule 702.12b).
      * Creatures with regeneration shields are regenerated instead of destroyed.
      */
@@ -233,7 +234,12 @@ class StateBasedActionChecker {
 
             val effectiveToughness = projected.getToughness(entityId) ?: 0
 
-            if (damageComponent.amount >= effectiveToughness) {
+            // 704.5g: lethal damage (amount >= toughness)
+            // 704.5h: any damage from a deathtouch source
+            val hasLethalDamage = damageComponent.amount >= effectiveToughness
+            val hasDeathtouch = damageComponent.deathtouchDamageReceived && damageComponent.amount > 0
+
+            if (hasLethalDamage || hasDeathtouch) {
                 // Check for regeneration shields (lethal damage is destruction, so it can be regenerated)
                 val (shieldState, wasRegenerated) = EffectExecutorUtils.applyRegenerationShields(newState, entityId)
                 if (wasRegenerated) {

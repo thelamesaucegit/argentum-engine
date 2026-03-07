@@ -70,7 +70,8 @@ data class CountersComponent(
  */
 @Serializable
 data class DamageComponent(
-    val amount: Int
+    val amount: Int,
+    val deathtouchDamageReceived: Boolean = false
 ) : Component
 
 /**

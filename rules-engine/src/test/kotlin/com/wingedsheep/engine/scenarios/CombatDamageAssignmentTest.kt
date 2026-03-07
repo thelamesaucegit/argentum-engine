@@ -235,8 +235,40 @@ class CombatDamageAssignmentTest : FunSpec({
         // 2 trample damage to player (3 power - 1 to blocker = 2)
         driver.assertLifeTotal(opponent, 18)
 
-        // Note: The blocker received 1 deathtouch damage. Whether it dies depends on
-        // SBA deathtouch tracking (704.5h) which is a separate feature.
+        // 704.5h: blocker received 1 deathtouch damage, so it dies
+        driver.findPermanent(opponent, "Grizzly Bears").shouldBeNull()
+    }
+
+    test("deathtouch 1/1 kills larger creature via 704.5h") {
+        val driver = createDriver()
+        driver.initMirrorMatch(
+            deck = Deck.of("Swamp" to 40),
+            startingLife = 20
+        )
+
+        val activePlayer = driver.activePlayer!!
+        val opponent = driver.getOpponent(activePlayer)
+
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        // 1/1 deathtouch attacking into 5/5 blocker
+        val rat = driver.putCreatureOnBattlefield(activePlayer, "Deathtouch Rat")
+        val bigCreature = driver.putCreatureOnBattlefield(opponent, "Force of Nature") // 5/5
+        driver.removeSummoningSickness(rat)
+
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        driver.declareAttackers(activePlayer, listOf(rat), opponent).isSuccess shouldBe true
+
+        driver.passPriorityUntil(Step.DECLARE_BLOCKERS)
+        driver.declareBlockers(opponent, mapOf(bigCreature to listOf(rat))).isSuccess shouldBe true
+
+        driver.passPriorityUntil(Step.POSTCOMBAT_MAIN)
+
+        // 704.5h: 5/5 received 1 deathtouch damage — it dies
+        driver.findPermanent(opponent, "Force of Nature").shouldBeNull()
+
+        // 1/1 rat also dies from 5 damage
+        driver.findPermanent(activePlayer, "Deathtouch Rat").shouldBeNull()
     }
 
     test("single blocker without trample - no decision needed, auto-assigned") {

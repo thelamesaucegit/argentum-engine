@@ -478,9 +478,15 @@ internal class CombatDamageManager(
             events.add(LifeChangedEvent(targetId, currentLife, newLife, LifeChangeReason.DAMAGE))
         } else {
             if (targetId !in newState.getBattlefield()) return newState
-            val currentDamage = newState.getEntity(targetId)?.get<DamageComponent>()?.amount ?: 0
+            val existingDamage = newState.getEntity(targetId)?.get<DamageComponent>()
+            val currentDamage = existingDamage?.amount ?: 0
+            val projected = newState.projectedState
+            val hasDeathtouch = projected.hasKeyword(sourceId, Keyword.DEATHTOUCH)
             newState = newState.updateEntity(targetId) { container ->
-                container.with(DamageComponent(currentDamage + amount))
+                container.with(DamageComponent(
+                    amount = currentDamage + amount,
+                    deathtouchDamageReceived = hasDeathtouch || (existingDamage?.deathtouchDamageReceived == true)
+                ))
             }
             newState = EffectExecutorUtils.trackDamageDealtToCreature(newState, sourceId, targetId)
             val sourceName = newState.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Creature"

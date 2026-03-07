@@ -379,9 +379,15 @@ object EffectExecutorUtils {
             events.add(LifeChangedEvent(targetId, lifeComponent.life, newLife, LifeChangeReason.DAMAGE))
         } else {
             // It's a creature - mark damage
-            val currentDamage = newState.getEntity(targetId)?.get<DamageComponent>()?.amount ?: 0
+            val existingDamage = newState.getEntity(targetId)?.get<DamageComponent>()
+            val currentDamage = existingDamage?.amount ?: 0
+            val projected = newState.projectedState
+            val hasDeathtouch = sourceId != null && projected.hasKeyword(sourceId, Keyword.DEATHTOUCH)
             newState = newState.updateEntity(targetId) { container ->
-                container.with(DamageComponent(currentDamage + effectiveAmount))
+                container.with(DamageComponent(
+                    amount = currentDamage + effectiveAmount,
+                    deathtouchDamageReceived = hasDeathtouch || (existingDamage?.deathtouchDamageReceived == true)
+                ))
             }
             // Track damage source for "creature dealt damage by this dies" triggers
             if (sourceId != null) {

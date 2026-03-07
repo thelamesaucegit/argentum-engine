@@ -524,6 +524,20 @@ object TestCards {
     )
 
     /**
+     * 1/1 Deathtouch for {B}
+     * Test card for deathtouch state-based action (704.5h).
+     */
+    val DeathtouchRat = CardDefinition.creature(
+        name = "Deathtouch Rat",
+        manaCost = ManaCost.parse("{B}"),
+        subtypes = setOf(Subtype("Rat")),
+        power = 1,
+        toughness = 1,
+        oracleText = "Deathtouch",
+        keywords = setOf(Keyword.DEATHTOUCH)
+    )
+
+    /**
      * 3/3 Trample Deathtouch for {1}{B}{G}
      * Test card for deathtouch+trample interaction.
      */
@@ -582,6 +596,7 @@ object TestCards {
         ArtifactCreature,
         BlackCreature,
         TrampleBeast,
+        DeathtouchRat,
         DeathtouchTrampler,
         TestCleric,
         // Mana Dorks
