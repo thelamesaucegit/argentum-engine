@@ -198,6 +198,7 @@ object KhansOfTarkirSet {
         TrumpetBlast,
 
         // Multicolor
+        AbominationOfGudul,
         AbzanGuide,
         CracklingDoom,
         EfreetWeaponmaster,
