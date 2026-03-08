@@ -220,6 +220,7 @@ object KhansOfTarkirSet {
         IcefeatherAven,
         IvorytuskFortress,
         MantisRider,
+        MarduCharm,
         MarduRoughrider,
         PonybackBrigade,
         RideDown,
