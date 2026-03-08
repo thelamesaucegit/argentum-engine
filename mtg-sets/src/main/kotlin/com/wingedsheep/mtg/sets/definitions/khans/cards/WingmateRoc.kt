@@ -39,7 +39,7 @@ val WingmateRoc = card("Wingmate Roc") {
             colors = setOf(Color.WHITE),
             creatureTypes = setOf("Bird"),
             keywords = setOf(Keyword.FLYING),
-            imageUri = "https://cards.scryfall.io/normal/front/2/5/25f0f6a2-b392-45e6-97c4-4f00016144d3.jpg?1562783827"
+            imageUri = "https://cards.scryfall.io/normal/front/2/6/26e0e196-36e6-4d7a-a76b-1c2a18270267.jpg?1561756807"
         )
     }
 
