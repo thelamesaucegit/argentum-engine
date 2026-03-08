@@ -130,6 +130,16 @@ export function DelveSelector() {
 
         <p style={styles.hint}>
           {selectedCards.length} card{selectedCards.length !== 1 ? 's' : ''} selected to exile
+          {selectedCards.length < maxDelve && (
+            <span style={styles.delveRemaining}>
+              {' '}&middot; exile {maxDelve - selectedCards.length} more to pay only colored mana
+            </span>
+          )}
+          {selectedCards.length === maxDelve && (
+            <span style={styles.delveComplete}>
+              {' '}&middot; generic cost fully covered
+            </span>
+          )}
         </p>
 
         <div style={styles.buttonRow}>
@@ -366,6 +376,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     textAlign: 'center',
     margin: '0 0 20px 0',
+  },
+  delveRemaining: {
+    color: '#e0a030',
+  },
+  delveComplete: {
+    color: '#4caf50',
   },
   buttonRow: {
     display: 'flex',
