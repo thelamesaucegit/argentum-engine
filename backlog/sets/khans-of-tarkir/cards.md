@@ -2,11 +2,11 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 201 / 249
+**Implemented:** 202 / 249
 
 | Color      | Count |
 |------------|-------|
-| White      | 30    |
+| White      | 31    |
 | Blue       | 30    |
 | Black      | 30    |
 | Red        | 30    |
@@ -103,7 +103,7 @@
 - [x] Hardened Scales
 - [x] Heart-Piercer Bow
 - [x] Heir of the Wilds
-- [ ] Herald of Anafenza
+- [x] Herald of Anafenza
 - [x] Highland Game
 - [x] High Sentinels of Arashin
 - [x] Highspire Mantis

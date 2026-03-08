@@ -28,6 +28,7 @@ object KhansOfTarkirSet {
         AlabasterKirin,
         DazzlingRamparts,
         FirehoofCavalry,
+        HeraldOfAnafenza,
         JeskaiStudent,
         MarduHateblade,
         MarduHordechief,
