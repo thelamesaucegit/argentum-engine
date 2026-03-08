@@ -320,9 +320,14 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
     @SerialName("CostReturnToHand")
     @Serializable
     data class ReturnToHand(
-        val filter: GameObjectFilter = GameObjectFilter.Any
+        val filter: GameObjectFilter = GameObjectFilter.Any,
+        val count: Int = 1
     ) : AbilityCost {
-        override val description: String = "Return a ${filter.description} you control to its owner's hand"
+        override val description: String = if (count == 1) {
+            "Return a ${filter.description} you control to its owner's hand"
+        } else {
+            "Return $count ${filter.description}s you control to their owner's hand"
+        }
 
         override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
             val newFilter = filter.applyTextReplacement(replacer)

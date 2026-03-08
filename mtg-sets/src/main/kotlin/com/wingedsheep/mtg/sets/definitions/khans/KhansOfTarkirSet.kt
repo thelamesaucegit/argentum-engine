@@ -70,6 +70,7 @@ object KhansOfTarkirSet {
         Scaldkin,
         ScionOfGlaciers,
         WetlandSambar,
+        PearlLakeAncient,
         WhirlwindAdept,
         MistfireWeaver,
 

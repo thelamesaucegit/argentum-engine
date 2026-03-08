@@ -2,12 +2,12 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 190 / 249
+**Implemented:** 191 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 30    |
-| Blue       | 29    |
+| Blue       | 30    |
 | Black      | 29    |
 | Red        | 30    |
 | Green      | 30    |
@@ -163,7 +163,7 @@
 - [x] Necropolis Fiend
 - [ ] Nomad Outpost
 - [ ] Opulent Palace
-- [ ] Pearl Lake Ancient
+- [x] Pearl Lake Ancient
 - [x] Pine Walker
 - [ ] Polluted Delta
 - [x] Ponyback Brigade

@@ -134,7 +134,7 @@ class CostHandler(
                 true
             }
             is AbilityCost.ReturnToHand -> {
-                findMatchingPermanentsUnified(state, controllerId, cost.filter).isNotEmpty()
+                findMatchingPermanentsUnified(state, controllerId, cost.filter).size >= cost.count
             }
             is AbilityCost.Composite -> {
                 cost.costs.all { canPayAbilityCost(state, it, sourceId, controllerId, manaPool) }
@@ -395,41 +395,48 @@ class CostHandler(
                 CostPaymentResult.success(newState, manaPool, events)
             }
             is AbilityCost.ReturnToHand -> {
-                val toBounce = choices.bounceChoices.firstOrNull()
-                    ?: return CostPaymentResult.failure("No bounce target chosen")
-
-                val bounceContainer = state.getEntity(toBounce)
-                    ?: return CostPaymentResult.failure("Bounce target not found")
-                val bounceController = bounceContainer.get<ControllerComponent>()?.playerId
-                    ?: return CostPaymentResult.failure("Bounce target has no controller")
-                val bounceOwner = bounceContainer.get<OwnerComponent>()?.playerId
-                    ?: bounceController
-                val bounceName = bounceContainer.get<CardComponent>()?.name ?: "Unknown"
-
-                // Validate the chosen bounce target matches the required filter
-                val context = PredicateContext(controllerId = controllerId)
-                if (!predicateEvaluator.matches(state, toBounce, cost.filter, context)) {
-                    return CostPaymentResult.failure("Bounce target does not match the required filter")
+                if (choices.bounceChoices.size < cost.count) {
+                    return CostPaymentResult.failure("Not enough permanents chosen to bounce (need ${cost.count}, got ${choices.bounceChoices.size})")
                 }
 
-                // Move from battlefield to owner's hand
-                val battlefieldZone = ZoneKey(bounceController, Zone.BATTLEFIELD)
-                val handZone = ZoneKey(bounceOwner, Zone.HAND)
+                val toBounceList = choices.bounceChoices.take(cost.count)
+                val context = PredicateContext(controllerId = controllerId)
+                var newState = state
+                val allEvents = mutableListOf<GameEvent>()
 
-                var newState = state.removeFromZone(battlefieldZone, toBounce)
-                newState = newState.addToZone(handZone, toBounce)
+                for (toBounce in toBounceList) {
+                    val bounceContainer = newState.getEntity(toBounce)
+                        ?: return CostPaymentResult.failure("Bounce target not found")
+                    val bounceController = bounceContainer.get<ControllerComponent>()?.playerId
+                        ?: return CostPaymentResult.failure("Bounce target has no controller")
+                    val bounceOwner = bounceContainer.get<OwnerComponent>()?.playerId
+                        ?: bounceController
+                    val bounceName = bounceContainer.get<CardComponent>()?.name ?: "Unknown"
 
-                val events = listOf(
-                    ZoneChangeEvent(
-                        entityId = toBounce,
-                        entityName = bounceName,
-                        fromZone = Zone.BATTLEFIELD,
-                        toZone = Zone.HAND,
-                        ownerId = bounceOwner
+                    // Validate the chosen bounce target matches the required filter
+                    if (!predicateEvaluator.matches(newState, toBounce, cost.filter, context)) {
+                        return CostPaymentResult.failure("Bounce target does not match the required filter")
+                    }
+
+                    // Move from battlefield to owner's hand
+                    val battlefieldZone = ZoneKey(bounceController, Zone.BATTLEFIELD)
+                    val handZone = ZoneKey(bounceOwner, Zone.HAND)
+
+                    newState = newState.removeFromZone(battlefieldZone, toBounce)
+                    newState = newState.addToZone(handZone, toBounce)
+
+                    allEvents.add(
+                        ZoneChangeEvent(
+                            entityId = toBounce,
+                            entityName = bounceName,
+                            fromZone = Zone.BATTLEFIELD,
+                            toZone = Zone.HAND,
+                            ownerId = bounceOwner
+                        )
                     )
-                )
+                }
 
-                CostPaymentResult.success(newState, manaPool, events)
+                CostPaymentResult.success(newState, manaPool, allEvents)
             }
             is AbilityCost.TapAttachedCreature -> {
                 val attachedId = state.getEntity(sourceId)?.get<AttachedToComponent>()?.targetId

@@ -1212,7 +1212,7 @@ class LegalActionsCalculator(
                     is AbilityCost.ReturnToHand -> {
                         bounceCost = effectiveCost
                         bounceTargets = findAbilityBounceTargets(state, playerId, bounceCost.filter)
-                        if (bounceTargets.isEmpty()) continue
+                        if (bounceTargets.size < bounceCost.count) continue
                     }
                     is AbilityCost.SacrificeChosenCreatureType -> {
                         val chosenType = container.get<ChosenCreatureTypeComponent>()?.creatureType
@@ -1314,7 +1314,7 @@ class LegalActionsCalculator(
                                 is AbilityCost.ReturnToHand -> {
                                     bounceCost = subCost
                                     bounceTargets = findAbilityBounceTargets(state, playerId, subCost.filter)
-                                    if (bounceTargets.isEmpty()) {
+                                    if (bounceTargets.size < subCost.count) {
                                         costCanBePaid = false
                                         break
                                     }
@@ -1368,7 +1368,7 @@ class LegalActionsCalculator(
                         description = bounceCost.description,
                         costType = "BouncePermanent",
                         validBounceTargets = bounceTargets,
-                        bounceCount = 1
+                        bounceCount = bounceCost.count
                     )
                 } else if (sacrificeTargets != null) {
                     // SacrificeSelf cost — sacrifice target is the source itself

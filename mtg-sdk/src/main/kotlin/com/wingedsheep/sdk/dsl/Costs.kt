@@ -174,8 +174,8 @@ object Costs {
     /**
      * Return a permanent you control matching the filter to its owner's hand.
      */
-    fun ReturnToHand(filter: GameObjectFilter = GameObjectFilter.Any): AbilityCost =
-        AbilityCost.ReturnToHand(filter)
+    fun ReturnToHand(filter: GameObjectFilter = GameObjectFilter.Any, count: Int = 1): AbilityCost =
+        AbilityCost.ReturnToHand(filter, count)
 
     // =========================================================================
     // Composite Costs

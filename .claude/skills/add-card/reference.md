@@ -603,7 +603,7 @@ constructors.
 - `Costs.TapAttachedCreature` — tap the creature this is attached to
 - `Costs.TapPermanents(count, filter)` — tap N permanents
 - `Costs.Loyalty(change)` — planeswalker loyalty
-- `Costs.ReturnToHand(filter)` — return a permanent matching filter to owner's hand
+- `Costs.ReturnToHand(filter, count)` — return N permanents matching filter to owner's hand (default count=1)
 - `Costs.Composite(cost1, cost2)` — multiple costs
 
 ---
