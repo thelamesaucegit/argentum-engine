@@ -207,6 +207,15 @@ class ConnectionHandler(
         if (token != null) {
             val identity = sessionRegistry.getIdentityByToken(token)
             if (identity != null) {
+                // If the player has already reconnected with a new WebSocket session,
+                // this disconnect is stale (from the old session). Skip disconnect logic
+                // to avoid overwriting the new session and starting spurious timers.
+                val currentWs = identity.webSocketSession
+                if (currentWs != null && currentWs.id != session.id && currentWs.isOpen) {
+                    logger.info("Player ${identity.playerName} already reconnected on a new session, ignoring stale disconnect for ${session.id}")
+                    return
+                }
+
                 // Use longer grace period for tournament players
                 val lobbyId = identity.currentLobbyId
                 val lobby = if (lobbyId != null) lobbyRepository.findLobbyById(lobbyId) else null

@@ -466,7 +466,7 @@ class LobbyHandler(
                 if (playerState?.hasSubmittedDeck == true) {
                     val tournament = lobbyRepository.findTournamentById(lobby.lobbyId)
                     if (tournament != null) {
-                        sendTournamentStartedToPlayer(lobby, tournament, identity)
+                        sendTournamentStartedToPlayer(lobby, tournament, identity, wsOverride = session)
                     }
                 }
             }
@@ -512,7 +512,7 @@ class LobbyHandler(
         sender.send(session, lobby.buildLobbyUpdate(identity.playerId))
 
         val tournament = lobbyRepository.findTournamentById(lobby.lobbyId) ?: return
-        sendTournamentStartedToPlayer(lobby, tournament, identity)
+        sendTournamentStartedToPlayer(lobby, tournament, identity, wsOverride = session)
 
         val currentRound = tournament.currentRound
         val playerMatch = currentRound?.matches?.find {
@@ -1791,13 +1791,17 @@ class LobbyHandler(
 
     /**
      * Send TournamentStarted message to a single player.
+     * @param wsOverride If provided, use this session instead of identity.webSocketSession.
+     *                   Used during reconnection to avoid a race where handleDisconnect
+     *                   clears identity.webSocketSession before this method runs.
      */
     private fun sendTournamentStartedToPlayer(
         lobby: TournamentLobby,
         tournament: TournamentManager,
-        identity: PlayerIdentity
+        identity: PlayerIdentity,
+        wsOverride: WebSocketSession? = null
     ) {
-        val ws = identity.webSocketSession ?: return
+        val ws = wsOverride ?: identity.webSocketSession ?: return
 
         val connectedIds = lobby.players.values
             .filter { it.identity.isConnected }
