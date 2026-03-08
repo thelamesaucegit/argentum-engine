@@ -1053,7 +1053,7 @@ class GameTestDriver {
      * During combat declaration steps, auto-submit empty declarations so that
      * PassPriority can proceed. This mirrors what the game server's auto-pass does.
      */
-    private fun autoSubmitCombatDeclarationIfNeeded() {
+    internal fun autoSubmitCombatDeclarationIfNeeded() {
         val priorityPlayer = state.priorityPlayerId ?: return
         if (state.step == Step.DECLARE_ATTACKERS && priorityPlayer == state.activePlayerId) {
             val attackersDeclared = state.getEntity(priorityPlayer)
