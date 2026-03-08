@@ -253,6 +253,7 @@ object KhansOfTarkirSet {
         // Colorless
         AbzanBanner,
         CranialArchive,
+        GhostfireBlade,
         HeartPiercerBow,
         JeskaiBanner,
         MarduBanner,

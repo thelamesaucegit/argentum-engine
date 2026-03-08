@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 209 / 249
+**Implemented:** 210 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -12,7 +12,7 @@
 | Red        | 31    |
 | Green      | 31    |
 | Multicolor | 42    |
-| Colorless  | 8     |
+| Colorless  | 9     |
 | Land       | 5     |
 
 ---
@@ -95,7 +95,7 @@
 - [ ] Flying Crane Technique
 - [x] Force Away
 - [ ] Frontier Bivouac
-- [ ] Ghostfire Blade
+- [x] Ghostfire Blade
 - [x] Glacial Stalker
 - [x] Goblinslide
 - [x] Grim Haruspex
