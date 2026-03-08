@@ -5,7 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Notes
 
 - Focus on your own work. If a change not made by you breaks the build, report it to the user and stop your work. Don't
-  try to revert or fix changes that are not assigned to you. Don't stash changes that others made, just report.
+  try to revert or fix changes that are not assigned to you. Don't stash or discard changes that others made — this is
+  likely work from another Claude agent working on the same branch. Report the conflict to the user and pause your work
+  until the user confirms it is safe to continue.
 - When asked to implement a card from a backlog file (e.g., `backlog/sets/scourge/cards.md`), always use the `add-card`
   skill to implement it. This streamlines set implementation.
 

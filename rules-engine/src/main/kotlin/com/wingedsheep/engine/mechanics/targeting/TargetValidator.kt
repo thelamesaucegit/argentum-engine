@@ -94,6 +94,7 @@ class TargetValidator {
             is TargetOpponent -> validateOpponentTarget(state, target, casterId)
             is AnyTarget -> validateAnyTarget(state, target)
             is TargetCreatureOrPlayer -> validateCreatureOrPlayerTarget(state, target)
+            is TargetOpponentOrPlaneswalker -> validateOpponentOrPlaneswalkerTarget(state, target, casterId)
             is TargetCreatureOrPlaneswalker -> validateCreatureOrPlaneswalkerTarget(state, target)
             is TargetSpellOrPermanent -> validateSpellOrPermanentTarget(state, target, casterId)
             is TargetObject -> validateObjectTarget(state, target, requirement.filter, casterId, sourceId)

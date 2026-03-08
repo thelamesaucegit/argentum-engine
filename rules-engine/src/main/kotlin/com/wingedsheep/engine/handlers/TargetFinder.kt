@@ -47,6 +47,7 @@ class TargetFinder(
             is TargetOpponent -> findOpponentTargets(state, controllerId)
             is AnyTarget -> findAnyTargets(state, controllerId, sourceId)
             is TargetCreatureOrPlayer -> findCreatureOrPlayerTargets(state, controllerId, sourceId)
+            is TargetOpponentOrPlaneswalker -> findOpponentOrPlaneswalkerTargets(state, controllerId, sourceId)
             is TargetCreatureOrPlaneswalker -> findCreatureOrPlaneswalkerTargets(state, controllerId, sourceId)
             is TargetObject -> findObjectTargets(state, requirement, controllerId, sourceId, ignoreTargetingRestrictions)
             is TargetSpellOrPermanent -> findSpellOrPermanentTargets(state, controllerId, sourceId)
@@ -71,6 +72,36 @@ class TargetFinder(
 
     private fun findOpponentTargets(state: GameState, controllerId: EntityId): List<EntityId> {
         return state.turnOrder.filter { it != controllerId && state.hasEntity(it) && !playerHasShroud(state, it) }
+    }
+
+    private fun findOpponentOrPlaneswalkerTargets(
+        state: GameState,
+        controllerId: EntityId,
+        sourceId: EntityId?
+    ): List<EntityId> {
+        val projected = state.projectedState
+        val targets = mutableListOf<EntityId>()
+
+        // Add opponents (excluding those with shroud)
+        targets.addAll(state.turnOrder.filter { it != controllerId && state.hasEntity(it) && !playerHasShroud(state, it) })
+
+        // Add all planeswalkers on the battlefield
+        val battlefield = state.getBattlefield()
+        for (entityId in battlefield) {
+            val container = state.getEntity(entityId) ?: continue
+            val cardComponent = container.get<CardComponent>() ?: continue
+            val entityController = container.get<ControllerComponent>()?.playerId
+
+            if (!cardComponent.isPlaneswalker) continue
+
+            // Check hexproof/shroud
+            if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != controllerId) continue
+            if (projected.hasKeyword(entityId, Keyword.SHROUD)) continue
+
+            targets.add(entityId)
+        }
+
+        return targets
     }
 
     private fun findPermanentTargets(
