@@ -223,6 +223,7 @@ object KhansOfTarkirSet {
         IvorytuskFortress,
         JeskaiCharm,
         MantisRider,
+        MasterTheWay,
         MarduCharm,
         MarduRoughrider,
         PonybackBrigade,
