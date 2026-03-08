@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 213 / 249
+**Implemented:** 214 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -12,7 +12,7 @@
 | Red        | 31    |
 | Green      | 31    |
 | Multicolor | 45    |
-| Colorless  | 9     |
+| Colorless  | 10    |
 | Land       | 5     |
 
 ---
@@ -52,7 +52,7 @@
 - [ ] Bloodstained Mire
 - [ ] Blossoming Sands
 - [x] Brave the Sands
-- [ ] Briber's Purse
+- [x] Briber's Purse
 - [x] Bring Low
 - [x] Burn Away
 - [x] Butcher of the Horde

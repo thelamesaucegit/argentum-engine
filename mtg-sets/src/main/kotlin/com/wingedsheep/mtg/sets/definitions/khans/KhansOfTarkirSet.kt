@@ -255,6 +255,7 @@ object KhansOfTarkirSet {
 
         // Colorless
         AbzanBanner,
+        BribersPurse,
         CranialArchive,
         GhostfireBlade,
         HeartPiercerBow,

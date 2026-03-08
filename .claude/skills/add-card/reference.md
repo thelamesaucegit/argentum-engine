@@ -93,6 +93,7 @@ constructors.
 - `Effects.ModifyStatsForAll(power, toughness, filter: GroupFilter, duration)` — P/T for group (Int or DynamicAmount overloads)
 - `Effects.DealDamageToAll(amount, filter: GroupFilter)` — also accepts `DynamicAmount`
 - `Effects.CantBlockGroup(filter: GroupFilter, duration)` — group can't block this turn
+- `Effects.CantAttackOrBlock(target, duration)` — target creature can't attack or block this turn
 - `EffectPatterns.returnAllToHand(filter: GroupFilter)` — return all matching permanents to owners' hands
 
 ### Control
@@ -366,6 +367,7 @@ constructors.
 | `ProvokeEffect`                                     | `target`                                    | Untap + force block source      |
 | `CantBlockGroupEffect`                              | `filter: GroupFilter, duration`             | Group can't block this turn     |
 | `CantBlockTargetCreaturesEffect`                    | `duration`                                  | Can't block target creatures    |
+| `CantAttackOrBlockTargetEffect`                     | `target, duration`                          | Target can't attack or block    |
 | `PreventNextDamageEffect`                           | `amount: DynamicAmount, target`             | Prevent next N damage           |
 | `RemoveFromCombatEffect`                            | `target`                                    | Remove from combat              |
 | `MarkMustAttackThisTurnEffect`                      | `target`                                    | Mark creature must attack       |
@@ -605,6 +607,7 @@ constructors.
 - `Costs.DiscardCard` / `Costs.Discard(filter)` / `Costs.DiscardSelf` / `Costs.DiscardHand`
 - `Costs.ExileFromGraveyard(count, filter)` / `Costs.ExileXFromGraveyard(filter)` / `Costs.ExileSelf`
 - `Costs.RemoveXPlusOnePlusOneCounters` — remove X +1/+1 counters from among creatures you control (X chosen by player)
+- `Costs.RemoveCounterFromSelf(counterType: String)` — remove a counter of the specified type from this permanent (e.g., "gem", "charge")
 - `Costs.TapAttachedCreature` — tap the creature this is attached to
 - `Costs.TapPermanents(count, filter)` — tap N permanents
 - `Costs.Loyalty(change)` — planeswalker loyalty

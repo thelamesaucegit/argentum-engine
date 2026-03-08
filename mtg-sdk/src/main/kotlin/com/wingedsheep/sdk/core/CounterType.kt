@@ -11,6 +11,7 @@ enum class CounterType {
     MINUS_ONE_MINUS_ONE,
     LOYALTY,
     CHARGE,
+    GEM,
     POISON,
     GOLD,
     PLAGUE,

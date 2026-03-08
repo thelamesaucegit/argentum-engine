@@ -13,6 +13,7 @@ import {
   getGoldCounters,
   getPlagueCounters,
   getChargeCounters,
+  getGemCounters,
   getDepletionCounters,
   getTrapCounters,
   getTokenFrameGradient,
@@ -67,7 +68,6 @@ export function GameCard({
   const removeTarget = useGameStore((state) => state.removeTarget)
   const combatState = useGameStore((state) => state.combatState)
   const legalActions = useGameStore((state) => state.legalActions)
-  const submitAction = useGameStore((state) => state.submitAction)
   const toggleAttacker = useGameStore((state) => state.toggleAttacker)
   const assignBlocker = useGameStore((state) => state.assignBlocker)
   const removeBlockerAssignment = useGameStore((state) => state.removeBlockerAssignment)
@@ -77,10 +77,6 @@ export function GameCard({
   const startDraggingCard = useGameStore((state) => state.startDraggingCard)
   const stopDraggingCard = useGameStore((state) => state.stopDraggingCard)
   const draggingCardId = useGameStore((state) => state.draggingCardId)
-  const startTargeting = useGameStore((state) => state.startTargeting)
-  const startXSelection = useGameStore((state) => state.startXSelection)
-  const startDelveSelection = useGameStore((state) => state.startDelveSelection)
-  const startConvokeSelection = useGameStore((state) => state.startConvokeSelection)
   const pendingDecision = useGameStore((state) => state.pendingDecision)
   const submitTargetsDecision = useGameStore((state) => state.submitTargetsDecision)
   const decisionSelectionState = useGameStore((state) => state.decisionSelectionState)
@@ -90,7 +86,7 @@ export function GameCard({
   const decrementDistribute = useGameStore((state) => state.decrementDistribute)
   const submitYesNoDecision = useGameStore((state) => state.submitYesNoDecision)
   const responsive = useResponsiveContext()
-  const { handleCardClick, handleDoubleClick } = useInteraction()
+  const { handleCardClick, handleDoubleClick, executeAction } = useInteraction()
   const dragStartPos = useRef<{ x: number; y: number } | null>(null)
   const handledByDrag = useRef(false)
 
@@ -314,90 +310,9 @@ export function GameCard({
           return
         }
 
-        // Check if spell has X cost - needs X selection first
-        if (playableAction.hasXCost) {
-          startXSelection({
-            actionInfo: playableAction,
-            cardName: playableAction.description.replace('Cast ', ''),
-            minX: playableAction.minX ?? 0,
-            maxX: playableAction.maxAffordableX ?? 0,
-            selectedX: playableAction.maxAffordableX ?? 0,
-          })
-        } else if (playableAction.action.type === 'CastSpell' && playableAction.hasConvoke && playableAction.validConvokeCreatures && playableAction.validConvokeCreatures.length > 0) {
-          // Check if spell has Convoke and there are creatures to tap
-          startConvokeSelection({
-            actionInfo: playableAction,
-            cardName: playableAction.description.replace('Cast ', ''),
-            manaCost: playableAction.manaCostString ?? '',
-            selectedCreatures: [],
-            validCreatures: playableAction.validConvokeCreatures,
-          })
-        } else if (playableAction.action.type === 'CastSpell' && playableAction.hasDelve && playableAction.validDelveCards && playableAction.validDelveCards.length > 0) {
-          // Check if spell has Delve and there are cards in graveyard to exile
-          const manaCostStr = playableAction.manaCostString ?? ''
-          const genericMatch = manaCostStr.match(/\{(\d+)\}/)
-          const genericAmount = genericMatch ? parseInt(genericMatch[1]!, 10) : 0
-          const maxDelve = Math.min(genericAmount, playableAction.validDelveCards.length)
-
-          if (maxDelve > 0) {
-            startDelveSelection({
-              actionInfo: playableAction,
-              cardName: playableAction.description.replace('Cast ', ''),
-              manaCost: manaCostStr,
-              selectedCards: [],
-              validCards: playableAction.validDelveCards,
-              maxDelve,
-            })
-          } else {
-            submitAction(playableAction.action)
-          }
-        } else if (playableAction.action.type === 'CastSpell' && (playableAction.additionalCostInfo?.costType === 'SacrificePermanent' || playableAction.additionalCostInfo?.costType === 'SacrificeSelf')) {
-          // Check if spell requires sacrifice as additional cost
-          const costInfo = playableAction.additionalCostInfo
-          startTargeting({
-            action: playableAction.action,
-            validTargets: [...(costInfo.validSacrificeTargets ?? [])],
-            selectedTargets: [],
-            minTargets: costInfo.sacrificeCount ?? 1,
-            maxTargets: costInfo.sacrificeCount ?? 1,
-            isSacrificeSelection: true,
-            pendingActionInfo: playableAction,
-          })
-        } else if (playableAction.requiresTargets && playableAction.validTargets && playableAction.validTargets.length > 0) {
-          // Check if action requires targeting
-          if (playableAction.targetRequirements && playableAction.targetRequirements.length > 1) {
-            // Multi-target spell (e.g., Cruel Revival) — set up full multi-target state
-            const firstReq = playableAction.targetRequirements[0]!
-            startTargeting({
-              action: playableAction.action,
-              validTargets: [...firstReq.validTargets],
-              selectedTargets: [],
-              minTargets: firstReq.minTargets,
-              maxTargets: firstReq.maxTargets,
-              currentRequirementIndex: 0,
-              allSelectedTargets: [],
-              targetRequirements: playableAction.targetRequirements,
-              ...(firstReq.targetZone ? { targetZone: firstReq.targetZone } : {}),
-              targetDescription: firstReq.description,
-              totalRequirements: playableAction.targetRequirements.length,
-              ...(playableAction.requiresDamageDistribution ? { pendingActionInfo: playableAction } : {}),
-            })
-          } else {
-            // Single-target spell — enter targeting mode
-            startTargeting({
-              action: playableAction.action,
-              validTargets: playableAction.validTargets,
-              selectedTargets: [],
-              minTargets: playableAction.minTargets ?? playableAction.targetCount ?? 1,
-              maxTargets: playableAction.targetCount ?? 1,
-              // Pass pendingActionInfo for damage distribution spells (e.g., Forked Lightning)
-              ...(playableAction.requiresDamageDistribution ? { pendingActionInfo: playableAction } : {}),
-            })
-          }
-        } else {
-          // Play the card directly
-          submitAction(playableAction.action)
-        }
+        // Delegate to the shared executeAction flow (handles X costs, convoke, delve,
+        // additional costs, targeting, damage distribution, and direct submission)
+        executeAction(playableAction)
       }
       stopDraggingCard()
     }
@@ -414,7 +329,7 @@ export function GameCard({
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [draggingCardId, card.id, playableAction, shouldShowCastModal, submitAction, stopDraggingCard, startTargeting, startXSelection, startDelveSelection, startConvokeSelection, handleCardClick, selectCard, isInAttackerMode, isValidAttacker, toggleAttacker, isInBlockerMode, isValidBlocker, isSelectedAsBlocker, removeBlockerAssignment])
+  }, [draggingCardId, card.id, playableAction, shouldShowCastModal, executeAction, stopDraggingCard, handleCardClick, selectCard, isInAttackerMode, isValidAttacker, toggleAttacker, isInBlockerMode, isValidBlocker, isSelectedAsBlocker, removeBlockerAssignment])
 
   // Global mouse/touch up handler to cancel blocker drag
   // For touch, we also detect drop target since touchend fires on the originating element
@@ -847,6 +762,20 @@ export function GameCard({
           <i className={`ms ms-${counterManaClass.CHARGE}`} style={{ fontSize: responsive.isMobile ? 8 : 10 }} />
           <span style={{ fontWeight: 700 }}>
             {getChargeCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Gem counter badge */}
+      {battlefield && getGemCounters(card) > 0 && (
+        <div style={{
+          ...styles.chargeCounterBadge,
+          fontSize: responsive.isMobile ? 9 : 11,
+          padding: responsive.isMobile ? '1px 4px' : '2px 6px',
+        }}>
+          <i className={`ms ms-${counterManaClass.GEM}`} style={{ fontSize: responsive.isMobile ? 8 : 10 }} />
+          <span style={{ fontWeight: 700 }}>
+            {getGemCounters(card)}
           </span>
         </div>
       )}

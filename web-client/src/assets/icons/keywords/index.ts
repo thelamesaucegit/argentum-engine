@@ -44,6 +44,7 @@ export const counterManaClass: Record<string, string> = {
   MINUS_ONE_MINUS_ONE: 'counter-minus',
   LOYALTY: 'counter-loyalty',
   CHARGE: 'counter-charge',
+  GEM: 'counter-charge',
   GOLD: 'counter-gold',
   PLAGUE: 'counter-skull',
   TRAP: 'counter-arrow',

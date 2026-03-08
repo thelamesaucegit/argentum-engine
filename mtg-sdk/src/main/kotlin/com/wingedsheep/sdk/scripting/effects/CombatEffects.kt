@@ -452,6 +452,26 @@ data class RedirectCombatDamageToControllerEffect(
  * The player is presented with a choice of all game objects that could be damage sources
  * (permanents on the battlefield + spells on the stack).
  */
+/**
+ * Target creature can't attack or block this turn.
+ * Used for Briber's Purse and similar targeted restriction effects.
+ *
+ * Creates two floating effects (SetCantAttack + SetCantBlock) on the targeted creature.
+ *
+ * @property target The creature to restrict
+ * @property duration How long the restriction lasts
+ */
+@SerialName("CantAttackOrBlockTarget")
+@Serializable
+data class CantAttackOrBlockTargetEffect(
+    val target: EffectTarget = EffectTarget.ContextTarget(0),
+    val duration: Duration = Duration.EndOfTurn
+) : Effect {
+    override val description: String = "Target creature can't attack or block this turn"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
 @SerialName("DeflectNextDamageFromChosenSource")
 @Serializable
 data object DeflectNextDamageFromChosenSourceEffect : Effect {

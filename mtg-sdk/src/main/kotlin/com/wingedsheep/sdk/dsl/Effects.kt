@@ -17,6 +17,7 @@ import com.wingedsheep.sdk.scripting.effects.SetBasePowerEffect
 import com.wingedsheep.sdk.scripting.effects.ChooseColorAndGrantProtectionToGroupEffect
 import com.wingedsheep.sdk.scripting.effects.ChooseColorAndGrantProtectionToTargetEffect
 import com.wingedsheep.sdk.scripting.effects.CantAttackGroupEffect
+import com.wingedsheep.sdk.scripting.effects.CantAttackOrBlockTargetEffect
 import com.wingedsheep.sdk.scripting.effects.CantBlockGroupEffect
 import com.wingedsheep.sdk.scripting.effects.CantCastSpellsEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
@@ -770,6 +771,12 @@ object Effects {
      */
     fun CantBlockGroup(filter: GroupFilter, duration: Duration = Duration.EndOfTurn): Effect =
         CantBlockGroupEffect(filter, duration)
+
+    /**
+     * Target creature can't attack or block this turn.
+     */
+    fun CantAttackOrBlock(target: EffectTarget = EffectTarget.ContextTarget(0), duration: Duration = Duration.EndOfTurn): Effect =
+        CantAttackOrBlockTargetEffect(target, duration)
 
     // =========================================================================
     // Special Effects

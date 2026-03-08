@@ -354,4 +354,17 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
         override val description: String = "Remove X +1/+1 counters from among creatures you control"
         override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
     }
+
+    /**
+     * Remove a counter of the specified type from this permanent.
+     * Used for artifacts with charge/gem counters as activation costs.
+     *
+     * @property counterType The type of counter to remove (e.g., "gem", "charge")
+     */
+    @SerialName("CostRemoveCounterFromSelf")
+    @Serializable
+    data class RemoveCounterFromSelf(val counterType: String) : AbilityCost {
+        override val description: String = "Remove a $counterType counter from this permanent"
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost = this
+    }
 }

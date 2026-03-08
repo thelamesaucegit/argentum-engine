@@ -141,6 +141,11 @@ class CostHandler(
                 // maxAffordableX is capped by total +1/+1 counters in LegalActionsCalculator
                 true
             }
+            is AbilityCost.RemoveCounterFromSelf -> {
+                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
+                val counterType = resolveNamedCounterType(cost.counterType)
+                (counters?.getCount(counterType) ?: 0) > 0
+            }
             is AbilityCost.Composite -> {
                 cost.costs.all { canPayAbilityCost(state, it, sourceId, controllerId, manaPool) }
             }
@@ -470,6 +475,20 @@ class CostHandler(
                     removeCountersFromCreatures(state, controllerId, xCount, manaPool)
                 }
             }
+            is AbilityCost.RemoveCounterFromSelf -> {
+                val counterType = resolveNamedCounterType(cost.counterType)
+                val counters = state.getEntity(sourceId)?.get<CountersComponent>()
+                    ?: return CostPaymentResult.failure("Source has no counters")
+                val currentCount = counters.getCount(counterType)
+                if (currentCount <= 0) {
+                    return CostPaymentResult.failure("Source has no ${cost.counterType} counters to remove")
+                }
+                val newState = state.updateEntity(sourceId) { container ->
+                    val c = container.get<CountersComponent>() ?: CountersComponent()
+                    container.with(c.withRemoved(counterType, 1))
+                }
+                CostPaymentResult.success(newState, manaPool)
+            }
             is AbilityCost.Composite -> {
                 var currentState = state
                 var currentPool = manaPool
@@ -660,6 +679,14 @@ class CostHandler(
         val projected = state.projectedState
         return cardIds.filter { cardId ->
             predicateEvaluator.matchesWithProjection(state, projected, cardId, filter, context)
+        }
+    }
+
+    private fun resolveNamedCounterType(name: String): CounterType {
+        return try {
+            CounterType.valueOf(name.uppercase().replace(' ', '_'))
+        } catch (_: IllegalArgumentException) {
+            CounterType.PLUS_ONE_PLUS_ONE
         }
     }
 

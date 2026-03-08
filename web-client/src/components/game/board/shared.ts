@@ -130,6 +130,13 @@ export function getChargeCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of gem counters on a card.
+ */
+export function getGemCounters(card: ClientCard): number {
+  return card.counters[CounterType.GEM] ?? 0
+}
+
+/**
  * Get the number of depletion counters on a card.
  */
 export function getDepletionCounters(card: ClientCard): number {
