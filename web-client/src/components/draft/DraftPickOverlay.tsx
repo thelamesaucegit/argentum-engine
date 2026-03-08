@@ -4,6 +4,7 @@ import type { SealedCardInfo, LobbySettings } from '../../types'
 import { useResponsive } from '../../hooks/useResponsive'
 import { getCardImageUrl } from '../../utils/cardImages'
 import { ManaCost } from '../ui/ManaSymbols'
+import { SetSynergiesButton } from './SetSynergiesOverlay'
 
 /**
  * Draft Pick overlay for draft mode.
@@ -96,6 +97,25 @@ function DraftPicker({ draftState, settings }: { draftState: DraftState; setting
       setSelectedCards([])
     }
   }, [selectedCards, picksRequired, makePick])
+
+  // Auto-submit selected cards when timer expires (before server auto-picks first N)
+  useEffect(() => {
+    if (draftState.timeRemaining === 0 && draftState.currentPack.length > 0) {
+      // Fill remaining slots with unselected cards from the pack
+      const picks = [...selectedCards]
+      if (picks.length < picksRequired) {
+        for (const card of draftState.currentPack) {
+          if (!picks.includes(card.name) && picks.length < picksRequired) {
+            picks.push(card.name)
+          }
+        }
+      }
+      if (picks.length > 0) {
+        makePick(picks)
+        setSelectedCards([])
+      }
+    }
+  }, [draftState.timeRemaining, draftState.currentPack, selectedCards, picksRequired, makePick])
 
   // Timer warning threshold
   const timerWarning = draftState.timeRemaining <= 10
@@ -213,6 +233,7 @@ function DraftPicker({ draftState, settings }: { draftState: DraftState; setting
             pickNumber={draftState.pickNumber}
             totalPacks={totalPacks}
           />
+          <SetSynergiesButton setCodes={settings.setCodes} />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
