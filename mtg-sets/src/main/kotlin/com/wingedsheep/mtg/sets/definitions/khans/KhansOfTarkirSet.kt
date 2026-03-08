@@ -228,6 +228,7 @@ object KhansOfTarkirSet {
         RideDown,
         SavageKnuckleblade,
         SiegeRhino,
+        SageOfTheInwardEye,
         SaguMauler,
         SnowhornRider,
         SecretPlans,
