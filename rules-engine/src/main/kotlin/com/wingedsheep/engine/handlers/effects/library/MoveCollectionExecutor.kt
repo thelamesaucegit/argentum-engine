@@ -10,6 +10,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
+import com.wingedsheep.engine.state.components.combat.AttackingComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
@@ -566,7 +567,7 @@ class MoveCollectionExecutor(
                     newState.addToZone(destZoneKey, cardId)
                     // Shuffle will happen after all cards are added
                 }
-                ZonePlacement.Tapped -> {
+                ZonePlacement.Tapped, ZonePlacement.TappedAndAttacking -> {
                     newState.addToZone(destZoneKey, cardId)
                 }
             }
@@ -585,8 +586,17 @@ class MoveCollectionExecutor(
                     }
 
                     // Apply tapped status if entering tapped
-                    if (destination.placement == ZonePlacement.Tapped) {
+                    if (destination.placement == ZonePlacement.Tapped || destination.placement == ZonePlacement.TappedAndAttacking) {
                         newContainer = newContainer.with(TappedComponent)
+                    }
+
+                    // Apply attacking status if entering tapped and attacking
+                    if (destination.placement == ZonePlacement.TappedAndAttacking) {
+                        val attackerController = if (underOwnersControl) ownerId else destPlayerId
+                        val defenderId = newState.turnOrder.firstOrNull { it != attackerController }
+                        if (defenderId != null) {
+                            newContainer = newContainer.with(AttackingComponent(defenderId))
+                        }
                     }
 
                     newState = newState.copy(entities = newState.entities + (cardId to newContainer))

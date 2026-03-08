@@ -16,6 +16,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.combat.AttackingComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
@@ -88,6 +89,7 @@ class MoveToZoneEffectExecutor(
             ZonePlacement.Bottom -> moveToLibraryBottom(state, targetId, cardComponent, ownerId, currentZone)
             ZonePlacement.Shuffled -> moveToLibraryShuffled(state, targetId, cardComponent, ownerId, currentZone)
             ZonePlacement.Tapped -> moveToBattlefieldTapped(state, targetId, cardComponent, controllerId, currentZone)
+            ZonePlacement.TappedAndAttacking -> moveToBattlefieldTappedAndAttacking(state, targetId, cardComponent, controllerId, currentZone)
             ZonePlacement.Default -> {
                 if (controllerId != ownerId && effect.destination == Zone.BATTLEFIELD) {
                     moveToBattlefieldUnderControl(state, targetId, cardComponent, ownerId, controllerId, currentZone)
@@ -216,6 +218,47 @@ class MoveToZoneEffectExecutor(
                     fromZone = currentZone.zoneType,
                     toZone = Zone.BATTLEFIELD,
                     ownerId = ownerId
+                )
+            )
+        )
+    }
+
+    /**
+     * Move a card to the battlefield tapped and attacking.
+     * Used for effects like Meandering Towershell that return "tapped and attacking."
+     * In a 2-player game, the opponent is automatically chosen as the defender.
+     */
+    private fun moveToBattlefieldTappedAndAttacking(
+        state: GameState,
+        entityId: EntityId,
+        cardComponent: CardComponent,
+        controllerId: EntityId,
+        currentZone: ZoneKey
+    ): ExecutionResult {
+        var newState = state.removeFromZone(currentZone, entityId)
+
+        val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
+        newState = newState.addToZone(battlefieldZone, entityId)
+
+        // Find the opponent to attack (in 2-player, there's only one)
+        val defenderId = state.turnOrder.firstOrNull { it != controllerId }
+            ?: return ExecutionResult.error(state, "No valid defender for tapped-and-attacking creature")
+
+        newState = newState.updateEntity(entityId) { c ->
+            c.with(ControllerComponent(controllerId))
+                .with(TappedComponent)
+                .with(AttackingComponent(defenderId))
+        }
+
+        return ExecutionResult.success(
+            newState,
+            listOf(
+                ZoneChangeEvent(
+                    entityId = entityId,
+                    entityName = cardComponent.name,
+                    fromZone = currentZone.zoneType,
+                    toZone = Zone.BATTLEFIELD,
+                    ownerId = controllerId
                 )
             )
         )

@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
  * @property sourceId The entity that created this delayed trigger
  * @property sourceName Human-readable name of the source
  * @property controllerId The player who controls this delayed trigger
+ * @property fireOnlyOnControllersTurn If true, only fires when the active player is the controller
  */
 @Serializable
 data class DelayedTriggeredAbility(
@@ -25,5 +26,6 @@ data class DelayedTriggeredAbility(
     val fireAtStep: Step,
     val sourceId: EntityId,
     val sourceName: String,
-    val controllerId: EntityId
+    val controllerId: EntityId,
+    val fireOnlyOnControllersTurn: Boolean = false
 )

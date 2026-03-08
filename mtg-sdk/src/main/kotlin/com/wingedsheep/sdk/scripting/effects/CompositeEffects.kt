@@ -294,12 +294,14 @@ data class PayOrSufferEffect(
  *
  * @param step The step at which the delayed trigger fires
  * @param effect The effect to execute when the trigger fires
+ * @param fireOnlyOnControllersTurn If true, the delayed trigger only fires when the active player is the controller
  */
 @SerialName("CreateDelayedTrigger")
 @Serializable
 data class CreateDelayedTriggerEffect(
     val step: Step,
-    val effect: Effect
+    val effect: Effect,
+    val fireOnlyOnControllersTurn: Boolean = false
 ) : Effect {
     override val description: String = "create a delayed trigger at the beginning of the next ${step.displayName}"
 

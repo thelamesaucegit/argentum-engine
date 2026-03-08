@@ -312,6 +312,8 @@ data class MoveToZoneEffect(
                 append("Put ${target.description} onto the battlefield face down")
             destination == Zone.BATTLEFIELD && controllerOverride != null ->
                 append("Put ${target.description} onto the battlefield under your control")
+            destination == Zone.BATTLEFIELD && placement == ZonePlacement.TappedAndAttacking ->
+                append("Put ${target.description} onto the battlefield tapped and attacking")
             destination == Zone.BATTLEFIELD && placement == ZonePlacement.Tapped ->
                 append("Put ${target.description} onto the battlefield tapped")
             destination == Zone.BATTLEFIELD ->

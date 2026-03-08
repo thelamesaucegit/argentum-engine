@@ -147,6 +147,7 @@ object KhansOfTarkirSet {
         TemurCharger,
         TuskedColossodon,
         TuskguardCaptain,
+        MeanderingTowershell,
         PineWalker,
         RattleclawMystic,
         WoollyLoxodon,

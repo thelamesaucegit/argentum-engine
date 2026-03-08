@@ -50,7 +50,8 @@ class CreateDelayedTriggerExecutor : EffectExecutor<CreateDelayedTriggerEffect> 
             fireAtStep = effect.step,
             sourceId = sourceId,
             sourceName = sourceName,
-            controllerId = context.controllerId
+            controllerId = context.controllerId,
+            fireOnlyOnControllersTurn = effect.fireOnlyOnControllersTurn
         )
 
         return ExecutionResult.success(state.addDelayedTrigger(delayedTrigger))
@@ -67,7 +68,13 @@ class CreateDelayedTriggerExecutor : EffectExecutor<CreateDelayedTriggerEffect> 
         return when (effect) {
             is MoveToZoneEffect -> {
                 val resolvedId = resolveTarget(effect.target, context)
-                if (resolvedId != null) effect.copy(target = EffectTarget.SpecificEntity(resolvedId)) else effect
+                val resolvedController = effect.controllerOverride?.let { co ->
+                    resolveTarget(co, context)?.let { EffectTarget.SpecificEntity(it) }
+                }
+                effect.copy(
+                    target = if (resolvedId != null) EffectTarget.SpecificEntity(resolvedId) else effect.target,
+                    controllerOverride = resolvedController ?: effect.controllerOverride
+                )
             }
             is SacrificeTargetEffect -> {
                 val resolvedId = resolveTarget(effect.target, context)

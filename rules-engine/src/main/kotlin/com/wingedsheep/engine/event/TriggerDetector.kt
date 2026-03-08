@@ -339,7 +339,11 @@ class TriggerDetector(
      * Returns the pending triggers and the IDs of consumed delayed triggers.
      */
     fun detectDelayedTriggers(state: GameState, step: Step): Pair<List<PendingTrigger>, Set<String>> {
-        val matching = state.delayedTriggers.filter { it.fireAtStep == step }
+        val activePlayer = state.activePlayerId
+        val matching = state.delayedTriggers.filter { delayed ->
+            delayed.fireAtStep == step &&
+                (!delayed.fireOnlyOnControllersTurn || delayed.controllerId == activePlayer)
+        }
         if (matching.isEmpty()) return emptyList<PendingTrigger>() to emptySet()
 
         val triggers = matching.map { delayed ->

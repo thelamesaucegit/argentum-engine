@@ -11,5 +11,6 @@ enum class ZonePlacement {
     Top,
     Bottom,
     Shuffled,
-    Tapped
+    Tapped,
+    TappedAndAttacking
 }
