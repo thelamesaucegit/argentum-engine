@@ -228,7 +228,7 @@ export function GameCard({
   const isCyclingLandWithoutPlayLand = card.cardTypes.includes('LAND') &&
     playableActions.length === 1 && (playableActions[0]?.action.type === 'CycleCard' || playableActions[0]?.action.type === 'TypecycleCard')
   const shouldShowCastModal = playableActions.length > 1 || (hasMultiplePotentialOptions && playableActions.length > 0) || isCyclingLandWithoutPlayLand
-  const canDragToPlay = inHand && playableAction && !isInCombatMode
+  const canDragToPlay = inHand && playableAction && !isInCombatMode && !isInTargetingMode
 
   // Handle mouse/touch down - start dragging for blockers or hand cards
   const handlePointerDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {

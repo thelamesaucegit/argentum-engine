@@ -65,6 +65,8 @@ export interface TargetingState {
   isTapPermanentSelection?: boolean
   /** If set, this targeting phase is for discarding cards as a cost */
   isDiscardSelection?: boolean
+  /** If set, this targeting phase is for revealing cards from hand as a cost */
+  isRevealSelection?: boolean
   /** If set, this targeting phase is for returning permanents to hand as a cost */
   isBounceSelection?: boolean
   /** The original action info, used to chain sacrifice -> spell targeting -> damage distribution */

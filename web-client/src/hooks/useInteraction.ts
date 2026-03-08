@@ -250,7 +250,7 @@ export function useInteraction() {
           minTargets: revealCount,
           maxTargets: revealCount,
           isSacrificeSelection: true,
-          isDiscardSelection: true,
+          isRevealSelection: true,
           pendingActionInfo: actionInfo,
         })
         selectCard(null)
