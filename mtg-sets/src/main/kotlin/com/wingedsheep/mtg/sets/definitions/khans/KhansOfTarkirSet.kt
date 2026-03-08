@@ -248,6 +248,7 @@ object KhansOfTarkirSet {
         // Lands
         JungleHollow,
         RuggedHighlands,
+        SwiftwaterCliffs,
         ThornwoodFalls,
         WindScarredCrag,
 

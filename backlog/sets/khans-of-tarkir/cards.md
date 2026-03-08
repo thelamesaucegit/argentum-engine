@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 193 / 249
+**Implemented:** 194 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -13,7 +13,7 @@
 | Green      | 30    |
 | Multicolor | 31    |
 | Colorless  | 8     |
-| Land       | 4     |
+| Land       | 5     |
 
 ---
 
@@ -223,7 +223,7 @@
 - [x] Suspension Field
 - [x] Swarm of Bloodflies
 - [x] Swift Kick
-- [ ] Swiftwater Cliffs
+- [x] Swiftwater Cliffs
 - [x] Taigam's Scheming
 - [x] Take Up Arms
 - [x] Temur Ascendancy
