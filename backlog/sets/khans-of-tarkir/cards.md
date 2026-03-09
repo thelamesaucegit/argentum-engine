@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 226 / 249
+**Implemented:** 227 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -13,7 +13,7 @@
 | Green      | 31    |
 | Multicolor | 45    |
 | Colorless  | 12    |
-| Land       | 15    |
+| Land       | 16    |
 
 ---
 
@@ -74,7 +74,7 @@
 - [x] Despise
 - [x] Dig Through Time
 - [x] Disdainful Stroke
-- [ ] Dismal Backwater
+- [x] Dismal Backwater
 - [x] Disowned Ancestor
 - [x] Dragon Grip
 - [x] Dragonscale Boon
