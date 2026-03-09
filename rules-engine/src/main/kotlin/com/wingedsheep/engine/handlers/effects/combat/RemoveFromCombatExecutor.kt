@@ -69,21 +69,17 @@ class RemoveFromCombatExecutor : EffectExecutor<RemoveFromCombatEffect> {
             }
         }
 
-        // If the removed creature was a blocker, clean up the attacker's BlockedComponent
+        // If the removed creature was a blocker, clean up the attacker's BlockedComponent.
+        // Keep BlockedComponent even if empty — a blocked creature stays blocked per MTG rules
+        // (it just deals no combat damage without trample).
         if (isBlocking) {
             val blockedAttackerIds = entity.get<BlockingComponent>()?.blockedAttackerIds ?: emptyList()
             for (attackerId in blockedAttackerIds) {
                 val attackerEntity = newState.getEntity(attackerId) ?: continue
                 val blockedComponent = attackerEntity.get<BlockedComponent>() ?: continue
                 val updatedBlockerIds = blockedComponent.blockerIds - targetId
-                newState = if (updatedBlockerIds.isEmpty()) {
-                    newState.updateEntity(attackerId) { container ->
-                        container.without<BlockedComponent>()
-                    }
-                } else {
-                    newState.updateEntity(attackerId) { container ->
-                        container.with(BlockedComponent(updatedBlockerIds))
-                    }
+                newState = newState.updateEntity(attackerId) { container ->
+                    container.with(BlockedComponent(updatedBlockerIds))
                 }
             }
         }

@@ -1227,7 +1227,14 @@ object EffectExecutorUtils {
      * @return ExecutionResult with the regenerated creature still on the battlefield
      */
     fun applyRegenerationReplacement(state: GameState, entityId: EntityId): ExecutionResult {
-        val newState = state.updateEntity(entityId) { c ->
+        val entity = state.getEntity(entityId)
+            ?: return ExecutionResult.success(state)
+
+        val isAttacking = entity.has<AttackingComponent>()
+        val isBlocking = entity.has<BlockingComponent>()
+
+        // Tap, remove damage, and strip combat components from the regenerated creature
+        var newState = state.updateEntity(entityId) { c ->
             c.with(TappedComponent)
                 .without<DamageComponent>()
                 .without<AttackingComponent>()
@@ -1236,6 +1243,40 @@ object EffectExecutorUtils {
                 .without<DamageAssignmentComponent>()
                 .without<DamageAssignmentOrderComponent>()
         }
+
+        // Clean up cross-references in other creatures' combat components
+        // (same logic as RemoveFromCombatExecutor)
+
+        // If the regenerated creature was an attacker, remove it from blockers' BlockingComponent
+        if (isAttacking) {
+            for ((otherId, components) in newState.entities) {
+                val blockingComponent = components.get<BlockingComponent>() ?: continue
+                if (entityId in blockingComponent.blockedAttackerIds) {
+                    val updatedIds = blockingComponent.blockedAttackerIds - entityId
+                    newState = if (updatedIds.isEmpty()) {
+                        newState.updateEntity(otherId) { c -> c.without<BlockingComponent>() }
+                    } else {
+                        newState.updateEntity(otherId) { c -> c.with(BlockingComponent(updatedIds)) }
+                    }
+                }
+            }
+        }
+
+        // If the regenerated creature was a blocker, remove it from attackers' BlockedComponent.
+        // Keep BlockedComponent even if empty — a blocked creature stays blocked per MTG rules
+        // (it just deals no combat damage without trample).
+        if (isBlocking) {
+            val blockedAttackerIds = entity.get<BlockingComponent>()?.blockedAttackerIds ?: emptyList()
+            for (attackerId in blockedAttackerIds) {
+                val attackerEntity = newState.getEntity(attackerId) ?: continue
+                val blockedComponent = attackerEntity.get<BlockedComponent>() ?: continue
+                val updatedBlockerIds = blockedComponent.blockerIds - entityId
+                newState = newState.updateEntity(attackerId) { c ->
+                    c.with(BlockedComponent(updatedBlockerIds))
+                }
+            }
+        }
+
         return ExecutionResult.success(newState)
     }
 
