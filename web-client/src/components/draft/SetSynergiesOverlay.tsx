@@ -4,7 +4,7 @@ import { ManaSymbol } from '../ui/ManaSymbols'
 /**
  * Archetype definition for a set's draft strategy.
  */
-interface Archetype {
+export interface Archetype {
   readonly name: string
   /** Mana color symbols, e.g. ['W', 'U'] */
   readonly colors: readonly string[]
@@ -254,15 +254,24 @@ function getSynergiesForSets(setCodes: readonly string[]): SetSynergies[] {
 }
 
 /**
+ * Returns all archetypes for the given set codes.
+ */
+export function getArchetypesForSets(setCodes: readonly string[]): Archetype[] {
+  return getSynergiesForSets(setCodes).flatMap((s) => s.archetypes)
+}
+
+/**
  * Button that opens the set synergies overlay.
  * Renders nothing if no synergy data is available for the given sets.
  */
 export function SetSynergiesButton({
   setCodes,
   style,
+  onSelectArchetype,
 }: {
   setCodes: readonly string[]
   style?: React.CSSProperties
+  onSelectArchetype?: (archetype: Archetype) => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -299,6 +308,7 @@ export function SetSynergiesButton({
         <SetSynergiesOverlay
           synergies={synergies}
           onClose={() => setIsOpen(false)}
+          {...(onSelectArchetype != null ? { onSelectArchetype } : {})}
         />
       )}
     </>
@@ -311,9 +321,11 @@ export function SetSynergiesButton({
 function SetSynergiesOverlay({
   synergies,
   onClose,
+  onSelectArchetype,
 }: {
   synergies: SetSynergies[]
   onClose: () => void
+  onSelectArchetype?: (archetype: Archetype) => void
 }) {
   const [activeTab, setActiveTab] = useState(0)
 
@@ -457,7 +469,17 @@ function SetSynergiesOverlay({
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {activeSynergy.archetypes.map((archetype) => (
-              <ArchetypeCard key={archetype.name} archetype={archetype} />
+              <ArchetypeCard
+                key={archetype.name}
+                archetype={archetype}
+                clickable={onSelectArchetype != null}
+                onClick={() => {
+                  if (onSelectArchetype) {
+                    onSelectArchetype(archetype)
+                    onClose()
+                  }
+                }}
+              />
             ))}
           </div>
         </div>
@@ -494,15 +516,17 @@ function getArchetypeBgColor(colors: readonly string[]): string {
   return 'rgba(255, 255, 255, 0.02)'
 }
 
-function ArchetypeCard({ archetype }: { archetype: Archetype }) {
+function ArchetypeCard({ archetype, clickable, onClick }: { archetype: Archetype; clickable?: boolean; onClick?: () => void }) {
   return (
     <div
+      onClick={clickable ? onClick : undefined}
       style={{
         padding: '14px 16px',
         borderRadius: 8,
         backgroundColor: getArchetypeBgColor(archetype.colors),
         border: `1px solid ${getArchetypeBorderColor(archetype.colors)}`,
         transition: 'background-color 0.15s',
+        cursor: clickable ? 'pointer' : undefined,
       }}
     >
       <div

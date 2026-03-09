@@ -4,7 +4,7 @@ import type { SealedCardInfo } from '../../types'
 import { useResponsive } from '../../hooks/useResponsive'
 import { getCardImageUrl } from '../../utils/cardImages'
 import { ManaSymbol, ManaCost } from '../ui/ManaSymbols'
-import { SetSynergiesButton } from '../draft/SetSynergiesOverlay'
+import { SetSynergiesButton, type Archetype } from '../draft/SetSynergiesOverlay'
 
 /**
  * Deck Builder overlay for sealed draft mode.
@@ -128,6 +128,7 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
   const [typeFilter, setTypeFilter] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [creatureTypeFilter, setCreatureTypeFilter] = useState<string | null>(null)
+  const [archetypeFilter, setArchetypeFilter] = useState<Archetype | null>(null)
 
   const handleHover = useCallback((card: SealedCardInfo | null, e?: React.MouseEvent) => {
     setHoveredCard(card)
@@ -251,6 +252,22 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
       const inDeckCount = deckCardCounts[name] || 0
       const availableCount = totalCount - inDeckCount
       if (availableCount > 0) {
+        if (archetypeFilter) {
+          const cardColors = getCardColors(card)
+          const archetypeColors = new Set(archetypeFilter.colors)
+          let matches = false
+          if (cardColors.size === 0) {
+            matches = true // colorless cards match any archetype
+          } else {
+            for (const c of cardColors) {
+              if (archetypeColors.has(c)) {
+                matches = true
+                break
+              }
+            }
+          }
+          if (!matches) continue
+        }
         if (colorFilter.size > 0) {
           const cardColors = getCardColors(card)
           let matches = false
@@ -286,7 +303,7 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
         return getRarityOrder(a.card) - getRarityOrder(b.card) || getCmc(a.card) - getCmc(b.card)
       }
     })
-  }, [state.cardPool, state.deck, sortBy, colorFilter, typeFilter, creatureTypeFilter, searchText])
+  }, [state.cardPool, state.deck, sortBy, colorFilter, typeFilter, creatureTypeFilter, searchText, archetypeFilter])
 
   const totalPoolCards = poolCardGroups.reduce((sum, g) => sum + g.availableCount, 0)
 
@@ -365,7 +382,12 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
           <h2 style={{ color: 'white', margin: 0, fontSize: responsive.isMobile ? 16 : 20 }}>
             Deck Builder - {state.setNames.join(' + ')}
           </h2>
-          <SetSynergiesButton setCodes={state.setCodes} />
+          <SetSynergiesButton
+            setCodes={state.setCodes}
+            onSelectArchetype={(archetype) => {
+              setArchetypeFilter((prev) => prev?.name === archetype.name ? null : archetype)
+            }}
+          />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -707,6 +729,48 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Selected archetype banner */}
+          {archetypeFilter && (
+            <div
+              style={{
+                padding: '6px 12px',
+                backgroundColor: 'rgba(124, 58, 237, 0.12)',
+                borderBottom: '1px solid rgba(124, 58, 237, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+                {archetypeFilter.colors.map((c) => (
+                  <ManaSymbol key={c} symbol={c} size={16} />
+                ))}
+              </div>
+              <span style={{ color: '#b388ff', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>
+                {archetypeFilter.name}
+              </span>
+              <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {archetypeFilter.description}
+              </span>
+              <button
+                onClick={() => setArchetypeFilter(null)}
+                style={{
+                  marginLeft: 'auto',
+                  background: 'none',
+                  border: '1px solid rgba(124, 58, 237, 0.3)',
+                  color: '#b388ff',
+                  fontSize: 11,
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                Clear
+              </button>
             </div>
           )}
 
