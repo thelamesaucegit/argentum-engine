@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 228 / 249
+**Implemented:** 229 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 31    |
 | Red        | 31    |
 | Green      | 31    |
-| Multicolor | 46    |
+| Multicolor | 47    |
 | Colorless  | 12    |
 | Land       | 16    |
 
@@ -21,7 +21,7 @@
 - [x] Abzan Ascendancy
 - [x] Abzan Banner
 - [x] Abzan Battle Priest
-- [ ] Abzan Charm
+- [x] Abzan Charm
 - [x] Abzan Falconer
 - [x] Abzan Guide
 - [x] Act of Treason
