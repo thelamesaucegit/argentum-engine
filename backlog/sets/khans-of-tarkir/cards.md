@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 220 / 249
+**Implemented:** 221 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -12,7 +12,7 @@
 | Red        | 31    |
 | Green      | 31    |
 | Multicolor | 45    |
-| Colorless  | 10    |
+| Colorless  | 11    |
 | Land       | 11    |
 
 ---
@@ -29,7 +29,7 @@
 - [x] Ainok Tracker
 - [x] Alabaster Kirin
 - [x] Alpine Grizzly
-- [ ] Altar of the Brood
+- [x] Altar of the Brood
 - [ ] Anafenza, the Foremost
 - [x] Ankle Shanker
 - [x] Archers' Parapet

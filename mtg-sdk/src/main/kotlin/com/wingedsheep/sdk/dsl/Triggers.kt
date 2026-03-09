@@ -83,6 +83,17 @@ object Triggers {
     )
 
     /**
+     * When another permanent you control enters the battlefield.
+     */
+    val OtherPermanentYouControlEnters: TriggerSpec = TriggerSpec(
+        event = ZoneChangeEvent(
+            filter = GameObjectFilter.Any.youControl(),
+            to = Zone.BATTLEFIELD
+        ),
+        binding = TriggerBinding.OTHER
+    )
+
+    /**
      * When this permanent leaves the battlefield.
      */
     val LeavesBattlefield: TriggerSpec = TriggerSpec(

@@ -254,6 +254,7 @@ object KhansOfTarkirSet {
         ZurgoHelmsmasher,
 
         // Colorless
+        AltarOfTheBrood,
         AbzanBanner,
         BribersPurse,
         CranialArchive,

@@ -489,7 +489,7 @@ constructors.
 ### Zone Changes
 
 - `Triggers.EntersBattlefield` / `Triggers.AnyEntersBattlefield`
-- `Triggers.OtherCreatureEnters` / `Triggers.AnyOtherCreatureEnters` / `Triggers.OtherCreatureWithSubtypeDies(subtype)`
+- `Triggers.OtherCreatureEnters` / `Triggers.AnyOtherCreatureEnters` / `Triggers.OtherPermanentYouControlEnters` / `Triggers.OtherCreatureWithSubtypeDies(subtype)`
 - `Triggers.LeavesBattlefield` / `Triggers.Dies` / `Triggers.AnyCreatureDies` / `Triggers.AnyOtherCreatureDies` / `Triggers.YourCreatureDies`
 - `Triggers.PutIntoGraveyardFromBattlefield`
 
