@@ -520,8 +520,8 @@ export interface LegalActionInfo {
   readonly requiresManaColorChoice?: boolean
   /** Source zone if this action is from a non-hand zone (e.g., "LIBRARY" for Future Sight) */
   readonly sourceZone?: string
-  /** Blocker IDs that can block multiple attackers (e.g., CanBlockAnyNumber) */
-  readonly canBlockMultipleAttackers?: readonly EntityId[]
+  /** Max block counts for blockers that can block more than one attacker */
+  readonly blockerMaxBlockCounts?: Readonly<Record<EntityId, number>>
   /** Pre-computed mandatory blocker→attacker assignments from Provoke / MustBeBlockedByAll */
   readonly mandatoryBlockerAssignments?: Readonly<Record<EntityId, readonly EntityId[]>>
   /** Maximum times this ability can be activated in a batch (for repeat-eligible self-targeting abilities) */

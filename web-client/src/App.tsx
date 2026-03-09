@@ -140,7 +140,7 @@ export default function App() {
         validCreatures,
         attackingCreatures: [],
         mustBeBlockedAttackers: [],
-        canBlockMultipleAttackers: [],
+        blockerMaxBlockCounts: {},
       })
       return
     }
@@ -174,10 +174,10 @@ export default function App() {
         }
       }
 
-      // Extract canBlockMultipleAttackers from the legal action
-      const canBlockMultipleAttackers: EntityId[] = blockersAction?.canBlockMultipleAttackers
-        ? [...blockersAction.canBlockMultipleAttackers]
-        : []
+      // Extract blockerMaxBlockCounts from the legal action
+      const blockerMaxBlockCounts: Record<EntityId, number> = blockersAction?.blockerMaxBlockCounts
+        ? { ...blockersAction.blockerMaxBlockCounts }
+        : {}
 
       // Enter combat mode
       startCombat({
@@ -187,7 +187,7 @@ export default function App() {
         validCreatures,
         attackingCreatures,
         mustBeBlockedAttackers,
-        canBlockMultipleAttackers,
+        blockerMaxBlockCounts,
       })
     }
   }, [hasDeclareAttackersAction, hasDeclareBlockersAction, gameState, viewingPlayer, combatState, startCombat, clearCombat, battlefieldCards, legalActions])

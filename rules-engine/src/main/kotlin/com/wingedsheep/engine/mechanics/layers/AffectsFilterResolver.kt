@@ -33,12 +33,12 @@ internal class AffectsFilterResolver {
         return when (filter) {
             is AffectsFilter.Self -> setOf(sourceId)
             is AffectsFilter.AllCreaturesYouControl -> {
-                val controller = state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+                val controller = projectedController(state, sourceId, projectedValues)
                     ?: return emptySet()
                 state.getBattlefield().filter { entityId ->
                     val container = state.getEntity(entityId) ?: return@filter false
                     val card = container.get<CardComponent>() ?: return@filter false
-                    val entityController = container.get<ControllerComponent>()?.playerId
+                    val entityController = projectedController(state, entityId, projectedValues)
                     (card.typeLine.isCreature || container.has<FaceDownComponent>()) && entityController == controller
                 }.toSet()
             }
@@ -49,12 +49,12 @@ internal class AffectsFilterResolver {
                 }.toSet()
             }
             is AffectsFilter.AllCreaturesOpponentsControl -> {
-                val controller = state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+                val controller = projectedController(state, sourceId, projectedValues)
                     ?: return emptySet()
                 state.getBattlefield().filter { entityId ->
                     val container = state.getEntity(entityId) ?: return@filter false
                     val card = container.get<CardComponent>() ?: return@filter false
-                    val entityController = container.get<ControllerComponent>()?.playerId
+                    val entityController = projectedController(state, entityId, projectedValues)
                     (card.typeLine.isCreature || container.has<FaceDownComponent>()) && entityController != controller
                 }.toSet()
             }
@@ -85,25 +85,25 @@ internal class AffectsFilterResolver {
                 }.toSet()
             }
             is AffectsFilter.OtherTappedCreaturesYouControl -> {
-                val controller = state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+                val controller = projectedController(state, sourceId, projectedValues)
                     ?: return emptySet()
                 state.getBattlefield().filter { entityId ->
                     if (entityId == sourceId) return@filter false
                     val container = state.getEntity(entityId) ?: return@filter false
                     val card = container.get<CardComponent>() ?: return@filter false
-                    val entityController = container.get<ControllerComponent>()?.playerId
+                    val entityController = projectedController(state, entityId, projectedValues)
                     val isTapped = container.has<TappedComponent>()
                     (card.typeLine.isCreature || container.has<FaceDownComponent>()) && entityController == controller && isTapped
                 }.toSet()
             }
             is AffectsFilter.OtherCreaturesYouControl -> {
-                val controller = state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+                val controller = projectedController(state, sourceId, projectedValues)
                     ?: return emptySet()
                 state.getBattlefield().filter { entityId ->
                     if (entityId == sourceId) return@filter false
                     val container = state.getEntity(entityId) ?: return@filter false
                     val card = container.get<CardComponent>() ?: return@filter false
-                    val entityController = container.get<ControllerComponent>()?.playerId
+                    val entityController = projectedController(state, entityId, projectedValues)
                     (card.typeLine.isCreature || container.has<FaceDownComponent>()) && entityController == controller
                 }.toSet()
             }
@@ -135,13 +135,13 @@ internal class AffectsFilterResolver {
             }
             is AffectsFilter.OwnCreaturesWithCounter -> {
                 val counterType = parseCounterType(filter.counterType) ?: return emptySet()
-                val sourceController = state.getEntity(sourceId)
-                    ?.get<ControllerComponent>()?.playerId ?: return emptySet()
+                val sourceController = projectedController(state, sourceId, projectedValues)
+                    ?: return emptySet()
                 state.getBattlefield().filter { entityId ->
                     val container = state.getEntity(entityId) ?: return@filter false
                     val card = container.get<CardComponent>() ?: return@filter false
                     val counters = container.get<CountersComponent>()
-                    val controller = container.get<ControllerComponent>()?.playerId
+                    val controller = projectedController(state, entityId, projectedValues)
                     controller == sourceController &&
                         (card.typeLine.isCreature || container.has<FaceDownComponent>()) &&
                         (counters?.getCount(counterType) ?: 0) > 0
@@ -183,7 +183,7 @@ internal class AffectsFilterResolver {
         projectedValues: Map<EntityId, MutableProjectedValues>
     ): Set<EntityId> {
         val baseFilter = groupFilter.baseFilter
-        val controller = state.getEntity(sourceId)?.get<ControllerComponent>()?.playerId
+        val controller = projectedController(state, sourceId, projectedValues)
 
         return state.getBattlefield().filter { entityId ->
             if (groupFilter.excludeSelf && entityId == sourceId) return@filter false
@@ -194,7 +194,7 @@ internal class AffectsFilterResolver {
 
             // Check controller predicate
             if (baseFilter.controllerPredicate != null) {
-                val entityController = container.get<ControllerComponent>()?.playerId
+                val entityController = projectedController(state, entityId, projectedValues)
                 when (baseFilter.controllerPredicate) {
                     ControllerPredicate.ControlledByYou -> if (entityController != controller) return@filter false
                     ControllerPredicate.ControlledByOpponent -> if (entityController == controller) return@filter false
@@ -283,6 +283,19 @@ internal class AffectsFilterResolver {
         is CardPredicate.Or -> predicate.predicates.any { matchesCardPredicateForProjection(it, card, container, projected, types, subtypes, colors, keywords, isFaceDown) }
         is CardPredicate.Not -> !matchesCardPredicateForProjection(predicate.predicate, card, container, projected, types, subtypes, colors, keywords, isFaceDown)
         else -> true
+    }
+
+    /**
+     * Get the controller of an entity, preferring projected state over base state.
+     * This ensures control-changing effects are respected during state projection.
+     */
+    private fun projectedController(
+        state: GameState,
+        entityId: EntityId,
+        projectedValues: Map<EntityId, MutableProjectedValues>
+    ): EntityId? {
+        return projectedValues[entityId]?.controllerId
+            ?: state.getEntity(entityId)?.get<ControllerComponent>()?.playerId
     }
 
     private fun parseCounterType(counterTypeString: String): CounterType? {

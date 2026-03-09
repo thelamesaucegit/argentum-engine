@@ -104,8 +104,8 @@ export interface CombatState {
   attackingCreatures: readonly EntityId[]
   /** For blockers mode: attackers that must be blocked by all creatures able to block them */
   mustBeBlockedAttackers: readonly EntityId[]
-  /** Blockers that can block multiple attackers (e.g., CanBlockAnyNumber) */
-  canBlockMultipleAttackers: readonly EntityId[]
+  /** Max block counts for blockers that can block more than one attacker (blocker ID -> max attackers) */
+  blockerMaxBlockCounts: Readonly<Record<EntityId, number>>
 }
 
 /**

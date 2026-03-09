@@ -89,12 +89,24 @@ class LegalActionsCalculator(
                 ?.get<BlockersDeclaredThisCombatComponent>() != null
             if (!blockersAlreadyDeclared) {
                 val validBlockers = turnManager.getValidBlockers(state, playerId)
-                val canBlockMultiple = validBlockers.filter { blockerId ->
-                    val container = state.getEntity(blockerId) ?: return@filter false
-                    val card = container.get<CardComponent>() ?: return@filter false
-                    if (container.has<FaceDownComponent>()) return@filter false
-                    val cardDef = cardRegistry.getCard(card.name) ?: return@filter false
-                    cardDef.staticAbilities.any { it is CanBlockAnyNumber }
+                val projected = state.projectedState
+                val blockerMaxBlockCounts = mutableMapOf<EntityId, Int>()
+                for (blockerId in validBlockers) {
+                    val container = state.getEntity(blockerId) ?: continue
+                    val card = container.get<CardComponent>() ?: continue
+                    val isFaceDown = container.has<FaceDownComponent>()
+                    val canBlockAny = if (!isFaceDown) {
+                        val cardDef = cardRegistry.getCard(card.name)
+                        cardDef?.staticAbilities?.any { it is CanBlockAnyNumber } == true
+                    } else false
+                    if (canBlockAny) {
+                        blockerMaxBlockCounts[blockerId] = Int.MAX_VALUE
+                    } else {
+                        val additionalBlocks = projected.getAdditionalBlockCount(blockerId)
+                        if (additionalBlocks > 0) {
+                            blockerMaxBlockCounts[blockerId] = 1 + additionalBlocks
+                        }
+                    }
                 }
                 val mandatoryAssignments = turnManager.getMandatoryBlockerAssignments(state, playerId)
                 return listOf(LegalActionInfo(
@@ -102,7 +114,7 @@ class LegalActionsCalculator(
                     description = "Declare blockers",
                     action = DeclareBlockers(playerId, emptyMap()),
                     validBlockers = validBlockers,
-                    canBlockMultipleAttackers = canBlockMultiple.ifEmpty { null },
+                    blockerMaxBlockCounts = blockerMaxBlockCounts.ifEmpty { null },
                     mandatoryBlockerAssignments = mandatoryAssignments.ifEmpty { null }
                 ))
             }
