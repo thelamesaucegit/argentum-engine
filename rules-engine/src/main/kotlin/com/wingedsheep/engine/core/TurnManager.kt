@@ -1091,6 +1091,7 @@ class TurnManager(
         // These effects (e.g., Mercurial Kite's freeze) need to be active during
         // the controller's next untap step, then expire afterward.
         var postUntapState = expireUntilYourNextTurnEffects(untapResult.newState, nextPlayer)
+        postUntapState = expireAffectedControllersNextUntapEffects(postUntapState, nextPlayer)
 
         // Advance to upkeep (this sets priority to the active player)
         val advanceResult = advanceStep(postUntapState)
@@ -1110,6 +1111,28 @@ class TurnManager(
         val remaining = state.floatingEffects.filter { floatingEffect ->
             !(floatingEffect.duration is Duration.UntilYourNextTurn &&
                 floatingEffect.controllerId == activePlayer)
+        }
+        return if (remaining.size != state.floatingEffects.size) {
+            state.copy(floatingEffects = remaining)
+        } else {
+            state
+        }
+    }
+
+    /**
+     * Expire UntilAfterAffectedControllersNextUntap floating effects after the untap step.
+     * These expire when any of the affected entities are controlled by the active player,
+     * meaning the affected creature's controller just had their untap step.
+     */
+    private fun expireAffectedControllersNextUntapEffects(state: GameState, activePlayer: EntityId): GameState {
+        val projected = state.projectedState
+        val remaining = state.floatingEffects.filter { floatingEffect ->
+            if (floatingEffect.duration !is Duration.UntilAfterAffectedControllersNextUntap) return@filter true
+            // Expire if any affected entity is controlled by the active player
+            val affectedByActivePlayer = floatingEffect.effect.affectedEntities.any { entityId ->
+                projected.getController(entityId) == activePlayer
+            }
+            !affectedByActivePlayer
         }
         return if (remaining.size != state.floatingEffects.size) {
             state.copy(floatingEffects = remaining)
@@ -1185,6 +1208,7 @@ class TurnManager(
                     sourceId != null && newState.getBattlefield().contains(sourceId) &&
                         newState.getEntity(sourceId)?.has<TappedComponent>() == true
                 }
+                is Duration.UntilAfterAffectedControllersNextUntap -> true  // Expires after affected entity's controller's untap
                 is Duration.UntilPhase -> true  // Handle in phase transitions
                 is Duration.UntilCondition -> true  // Handle condition checking elsewhere
             }

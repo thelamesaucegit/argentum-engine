@@ -24,7 +24,7 @@ val CripplingChill = card("Crippling Chill") {
     spell {
         target = Targets.Creature
         effect = Effects.Tap(EffectTarget.ContextTarget(0)) then
-            GrantKeywordEffect(AbilityFlag.DOESNT_UNTAP.name, EffectTarget.ContextTarget(0), Duration.UntilYourNextTurn) then
+            GrantKeywordEffect(AbilityFlag.DOESNT_UNTAP.name, EffectTarget.ContextTarget(0), Duration.UntilAfterAffectedControllersNextUntap) then
             Effects.DrawCards(1)
     }
 

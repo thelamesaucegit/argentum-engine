@@ -30,7 +30,7 @@
                             "type": "GrantKeyword",
                             "keyword": "DOESNT_UNTAP",
                             "target": "TriggeringEntity",
-                            "duration": "UntilYourNextTurn"
+                            "duration": "UntilAfterAffectedControllersNextUntap"
                         }
                     ]
                 }

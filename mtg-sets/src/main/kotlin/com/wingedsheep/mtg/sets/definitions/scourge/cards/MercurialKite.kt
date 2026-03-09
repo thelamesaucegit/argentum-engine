@@ -31,7 +31,7 @@ val MercurialKite = card("Mercurial Kite") {
     triggeredAbility {
         trigger = Triggers.DealsCombatDamageToCreature
         effect = Effects.Tap(EffectTarget.TriggeringEntity) then
-            GrantKeywordEffect(AbilityFlag.DOESNT_UNTAP.name, EffectTarget.TriggeringEntity, Duration.UntilYourNextTurn)
+            GrantKeywordEffect(AbilityFlag.DOESNT_UNTAP.name, EffectTarget.TriggeringEntity, Duration.UntilAfterAffectedControllersNextUntap)
     }
 
     metadata {

@@ -31,7 +31,7 @@ val QuietContemplation = card("Quiet Contemplation") {
         effect = MayPayManaEffect(
             cost = ManaCost.parse("{1}"),
             effect = Effects.Tap(EffectTarget.ContextTarget(0)) then
-                GrantKeywordEffect(AbilityFlag.DOESNT_UNTAP.name, EffectTarget.ContextTarget(0), Duration.UntilYourNextTurn)
+                GrantKeywordEffect(AbilityFlag.DOESNT_UNTAP.name, EffectTarget.ContextTarget(0), Duration.UntilAfterAffectedControllersNextUntap)
         )
     }
 

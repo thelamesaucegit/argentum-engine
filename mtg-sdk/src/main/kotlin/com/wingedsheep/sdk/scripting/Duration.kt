@@ -109,6 +109,18 @@ sealed interface Duration {
     }
 
     /**
+     * Effect lasts through the affected entity's controller's next untap step, then expires.
+     * Used for "doesn't untap during its controller's next untap step" effects.
+     * Unlike UntilYourNextTurn (which tracks the caster), this tracks the affected creature's controller.
+     * Example: Crippling Chill, Mercurial Kite
+     */
+    @SerialName("UntilAfterAffectedControllersNextUntap")
+    @Serializable
+    data object UntilAfterAffectedControllersNextUntap : Duration {
+        override val description = "doesn't untap during its controller's next untap step"
+    }
+
+    /**
      * Effect lasts while the source permanent remains tapped.
      * Example: Everglove Courier "for as long as Everglove Courier remains tapped"
      */

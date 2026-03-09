@@ -37,7 +37,7 @@ val IcyBlast = card("Icy Blast") {
                     GrantKeywordEffect(
                         AbilityFlag.DOESNT_UNTAP.name,
                         EffectTarget.ContextTarget(0),
-                        Duration.UntilYourNextTurn
+                        Duration.UntilAfterAffectedControllersNextUntap
                     )
                 ))
             ))
