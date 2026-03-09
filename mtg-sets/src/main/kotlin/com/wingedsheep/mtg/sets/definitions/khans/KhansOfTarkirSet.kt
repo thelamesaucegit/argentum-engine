@@ -260,6 +260,7 @@ object KhansOfTarkirSet {
         CranialArchive,
         GhostfireBlade,
         HeartPiercerBow,
+        LensOfClarity,
         JeskaiBanner,
         MarduBanner,
         SultaiBanner,

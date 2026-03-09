@@ -925,7 +925,9 @@ Set via `staticAbility { ability = ... }`:
 - `CantCastSpells(target, duration)` — prevent target player from casting spells
 - `SkipNextTurn(target)` — target player skips their next turn
 - `AdditionalManaOnTap(color, amount: DynamicAmount)` — produce additional mana
-- `PlayFromTopOfLibrary` — play cards from top of library
+- `PlayFromTopOfLibrary` — play cards from top of library (revealed to all)
+- `LookAtTopOfLibrary` — look at top card of your library any time (private, controller only)
+- `LookAtFaceDownCreatures` — look at face-down creatures you don't control any time
 - `PreventCycling` — players can't cycle cards
 - `PreventManaPoolEmptying` — players don't lose unspent mana as steps and phases end
 - `IncreaseMorphCost(amount: Int)` — all morph (turn face-up) costs cost more

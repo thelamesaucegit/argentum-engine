@@ -1134,6 +1134,32 @@ data object PlayFromTopOfLibrary : StaticAbility {
 }
 
 /**
+ * You may look at the top card of your library any time.
+ * Unlike PlayFromTopOfLibrary, this only reveals the top card privately to the controller,
+ * not to all players. Used for Lens of Clarity, Vizier of the Menagerie, etc.
+ */
+@SerialName("LookAtTopOfLibrary")
+@Serializable
+data object LookAtTopOfLibrary : StaticAbility {
+    override val description: String =
+        "You may look at the top card of your library any time."
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
+ * You may look at face-down creatures you don't control any time.
+ * Reveals the identity of opponent's face-down creatures to the controller.
+ * Used for Lens of Clarity.
+ */
+@SerialName("LookAtFaceDownCreatures")
+@Serializable
+data object LookAtFaceDownCreatures : StaticAbility {
+    override val description: String =
+        "You may look at face-down creatures you don't control any time."
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Modifies power/toughness based on the number of other creatures that share a creature type
  * with the target creature. Used for Alpha Status: "Enchanted creature gets +2/+2 for each
  * other creature on the battlefield that shares a creature type with it."

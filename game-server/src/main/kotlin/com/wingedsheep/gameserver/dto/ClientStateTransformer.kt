@@ -26,6 +26,8 @@ import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.sdk.model.CardDefinition
+import com.wingedsheep.sdk.scripting.LookAtFaceDownCreatures
+import com.wingedsheep.sdk.scripting.LookAtTopOfLibrary
 import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.conditions.Compare
 import com.wingedsheep.sdk.scripting.conditions.ComparisonOperator
@@ -181,6 +183,37 @@ class ClientStateTransformer(
             }
         }
 
+        // Reveal top library card privately for players with LookAtTopOfLibrary (e.g., Lens of Clarity)
+        // Unlike PlayFromTopOfLibrary, this only reveals to the controller, not all players.
+        if (!isSpectator && hasLookAtTopOfLibrary(state, viewingPlayerId)) {
+            val library = state.getLibrary(viewingPlayerId)
+            if (library.isNotEmpty()) {
+                val topCardId = library.first()
+                if (topCardId !in cards) {
+                    val libraryZoneKey = ZoneKey(viewingPlayerId, Zone.LIBRARY)
+                    val clientCard = transformCard(state, topCardId, libraryZoneKey, projectedState, viewingPlayerId)
+                    if (clientCard != null) {
+                        cards[topCardId] = clientCard
+                        val zoneIndex = zones.indexOfFirst {
+                            it.zoneId.ownerId == viewingPlayerId && it.zoneId.zoneType == Zone.LIBRARY
+                        }
+                        if (zoneIndex >= 0) {
+                            val existingZone = zones[zoneIndex]
+                            val newCardIds = if (existingZone.cardIds.contains(topCardId)) {
+                                existingZone.cardIds
+                            } else {
+                                listOf(topCardId) + existingZone.cardIds
+                            }
+                            zones[zoneIndex] = existingZone.copy(
+                                cardIds = newCardIds,
+                                isVisible = true
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Build player information
         val players = state.turnOrder.map { playerId ->
             transformPlayer(state, playerId, viewingPlayerId)
@@ -232,6 +265,36 @@ class ClientStateTransformer(
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is PlayFromTopOfLibrary }) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Check if a player controls a permanent with LookAtTopOfLibrary (e.g., Lens of Clarity).
+     * This reveals the top card of the controller's library privately (only to them).
+     */
+    private fun hasLookAtTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
+        for (entityId in state.getBattlefield(playerId)) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            if (cardDef.script.staticAbilities.any { it is LookAtTopOfLibrary }) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Check if a player controls a permanent with LookAtFaceDownCreatures (e.g., Lens of Clarity).
+     * This reveals the identity of opponent's face-down battlefield creatures to the controller.
+     */
+    private fun hasLookAtFaceDownCreatures(state: GameState, playerId: EntityId): Boolean {
+        for (entityId in state.getBattlefield(playerId)) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            if (cardDef.script.staticAbilities.any { it is LookAtFaceDownCreatures }) {
                 return true
             }
         }
@@ -458,7 +521,12 @@ class ClientStateTransformer(
         // Controller sees real card info + morph cost (but not spectators)
         if (isFaceDown && (isSpectator || controllerId != viewingPlayerId)) {
             // Check if the face-down card has been revealed to the viewing player (e.g., via Spy Network)
-            val isRevealedToViewer = !isSpectator && isCardRevealedTo(state, entityId, viewingPlayerId)
+            // Also check LookAtFaceDownCreatures (e.g., Lens of Clarity) — only for battlefield creatures,
+            // not face-down spells on the stack (per ruling).
+            val isRevealedToViewer = !isSpectator && (
+                isCardRevealedTo(state, entityId, viewingPlayerId) ||
+                (zoneKey.zoneType == Zone.BATTLEFIELD && hasLookAtFaceDownCreatures(state, viewingPlayerId))
+            )
 
             // Face-down exiled cards show minimal info (not creatures, no P/T)
             if (zoneKey.zoneType == Zone.EXILE) {
