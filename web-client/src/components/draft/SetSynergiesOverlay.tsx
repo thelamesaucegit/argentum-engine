@@ -10,6 +10,8 @@ export interface Archetype {
   /** Mana color symbols, e.g. ['W', 'U'] */
   readonly colors: readonly string[]
   readonly description: string
+  /** Creature subtypes this archetype cares about, e.g. ['Wizard'] */
+  readonly creatureTypes?: readonly string[]
 }
 
 interface SetSynergies {
@@ -60,36 +62,43 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       {
         name: 'Wizards',
         colors: ['U', 'R'],
+        creatureTypes: ['Wizard'],
         description: 'Attach auras to Wizards for repeatable removal, and use shapeshifters for extra tribal synergy. A spell-based control deck.',
       },
       {
         name: 'Clerics',
         colors: ['W', 'B'],
+        creatureTypes: ['Cleric'],
         description: 'White Clerics defend and heal while black Clerics drain life. The tribe rewards a slow, grinding game plan built on incremental advantages.',
       },
       {
         name: 'Zombies',
         colors: ['B'],
+        creatureTypes: ['Zombie'],
         description: 'Recursive threats and strong removal fuel an attrition-based strategy that grinds opponents down relentlessly.',
       },
       {
         name: 'Goblins',
         colors: ['B', 'R'],
+        creatureTypes: ['Goblin'],
         description: 'Red aggression paired with black removal. Goblin tribal synergies create explosive starts backed by efficient creature destruction.',
       },
       {
         name: 'Elves',
         colors: ['G'],
+        creatureTypes: ['Elf'],
         description: 'Elves generate mana, gain life, and pump each other. The more Elves you draft, the stronger every individual Elf becomes.',
       },
       {
         name: 'Beasts',
         colors: ['R', 'G'],
+        creatureTypes: ['Beast'],
         description: 'Green\'s large beasts combined with red removal create a midrange deck that wins through creature quality and raw combat dominance.',
       },
       {
         name: 'Soldiers / Flyers',
         colors: ['W', 'U'],
+        creatureTypes: ['Soldier', 'Bird'],
         description: 'Cheap evasive flyers and Soldier tribal put opponents on a fast clock. A tempo-aggro deck that races on the ground and in the air.',
       },
       {
@@ -111,31 +120,37 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       {
         name: 'Soldiers / Flyers',
         colors: ['W', 'U'],
+        creatureTypes: ['Soldier', 'Bird'],
         description: 'Soldiers and Birds combine for a tempo-evasion strategy. Fly over stalled boards while tribal lords pump your ground forces.',
       },
       {
         name: 'Clerics',
         colors: ['W', 'B'],
+        creatureTypes: ['Cleric'],
         description: 'The cleric synergy engine continues. In an all-creature set with no removal spells, the lifegain/drain plan is even more dominant.',
       },
       {
         name: 'Goblins',
         colors: ['B', 'R'],
+        creatureTypes: ['Goblin'],
         description: 'Morph Goblins provide rare removal in a removal-starved set. Amplify lords reward drafting Goblins aggressively for explosive starts.',
       },
       {
         name: 'Elves',
         colors: ['G', 'W'],
+        creatureTypes: ['Elf'],
         description: 'Elf lords that tap to pump make every Elf a threat. Amplify and provoke create an engine of growth that overwhelms with sheer numbers.',
       },
       {
         name: 'Zombies',
         colors: ['U', 'B'],
+        creatureTypes: ['Zombie'],
         description: 'Zombie tribal mixed with blue evasion. Morph creatures provide tempo plays with face-down threats that flip into value.',
       },
       {
         name: 'Slivers',
         colors: ['W', 'U', 'B', 'R', 'G'],
+        creatureTypes: ['Sliver'],
         description: 'Every Sliver shares its abilities with all others. A risky but powerful tribal strategy — if the pieces come together, the hive is unstoppable.',
       },
       {
@@ -152,6 +167,7 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       {
         name: 'Goblins',
         colors: ['B', 'R'],
+        creatureTypes: ['Goblin'],
         description: 'Black removal plus Goblin tribal synergies. Storm spells can steal games out of nowhere.',
       },
       {
@@ -162,11 +178,13 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       {
         name: 'Clerics / Control',
         colors: ['W', 'B'],
+        creatureTypes: ['Cleric'],
         description: 'White landcyclers ensure land drops while black provides efficient removal. A solid control strategy.',
       },
       {
         name: 'Wizards',
         colors: ['U', 'R'],
+        creatureTypes: ['Wizard'],
         description: 'Draw cards proportional to your highest mana cost for massive card advantage. Wizard synergies from the block still anchor the deck.',
       },
       {
@@ -177,6 +195,7 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       {
         name: 'Dragons',
         colors: ['R'],
+        creatureTypes: ['Dragon'],
         description: 'Dedicated Dragon tribal support rewards these devastating flying threats. High mana costs are a feature, not a bug.',
       },
       {
@@ -218,6 +237,7 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       {
         name: 'Warriors',
         colors: ['W', 'B'],
+        creatureTypes: ['Warrior'],
         description: 'Flood the board with cheap Warriors and pump them with tribal lords for an aggressive, low-curve strategy.',
       },
       {
@@ -518,6 +538,31 @@ function isLand(card: SealedCardInfo): boolean {
   return card.typeLine.toLowerCase().includes('land')
 }
 
+function getCreatureSubtypes(card: SealedCardInfo): string[] {
+  const dashIndex = card.typeLine.indexOf('—')
+  if (dashIndex === -1) return []
+  return card.typeLine.substring(dashIndex + 1).trim().split(/\s+/)
+}
+
+function countCreatureTypes(
+  cardPool: readonly SealedCardInfo[],
+  creatureTypes: readonly string[],
+): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const type of creatureTypes) {
+    counts.set(type, 0)
+  }
+  for (const card of cardPool) {
+    const subtypes = getCreatureSubtypes(card)
+    for (const type of creatureTypes) {
+      if (subtypes.includes(type)) {
+        counts.set(type, (counts.get(type) ?? 0) + 1)
+      }
+    }
+  }
+  return counts
+}
+
 function cardMatchesArchetype(card: SealedCardInfo, archetypeColors: Set<string>): boolean {
   if (isLand(card)) return true
   const cardColors = getCardColors(card)
@@ -622,6 +667,11 @@ function ArchetypeCard({ archetype, clickable, onClick, cardPool }: { archetype:
     return computeArchetypeRarities(cardPool, archetype)
   }, [cardPool, archetype])
 
+  const creatureTypeCounts = useMemo(() => {
+    if (!cardPool || cardPool.length === 0 || !archetype.creatureTypes || archetype.creatureTypes.length === 0) return null
+    return countCreatureTypes(cardPool, archetype.creatureTypes)
+  }, [cardPool, archetype])
+
   return (
     <div
       onClick={clickable ? onClick : undefined}
@@ -658,6 +708,26 @@ function ArchetypeCard({ archetype, clickable, onClick, cardPool }: { archetype:
         >
           {archetype.name}
         </span>
+        {creatureTypeCounts && (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {[...creatureTypeCounts.entries()].map(([type, count]) => (
+              <span
+                key={type}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'rgba(255, 255, 255, 0.55)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                }}
+                title={`${count} ${type}${count !== 1 ? 's' : ''} in pool`}
+              >
+                {count} {type}{count !== 1 ? 's' : ''}
+              </span>
+            ))}
+          </div>
+        )}
         {rarities && (
           <div
             style={{

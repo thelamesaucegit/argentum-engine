@@ -328,6 +328,25 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
     return { MYTHIC: mythic, RARE: rare, UNCOMMON: uncommon, COMMON: common }
   }, [poolCardGroups, sortBy])
 
+  // Cards highlighted by archetype creature types
+  const highlightedCards = useMemo(() => {
+    if (!archetypeFilter?.creatureTypes || archetypeFilter.creatureTypes.length === 0) return null
+    const types = archetypeFilter.creatureTypes
+    const names = new Set<string>()
+    for (const card of state.cardPool) {
+      const dashIndex = card.typeLine.indexOf('—')
+      if (dashIndex === -1) continue
+      const subtypes = card.typeLine.substring(dashIndex + 1).trim().split(/\s+/)
+      for (const type of types) {
+        if (subtypes.includes(type)) {
+          names.add(card.name)
+          break
+        }
+      }
+    }
+    return names
+  }, [state.cardPool, archetypeFilter])
+
   // Group deck cards by name for vertical list
   const deckCardGroups = useMemo(() => {
     const groups: Record<string, { card: SealedCardInfo; count: number }> = {}
@@ -809,6 +828,7 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
                             onClick={() => !isSubmitted && addCardToDeck(card.name)}
                             onHover={handleHover}
                             disabled={isSubmitted}
+                            highlighted={highlightedCards != null ? highlightedCards.has(card.name) : undefined}
                           />
                         ))}
                       </div>
@@ -833,6 +853,7 @@ function DeckBuilder({ state }: { state: DeckBuildingState }) {
                     onClick={() => !isSubmitted && addCardToDeck(card.name)}
                     onHover={handleHover}
                     disabled={isSubmitted}
+                    highlighted={highlightedCards != null ? highlightedCards.has(card.name) : undefined}
                   />
                 ))}
               </div>
@@ -1115,16 +1136,19 @@ function PoolCard({
   onClick,
   onHover,
   disabled,
+  highlighted,
 }: {
   card: SealedCardInfo
   count: number
   onClick: () => void
   onHover: (card: SealedCardInfo | null, e?: React.MouseEvent) => void
   disabled: boolean
+  highlighted?: boolean | undefined
 }) {
   const cardWidth = 110
   const cardHeight = Math.round(cardWidth * 1.4)
   const imageUrl = getCardImageUrl(card.name, card.imageUri, 'small')
+  const defaultBorder = highlighted ? '2px solid #a78bfa' : '2px solid #444'
 
   return (
     <div
@@ -1139,9 +1163,10 @@ function PoolCard({
         borderRadius: 6,
         overflow: 'hidden',
         cursor: disabled ? 'default' : 'pointer',
-        border: '2px solid #444',
+        border: defaultBorder,
         opacity: disabled ? 0.6 : 1,
         transition: 'all 0.15s',
+        boxShadow: highlighted ? '0 0 8px rgba(167, 139, 250, 0.4)' : undefined,
       }}
       onMouseOver={(e) => {
         if (!disabled) {
@@ -1150,7 +1175,7 @@ function PoolCard({
         }
       }}
       onMouseOut={(e) => {
-        e.currentTarget.style.border = '2px solid #444'
+        e.currentTarget.style.border = defaultBorder
         e.currentTarget.style.transform = 'scale(1)'
       }}
       data-testid="pool-card"
