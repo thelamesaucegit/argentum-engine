@@ -231,6 +231,7 @@ object KhansOfTarkirSet {
         MantisRider,
         MasterTheWay,
         Mindswipe,
+        MarduAscendancy,
         MarduCharm,
         MarduRoughrider,
         PonybackBrigade,

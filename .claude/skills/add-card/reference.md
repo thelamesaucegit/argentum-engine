@@ -324,7 +324,7 @@ constructors.
 
 | Effect                           | Parameters                                                                                  | Purpose                        |
 |----------------------------------|---------------------------------------------------------------------------------------------|--------------------------------|
-| `CreateTokenEffect`              | `count: DynamicAmount, power, toughness, colors, creatureTypes, keywords, name?, imageUri?, tapped?` | Create token (tapped = enter tapped) |
+| `CreateTokenEffect`              | `count: DynamicAmount, power, toughness, colors, creatureTypes, keywords, name?, imageUri?, tapped?, attacking?` | Create token (tapped = enter tapped, attacking = enter attacking) |
 | `CreateChosenTokenEffect`        | `dynamicPower: DynamicAmount, dynamicToughness: DynamicAmount`                              | Create token with chosen stats |
 | `CreateTreasureTokensEffect`     | `count: DynamicAmount`                                                                      | Create Treasure                |
 | `CreateTokenFromGraveyardEffect` | `power, toughness, colors, creatureTypes`                                                   | Token from graveyard           |
@@ -496,7 +496,8 @@ constructors.
 
 ### Combat
 
-- `Triggers.Attacks` / `Triggers.AnyAttacks` / `Triggers.YouAttack`
+- `Triggers.Attacks` / `Triggers.AnyAttacks` / `Triggers.YouAttack` / `Triggers.NontokenCreatureYouControlAttacks`
+- `AttackEvent(filter: GameObjectFilter?)` — filter restricts which attackers trigger (includes controller predicate)
 - `Triggers.Blocks` / `Triggers.BecomesBlocked` / `Triggers.CreatureYouControlBecomesBlocked` / `Triggers.FilteredBecomesBlocked(filter: GameObjectFilter)` — any creature matching filter becomes blocked (any controller)
 - `Triggers.BecomesTarget` / `Triggers.BecomesTarget(filter: GameObjectFilter)` — when a permanent becomes target of spell/ability
 - `Triggers.DealsDamage` / `Triggers.DealsCombatDamage`

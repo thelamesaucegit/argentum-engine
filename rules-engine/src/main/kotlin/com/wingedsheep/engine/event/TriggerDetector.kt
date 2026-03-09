@@ -494,16 +494,36 @@ class TriggerDetector(
                     // create one trigger per attacking creature (Rule 603.2c)
                     if (ability.trigger is GameEvent.AttackEvent && ability.binding == TriggerBinding.ANY &&
                         event is AttackersDeclaredEvent) {
+                        val attackFilter = (ability.trigger as GameEvent.AttackEvent).filter
                         for (attackerId in event.attackers) {
-                            triggers.add(
-                                PendingTrigger(
-                                    ability = ability,
-                                    sourceId = entityId,
-                                    sourceName = cardComponent.name,
-                                    controllerId = controllerId,
-                                    triggerContext = TriggerContext(triggeringEntityId = attackerId)
+                            if (attackFilter != null) {
+                                // Filtered trigger: match creature against filter (includes controller predicate)
+                                if (predicateEvaluator.matchesWithProjection(
+                                        state, projected, attackerId, attackFilter,
+                                        PredicateContext(controllerId = controllerId, sourceId = entityId)
+                                    )) {
+                                    triggers.add(
+                                        PendingTrigger(
+                                            ability = ability,
+                                            sourceId = entityId,
+                                            sourceName = cardComponent.name,
+                                            controllerId = controllerId,
+                                            triggerContext = TriggerContext(triggeringEntityId = attackerId)
+                                        )
+                                    )
+                                }
+                            } else {
+                                // Unfiltered trigger: any creature attacking
+                                triggers.add(
+                                    PendingTrigger(
+                                        ability = ability,
+                                        sourceId = entityId,
+                                        sourceName = cardComponent.name,
+                                        controllerId = controllerId,
+                                        triggerContext = TriggerContext(triggeringEntityId = attackerId)
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                     // For "whenever a creature you control becomes blocked" (BecomesBlockedEvent with ANY binding),

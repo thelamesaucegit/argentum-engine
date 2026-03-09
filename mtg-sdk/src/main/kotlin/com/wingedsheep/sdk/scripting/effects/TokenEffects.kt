@@ -75,7 +75,8 @@ data class CreateTokenEffect(
     val controller: EffectTarget? = null,
     val dynamicPower: DynamicAmount? = null,
     val dynamicToughness: DynamicAmount? = null,
-    val tapped: Boolean = false
+    val tapped: Boolean = false,
+    val attacking: Boolean = false
 ) : Effect {
     constructor(
         count: Int,

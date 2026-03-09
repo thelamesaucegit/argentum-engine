@@ -11,6 +11,7 @@ import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.combat.AttackingComponent
 import com.wingedsheep.engine.state.components.identity.TokenComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.ManaCost
@@ -85,6 +86,13 @@ class CreateTokenExecutor(
             )
             if (effect.tapped) {
                 components.add(TappedComponent)
+            }
+            if (effect.attacking) {
+                // Token enters attacking — in 2-player games, the defender is the opponent
+                val defenderId = newState.getOpponent(tokenControllerId)
+                if (defenderId != null) {
+                    components.add(AttackingComponent(defenderId))
+                }
             }
             val container = ComponentContainer.of(*components.toTypedArray())
 

@@ -301,12 +301,29 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     /**
      * When a creature attacks.
      * Binding SELF = "when this creature attacks", ANY = "whenever a creature attacks".
+     * Optional [filter] restricts which attacking creatures trigger this (e.g., nontoken creatures).
+     * When filter is null and binding is ANY, triggers for creatures you control (default).
+     * When filter is set, triggers for any creature matching the filter regardless of controller
+     * (same pattern as [BecomesBlockedEvent]).
      */
     @SerialName("AttackEvent")
     @Serializable
-    data object AttackEvent : GameEvent {
-        override val description: String = "a creature attacks"
-        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    data class AttackEvent(
+        val filter: GameObjectFilter? = null
+    ) : GameEvent {
+        override val description: String = buildString {
+            if (filter != null) {
+                append("a ${filter.description} attacks")
+            } else {
+                append("a creature attacks")
+            }
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val f = filter ?: return this
+            val newFilter = f.applyTextReplacement(replacer)
+            return if (newFilter !== f) copy(filter = newFilter) else this
+        }
     }
 
     /**

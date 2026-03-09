@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.events.RecipientFilter
 import com.wingedsheep.sdk.scripting.events.SourceFilter
 import com.wingedsheep.sdk.scripting.events.SpellTypeFilter
 import com.wingedsheep.sdk.scripting.predicates.CardPredicate
+import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
 import com.wingedsheep.sdk.scripting.references.Player
 
 /**
@@ -165,7 +166,7 @@ object Triggers {
      * When this creature attacks.
      */
     val Attacks: TriggerSpec = TriggerSpec(
-        event = AttackEvent,
+        event = AttackEvent(),
         binding = TriggerBinding.SELF
     )
 
@@ -173,7 +174,21 @@ object Triggers {
      * When any creature attacks.
      */
     val AnyAttacks: TriggerSpec = TriggerSpec(
-        event = AttackEvent,
+        event = AttackEvent(),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
+     * When a nontoken creature you control attacks.
+     * Creates one trigger per nontoken attacker controlled by the ability's controller.
+     */
+    val NontokenCreatureYouControlAttacks: TriggerSpec = TriggerSpec(
+        event = AttackEvent(
+            filter = GameObjectFilter(
+                cardPredicates = listOf(CardPredicate.IsCreature, CardPredicate.IsNontoken),
+                controllerPredicate = ControllerPredicate.ControlledByYou
+            )
+        ),
         binding = TriggerBinding.ANY
     )
 
