@@ -278,6 +278,7 @@ object KhansOfTarkirSet {
         RuggedHighlands,
         SwiftwaterCliffs,
         ThornwoodFalls,
+        TombOfTheSpiritDragon,
         TranquilCove,
         WindScarredCrag,
 

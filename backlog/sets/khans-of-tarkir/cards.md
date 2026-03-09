@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 223 / 249
+**Implemented:** 224 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -13,7 +13,7 @@
 | Green      | 31    |
 | Multicolor | 45    |
 | Colorless  | 11    |
-| Land       | 13    |
+| Land       | 14    |
 
 ---
 
@@ -234,7 +234,7 @@
 - [x] Thousand Winds
 - [x] Throttle
 - [x] Timely Hordemate
-- [ ] Tomb of the Spirit Dragon
+- [x] Tomb of the Spirit Dragon
 - [x] Tormenting Voice
 - [x] Trail of Mystery
 - [x] Tranquil Cove
