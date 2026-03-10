@@ -133,6 +133,9 @@ export interface ClientCard {
   /** What's attached to this card (auras, equipment on this permanent) */
   readonly attachments: readonly EntityId[]
 
+  /** Cards exiled by this permanent via linked exile (e.g., Suspension Field) */
+  readonly linkedExile?: readonly EntityId[]
+
   /** Whether this card is face-down (for morph, manifest, hidden info) */
   readonly isFaceDown: boolean
 

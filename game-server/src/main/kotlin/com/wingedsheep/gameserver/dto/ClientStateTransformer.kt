@@ -619,6 +619,7 @@ class ClientStateTransformer(
                 attachments = state.getBattlefield().filter { otherId ->
                     state.getEntity(otherId)?.get<AttachedToComponent>()?.targetId == entityId
                 },
+                linkedExile = container.get<LinkedExileComponent>()?.exiledIds ?: emptyList(),
                 isFaceDown = true,
                 morphCost = null, // Opponent can't see morph cost
                 imageUri = "https://cards.scryfall.io/normal/front/e/9/e9375cbe-93c0-41a5-a6e3-fb4416f54a69.jpg", // Morph token from Commander 2019
@@ -652,6 +653,9 @@ class ClientStateTransformer(
         val attachments = state.getBattlefield().filter { otherId ->
             state.getEntity(otherId)?.get<AttachedToComponent>()?.targetId == entityId
         }
+
+        // Get linked exile (cards exiled by this permanent, e.g., Suspension Field)
+        val linkedExile = container.get<LinkedExileComponent>()?.exiledIds ?: emptyList()
 
         // Check if token
         val isToken = container.has<TokenComponent>()
@@ -747,6 +751,7 @@ class ClientStateTransformer(
             zone = zoneKey,
             attachedTo = attachedTo,
             attachments = attachments,
+            linkedExile = linkedExile,
             isFaceDown = isFaceDown,
             morphCost = if (isFaceDown && morphData != null) morphData.morphCost.description else null,
             targets = targets,

@@ -154,6 +154,9 @@ data class ClientCard(
     /** What's attached to this card (auras, equipment on this permanent) */
     val attachments: List<EntityId>,
 
+    /** Cards exiled by this permanent via linked exile (e.g., Suspension Field, Oblivion Ring) */
+    val linkedExile: List<EntityId> = emptyList(),
+
     /** Whether this card is face-down (for morph, manifest, hidden info) */
     val isFaceDown: Boolean,
 

@@ -55,6 +55,14 @@ export function Battlefield({ isOpponent, spectatorMode = false }: { isOpponent:
       .filter((c): c is ClientCard => c != null)
   }
 
+  // Resolve linked exile cards for a permanent (e.g., Suspension Field exiling a creature)
+  const getLinkedExile = (card: ClientCard): ClientCard[] => {
+    if (!gameState || !card.linkedExile || card.linkedExile.length === 0) return []
+    return card.linkedExile
+      .map((id) => gameState.cards[id])
+      .filter((c): c is ClientCard => c != null)
+  }
+
   const hasCreatures = groupedCreatures.length > 0
   const hasPlaneswalkers = groupedPlaneswalkers.length > 0
   const hasLands = groupedLands.length > 0
@@ -78,7 +86,7 @@ export function Battlefield({ isOpponent, spectatorMode = false }: { isOpponent:
    * Tapped: attachments peek horizontally to the right of the parent card.
    */
   const renderWithAttachments = (group: GroupedCard) => {
-    const attachments = getAttachments(group.card)
+    const attachments = [...getAttachments(group.card), ...getLinkedExile(group.card)]
     if (attachments.length === 0) {
       return (
         <CardStack
