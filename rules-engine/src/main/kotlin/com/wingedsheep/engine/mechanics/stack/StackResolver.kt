@@ -1245,10 +1245,17 @@ class StackResolver(
         cardId: EntityId,
         playerId: EntityId
     ): Zone? {
-        val zones = listOf(Zone.HAND, Zone.GRAVEYARD, Zone.EXILE, Zone.LIBRARY)
+        val zones = listOf(Zone.HAND, Zone.GRAVEYARD, Zone.LIBRARY)
         for (zone in zones) {
             if (cardId in state.getZone(ZoneKey(playerId, zone))) {
                 return zone
+            }
+        }
+        // Check all players' exile zones (cards may be in another player's exile,
+        // e.g., Villainous Wealth exiles from opponent's library)
+        for (pid in state.turnOrder) {
+            if (cardId in state.getZone(ZoneKey(pid, Zone.EXILE))) {
+                return Zone.EXILE
             }
         }
         return null
@@ -1274,10 +1281,13 @@ class StackResolver(
             return state.removeFromZone(graveyardZone, cardId)
         }
 
-        // Check exile
-        val exileZone = ZoneKey(playerId, Zone.EXILE)
-        if (cardId in state.getZone(exileZone)) {
-            return state.removeFromZone(exileZone, cardId)
+        // Check all players' exile zones (cards may be in another player's exile,
+        // e.g., Villainous Wealth exiles from opponent's library)
+        for (pid in state.turnOrder) {
+            val exileZone = ZoneKey(pid, Zone.EXILE)
+            if (cardId in state.getZone(exileZone)) {
+                return state.removeFromZone(exileZone, cardId)
+            }
         }
 
         // Check library (for Future Sight / play from top of library)

@@ -723,10 +723,12 @@ class LegalActionsCalculator(
             }
         }
 
-        // Check for cards in exile that may be played (e.g., Mind's Desire)
+        // Check for cards in exile that may be played (e.g., Mind's Desire, Villainous Wealth)
         // Always generate legal actions for exile cards with MayPlayFromExileComponent,
         // marking them unaffordable when timing/land drops don't allow it.
-        val exileZone = state.getExile(playerId)
+        // Check all players' exile zones because cards like Villainous Wealth exile from
+        // an opponent's library (cards stay in their owner's exile zone).
+        val exileZone = state.turnOrder.flatMap { pid -> state.getExile(pid) }
         for (cardId in exileZone) {
             val container = state.getEntity(cardId) ?: continue
             val exileComponent = container.get<MayPlayFromExileComponent>() ?: continue

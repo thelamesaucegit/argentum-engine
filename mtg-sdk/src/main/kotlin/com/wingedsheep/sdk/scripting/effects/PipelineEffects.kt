@@ -634,6 +634,18 @@ sealed interface CollectionFilter {
     @SerialName("GreatestPower")
     @Serializable
     data object GreatestPower : CollectionFilter
+
+    /**
+     * Keep only entities whose mana value is at most a dynamic amount.
+     * The amount is resolved at execution time from the effect context.
+     *
+     * Used for "spells with mana value X or less" effects like Villainous Wealth.
+     *
+     * @property max The maximum mana value (resolved dynamically)
+     */
+    @SerialName("ManaValueAtMost")
+    @Serializable
+    data class ManaValueAtMost(val max: DynamicAmount) : CollectionFilter
 }
 
 /**

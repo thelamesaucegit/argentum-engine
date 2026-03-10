@@ -744,7 +744,8 @@ CompositeEffect(
 | `SelectTargetEffect(requirement, storeAs)`                                                                                     | Select and store a target                        |
 
 Filters: `CollectionFilter.MatchesFilter(filter)`, `CollectionFilter.ExcludeSubtypesFromStored(key)`,
-`CollectionFilter.SharesSubtypeWithSacrificed`, `CollectionFilter.GreatestPower` — keep only creatures with highest power
+`CollectionFilter.SharesSubtypeWithSacrificed`, `CollectionFilter.GreatestPower` — keep only creatures with highest power,
+`CollectionFilter.ManaValueAtMost(max: DynamicAmount)` — keep only cards with mana value ≤ dynamic amount (e.g., X value)
 
 Sources: `CardSource.TopOfLibrary(count, player)`, `CardSource.FromZone(zone, player, filter)`,
 `CardSource.FromVariable(name)`, `CardSource.ControlledPermanents(player, filter)`,

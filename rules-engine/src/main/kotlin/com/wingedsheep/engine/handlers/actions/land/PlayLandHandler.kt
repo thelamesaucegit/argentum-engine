@@ -87,14 +87,21 @@ class PlayLandHandler(
         // Remove from hand, library, or exile (whichever zone the card is in)
         val handZone = ZoneKey(action.playerId, Zone.HAND)
         val libraryZone = ZoneKey(action.playerId, Zone.LIBRARY)
-        val exileZone = ZoneKey(action.playerId, Zone.EXILE)
+        // Check all exile zones since cards may be in another player's exile (Villainous Wealth)
+        val exileOwner = state.turnOrder.firstOrNull { pid ->
+            action.cardId in state.getZone(ZoneKey(pid, Zone.EXILE))
+        }
         val fromZone = when {
             action.cardId in state.getZone(handZone) -> Zone.HAND
             action.cardId in state.getZone(libraryZone) -> Zone.LIBRARY
-            action.cardId in state.getZone(exileZone) -> Zone.EXILE
+            exileOwner != null -> Zone.EXILE
             else -> Zone.HAND
         }
-        val sourceZoneKey = ZoneKey(action.playerId, fromZone)
+        val sourceZoneKey = if (fromZone == Zone.EXILE && exileOwner != null) {
+            ZoneKey(exileOwner, Zone.EXILE)
+        } else {
+            ZoneKey(action.playerId, fromZone)
+        }
         newState = newState.removeFromZone(sourceZoneKey, action.cardId)
 
         // Add to battlefield
@@ -168,8 +175,10 @@ class PlayLandHandler(
         playerId: EntityId,
         cardId: EntityId
     ): Boolean {
-        val exileZone = ZoneKey(playerId, Zone.EXILE)
-        if (cardId !in state.getZone(exileZone)) return false
+        val inAnyExile = state.turnOrder.any { pid ->
+            cardId in state.getZone(ZoneKey(pid, Zone.EXILE))
+        }
+        if (!inAnyExile) return false
         val component = state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
         return component?.controllerId == playerId
     }

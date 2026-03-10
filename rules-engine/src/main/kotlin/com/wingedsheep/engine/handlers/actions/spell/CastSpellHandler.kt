@@ -1057,15 +1057,19 @@ class CastSpellHandler(
 
     /**
      * Check if a card is in exile and has MayPlayFromExileComponent granting
-     * the player permission to play it from exile.
+     * the player permission to play it from exile. Checks all players' exile zones
+     * because cards like Villainous Wealth exile from an opponent's library (cards
+     * remain in their owner's exile zone but are castable by the spell's controller).
      */
     private fun isInExileWithPlayPermission(
         state: GameState,
         playerId: EntityId,
         cardId: EntityId
     ): Boolean {
-        val exileZone = ZoneKey(playerId, Zone.EXILE)
-        if (cardId !in state.getZone(exileZone)) return false
+        val inAnyExile = state.turnOrder.any { pid ->
+            cardId in state.getZone(ZoneKey(pid, Zone.EXILE))
+        }
+        if (!inAnyExile) return false
         val component = state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
         return component?.controllerId == playerId
     }

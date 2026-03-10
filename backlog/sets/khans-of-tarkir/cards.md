@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 239 / 249
+**Implemented:** 240 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 31    |
 | Red        | 31    |
 | Green      | 32    |
-| Multicolor | 50    |
+| Multicolor | 51    |
 | Colorless  | 12    |
 | Land       | 21    |
 
@@ -248,7 +248,7 @@
 - [x] Utter End
 - [x] Valley Dasher
 - [x] Venerable Lammasu
-- [ ] Villainous Wealth
+- [x] Villainous Wealth
 - [x] War Behemoth
 - [x] Warden of the Eye
 - [x] War-Name Aspirant

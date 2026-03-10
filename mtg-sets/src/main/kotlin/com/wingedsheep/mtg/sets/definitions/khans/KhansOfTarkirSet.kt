@@ -256,6 +256,7 @@ object KhansOfTarkirSet {
         TemurCharm,
         TrapEssence,
         UtterEnd,
+        VillainousWealth,
         WardenOfTheEye,
         Winterflame,
         ZurgoHelmsmasher,

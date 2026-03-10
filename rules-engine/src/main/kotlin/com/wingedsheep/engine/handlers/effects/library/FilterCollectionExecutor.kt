@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.handlers.effects.library
 
 import com.wingedsheep.engine.core.ExecutionResult
+import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
@@ -24,6 +25,7 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
     override val effectType: KClass<FilterCollectionEffect> = FilterCollectionEffect::class
 
     private val predicateEvaluator = PredicateEvaluator()
+    private val amountEvaluator = DynamicAmountEvaluator()
 
     override fun execute(
         state: GameState,
@@ -78,6 +80,15 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
                     emptyList<EntityId>() to cards
                 } else {
                     cards.partition { (projected.getPower(it) ?: Int.MIN_VALUE) == maxPower }
+                }
+            }
+
+            is CollectionFilter.ManaValueAtMost -> {
+                val maxManaValue = amountEvaluator.evaluate(state, filter.max, context)
+                cards.partition { cardId ->
+                    val cardComponent = state.getEntity(cardId)?.get<CardComponent>()
+                    val manaValue = cardComponent?.manaValue ?: 0
+                    manaValue <= maxManaValue
                 }
             }
         }
