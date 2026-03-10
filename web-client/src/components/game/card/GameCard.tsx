@@ -244,6 +244,7 @@ export function GameCard({
     // Start dragging attacker to assign planeswalker target
     if (isInAttackerMode && isSelectedAsAttacker && combatState && combatState.validAttackTargets.length > 0) {
       e.preventDefault()
+      dragStartPos.current = { x: clientX, y: clientY }
       startDraggingAttacker(card.id)
       return
     }
@@ -389,39 +390,68 @@ export function GameCard({
     }
   }, [draggingBlockerId, stopDraggingBlocker, isInBlockerMode, combatState, assignBlocker])
 
-  // Global mouse/touch up handler to cancel attacker drag (planeswalker targeting)
-  // For touch, detect drop target since touchend fires on the originating element
+  // Global mouse/touch up handler for attacker drag (planeswalker targeting)
+  // Uses drag distance to distinguish click (toggle attacker off) from drag (assign target)
   useEffect(() => {
-    if (!draggingAttackerId) return
+    if (draggingAttackerId !== card.id) return
 
-    const handleGlobalMouseUp = () => {
+    const handleGlobalPointerUp = (clientX: number, clientY: number) => {
+      const MIN_DRAG_DISTANCE = 30
+      const start = dragStartPos.current
+      const draggedFarEnough = start != null &&
+        Math.hypot(clientX - start.x, clientY - start.y) >= MIN_DRAG_DISTANCE
+      dragStartPos.current = null
+      handledByDrag.current = true
+
+      if (!draggedFarEnough) {
+        // Short press = click to toggle attacker off
+        stopDraggingAttacker()
+        toggleAttacker(card.id)
+        return
+      }
+
+      // Long drag - drop was handled by target card's onMouseUp (handlePointerUp)
+      // or missed (no valid target under cursor) - just stop dragging
       stopDraggingAttacker()
     }
 
-    const handleGlobalTouchEnd = (e: TouchEvent) => {
+    const handleMouseUp = (e: MouseEvent) => handleGlobalPointerUp(e.clientX, e.clientY)
+    const handleTouchEnd = (e: TouchEvent) => {
       const touch = e.changedTouches[0]
-      if (touch && isInAttackerMode) {
-        const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY)
-        if (elementAtPoint) {
-          const cardEl = elementAtPoint.closest('[data-card-id]')
-          if (cardEl) {
-            const targetCardId = cardEl.getAttribute('data-card-id')
-            if (targetCardId && combatState?.validAttackTargets.includes(targetCardId as EntityId)) {
-              setAttackTarget(draggingAttackerId, targetCardId as EntityId)
+      if (touch) {
+        // For touch, detect drop target since touchend fires on the originating element
+        const MIN_DRAG_DISTANCE = 30
+        const start = dragStartPos.current
+        const draggedFarEnough = start != null &&
+          Math.hypot(touch.clientX - start.x, touch.clientY - start.y) >= MIN_DRAG_DISTANCE
+        dragStartPos.current = null
+        handledByDrag.current = true
+
+        if (draggedFarEnough && isInAttackerMode) {
+          const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY)
+          if (elementAtPoint) {
+            const cardEl = elementAtPoint.closest('[data-card-id]')
+            if (cardEl) {
+              const targetCardId = cardEl.getAttribute('data-card-id')
+              if (targetCardId && combatState?.validAttackTargets.includes(targetCardId as EntityId)) {
+                setAttackTarget(draggingAttackerId, targetCardId as EntityId)
+              }
             }
           }
+        } else if (!draggedFarEnough) {
+          toggleAttacker(card.id)
         }
       }
       stopDraggingAttacker()
     }
 
-    window.addEventListener('mouseup', handleGlobalMouseUp)
-    window.addEventListener('touchend', handleGlobalTouchEnd)
+    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('touchend', handleTouchEnd)
     return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp)
-      window.removeEventListener('touchend', handleGlobalTouchEnd)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [draggingAttackerId, stopDraggingAttacker, isInAttackerMode, combatState, setAttackTarget])
+  }, [draggingAttackerId, card.id, stopDraggingAttacker, toggleAttacker, isInAttackerMode, combatState, setAttackTarget])
 
   const handleClick = () => {
     // If the drag handler already processed this interaction, skip
