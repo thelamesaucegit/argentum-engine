@@ -23,18 +23,22 @@ export function ZonePile({ player, isOpponent = false }: { player: ClientPlayer;
   const stackCards = useStackCards()
 
   // Find any graveyard cards that are being targeted by spells on the stack
-  const targetedGraveyardCard = React.useMemo(() => {
+  const targetedGraveyardCards = React.useMemo(() => {
+    const targeted: ClientCard[] = []
+    const seenIds = new Set<string>()
     for (const stackCard of stackCards) {
       if (!stackCard.targets) continue
       for (const target of stackCard.targets) {
         if (target.type === 'Card') {
-          // Check if this card is in this player's graveyard
           const card = graveyardCards.find((c) => c.id === target.cardId)
-          if (card) return card
+          if (card && !seenIds.has(card.id)) {
+            seenIds.add(card.id)
+            targeted.push(card)
+          }
         }
       }
     }
-    return null
+    return targeted
   }, [stackCards, graveyardCards])
 
   const pileStyle = {
@@ -91,29 +95,36 @@ export function ZonePile({ player, isOpponent = false }: { player: ClientPlayer;
           {player.graveyardSize > 0 && (
             <div style={{ ...styles.pileCount, fontSize: responsive.fontSize.small }}>{player.graveyardSize}</div>
           )}
-          {/* Show targeted card on top when a spell is targeting a card in this graveyard */}
-          {targetedGraveyardCard && (
-            <div
-              data-card-id={targetedGraveyardCard.id}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: 10,
-                boxShadow: '0 0 12px 4px rgba(255, 136, 0, 0.8)',
-                borderRadius: responsive.isMobile ? 4 : 6,
-              }}
-            >
-              <img
-                src={getCardImageUrl(targetedGraveyardCard.name, targetedGraveyardCard.imageUri, 'normal')}
-                alt={targetedGraveyardCard.name}
-                style={{ ...styles.pileImage, borderRadius: responsive.isMobile ? 4 : 6 }}
-                onError={(e) => handleImageError(e, targetedGraveyardCard.name, 'normal')}
-              />
-            </div>
-          )}
+          {/* Show targeted cards fanned out when a spell is targeting cards in this graveyard */}
+          {targetedGraveyardCards.map((card, index) => {
+            const fanOffset = targetedGraveyardCards.length > 1
+              ? (index - (targetedGraveyardCards.length - 1) / 2) * (responsive.isMobile ? 14 : 20)
+              : 0
+            return (
+              <div
+                key={card.id}
+                data-card-id={card.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 10 + index,
+                  boxShadow: '0 0 12px 4px rgba(255, 136, 0, 0.8)',
+                  borderRadius: responsive.isMobile ? 4 : 6,
+                  transform: `translateX(${fanOffset}px)`,
+                }}
+              >
+                <img
+                  src={getCardImageUrl(card.name, card.imageUri, 'normal')}
+                  alt={card.name}
+                  style={{ ...styles.pileImage, borderRadius: responsive.isMobile ? 4 : 6 }}
+                  onError={(e) => handleImageError(e, card.name, 'normal')}
+                />
+              </div>
+            )
+          })}
         </div>
         <span style={{ ...styles.zoneLabel, fontSize: responsive.isMobile ? 8 : 10 }}>Graveyard</span>
       </div>
