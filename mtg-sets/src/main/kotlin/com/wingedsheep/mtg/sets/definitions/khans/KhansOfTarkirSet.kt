@@ -269,6 +269,9 @@ object KhansOfTarkirSet {
         Winterflame,
         ZurgoHelmsmasher,
 
+        // Multicolor planeswalkers
+        SorinSolemnVisitor,
+
         // Colorless
         AltarOfTheBrood,
         AbzanBanner,

@@ -2,16 +2,16 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 247 / 249
+**Implemented:** 249 / 249
 
 | Color      | Count |
 |------------|-------|
 | White      | 31    |
 | Blue       | 32    |
 | Black      | 31    |
-| Red        | 31    |
+| Red        | 32    |
 | Green      | 32    |
-| Multicolor | 55    |
+| Multicolor | 56    |
 | Colorless  | 14    |
 | Land       | 21    |
 
@@ -188,7 +188,7 @@
 - [x] Sagu Mauler
 - [x] Salt Road Patrol
 - [x] Sandsteppe Citadel
-- [ ] Sarkhan, the Dragonspeaker
+- [x] Sarkhan, the Dragonspeaker
 - [x] Savage Knuckleblade
 - [x] Savage Punch
 - [x] Scaldkin
@@ -210,7 +210,7 @@
 - [x] Smite the Monstrous
 - [x] Smoke Teller
 - [x] Snowhorn Rider
-- [ ] Sorin, Solemn Visitor
+- [x] Sorin, Solemn Visitor
 - [x] Stubborn Denial
 - [x] Sultai Ascendancy
 - [x] Sultai Banner
