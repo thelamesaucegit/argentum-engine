@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 240 / 249
+**Implemented:** 241 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -12,7 +12,7 @@
 | Red        | 31    |
 | Green      | 32    |
 | Multicolor | 51    |
-| Colorless  | 12    |
+| Colorless  | 13    |
 | Land       | 21    |
 
 ---
@@ -80,7 +80,7 @@
 - [x] Dragonscale Boon
 - [x] Dragon's Eye Savants
 - [x] Dragon-Style Twins
-- [ ] Dragon Throne of Tarkir
+- [x] Dragon Throne of Tarkir
 - [x] Duneblast
 - [x] Dutiful Return
 - [x] Efreet Weaponmaster

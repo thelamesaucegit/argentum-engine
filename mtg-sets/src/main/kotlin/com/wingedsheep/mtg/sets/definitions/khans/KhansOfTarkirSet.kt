@@ -266,6 +266,7 @@ object KhansOfTarkirSet {
         AbzanBanner,
         BribersPurse,
         CranialArchive,
+        DragonThroneOfTarkir,
         GhostfireBlade,
         HeartPiercerBow,
         LensOfClarity,

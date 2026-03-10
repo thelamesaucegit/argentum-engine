@@ -160,12 +160,34 @@ class DynamicAmountEvaluator(
 
             is DynamicAmount.SourcePower -> {
                 val sourceId = context.sourceId ?: return 0
-                val card = state.getEntity(sourceId)?.get<CardComponent>() ?: return 0
-                when (val power = card.baseStats?.power) {
-                    is com.wingedsheep.sdk.model.CharacteristicValue.Fixed -> power.value
-                    is com.wingedsheep.sdk.model.CharacteristicValue.Dynamic -> evaluate(state, power.source, context)
-                    is com.wingedsheep.sdk.model.CharacteristicValue.DynamicWithOffset -> evaluate(state, power.source, context) + power.offset
-                    null -> 0
+                // Use projected state for accurate power (accounts for continuous effects,
+                // counters, equipment bonuses, etc.)
+                val projected = if (projectForBattlefieldCounting) {
+                    state.projectedState
+                } else null
+                if (projected != null) {
+                    val projectedPower = projected.getPower(sourceId)
+                    if (projectedPower != null) {
+                        projectedPower
+                    } else {
+                        // Source not on battlefield (e.g., left battlefield before resolution) -
+                        // fall back to base stats
+                        val card = state.getEntity(sourceId)?.get<CardComponent>() ?: return 0
+                        when (val power = card.baseStats?.power) {
+                            is com.wingedsheep.sdk.model.CharacteristicValue.Fixed -> power.value
+                            is com.wingedsheep.sdk.model.CharacteristicValue.Dynamic -> evaluate(state, power.source, context)
+                            is com.wingedsheep.sdk.model.CharacteristicValue.DynamicWithOffset -> evaluate(state, power.source, context) + power.offset
+                            null -> 0
+                        }
+                    }
+                } else {
+                    val card = state.getEntity(sourceId)?.get<CardComponent>() ?: return 0
+                    when (val power = card.baseStats?.power) {
+                        is com.wingedsheep.sdk.model.CharacteristicValue.Fixed -> power.value
+                        is com.wingedsheep.sdk.model.CharacteristicValue.Dynamic -> evaluate(state, power.source, context)
+                        is com.wingedsheep.sdk.model.CharacteristicValue.DynamicWithOffset -> evaluate(state, power.source, context) + power.offset
+                        null -> 0
+                    }
                 }
             }
 
