@@ -94,6 +94,8 @@ export function GameCard({
   const { handleCardClick, handleDoubleClick, executeAction } = useInteraction()
   const dragStartPos = useRef<{ x: number; y: number } | null>(null)
   const handledByDrag = useRef(false)
+  /** Whether the attacker was already selected when drag started (to know if short press = select or deselect) */
+  const attackerWasSelected = useRef(false)
 
   // Hover handlers for card preview
   const handleMouseEnter = useCallback(() => {
@@ -241,10 +243,15 @@ export function GameCard({
     const clientX = 'touches' in e ? e.touches[0]!.clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0]!.clientY : e.clientY
 
-    // Start dragging attacker to assign planeswalker target
-    if (isInAttackerMode && isSelectedAsAttacker && combatState && combatState.validAttackTargets.length > 0) {
+    // Start dragging attacker to assign attack target (planeswalker or player)
+    // Works for both already-selected and unselected valid attackers
+    if (isInAttackerMode && (isSelectedAsAttacker || isValidAttacker) && combatState) {
       e.preventDefault()
       dragStartPos.current = { x: clientX, y: clientY }
+      attackerWasSelected.current = isSelectedAsAttacker
+      if (!isSelectedAsAttacker) {
+        toggleAttacker(card.id) // Select it immediately so the arrow shows
+      }
       startDraggingAttacker(card.id)
       return
     }
@@ -260,21 +267,17 @@ export function GameCard({
       dragStartPos.current = { x: clientX, y: clientY }
       startDraggingCard(card.id)
     }
-  }, [isInAttackerMode, isSelectedAsAttacker, combatState, startDraggingAttacker, isInBlockerMode, isValidBlocker, startDraggingBlocker, canDragToPlay, startDraggingCard, card.id])
+  }, [isInAttackerMode, isSelectedAsAttacker, isValidAttacker, combatState, startDraggingAttacker, toggleAttacker, isInBlockerMode, isValidBlocker, startDraggingBlocker, canDragToPlay, startDraggingCard, card.id])
 
-  // Handle mouse/touch up - drop blocker on attacker, or drop attacker on planeswalker
+  // Handle mouse/touch up - drop blocker on attacker
   const handlePointerUp = useCallback(() => {
     if (isInBlockerMode && draggingBlockerId && isAttackingInBlockerMode) {
       // Dropping on an attacker - assign the blocker
       assignBlocker(draggingBlockerId, card.id)
       stopDraggingBlocker()
     }
-    if (isInAttackerMode && draggingAttackerId && isValidPlaneswalkerTarget) {
-      // Dropping on a planeswalker - set as attack target
-      setAttackTarget(draggingAttackerId, card.id)
-      stopDraggingAttacker()
-    }
-  }, [isInBlockerMode, draggingBlockerId, isAttackingInBlockerMode, assignBlocker, stopDraggingBlocker, isInAttackerMode, draggingAttackerId, isValidPlaneswalkerTarget, setAttackTarget, stopDraggingAttacker, card.id])
+    // Attacker drag drop is handled in the global handler via resolveDropTarget
+  }, [isInBlockerMode, draggingBlockerId, isAttackingInBlockerMode, assignBlocker, stopDraggingBlocker, card.id])
 
   // Global mouse/touch up handler for card dragging (to detect drop outside hand)
   useEffect(() => {
@@ -395,6 +398,35 @@ export function GameCard({
   useEffect(() => {
     if (draggingAttackerId !== card.id) return
 
+    const resolveDropTarget = (clientX: number, clientY: number) => {
+      const elementAtPoint = document.elementFromPoint(clientX, clientY)
+      if (!elementAtPoint) return
+
+      // Check if dropped on an opponent planeswalker
+      const cardEl = elementAtPoint.closest('[data-card-id]')
+      if (cardEl) {
+        const targetCardId = cardEl.getAttribute('data-card-id')
+        if (targetCardId && combatState?.validAttackTargets.includes(targetCardId as EntityId)) {
+          setAttackTarget(draggingAttackerId, targetCardId as EntityId)
+          return
+        }
+      }
+
+      // Check if dropped on the opponent's life display (clear planeswalker target → default to player)
+      const lifeEl = elementAtPoint.closest('[data-life-id]')
+      if (lifeEl) {
+        const { combatState: cs } = useGameStore.getState()
+        if (cs && cs.attackerTargets[draggingAttackerId]) {
+          // Clear the planeswalker target so it defaults to the player
+          const newTargets = { ...cs.attackerTargets }
+          delete newTargets[draggingAttackerId]
+          useGameStore.setState({
+            combatState: { ...cs, attackerTargets: newTargets },
+          })
+        }
+      }
+    }
+
     const handleGlobalPointerUp = (clientX: number, clientY: number) => {
       const MIN_DRAG_DISTANCE = 30
       const start = dragStartPos.current
@@ -404,14 +436,18 @@ export function GameCard({
       handledByDrag.current = true
 
       if (!draggedFarEnough) {
-        // Short press = click to toggle attacker off
+        // Short press = click
         stopDraggingAttacker()
-        toggleAttacker(card.id)
+        if (attackerWasSelected.current) {
+          // Was already selected → toggle off (deselect)
+          toggleAttacker(card.id)
+        }
+        // If wasn't selected, we already selected it in handlePointerDown → stays selected
         return
       }
 
-      // Long drag - drop was handled by target card's onMouseUp (handlePointerUp)
-      // or missed (no valid target under cursor) - just stop dragging
+      // Long drag - resolve where we dropped
+      resolveDropTarget(clientX, clientY)
       stopDraggingAttacker()
     }
 
@@ -419,7 +455,6 @@ export function GameCard({
     const handleTouchEnd = (e: TouchEvent) => {
       const touch = e.changedTouches[0]
       if (touch) {
-        // For touch, detect drop target since touchend fires on the originating element
         const MIN_DRAG_DISTANCE = 30
         const start = dragStartPos.current
         const draggedFarEnough = start != null &&
@@ -427,18 +462,9 @@ export function GameCard({
         dragStartPos.current = null
         handledByDrag.current = true
 
-        if (draggedFarEnough && isInAttackerMode) {
-          const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY)
-          if (elementAtPoint) {
-            const cardEl = elementAtPoint.closest('[data-card-id]')
-            if (cardEl) {
-              const targetCardId = cardEl.getAttribute('data-card-id')
-              if (targetCardId && combatState?.validAttackTargets.includes(targetCardId as EntityId)) {
-                setAttackTarget(draggingAttackerId, targetCardId as EntityId)
-              }
-            }
-          }
-        } else if (!draggedFarEnough) {
+        if (draggedFarEnough) {
+          resolveDropTarget(touch.clientX, touch.clientY)
+        } else if (attackerWasSelected.current) {
           toggleAttacker(card.id)
         }
       }
@@ -451,7 +477,7 @@ export function GameCard({
       window.removeEventListener('mouseup', handleMouseUp)
       window.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [draggingAttackerId, card.id, stopDraggingAttacker, toggleAttacker, isInAttackerMode, combatState, setAttackTarget])
+  }, [draggingAttackerId, card.id, stopDraggingAttacker, toggleAttacker, combatState, setAttackTarget])
 
   const handleClick = () => {
     // If the drag handler already processed this interaction, skip
@@ -649,7 +675,7 @@ export function GameCard({
   // Determine cursor
   const canInteract = interactive || isValidTarget || isValidDecisionTarget || isValidDecisionSelection || isValidAttacker || isValidBlocker || isAttackingInBlockerMode || isValidPlaneswalkerTarget || canDragToPlay || isDistributeTarget
   const baseCursor = canInteract ? 'pointer' : 'default'
-  const cursor = isValidBlocker || isSelectedAsAttacker || canDragToPlay ? 'grab' : baseCursor
+  const cursor = isValidBlocker || isValidAttacker || isSelectedAsAttacker || canDragToPlay ? 'grab' : baseCursor
 
   // Check if currently being dragged (attacker, blocker, or hand card)
   const isBeingDragged = draggingBlockerId === card.id || draggingAttackerId === card.id || draggingCardId === card.id
