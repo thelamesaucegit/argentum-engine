@@ -291,6 +291,7 @@ object KhansOfTarkirSet {
         TombOfTheSpiritDragon,
         TranquilCove,
         WindScarredCrag,
+        WoodedFoothills,
 
         // Basic lands
     ) + KhansBasicLands
