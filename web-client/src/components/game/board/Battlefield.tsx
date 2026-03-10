@@ -178,17 +178,8 @@ export function Battlefield({ isOpponent, spectatorMode = false }: { isOpponent:
       width: '100%',
       ...extra,
     }}>
-      {/* Left column: side items, right-aligned to sit near center */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'flex-end',
-        flexWrap: 'wrap',
-        gap: responsive.cardGap,
-        paddingRight: sideItems.length > 0 && centerItems.length > 0 ? responsive.cardGap * 2 : 0,
-      }}>
-        {sideItems.map((group) => renderWithAttachments(group))}
-      </div>
+      {/* Left column: empty spacer to balance the grid */}
+      <div />
 
       {/* Center column: main items */}
       <div style={{
@@ -201,8 +192,26 @@ export function Battlefield({ isOpponent, spectatorMode = false }: { isOpponent:
         {centerItems.map((group) => renderWithAttachments(group))}
       </div>
 
-      {/* Right column: empty spacer to balance the grid */}
-      <div />
+      {/* Right column: side items (e.g. planeswalkers), left-aligned with separator */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-start',
+        alignItems: 'flex-end',
+        flexWrap: 'wrap',
+        gap: responsive.cardGap,
+        paddingLeft: sideItems.length > 0 && centerItems.length > 0 ? responsive.cardGap : 0,
+      }}>
+        {sideItems.length > 0 && centerItems.length > 0 && (
+          <div style={{
+            width: 1,
+            alignSelf: 'stretch',
+            backgroundColor: '#555',
+            marginRight: responsive.cardGap,
+            borderRadius: 1,
+          }} />
+        )}
+        {sideItems.map((group) => renderWithAttachments(group))}
+      </div>
     </div>
   )
 
