@@ -772,6 +772,44 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
             return if (newFilter !== f) copy(cardFilter = newFilter) else this
         }
     }
+
+    // =========================================================================
+    // Batched Zone Change Events (Triggers)
+    // =========================================================================
+
+    /**
+     * Whenever one or more cards matching [filter] are put into your graveyard from your library.
+     *
+     * This is a **batching trigger** — it fires at most once per event batch, regardless of
+     * how many matching cards were moved. Used by Sidisi, Brood Tyrant and similar cards.
+     *
+     * Detection is handled specially by TriggerDetector: after processing individual events,
+     * it groups all library-to-graveyard ZoneChangeEvents, checks if any match the filter,
+     * and fires the trigger once per qualifying controller.
+     *
+     * Examples:
+     * - "Whenever one or more creature cards are put into your graveyard from your library"
+     *   → CardsPutIntoGraveyardFromLibraryEvent(filter = GameObjectFilter.Creature)
+     */
+    @SerialName("CardsPutIntoGraveyardFromLibraryEvent")
+    @Serializable
+    data class CardsPutIntoGraveyardFromLibraryEvent(
+        val filter: GameObjectFilter = GameObjectFilter.Any
+    ) : GameEvent {
+        override val description: String = buildString {
+            append("one or more ")
+            if (filter != GameObjectFilter.Any) {
+                append(filter.cardPredicates.joinToString(" ") { it.description })
+                append(" ")
+            }
+            append("cards are put into your graveyard from your library")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
 }
 
 /**

@@ -553,6 +553,10 @@ constructors.
 
 - `Triggers.YouGainLife` / `Triggers.AnyPlayerGainsLife`
 
+### Library to Graveyard (Batching)
+
+- `Triggers.CreaturesPutIntoGraveyardFromLibrary` — whenever one or more creature cards are put into your graveyard from your library (batching trigger, fires at most once per event batch)
+
 ### Transform
 
 - `Triggers.Transforms` / `Triggers.TransformsToBack` / `Triggers.TransformsToFront`

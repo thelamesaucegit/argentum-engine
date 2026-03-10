@@ -250,6 +250,7 @@ object KhansOfTarkirSet {
         SecretPlans,
         AbzanAscendancy,
         AbzanCharm,
+        SidisiBroodTyrant,
         SultaiAscendancy,
         SultaiCharm,
         SultaiSoothsayer,

@@ -54,6 +54,7 @@ enum class TriggerCategory {
     TURN_FACE_UP,
     STEP,
     ENCHANTED_STEP,
+    LIBRARY_TO_GRAVEYARD,
 }
 
 /**
@@ -140,6 +141,7 @@ class TriggerIndex(
             is SdkGameEvent.CreatureTurnedFaceUpEvent -> listOf(TriggerCategory.TURN_FACE_UP)
             is SdkGameEvent.StepEvent -> listOf(TriggerCategory.STEP)
             is SdkGameEvent.EnchantedCreatureControllerStepEvent -> listOf(TriggerCategory.ENCHANTED_STEP)
+            is SdkGameEvent.CardsPutIntoGraveyardFromLibraryEvent -> listOf(TriggerCategory.LIBRARY_TO_GRAVEYARD)
             // These are handled by specialized detect methods, not the main loop
             else -> emptyList()
         }

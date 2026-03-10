@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 242 / 249
+**Implemented:** 243 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -11,7 +11,7 @@
 | Black      | 31    |
 | Red        | 31    |
 | Green      | 32    |
-| Multicolor | 52    |
+| Multicolor | 53    |
 | Colorless  | 13    |
 | Land       | 21    |
 
@@ -202,7 +202,7 @@
 - [x] Set Adrift
 - [x] Shambling Attendants
 - [x] Shatter
-- [ ] Sidisi, Brood Tyrant
+- [x] Sidisi, Brood Tyrant
 - [x] Sidisi's Pet
 - [x] Siegecraft
 - [x] Siege Rhino

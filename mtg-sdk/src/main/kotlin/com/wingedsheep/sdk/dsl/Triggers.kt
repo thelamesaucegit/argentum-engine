@@ -379,6 +379,21 @@ object Triggers {
     )
 
     // =========================================================================
+    // Library-to-Graveyard Batching Triggers
+    // =========================================================================
+
+    /**
+     * Whenever one or more creature cards are put into your graveyard from your library.
+     * Batching trigger — fires at most once per event batch regardless of how many creatures were milled.
+     */
+    val CreaturesPutIntoGraveyardFromLibrary: TriggerSpec = TriggerSpec(
+        event = CardsPutIntoGraveyardFromLibraryEvent(
+            filter = GameObjectFilter.Creature
+        ),
+        binding = TriggerBinding.ANY
+    )
+
+    // =========================================================================
     // Card Drawing Triggers
     // =========================================================================
 

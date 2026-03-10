@@ -331,6 +331,11 @@ class TriggerDetector(
         // so dead creatures miss each other's death events. Fix that here.
         detectSimultaneousDeathTriggers(state, events, triggers)
 
+        // Detect "whenever one or more cards are put into your graveyard from your library"
+        // batching triggers (e.g., Sidisi, Brood Tyrant). Groups library→graveyard zone changes
+        // and fires the trigger at most once per controller.
+        detectLibraryToGraveyardBatchTriggers(state, events, triggers, index)
+
         // Rule 603.4: Filter out triggers with unmet intervening-if conditions
         return sortByApnapOrder(state, filterByTriggerCondition(state, triggers))
     }
@@ -911,6 +916,69 @@ class TriggerDetector(
                             )
                         )
                     }
+                }
+            }
+        }
+    }
+
+    /**
+     * Detect "whenever one or more [filter] cards are put into your graveyard from your library"
+     * batching triggers. Groups all library→graveyard zone changes by owner and fires matching
+     * triggers at most once per controller, regardless of how many cards were moved.
+     */
+    private fun detectLibraryToGraveyardBatchTriggers(
+        state: GameState,
+        events: List<EngineGameEvent>,
+        triggers: MutableList<PendingTrigger>,
+        index: TriggerIndex
+    ) {
+        // Collect all library→graveyard zone change events, grouped by owner
+        val libToGravByOwner = mutableMapOf<EntityId, MutableList<ZoneChangeEvent>>()
+        for (event in events) {
+            if (event is ZoneChangeEvent && event.fromZone == Zone.LIBRARY && event.toZone == Zone.GRAVEYARD) {
+                libToGravByOwner.getOrPut(event.ownerId) { mutableListOf() }.add(event)
+            }
+        }
+        if (libToGravByOwner.isEmpty()) return
+
+        // Check battlefield permanents with library-to-graveyard batch triggers
+        for (entry in index.getEntitiesForCategory(TriggerCategory.LIBRARY_TO_GRAVEYARD)) {
+            for (ability in entry.abilities) {
+                val trigger = ability.trigger
+                if (trigger !is GameEvent.CardsPutIntoGraveyardFromLibraryEvent) continue
+
+                // This trigger watches the controller's own graveyard
+                val controllerId = entry.controllerId
+                val ownerEvents = libToGravByOwner[controllerId] ?: continue
+
+                // Check if any of the milled cards match the filter
+                val hasMatch = ownerEvents.any { event ->
+                    if (trigger.filter == GameObjectFilter.Any) return@any true
+                    val entity = state.getEntity(event.entityId)
+                    val cardComponent = entity?.get<CardComponent>()
+                    if (cardComponent != null) {
+                        trigger.filter.cardPredicates.all { predicate ->
+                            when (predicate) {
+                                is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature ->
+                                    cardComponent.typeLine.isCreature
+                                is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->
+                                    cardComponent.typeLine.hasSubtype(predicate.subtype)
+                                else -> true
+                            }
+                        }
+                    } else false
+                }
+
+                if (hasMatch) {
+                    triggers.add(
+                        PendingTrigger(
+                            ability = ability,
+                            sourceId = entry.entityId,
+                            sourceName = entry.cardComponent.name,
+                            controllerId = controllerId,
+                            triggerContext = TriggerContext()
+                        )
+                    )
                 }
             }
         }
@@ -1547,6 +1615,8 @@ class TriggerDetector(
             }
             is GameEvent.DiscardEvent -> false
             is GameEvent.SearchLibraryEvent -> false
+            // Batching trigger — handled in detectLibraryToGraveyardBatchTriggers
+            is GameEvent.CardsPutIntoGraveyardFromLibraryEvent -> false
         }
     }
 
