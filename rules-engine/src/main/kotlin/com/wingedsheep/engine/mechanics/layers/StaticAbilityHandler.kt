@@ -523,8 +523,8 @@ class StaticAbilityHandler(
             return AffectsFilter.OtherTappedCreaturesYouControl
         }
 
-        // Handle "other creatures" pattern
-        if (hasExcludeSelf) {
+        // Handle "other creatures" pattern (only when no other restrictions)
+        if (hasExcludeSelf && subtypePredicate == null && controllerPredicate == null && baseFilter.statePredicates.isEmpty()) {
             return AffectsFilter.AllOtherCreatures
         }
 
