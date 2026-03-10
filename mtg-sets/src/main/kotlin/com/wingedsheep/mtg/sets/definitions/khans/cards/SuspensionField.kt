@@ -33,7 +33,7 @@ val SuspensionField = card("Suspension Field") {
 
     triggeredAbility {
         trigger = Triggers.LeavesBattlefield
-        effect = Effects.ReturnLinkedExile()
+        effect = Effects.ReturnLinkedExileUnderOwnersControl()
     }
 
     metadata {
