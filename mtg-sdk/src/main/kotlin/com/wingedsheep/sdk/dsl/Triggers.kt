@@ -287,6 +287,14 @@ object Triggers {
     )
 
     /**
+     * At the beginning of your draw step.
+     */
+    val YourDrawStep: TriggerSpec = TriggerSpec(
+        event = StepEvent(Step.DRAW, Player.You),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * At the beginning of each upkeep.
      */
     val EachUpkeep: TriggerSpec = TriggerSpec(

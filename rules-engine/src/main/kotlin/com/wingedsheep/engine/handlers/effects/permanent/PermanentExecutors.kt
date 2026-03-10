@@ -42,6 +42,7 @@ class PermanentExecutors(
         ChangeGroupColorExecutor(),
         GrantActivatedAbilityToGroupExecutor(),
         AnimateLandExecutor(),
+        BecomeCreatureExecutor(),
         SetBasePowerExecutor(amountEvaluator),
         DistributeCountersFromSelfExecutor(),
         DistributeCountersAmongTargetsExecutor(),

@@ -1,6 +1,7 @@
 package com.wingedsheep.gameserver.legalactions
 
 import com.wingedsheep.engine.core.*
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
@@ -15,6 +16,7 @@ import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShrou
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.combat.AttackersDeclaredThisCombatComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
@@ -1206,6 +1208,20 @@ class LegalActionsCalculator(
             val textReplacement = container.get<TextReplacementComponent>()
 
             for (ability in nonManaAbilities) {
+                // Planeswalker loyalty abilities: sorcery speed + once per turn + loyalty cost check
+                if (ability.isPlaneswalkerAbility) {
+                    if (!canPlaySorcerySpeed) continue
+                    val tracker = container.get<AbilityActivatedThisTurnComponent>()
+                    if (tracker != null && tracker.loyaltyAbilityActivated) continue
+                    // Check loyalty cost payability for negative costs
+                    val loyaltyCost = ability.cost as? AbilityCost.Loyalty
+                    if (loyaltyCost != null && loyaltyCost.change < 0) {
+                        val counters = container.get<CountersComponent>()
+                        val currentLoyalty = counters?.getCount(CounterType.LOYALTY) ?: 0
+                        if (currentLoyalty < -loyaltyCost.change) continue
+                    }
+                }
+
                 // Apply text replacement to cost filters (e.g., "Sacrifice a Goblin" → "Sacrifice a Bird")
                 val effectiveCost = if (textReplacement != null) {
                     ability.cost.applyTextReplacement(textReplacement)

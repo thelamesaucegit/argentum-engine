@@ -860,14 +860,28 @@ class StaticAbilityBuilder {
 class LoyaltyAbilityBuilder(private val loyaltyChange: Int) {
     var effect: Effect? = null
     var target: TargetRequirement? = null
+    private val namedTargets: MutableList<Pair<String, TargetRequirement>> = mutableListOf()
+
+    /**
+     * Add a named target for this loyalty ability and get an EffectTarget reference.
+     */
+    fun target(name: String, requirement: TargetRequirement): EffectTarget.BoundVariable {
+        namedTargets.add(name to requirement.withId(name))
+        return EffectTarget.BoundVariable(name)
+    }
 
     fun build(): ActivatedAbility {
         requireNotNull(effect) { "Loyalty ability must have an effect" }
+        val targetReqs = if (namedTargets.isNotEmpty()) {
+            namedTargets.map { it.second }
+        } else {
+            listOfNotNull(target)
+        }
         return ActivatedAbility(
             id = AbilityId.generate(),
             cost = AbilityCost.Loyalty(loyaltyChange),
             effect = effect!!,
-            targetRequirements = listOfNotNull(target),
+            targetRequirements = targetReqs,
             isPlaneswalkerAbility = true,
             timing = TimingRule.SorcerySpeed
         )

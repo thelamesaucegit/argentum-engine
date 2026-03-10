@@ -183,6 +183,9 @@ export interface ClientCard {
 
   /** Whether this card can be played from exile (e.g., Mind's Desire impulse draw) */
   readonly playableFromExile?: boolean
+
+  /** Original card name when this permanent is a copy (e.g., "Clever Impersonator") */
+  readonly copyOf?: string | null
 }
 
 /**

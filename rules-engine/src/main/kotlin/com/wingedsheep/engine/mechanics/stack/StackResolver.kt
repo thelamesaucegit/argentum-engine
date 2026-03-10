@@ -611,6 +611,18 @@ class StackResolver(
             newState = applyEntersWithCounters(newState, spellId, cardDef, controllerId, spellComponent.xValue)
         }
 
+        // Handle planeswalker starting loyalty (Rule 306.5b)
+        if (cardDef != null && !spellComponent.castFaceDown && cardDef.startingLoyalty != null) {
+            val loyaltyCount = cardDef.startingLoyalty!!
+            val modifiedCount = EffectExecutorUtils.applyCounterPlacementModifiers(
+                newState, spellId, CounterType.LOYALTY, loyaltyCount
+            )
+            val current = newState.getEntity(spellId)?.get<CountersComponent>() ?: CountersComponent()
+            newState = newState.updateEntity(spellId) { c ->
+                c.with(current.withAdded(CounterType.LOYALTY, modifiedCount))
+            }
+        }
+
         // Add to battlefield
         val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
         newState = newState.addToZone(battlefieldZone, spellId)

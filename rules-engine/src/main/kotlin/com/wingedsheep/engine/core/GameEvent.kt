@@ -30,7 +30,9 @@ data class ZoneChangeEvent(
     val toZone: Zone,
     val ownerId: EntityId,
     /** Last known +1/+1 counter count when leaving battlefield (for death triggers needing last known info) */
-    val lastKnownCounterCount: Int = 0
+    val lastKnownCounterCount: Int = 0,
+    /** The original card name when this permanent entered as a copy (e.g., "Clever Impersonator") */
+    val copyOfOriginalName: String? = null
 ) : GameEvent
 
 // =============================================================================

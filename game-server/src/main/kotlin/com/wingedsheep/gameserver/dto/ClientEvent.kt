@@ -105,10 +105,16 @@ sealed interface ClientEvent {
         val controllerId: EntityId,
         val enteredTapped: Boolean,
         val isYours: Boolean? = null,
-        override val description: String = when (isYours) {
-            true -> "Your $cardName entered the battlefield${if (enteredTapped) " tapped" else ""}"
-            false -> "Opponent's $cardName entered the battlefield${if (enteredTapped) " tapped" else ""}"
-            null -> "$cardName entered the battlefield${if (enteredTapped) " tapped" else ""}"
+        val copyOf: String? = null,
+        override val description: String = run {
+            val copyText = if (copyOf != null) " as a copy of $cardName" else ""
+            val tappedText = if (enteredTapped) " tapped" else ""
+            val displayName = copyOf ?: cardName
+            when (isYours) {
+                true -> "Your $displayName entered the battlefield$copyText$tappedText"
+                false -> "Opponent's $displayName entered the battlefield$copyText$tappedText"
+                null -> "$displayName entered the battlefield$copyText$tappedText"
+            }
         }
     ) : ClientEvent
 
@@ -639,7 +645,8 @@ object ClientEventTransformer {
                         cardName = event.entityName,
                         controllerId = event.ownerId,
                         enteredTapped = false, // Would need to check state
-                        isYours = isYours
+                        isYours = isYours,
+                        copyOf = event.copyOfOriginalName
                     )
                     com.wingedsheep.sdk.core.Zone.GRAVEYARD -> ClientEvent.PermanentLeft(
                         cardId = event.entityId,

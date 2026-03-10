@@ -16,6 +16,7 @@ import {
   getGemCounters,
   getDepletionCounters,
   getTrapCounters,
+  getLoyaltyCounters,
   getTokenFrameGradient,
   getTokenFrameTextColor,
   getCardFallbackColor,
@@ -712,6 +713,39 @@ export function GameCard({
         </div>
       )}
 
+      {/* Loyalty counter badge for planeswalkers */}
+      {battlefield && getLoyaltyCounters(card) > 0 && (card.power === null || card.power === undefined) && (
+        <div style={{
+          ...styles.ptOverlay,
+          backgroundColor: 'rgba(60, 60, 60, 0.9)',
+          border: '1px solid rgba(200, 160, 60, 0.6)',
+        }}>
+          <i className={`ms ms-${counterManaClass.LOYALTY}`} style={{ fontSize: responsive.isMobile ? 8 : 10, color: '#e0c060', marginRight: 2 }} />
+          <span style={{
+            color: '#e0c060',
+            fontWeight: 700,
+            fontSize: responsive.isMobile ? 10 : 12,
+          }}>
+            {getLoyaltyCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Loyalty counter badge for animated planeswalkers (has both P/T and loyalty) */}
+      {battlefield && getLoyaltyCounters(card) > 0 && card.power !== null && card.power !== undefined && (
+        <div style={{
+          ...styles.chargeCounterBadge,
+          backgroundColor: 'rgba(60, 60, 60, 0.9)',
+          border: '1px solid rgba(200, 160, 60, 0.6)',
+          color: '#e0c060',
+        }}>
+          <i className={`ms ms-${counterManaClass.LOYALTY}`} style={{ fontSize: responsive.isMobile ? 8 : 10 }} />
+          <span style={{ fontWeight: 700 }}>
+            {getLoyaltyCounters(card)}
+          </span>
+        </div>
+      )}
+
       {/* Counter badge for creatures with +1/+1 or -1/-1 counters */}
       {battlefield && hasStatCounters(card) && (
         <div style={{
@@ -852,6 +886,26 @@ export function GameCard({
           zIndex: 5,
         }}>
           {[card.chosenColor, card.chosenCreatureType].filter(Boolean).join(' ')}
+        </div>
+      )}
+
+      {/* Copy indicator badge (e.g., Clever Impersonator copying Wind Drake) */}
+      {!faceDown && card.copyOf && (
+        <div style={{
+          position: 'absolute',
+          top: 4,
+          left: 4,
+          backgroundColor: 'rgba(40, 40, 80, 0.9)',
+          color: '#a0b0e0',
+          fontSize: responsive.isMobile ? 7 : 9,
+          padding: '1px 4px',
+          borderRadius: 3,
+          border: '1px solid rgba(100, 120, 200, 0.6)',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}>
+          {card.copyOf}
         </div>
       )}
 

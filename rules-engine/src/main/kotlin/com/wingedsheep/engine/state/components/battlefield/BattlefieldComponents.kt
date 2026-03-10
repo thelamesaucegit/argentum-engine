@@ -123,17 +123,21 @@ data class TimestampComponent(
 
 /**
  * Tracks which activated abilities have been activated this turn.
- * Used for "Activate only once each turn" restrictions.
+ * Used for "Activate only once each turn" restrictions and planeswalker loyalty abilities (Rule 606.3).
  * Cleared at end of turn by TurnManager.
  */
 @Serializable
 data class AbilityActivatedThisTurnComponent(
-    val abilityIds: Set<AbilityId> = emptySet()
+    val abilityIds: Set<AbilityId> = emptySet(),
+    val loyaltyAbilityActivated: Boolean = false
 ) : Component {
     fun withActivated(abilityId: AbilityId): AbilityActivatedThisTurnComponent =
         copy(abilityIds = abilityIds + abilityId)
 
     fun hasActivated(abilityId: AbilityId): Boolean = abilityId in abilityIds
+
+    fun withLoyaltyActivated(): AbilityActivatedThisTurnComponent =
+        copy(loyaltyAbilityActivated = true)
 }
 
 /**

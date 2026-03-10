@@ -191,6 +191,9 @@ object KhansOfTarkirSet {
         ValleyDasher,
         WarNameAspirant,
 
+        // Red planeswalkers
+        SarkhanTheDragonspeaker,
+
         // Red enchantments
         Goblinslide,
 

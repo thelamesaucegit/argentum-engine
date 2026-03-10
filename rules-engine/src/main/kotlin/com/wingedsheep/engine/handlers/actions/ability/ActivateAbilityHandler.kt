@@ -141,6 +141,11 @@ class ActivateAbilityHandler(
             if (!turnManager.canPlaySorcerySpeed(state, action.playerId)) {
                 return "Loyalty abilities can only be activated at sorcery speed"
             }
+            // Rule 606.3: Only one loyalty ability per planeswalker per turn
+            val tracker = container.get<AbilityActivatedThisTurnComponent>()
+            if (tracker != null && tracker.loyaltyAbilityActivated) {
+                return "Only one loyalty ability can be activated per planeswalker each turn"
+            }
         }
 
         // Check timing for sorcery-speed abilities ("Activate only as a sorcery")
@@ -372,6 +377,16 @@ class ActivateAbilityHandler(
                 currentState = currentState.updateEntity(action.sourceId) { c ->
                     val tracker = c.get<AbilityActivatedThisTurnComponent>() ?: AbilityActivatedThisTurnComponent()
                     c.with(tracker.withActivated(ability.id))
+                }
+            }
+        }
+
+        // Track planeswalker loyalty ability activation (Rule 606.3: once per planeswalker per turn)
+        if (ability.isPlaneswalkerAbility) {
+            if (currentState.getEntity(action.sourceId) != null) {
+                currentState = currentState.updateEntity(action.sourceId) { c ->
+                    val tracker = c.get<AbilityActivatedThisTurnComponent>() ?: AbilityActivatedThisTurnComponent()
+                    c.with(tracker.withLoyaltyActivated())
                 }
             }
         }

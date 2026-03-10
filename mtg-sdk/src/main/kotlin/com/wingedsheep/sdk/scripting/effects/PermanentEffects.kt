@@ -881,6 +881,51 @@ data class AnimateLandEffect(
 }
 
 /**
+ * Target permanent becomes a creature with specified characteristics until end of turn.
+ * More general than AnimateLandEffect — can also remove types (e.g., Planeswalker),
+ * grant keywords, set subtypes, and change color.
+ *
+ * Used for Sarkhan, the Dragonspeaker's +1: "becomes a legendary 4/4 red Dragon creature
+ * with flying, indestructible, and haste."
+ *
+ * Creates floating effects across multiple layers:
+ * - Layer.TYPE: AddType("CREATURE"), RemoveType for each removeType, SetCreatureSubtypes
+ * - Layer.COLOR: ChangeColor if colors specified
+ * - Layer.ABILITY: GrantKeyword for each keyword
+ * - Layer.POWER_TOUGHNESS + Sublayer.SET_VALUES: SetPowerToughness
+ *
+ * @property target The permanent to animate
+ * @property power The base power to set
+ * @property toughness The base toughness to set
+ * @property keywords Keywords to grant (e.g., flying, indestructible, haste)
+ * @property creatureTypes Creature subtypes to set (e.g., "Dragon")
+ * @property removeTypes Types to remove (e.g., "PLANESWALKER")
+ * @property colors Colors to set (null = keep existing)
+ * @property duration How long the effect lasts
+ */
+@SerialName("BecomeCreature")
+@Serializable
+data class BecomeCreatureEffect(
+    val target: EffectTarget = EffectTarget.Self,
+    val power: Int,
+    val toughness: Int,
+    val keywords: Set<Keyword> = emptySet(),
+    val creatureTypes: Set<String> = emptySet(),
+    val removeTypes: Set<String> = emptySet(),
+    val colors: Set<String>? = null,
+    val duration: Duration = Duration.EndOfTurn
+) : Effect {
+    override val description: String = buildString {
+        append("${target.description} becomes a $power/$toughness creature")
+        if (creatureTypes.isNotEmpty()) append(" ${creatureTypes.joinToString("/")}")
+        if (keywords.isNotEmpty()) append(" with ${keywords.joinToString(", ") { it.name.lowercase() }}")
+        if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Mark a permanent so that if it would leave the battlefield, it is exiled instead.
  * Used by Kheru Lich Lord, Whip of Erebos, Sneak Attack, and similar reanimation effects.
  *

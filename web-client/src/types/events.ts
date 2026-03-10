@@ -104,6 +104,7 @@ export interface PermanentEnteredEvent {
   readonly cardName: string
   readonly controllerId: EntityId
   readonly enteredTapped: boolean
+  readonly copyOf?: string
   readonly description: string
 }
 

@@ -260,6 +260,11 @@ class ModalAndCloneContinuationResumer(
         // Get the (possibly updated) card component for event names
         val finalCardComponent = newState.getEntity(spellId)?.get<CardComponent>() ?: originalCardComponent
 
+        // Track whether a copy was made (original name differs from final name)
+        val copyOfOriginalName = if (selectedCreatureId != null && finalCardComponent.name != originalCardComponent.name) {
+            originalCardComponent.name
+        } else null
+
         // Complete the permanent entry using the shared helper
         newState = ctx.stackResolver.enterPermanentOnBattlefield(
             newState, spellId, spellComponent, finalCardComponent, copiedCardDef
@@ -272,7 +277,8 @@ class ModalAndCloneContinuationResumer(
                 finalCardComponent.name,
                 null,
                 Zone.BATTLEFIELD,
-                ownerId
+                ownerId,
+                copyOfOriginalName = copyOfOriginalName
             )
         )
 

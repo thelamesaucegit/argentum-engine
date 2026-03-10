@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
+import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
 import com.wingedsheep.sdk.scripting.effects.SetBasePowerEffect
 
 import com.wingedsheep.sdk.scripting.effects.ChooseColorAndGrantProtectionToGroupEffect
@@ -896,6 +897,21 @@ object Effects {
         toughness: Int = 1,
         duration: Duration = Duration.EndOfTurn
     ): Effect = AnimateLandEffect(target, power, toughness, duration)
+
+    /**
+     * Target permanent becomes a creature with specified characteristics.
+     * More general than AnimateLand — can remove types, grant keywords, set subtypes, change color.
+     */
+    fun BecomeCreature(
+        target: EffectTarget = EffectTarget.Self,
+        power: Int,
+        toughness: Int,
+        keywords: Set<Keyword> = emptySet(),
+        creatureTypes: Set<String> = emptySet(),
+        removeTypes: Set<String> = emptySet(),
+        colors: Set<String>? = null,
+        duration: Duration = Duration.EndOfTurn
+    ): Effect = BecomeCreatureEffect(target, power, toughness, keywords, creatureTypes, removeTypes, colors, duration)
 
     // =========================================================================
     // Pipeline Targeting

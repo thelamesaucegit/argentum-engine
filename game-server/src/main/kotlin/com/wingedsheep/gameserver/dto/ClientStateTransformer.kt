@@ -765,6 +765,9 @@ class ClientStateTransformer(
             chosenColor = chosenColor,
             sacrificedCreatureTypes = sacrificedCreatureTypes,
             playableFromExile = playableFromExile,
+            copyOf = container.get<com.wingedsheep.engine.state.components.identity.CopyOfComponent>()?.let { copyComp ->
+                cardRegistry.getCard(copyComp.originalCardDefinitionId)?.name
+            },
             stackText = if (zoneKey.zoneType == Zone.STACK && spellOnStack != null && cardDef != null) {
                 when {
                     spellOnStack.castFaceDown -> "Cast as a face-down 2/2 creature"

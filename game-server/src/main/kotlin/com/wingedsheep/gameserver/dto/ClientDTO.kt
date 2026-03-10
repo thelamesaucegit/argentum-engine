@@ -203,7 +203,10 @@ data class ClientCard(
     val revealedImageUri: String? = null,
 
     /** Whether this card can be played from exile (e.g., Mind's Desire impulse draw) */
-    val playableFromExile: Boolean = false
+    val playableFromExile: Boolean = false,
+
+    /** Original card name when this permanent is a copy (e.g., "Clever Impersonator" copying a Wind Drake) */
+    val copyOf: String? = null
 )
 
 /**
