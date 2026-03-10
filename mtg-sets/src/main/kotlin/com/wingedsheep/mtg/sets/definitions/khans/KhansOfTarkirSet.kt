@@ -294,6 +294,7 @@ object KhansOfTarkirSet {
         TombOfTheSpiritDragon,
         TranquilCove,
         WindScarredCrag,
+        WindsweptHeath,
         WoodedFoothills,
 
         // Basic lands

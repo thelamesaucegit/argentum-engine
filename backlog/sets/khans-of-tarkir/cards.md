@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 238 / 249
+**Implemented:** 239 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -13,7 +13,7 @@
 | Green      | 32    |
 | Multicolor | 50    |
 | Colorless  | 12    |
-| Land       | 20    |
+| Land       | 21    |
 
 ---
 
@@ -259,7 +259,7 @@
 - [x] Whirlwind Adept
 - [x] Wind-Scarred Crag
 - [x] Windstorm
-- [ ] Windswept Heath
+- [x] Windswept Heath
 - [x] Wingmate Roc
 - [x] Winterflame
 - [x] Witness of the Ages
