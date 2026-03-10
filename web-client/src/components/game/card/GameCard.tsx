@@ -412,17 +412,12 @@ export function GameCard({
         }
       }
 
-      // Check if dropped on the opponent's life display (clear planeswalker target → default to player)
+      // Check if dropped on the opponent's life display → set player as attack target
       const lifeEl = elementAtPoint.closest('[data-life-id]')
       if (lifeEl) {
-        const { combatState: cs } = useGameStore.getState()
-        if (cs && cs.attackerTargets[draggingAttackerId]) {
-          // Clear the planeswalker target so it defaults to the player
-          const newTargets = { ...cs.attackerTargets }
-          delete newTargets[draggingAttackerId]
-          useGameStore.setState({
-            combatState: { ...cs, attackerTargets: newTargets },
-          })
+        const playerId = lifeEl.getAttribute('data-life-id')
+        if (playerId) {
+          setAttackTarget(draggingAttackerId, playerId as EntityId)
         }
       }
     }

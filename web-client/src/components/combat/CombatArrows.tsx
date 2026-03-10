@@ -421,14 +421,15 @@ export function CombatArrows() {
         }
       }
 
-      // Compute local attacker→planeswalker arrows during declare attackers phase
+      // Compute local attacker→target arrows during declare attackers phase
       if (combatState?.mode === 'declareAttackers' && combatState.attackerTargets) {
         for (const [attackerIdStr, targetId] of Object.entries(combatState.attackerTargets)) {
           const attackerId = attackerIdStr as EntityId
           // Only show if this attacker is still selected
           if (!combatState.selectedAttackers.includes(attackerId)) continue
           const attackerPos = getCardCenter(attackerId)
-          const targetPos = getCardCenter(targetId)
+          // Target can be a planeswalker (card) or a player (life display)
+          const targetPos = getCardCenter(targetId) ?? getPlayerLifeCenter(targetId)
           if (attackerPos && targetPos) {
             newAttackerArrows.push({
               start: attackerPos,
