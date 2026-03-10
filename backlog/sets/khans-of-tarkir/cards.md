@@ -2,7 +2,7 @@
 
 **Set Size:** 269 cards (249 unique card names + basic land variants)
 **Release Date:** September 26, 2014
-**Implemented:** 237 / 249
+**Implemented:** 238 / 249
 
 | Color      | Count |
 |------------|-------|
@@ -13,7 +13,7 @@
 | Green      | 32    |
 | Multicolor | 50    |
 | Colorless  | 12    |
-| Land       | 19    |
+| Land       | 20    |
 
 ---
 
@@ -165,7 +165,7 @@
 - [x] Opulent Palace
 - [x] Pearl Lake Ancient
 - [x] Pine Walker
-- [ ] Polluted Delta
+- [x] Polluted Delta
 - [x] Ponyback Brigade
 - [x] Quiet Contemplation
 - [x] Raiders' Spoils

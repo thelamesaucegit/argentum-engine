@@ -282,6 +282,7 @@ object KhansOfTarkirSet {
         SandsteppeCitadel,
         BloodstainedMire,
         FloodedStrand,
+        PollutedDelta,
         BloodfellCaves,
         BlossomingSands,
         DismalBackwater,
