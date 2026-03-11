@@ -68,6 +68,8 @@ export const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
     zIndex: 100,
+    minWidth: 140,
+    textAlign: 'center' as const,
   },
   floatingUndoButton: {
     position: 'fixed',
@@ -80,6 +82,8 @@ export const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
     zIndex: 100,
+    minWidth: 140,
+    textAlign: 'center' as const,
   },
   combatButtonContainer: {
     position: 'fixed',
@@ -98,6 +102,8 @@ export const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
     fontSize: 14,
+    minWidth: 140,
+    textAlign: 'center' as const,
   },
   combatButtonPrimary: {
     backgroundColor: '#c62828',

@@ -343,7 +343,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
               style={{
                 ...styles.floatingUndoButton,
                 position: 'static',
-                padding: responsive.isMobile ? '10px 16px' : '12px 20px',
+                padding: responsive.isMobile ? '10px 20px' : '12px 24px',
                 fontSize: responsive.fontSize.normal,
               }}
             >
@@ -361,7 +361,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
               ...styles.floatingPassButton,
               ...getPassButtonStyle(),
               position: 'static',
-              padding: responsive.isMobile ? '10px 20px' : '12px 28px',
+              padding: responsive.isMobile ? '10px 20px' : '12px 24px',
               fontSize: responsive.fontSize.normal,
               border: `2px solid ${getPassButtonStyle().borderColor}`,
               transition: 'background-color 0.2s, border-color 0.2s',
