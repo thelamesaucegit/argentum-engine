@@ -258,6 +258,18 @@ sealed interface ClientMessage {
     // =========================================================================
 
     /**
+     * Update tentative attacker targets during declare attackers phase.
+     * Sent in real-time as the attacking player assigns targets.
+     */
+    @Serializable
+    @SerialName("updateAttackerTargets")
+    data class UpdateAttackerTargets(
+        /** Map of attacker creature ID to target entity ID (player or planeswalker) */
+        val selectedAttackers: List<EntityId>,
+        val attackerTargets: Map<EntityId, EntityId>
+    ) : ClientMessage
+
+    /**
      * Update tentative blocker assignments during declare blockers phase.
      * Sent in real-time as the defending player assigns blockers.
      */

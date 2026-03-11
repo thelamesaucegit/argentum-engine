@@ -349,9 +349,11 @@ data class ClientAttacker(
 @Serializable
 sealed interface ClientCombatTarget {
     @Serializable
+    @kotlinx.serialization.SerialName("Player")
     data class Player(val playerId: EntityId) : ClientCombatTarget
 
     @Serializable
+    @kotlinx.serialization.SerialName("Planeswalker")
     data class Planeswalker(val permanentId: EntityId) : ClientCombatTarget
 }
 

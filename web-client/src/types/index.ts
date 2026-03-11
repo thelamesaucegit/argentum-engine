@@ -254,7 +254,9 @@ export type {
   SpectateGameMessage,
   StopSpectatingMessage,
   // Combat UI types
+  OpponentAttackerTargetsMessage,
   OpponentBlockerAssignmentsMessage,
+  UpdateAttackerTargetsMessage,
   UpdateBlockerAssignmentsMessage,
   // Disconnect types
   OpponentDisconnectedMessage,
@@ -350,6 +352,7 @@ export {
   isSpectatingStartedMessage,
   isSpectatingStoppedMessage,
   // Combat UI factories
+  createUpdateAttackerTargetsMessage,
   createUpdateBlockerAssignmentsMessage,
   // Game Settings factories
   createSetFullControlMessage,

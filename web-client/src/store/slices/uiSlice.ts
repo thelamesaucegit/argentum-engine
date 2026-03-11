@@ -24,6 +24,7 @@ import type {
 import {
   entityId,
   createSubmitActionMessage,
+  createUpdateAttackerTargetsMessage,
   createUpdateBlockerAssignmentsMessage,
 } from '../../types'
 import { getWebSocket } from './shared'
@@ -54,6 +55,7 @@ export interface UISliceState {
     source: string | null
     isYourReveal: boolean
   } | null
+  opponentAttackerTargets: { selectedAttackers: readonly EntityId[]; attackerTargets: Record<EntityId, EntityId> } | null
   opponentBlockerAssignments: Record<EntityId, EntityId[]> | null
   drawAnimations: readonly DrawAnimation[]
   damageAnimations: readonly DamageAnimation[]
@@ -157,6 +159,7 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
   draggingCardId: null,
   revealedHandCardIds: null,
   revealedCardsInfo: null,
+  opponentAttackerTargets: null,
   opponentBlockerAssignments: null,
   drawAnimations: [],
   damageAnimations: [],
@@ -463,6 +466,8 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
         delete newTargets[creatureId]
       }
 
+      getWebSocket()?.send(createUpdateAttackerTargetsMessage(newAttackers, newTargets))
+
       return {
         combatState: {
           ...state.combatState,
@@ -479,13 +484,20 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
         return state
       }
 
+      const newTargets = {
+        ...state.combatState.attackerTargets,
+        [attackerId]: targetId,
+      }
+
+      getWebSocket()?.send(createUpdateAttackerTargetsMessage(
+        [...state.combatState.selectedAttackers],
+        newTargets,
+      ))
+
       return {
         combatState: {
           ...state.combatState,
-          attackerTargets: {
-            ...state.combatState.attackerTargets,
-            [attackerId]: targetId,
-          },
+          attackerTargets: newTargets,
         },
       }
     })

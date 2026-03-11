@@ -68,6 +68,7 @@ class GameWebSocketHandler(
                 is ClientMessage.KeepHand,
                 is ClientMessage.Mulligan,
                 is ClientMessage.ChooseBottomCards,
+                is ClientMessage.UpdateAttackerTargets,
                 is ClientMessage.UpdateBlockerAssignments,
                 is ClientMessage.SetFullControl,
                 is ClientMessage.SetPriorityMode,

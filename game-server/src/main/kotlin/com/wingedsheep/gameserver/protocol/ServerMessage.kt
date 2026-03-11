@@ -838,6 +838,19 @@ sealed interface ServerMessage {
     // =========================================================================
 
     /**
+     * Opponent's tentative attacker targets during declare attackers phase.
+     * Sent to the defending player in real-time.
+     */
+    @Serializable
+    @SerialName("opponentAttackerTargets")
+    data class OpponentAttackerTargets(
+        /** List of selected attacker creature IDs */
+        val selectedAttackers: List<EntityId>,
+        /** Map of attacker creature ID to target entity ID (player or planeswalker) */
+        val attackerTargets: Map<EntityId, EntityId>
+    ) : ServerMessage
+
+    /**
      * Opponent's tentative blocker assignments during declare blockers phase.
      * Sent to the attacking player in real-time.
      */

@@ -260,6 +260,7 @@ function processStateUpdate(
     revealedCardsInfo: cardsRevealedEvent
       ? { cardIds: cardsRevealedEvent.cardIds, cardNames: cardsRevealedEvent.cardNames, imageUris: cardsRevealedEvent.imageUris, source: cardsRevealedEvent.source, isYourReveal: cardsRevealedEvent.revealingPlayerId === playerId }
       : state.revealedCardsInfo,
+    opponentAttackerTargets: resolvedState.combat ? null : state.opponentAttackerTargets,
     opponentBlockerAssignments: (resolvedState.combat?.blockers?.length || !resolvedState.combat) ? null : state.opponentBlockerAssignments,
   }))
 
@@ -1029,6 +1030,7 @@ export function createMessageHandlers(set: SetState, get: GetState): MessageHand
           combat: msg.combat,
           decisionStatus: msg.decisionStatus ?? null,
         },
+        opponentAttackerTargets: msg.combat ? null : state.opponentAttackerTargets,
         opponentBlockerAssignments: (msg.combat?.attackers?.some(a => a.blockedBy.length > 0) || !msg.combat) ? null : state.opponentBlockerAssignments,
       }))
     },
@@ -1060,6 +1062,10 @@ export function createMessageHandlers(set: SetState, get: GetState): MessageHand
     // ========================================================================
     // Combat UI handlers
     // ========================================================================
+    onOpponentAttackerTargets: (msg) => {
+      set({ opponentAttackerTargets: { selectedAttackers: msg.selectedAttackers, attackerTargets: msg.attackerTargets } })
+    },
+
     onOpponentBlockerAssignments: (msg) => {
       set({ opponentBlockerAssignments: msg.assignments })
     },

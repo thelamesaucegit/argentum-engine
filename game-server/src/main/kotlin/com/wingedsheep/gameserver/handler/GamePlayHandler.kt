@@ -63,6 +63,7 @@ class GamePlayHandler(
             is ClientMessage.KeepHand -> handleKeepHand(session)
             is ClientMessage.Mulligan -> handleMulligan(session)
             is ClientMessage.ChooseBottomCards -> handleChooseBottomCards(session, message)
+            is ClientMessage.UpdateAttackerTargets -> handleUpdateAttackerTargets(session, message)
             is ClientMessage.UpdateBlockerAssignments -> handleUpdateBlockerAssignments(session, message)
             is ClientMessage.SetFullControl -> handleSetFullControl(session, message)
             is ClientMessage.SetPriorityMode -> handleSetPriorityMode(session, message)
@@ -581,6 +582,34 @@ class GamePlayHandler(
             return null
         }
         return gameSession
+    }
+
+    private fun handleUpdateAttackerTargets(session: WebSocketSession, message: ClientMessage.UpdateAttackerTargets) {
+        val playerSession = sessionRegistry.getPlayerSession(session.id)
+        if (playerSession == null) {
+            sender.sendError(session, ErrorCode.NOT_CONNECTED, "Not connected")
+            return
+        }
+
+        val gameSession = getGameSession(session, playerSession) ?: return
+
+        // Forward the attacker targets to the opponent
+        val opponent = if (gameSession.player1?.playerId == playerSession.playerId) {
+            gameSession.player2
+        } else {
+            gameSession.player1
+        }
+
+        val serverMessage = ServerMessage.OpponentAttackerTargets(message.selectedAttackers, message.attackerTargets)
+
+        if (opponent != null) {
+            sender.send(opponent.webSocketSession, serverMessage)
+        }
+
+        // Also forward to all spectators so they can see attacker arrows in real-time
+        for (spectator in gameSession.getSpectators()) {
+            sender.send(spectator.webSocketSession, serverMessage)
+        }
     }
 
     private fun handleUpdateBlockerAssignments(session: WebSocketSession, message: ClientMessage.UpdateBlockerAssignments) {

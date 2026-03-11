@@ -220,6 +220,7 @@ export function CombatArrows() {
   const gameStateCombat = gameState?.combat
   const currentStep = gameState?.currentStep
   const cards = gameState?.cards
+  const opponentAttackerTargets = useGameStore((state) => state.opponentAttackerTargets)
   const opponentBlockerAssignments = useGameStore((state) => state.opponentBlockerAssignments)
   const draggingBlockerId = useGameStore((state) => state.draggingBlockerId)
   const draggingAttackerId = useGameStore((state) => state.draggingAttackerId)
@@ -382,20 +383,11 @@ export function CombatArrows() {
 
       setArrows(newArrows)
 
-      // Compute attacker arrows (for spectators and during combat)
+      // Compute attacker arrows (visible to all players and spectators during combat)
+      // gameStateCombat is only populated by the server during combat phase, so no extra phase guard needed
       const newAttackerArrows: AttackerArrowData[] = []
-      if (gameStateCombat && gameStateCombat.attackers.length > 0 && isInCombatPhase) {
-        // Build set of blocked attacker IDs for quick lookup
-        const blockedAttackerIds = new Set(
-          gameStateCombat.blockers.map(b => b.blockingAttacker)
-        )
-
+      if (gameStateCombat && gameStateCombat.attackers.length > 0) {
         for (const attacker of gameStateCombat.attackers) {
-          // Only show attacker arrows for unblocked attackers
-          if (blockedAttackerIds.has(attacker.creatureId)) {
-            continue
-          }
-
           // Check if attacker is still on battlefield
           const attackerCard = cards?.[attacker.creatureId]
           if (attackerCard?.zone?.zoneType !== ZoneType.BATTLEFIELD) {
@@ -439,6 +431,23 @@ export function CombatArrows() {
           }
         }
       }
+
+      // Compute opponent's real-time attacker target arrows (for defending player and spectators)
+      if (opponentAttackerTargets && opponentAttackerTargets.selectedAttackers.length > 0 && !gameStateCombat) {
+        for (const [attackerIdStr, targetId] of Object.entries(opponentAttackerTargets.attackerTargets)) {
+          const attackerId = attackerIdStr as EntityId
+          if (!opponentAttackerTargets.selectedAttackers.includes(attackerId)) continue
+          const attackerPos = getCardCenter(attackerId)
+          const targetPos = getCardCenter(targetId) ?? getPlayerLifeCenter(targetId)
+          if (attackerPos && targetPos) {
+            newAttackerArrows.push({
+              start: attackerPos,
+              end: targetPos,
+              attackerId,
+            })
+          }
+        }
+      }
       setAttackerArrows(newAttackerArrows)
 
       // Compute attack direction indicators (red triangles)
@@ -456,7 +465,18 @@ export function CombatArrows() {
             newIndicators.push({ x: pos.x, y: pos.y, direction, attackerId })
           }
         }
-      } else if (gameStateCombat && gameStateCombat.attackers.length > 0 && isInCombatPhase) {
+      } else if (opponentAttackerTargets && opponentAttackerTargets.selectedAttackers.length > 0 && !gameStateCombat) {
+        // Opponent's real-time attacker selections (for defending player and spectators)
+        for (const attackerId of opponentAttackerTargets.selectedAttackers) {
+          if (opponentAttackerTargets.attackerTargets[attackerId]) continue
+          const edge = getCardEdgeCenter(attackerId)
+          if (edge) {
+            const direction = edge.centerY > viewportCenterY ? 'up' : 'down'
+            const pos = direction === 'up' ? edge.topCenter : edge.bottomCenter
+            newIndicators.push({ x: pos.x, y: pos.y, direction, attackerId })
+          }
+        }
+      } else if (gameStateCombat && gameStateCombat.attackers.length > 0) {
         // During other combat phases: show for all confirmed attackers
         for (const attacker of gameStateCombat.attackers) {
           const attackerCard = cards?.[attacker.creatureId]
@@ -477,7 +497,7 @@ export function CombatArrows() {
     updateArrows()
     const interval = setInterval(updateArrows, 100)
     return () => clearInterval(interval)
-  }, [combatState, gameStateCombat, opponentBlockerAssignments, isDeclaringBlockers, isInCombatPhase, cards, isSpectating, isSelectingDamageOrder])
+  }, [combatState, gameStateCombat, opponentAttackerTargets, opponentBlockerAssignments, isDeclaringBlockers, isInCombatPhase, cards, isSpectating, isSelectingDamageOrder])
 
   // Don't render during full-screen overlay decisions
   if (hasOverlayDecision) {
@@ -488,9 +508,10 @@ export function CombatArrows() {
   const hasBlockers = isDeclaringBlockers ||
     (opponentBlockerAssignments && Object.keys(opponentBlockerAssignments).length > 0 && isInCombatPhase) ||
     (gameStateCombat && gameStateCombat.blockers.length > 0 && isInCombatPhase)
-  const hasAttackers = gameStateCombat && gameStateCombat.attackers.length > 0 && isInCombatPhase
+  const hasAttackers = gameStateCombat && gameStateCombat.attackers.length > 0
   const hasSelectedAttackers = combatState?.mode === 'declareAttackers' && combatState.selectedAttackers.length > 0
-  if (!hasBlockers && !hasAttackers && !hasSelectedAttackers && !draggingBlockerId && !draggingAttackerId) {
+  const hasOpponentAttackers = opponentAttackerTargets && opponentAttackerTargets.selectedAttackers.length > 0
+  if (!hasBlockers && !hasAttackers && !hasSelectedAttackers && !hasOpponentAttackers && !draggingBlockerId && !draggingAttackerId) {
     return null
   }
 

@@ -39,6 +39,7 @@ import type {
   SpectatorStateUpdateMessage,
   SpectatingStartedMessage,
   SpectatingStoppedMessage,
+  OpponentAttackerTargetsMessage,
   OpponentBlockerAssignmentsMessage,
   OpponentDisconnectedMessage,
   OpponentReconnectedMessage,
@@ -98,6 +99,7 @@ export interface MessageHandlers {
   onSpectatingStarted: (message: SpectatingStartedMessage) => void
   onSpectatingStopped: (message: SpectatingStoppedMessage) => void
   // Combat UI handlers
+  onOpponentAttackerTargets: (message: OpponentAttackerTargetsMessage) => void
   onOpponentBlockerAssignments: (message: OpponentBlockerAssignmentsMessage) => void
   // Disconnect handlers
   onOpponentDisconnected: (message: OpponentDisconnectedMessage) => void
@@ -239,6 +241,9 @@ export function handleServerMessage(message: ServerMessage, handlers: MessageHan
       handlers.onSpectatingStopped(message)
       break
     // Combat UI messages
+    case 'opponentAttackerTargets':
+      handlers.onOpponentAttackerTargets(message)
+      break
     case 'opponentBlockerAssignments':
       handlers.onOpponentBlockerAssignments(message)
       break
@@ -435,6 +440,10 @@ export function createLoggingHandlers(handlers: MessageHandlers): MessageHandler
       handlers.onSpectatingStopped(msg)
     },
     // Combat UI handlers
+    onOpponentAttackerTargets: (msg) => {
+      console.log('[Server] Opponent attacker targets:', msg)
+      handlers.onOpponentAttackerTargets(msg)
+    },
     onOpponentBlockerAssignments: (msg) => {
       console.log('[Server] Opponent blocker assignments:', msg)
       handlers.onOpponentBlockerAssignments(msg)

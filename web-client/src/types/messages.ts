@@ -61,6 +61,7 @@ export type ServerMessage =
   | SpectatingStartedMessage
   | SpectatingStoppedMessage
   // Combat UI Messages
+  | OpponentAttackerTargetsMessage
   | OpponentBlockerAssignmentsMessage
   // Disconnect Messages
   | OpponentDisconnectedMessage
@@ -279,6 +280,7 @@ export interface ChooseTargetsDecision extends PendingDecisionBase {
   readonly type: 'ChooseTargetsDecision'
   readonly targetRequirements: readonly TargetRequirementInfo[]
   readonly legalTargets: Record<number, readonly EntityId[]>
+  readonly canCancel?: boolean
 }
 
 export interface TargetRequirementInfo {
@@ -1084,6 +1086,18 @@ export interface SpectatingStoppedMessage {
 // ============================================================================
 
 /**
+ * Opponent's tentative attacker targets during declare attackers phase.
+ * Sent to the defending player in real-time.
+ */
+export interface OpponentAttackerTargetsMessage {
+  readonly type: 'opponentAttackerTargets'
+  /** List of selected attacker creature IDs */
+  readonly selectedAttackers: readonly EntityId[]
+  /** Map of attacker creature ID to target entity ID (player or planeswalker) */
+  readonly attackerTargets: Record<EntityId, EntityId>
+}
+
+/**
  * Opponent's tentative blocker assignments during declare blockers phase.
  * Sent to the attacking player in real-time.
  */
@@ -1170,6 +1184,7 @@ export type ClientMessage =
   | AddDisconnectTimeMessage
   | KickPlayerMessage
   // Combat UI Messages
+  | UpdateAttackerTargetsMessage
   | UpdateBlockerAssignmentsMessage
   // Game Settings Messages
   | SetFullControlMessage
@@ -1500,6 +1515,16 @@ export interface KickPlayerMessage {
 // Combat UI Client Messages
 
 /**
+ * Update tentative attacker targets during declare attackers phase.
+ * Sent in real-time as the attacking player assigns targets.
+ */
+export interface UpdateAttackerTargetsMessage {
+  readonly type: 'updateAttackerTargets'
+  readonly selectedAttackers: readonly EntityId[]
+  readonly attackerTargets: Record<EntityId, EntityId>
+}
+
+/**
  * Update tentative blocker assignments during declare blockers phase.
  * Sent in real-time as the defending player assigns blockers.
  */
@@ -1654,6 +1679,13 @@ export function createAddDisconnectTimeMessage(playerId: string): AddDisconnectT
 
 export function createKickPlayerMessage(playerId: string): KickPlayerMessage {
   return { type: 'kickPlayer', playerId }
+}
+
+export function createUpdateAttackerTargetsMessage(
+  selectedAttackers: readonly EntityId[],
+  attackerTargets: Record<EntityId, EntityId>
+): UpdateAttackerTargetsMessage {
+  return { type: 'updateAttackerTargets', selectedAttackers, attackerTargets }
 }
 
 export function createUpdateBlockerAssignmentsMessage(
