@@ -26,6 +26,7 @@ object DominariaSet {
         CastDown,
         KeldonRaider,
         LlanowarElves,
+        MammothSpider,
         MesaUnicorn,
         Opt,
         RunAmok,
