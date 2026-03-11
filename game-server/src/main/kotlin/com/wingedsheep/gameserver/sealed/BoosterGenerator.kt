@@ -7,6 +7,7 @@ import com.wingedsheep.mtg.sets.definitions.onslaught.OnslaughtSet
 import com.wingedsheep.mtg.sets.definitions.legions.LegionsSet
 import com.wingedsheep.mtg.sets.definitions.scourge.ScourgeSet
 import com.wingedsheep.mtg.sets.definitions.khans.KhansOfTarkirSet
+import com.wingedsheep.mtg.sets.definitions.dominaria.DominariaSet
 import kotlin.random.Random
 
 /**
@@ -31,7 +32,8 @@ class BoosterGenerator(
         val basicLands: List<CardDefinition>,
         val incomplete: Boolean = false,
         val block: String? = null,
-        val totalSetSize: Int? = null
+        val totalSetSize: Int? = null,
+        val guaranteedLegendary: Boolean = false
     )
 
     companion object {
@@ -91,6 +93,18 @@ class BoosterGenerator(
             incomplete = false,
             totalSetSize = 249
         )
+
+        /**
+         * Dominaria set configuration.
+         */
+        val dominariaSetConfig = SetConfig(
+            setCode = DominariaSet.SET_CODE,
+            setName = DominariaSet.SET_NAME,
+            cards = DominariaSet.allCards,
+            basicLands = PortalSet.basicLands,  // Dominaria has no basic lands implemented; use Portal lands
+            incomplete = true,
+            guaranteedLegendary = true
+        )
     }
 
     /**
@@ -109,7 +123,11 @@ class BoosterGenerator(
         val setConfig = availableSets[setCode]
             ?: throw IllegalArgumentException("Unknown set code: $setCode")
 
-        return generateBoosterFromCards(setConfig.cards)
+        return if (setConfig.guaranteedLegendary) {
+            generateDominariaBooster(setConfig.cards)
+        } else {
+            generateBoosterFromCards(setConfig.cards)
+        }
     }
 
     /**
@@ -290,6 +308,75 @@ class BoosterGenerator(
         }
         // Use basic lands from the first set
         return getBasicLands(setCodes.first())
+    }
+
+    /**
+     * Dominaria-style booster: guaranteed legendary creature in every pack.
+     * The legendary replaces a card of its rarity, so the pack is still 15 cards:
+     * - If legendary is uncommon: 11C + 2U + 1 legendary U + 1R = 15
+     * - If legendary is rare/mythic: 11C + 3U + 1 legendary R/M = 15
+     * Falls back to standard generation if no legendary creatures are available.
+     */
+    private fun generateDominariaBooster(allCards: List<CardDefinition>): List<CardDefinition> {
+        val boosterPool = allCards.filter { !it.typeLine.isBasicLand }
+
+        val legendaries = boosterPool.filter { it.typeLine.isLegendary && it.typeLine.isCreature }
+        if (legendaries.isEmpty()) return generateBoosterFromCards(allCards)
+
+        val legendary = legendaries.random()
+
+        val commons = boosterPool.filter { it.metadata.rarity == Rarity.COMMON }.toMutableList()
+        val uncommons = boosterPool.filter {
+            it.metadata.rarity == Rarity.UNCOMMON && it.name != legendary.name
+        }.toMutableList()
+        val rares = boosterPool.filter {
+            it.metadata.rarity == Rarity.RARE && it.name != legendary.name
+        }.toMutableList()
+        val mythics = boosterPool.filter {
+            it.metadata.rarity == Rarity.MYTHIC && it.name != legendary.name
+        }.toMutableList()
+
+        val booster = mutableListOf<CardDefinition>()
+        val usedCardNames = mutableSetOf(legendary.name)
+
+        fun pickWithoutDuplicates(pool: MutableList<CardDefinition>): CardDefinition? {
+            val available = pool.filter { it.name !in usedCardNames }
+            if (available.isEmpty()) return null
+            val picked = available.random()
+            usedCardNames.add(picked.name)
+            return picked
+        }
+
+        // 11 Commons
+        repeat(11) {
+            pickWithoutDuplicates(commons)?.let { booster.add(it) }
+        }
+
+        // Uncommons: 3 if legendary is rare/mythic, 2 if legendary is uncommon
+        val uncommonCount = if (legendary.metadata.rarity == Rarity.UNCOMMON) 2 else 3
+        repeat(uncommonCount) {
+            pickWithoutDuplicates(uncommons)?.let { booster.add(it) }
+        }
+
+        // Rare/mythic slot: skip if the legendary already fills it
+        val legendaryIsRareOrMythic = legendary.metadata.rarity == Rarity.RARE ||
+            legendary.metadata.rarity == Rarity.MYTHIC
+        if (!legendaryIsRareOrMythic) {
+            val rareSlot = if (mythics.isNotEmpty() && Math.random() < 0.125) {
+                pickWithoutDuplicates(mythics)
+            } else {
+                null
+            } ?: pickWithoutDuplicates(rares)
+              ?: pickWithoutDuplicates(uncommons)
+              ?: pickWithoutDuplicates(commons)
+
+            rareSlot?.let { booster.add(it) }
+        }
+
+        // Guaranteed legendary slot (last, matching physical pack order)
+        booster.add(legendary)
+
+        return booster
     }
 
     private fun generateBoosterFromCards(allCards: List<CardDefinition>): List<CardDefinition> {

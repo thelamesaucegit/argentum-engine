@@ -54,6 +54,9 @@ class GameBeansConfig(
             if (gameProperties.sets.khansEnabled) {
                 put(KhansOfTarkirSet.SET_CODE, BoosterGenerator.khansSetConfig)
             }
+            if (gameProperties.sets.dominariaEnabled) {
+                put(DominariaSet.SET_CODE, BoosterGenerator.dominariaSetConfig)
+            }
         }
         return BoosterGenerator(sets)
     }
