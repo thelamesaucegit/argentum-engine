@@ -33,6 +33,7 @@ object DominariaSet {
         MammothSpider,
         MesaUnicorn,
         Opt,
+        PardicWanderer,
         PrimordialWurm,
         RunAmok,
         SerraAngel,

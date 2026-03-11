@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 17 / 249
+**Implemented:** 18 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 3    |
 | Green      | 37    | 3    |
 | Multicolor | 19    | 1    |
-| Colorless  | 30    | 1    |
+| Colorless  | 30    | 2    |
 | Land       | 12    | 0    |
 
 ---
@@ -166,7 +166,7 @@
 - [ ] On Serra's Wings
 - [x] Opt
 - [ ] Orcish Vandal
-- [ ] Pardic Wanderer
+- [x] Pardic Wanderer
 - [ ] Pegasus Courser
 - [ ] Phyrexian Scriptures
 - [ ] Pierce the Sky
