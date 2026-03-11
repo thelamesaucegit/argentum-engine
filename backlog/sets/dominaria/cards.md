@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 19 / 249
+**Implemented:** 20 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 3    |
 | Blue       | 37    | 4    |
-| Black      | 38    | 3    |
+| Black      | 38    | 4    |
 | Red        | 38    | 3    |
 | Green      | 37    | 3    |
 | Multicolor | 19    | 1    |
@@ -80,7 +80,7 @@
 - [ ] Evra, Halcyon Witness
 - [ ] Excavation Elephant
 - [ ] Fall of the Thran
-- [ ] Feral Abomination
+- [x] Feral Abomination
 - [x] Fervent Strike
 - [ ] Fiery Intervention
 - [ ] Fight with Fire

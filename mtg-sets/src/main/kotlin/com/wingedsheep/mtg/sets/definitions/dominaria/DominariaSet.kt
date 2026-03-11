@@ -26,6 +26,7 @@ object DominariaSet {
         CastDown,
         Divination,
         Eviscerate,
+        FeralAbomination,
         FerventStrike,
         KnightOfNewBenalia,
         KeldonRaider,
