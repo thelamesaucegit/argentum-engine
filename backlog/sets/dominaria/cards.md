@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 1 / 249
+**Implemented:** 2 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 0    |
-| Blue       | 37    | 0    |
+| Blue       | 37    | 1    |
 | Black      | 38    | 1    |
 | Red        | 38    | 0    |
 | Green      | 37    | 0    |
@@ -164,7 +164,7 @@
 - [ ] Navigator's Compass
 - [ ] Oath of Teferi
 - [ ] On Serra's Wings
-- [ ] Opt
+- [x] Opt
 - [ ] Orcish Vandal
 - [ ] Pardic Wanderer
 - [ ] Pegasus Courser
