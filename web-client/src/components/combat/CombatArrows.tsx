@@ -384,9 +384,12 @@ export function CombatArrows() {
       setArrows(newArrows)
 
       // Compute attacker arrows (visible to all players and spectators during combat)
-      // gameStateCombat is only populated by the server during combat phase, so no extra phase guard needed
+      // Only show attacker arrows when planeswalkers exist — otherwise red triangle indicators suffice
       const newAttackerArrows: AttackerArrowData[] = []
-      if (gameStateCombat && gameStateCombat.attackers.length > 0) {
+      const hasPlaneswalkerOnBattlefield = cards && Object.values(cards).some(
+        (card) => card.zone?.zoneType === ZoneType.BATTLEFIELD && card.cardTypes.includes('Planeswalker'),
+      )
+      if (hasPlaneswalkerOnBattlefield && gameStateCombat && gameStateCombat.attackers.length > 0) {
         for (const attacker of gameStateCombat.attackers) {
           // Check if attacker is still on battlefield
           const attackerCard = cards?.[attacker.creatureId]
@@ -414,7 +417,7 @@ export function CombatArrows() {
       }
 
       // Compute local attacker→target arrows during declare attackers phase
-      if (combatState?.mode === 'declareAttackers' && combatState.attackerTargets) {
+      if (hasPlaneswalkerOnBattlefield && combatState?.mode === 'declareAttackers' && combatState.attackerTargets) {
         for (const [attackerIdStr, targetId] of Object.entries(combatState.attackerTargets)) {
           const attackerId = attackerIdStr as EntityId
           // Only show if this attacker is still selected
@@ -433,7 +436,7 @@ export function CombatArrows() {
       }
 
       // Compute opponent's real-time attacker target arrows (for defending player and spectators)
-      if (opponentAttackerTargets && opponentAttackerTargets.selectedAttackers.length > 0 && !gameStateCombat) {
+      if (hasPlaneswalkerOnBattlefield && opponentAttackerTargets && opponentAttackerTargets.selectedAttackers.length > 0 && !gameStateCombat) {
         for (const [attackerIdStr, targetId] of Object.entries(opponentAttackerTargets.attackerTargets)) {
           const attackerId = attackerIdStr as EntityId
           if (!opponentAttackerTargets.selectedAttackers.includes(attackerId)) continue
