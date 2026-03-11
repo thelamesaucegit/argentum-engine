@@ -138,6 +138,72 @@ class KheruSpellsnatcherScenarioTest : ScenarioTestBase() {
                     comp.controllerId shouldBe game.player1Id
                 }
             }
+
+            test("can cast exiled spell without paying its mana cost") {
+                val game = scenario()
+                    .withPlayers("Player1", "Player2")
+                    .withCardInHand(1, "Kheru Spellsnatcher")
+                    .withCardInHand(2, "Alpine Grizzly")
+                    .withLandsOnBattlefield(1, "Island", 9)
+                    .withLandsOnBattlefield(2, "Forest", 3)
+                    .withCardInLibrary(1, "Island")
+                    .withCardInLibrary(2, "Forest")
+                    .withActivePlayer(1)
+                    .inPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+                    .build()
+
+                // Cast Spellsnatcher face-down
+                val cardId = game.state.getHand(game.player1Id).first { entityId ->
+                    game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Kheru Spellsnatcher"
+                }
+                game.execute(CastSpell(game.player1Id, cardId, castFaceDown = true))
+                game.resolveStack()
+
+                val faceDownId = game.state.getBattlefield().find { entityId ->
+                    game.state.getEntity(entityId)?.has<FaceDownComponent>() == true
+                }!!
+
+                // Pass to Player 2's main phase
+                game.passUntilPhase(Phase.POSTCOMBAT_MAIN, Step.POSTCOMBAT_MAIN)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+
+                // Player 2 casts Alpine Grizzly
+                game.castSpell(2, "Alpine Grizzly")
+                game.execute(PassPriority(game.player2Id))
+
+                val spellOnStack = game.state.stack.first { entityId ->
+                    game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Alpine Grizzly"
+                }
+
+                // Player 1 morphs Spellsnatcher, counter the spell
+                game.execute(TurnFaceUp(game.player1Id, faceDownId))
+                game.selectTargets(listOf(spellOnStack))
+                game.resolveStack()
+
+                // Now pass to Player 1's main phase so they can cast the exiled card
+                game.passUntilPhase(Phase.POSTCOMBAT_MAIN, Step.POSTCOMBAT_MAIN)
+                game.passUntilPhase(Phase.PRECOMBAT_MAIN, Step.PRECOMBAT_MAIN)
+
+                game.state.activePlayerId shouldBe game.player1Id
+
+                // Find the exiled Alpine Grizzly (in player 2's exile zone)
+                val exiledId = game.getExileCards(2).first { entityId ->
+                    game.state.getEntity(entityId)?.get<CardComponent>()?.name == "Alpine Grizzly"
+                }
+
+                // Player 1 should be able to cast it without paying mana
+                val castFromExileResult = game.execute(CastSpell(game.player1Id, exiledId))
+                withClue("Should be able to cast exiled card: ${castFromExileResult.error}") {
+                    castFromExileResult.error shouldBe null
+                }
+
+                game.resolveStack()
+
+                // Alpine Grizzly should now be on the battlefield under Player 1's control
+                withClue("Alpine Grizzly should be on the battlefield") {
+                    game.isOnBattlefield("Alpine Grizzly") shouldBe true
+                }
+            }
         }
     }
 }

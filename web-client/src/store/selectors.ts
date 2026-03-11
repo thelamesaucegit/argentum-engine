@@ -8,7 +8,7 @@ import type {
   LegalActionInfo,
   ZoneId,
 } from '../types'
-import { ZoneType, zoneIdEquals, graveyard, library, exile } from '../types'
+import { ZoneType, zoneIdEquals, graveyard, library } from '../types'
 
 /**
  * Select the game state (works for both normal play and spectating).
@@ -512,11 +512,11 @@ export function useGhostCards(playerId: EntityId | null): readonly ClientCard[] 
     }
 
     // 3. Exile cards playable via Mind's Desire-like effects
-    // Show all exile cards with playableFromExile flag, even if no legal action exists yet
-    const exileZoneId = exile(playerId)
-    const exileZone = gameState.zones.find((z) => zoneIdEquals(z.zoneId, exileZoneId))
-    if (exileZone && exileZone.cardIds && exileZone.cardIds.length > 0) {
-      for (const cardId of exileZone.cardIds) {
+    // Check ALL exile zones because cards like Kheru Spellsnatcher exile opponent's spells
+    // (cards stay in their owner's exile zone but are playable by the Spellsnatcher's controller)
+    for (const zone of gameState.zones) {
+      if (zone.zoneId.zoneType !== ZoneType.EXILE) continue
+      for (const cardId of zone.cardIds) {
         const card = gameState.cards[cardId]
         if (card?.playableFromExile) {
           ghostCardIds.add(cardId)
