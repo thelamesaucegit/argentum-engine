@@ -43,6 +43,9 @@ test.describe('Ironfist Crusher', () => {
     await p2.declareBlocker('Ironfist Crusher', 'Devoted Hero')
     await p2.confirmBlockers()
 
+    // Attacker must order the attackers for damage assignment
+    await p1.confirmBlockerOrder()
+
     // Combat damage: Glory Seeker (2/2) + Devoted Hero (1/2) = 3 damage to Ironfist Crusher (2/4)
     // Ironfist Crusher survives with 1 toughness remaining
     await p2.expectOnBattlefield('Ironfist Crusher')
@@ -85,6 +88,9 @@ test.describe('Ironfist Crusher', () => {
     await p2.declareBlocker('Ironfist Crusher', 'Grizzly Bears')
     await p2.declareBlocker('Ironfist Crusher', 'Devoted Hero')
     await p2.confirmBlockers()
+
+    // Attacker must order the attackers for damage assignment
+    await p1.confirmBlockerOrder()
 
     // Combat damage: Glory Seeker (2) + Grizzly Bears (2) + Devoted Hero (1) = 5 damage
     // Ironfist Crusher (2/4) takes 5 damage and dies
