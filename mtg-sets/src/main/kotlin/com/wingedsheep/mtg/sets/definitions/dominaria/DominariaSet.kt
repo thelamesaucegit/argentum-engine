@@ -26,6 +26,7 @@ object DominariaSet {
         CastDown,
         Divination,
         Eviscerate,
+        FerventStrike,
         KeldonRaider,
         LlanowarElves,
         MammothSpider,

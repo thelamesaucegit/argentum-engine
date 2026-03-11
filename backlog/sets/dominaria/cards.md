@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 14 / 249
+**Implemented:** 15 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 2    |
 | Blue       | 37    | 3    |
 | Black      | 38    | 3    |
-| Red        | 38    | 2    |
+| Red        | 38    | 3    |
 | Green      | 37    | 2    |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 1    |
@@ -81,7 +81,7 @@
 - [ ] Excavation Elephant
 - [ ] Fall of the Thran
 - [ ] Feral Abomination
-- [ ] Fervent Strike
+- [x] Fervent Strike
 - [ ] Fiery Intervention
 - [ ] Fight with Fire
 - [ ] Final Parting
