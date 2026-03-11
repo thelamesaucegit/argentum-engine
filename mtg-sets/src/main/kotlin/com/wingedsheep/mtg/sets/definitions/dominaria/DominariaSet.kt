@@ -25,6 +25,7 @@ object DominariaSet {
         Befuddle,
         CastDown,
         Divination,
+        Eviscerate,
         KeldonRaider,
         LlanowarElves,
         MammothSpider,
