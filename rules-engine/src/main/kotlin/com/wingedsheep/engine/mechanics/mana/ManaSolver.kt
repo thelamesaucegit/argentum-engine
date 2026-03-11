@@ -557,7 +557,10 @@ class ManaSolver(
             // Fall back to land subtype logic for lands without explicit abilities
             // (lands without basic land subtypes that also have no explicit mana abilities
             // produce colorless mana, e.g., Wastes)
+            // Skip lands that have non-mana activated abilities but no mana abilities
+            // (e.g., fetch lands like Windswept Heath)
             if (!card.typeLine.isLand) return@mapNotNull null
+            if (allAbilities.isNotEmpty() && manaAbilities.isEmpty()) return@mapNotNull null
 
             ManaSource(
                 entityId = entityId,
