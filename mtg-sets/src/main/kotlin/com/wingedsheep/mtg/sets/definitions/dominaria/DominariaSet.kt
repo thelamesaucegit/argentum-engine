@@ -26,5 +26,6 @@ object DominariaSet {
         MesaUnicorn,
         Opt,
         RunAmok,
+        SparringConstruct,
     )
 }

@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 5 / 249
+**Implemented:** 6 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 1    |
 | Green      | 37    | 1    |
 | Multicolor | 19    | 0    |
-| Colorless  | 30    | 0    |
+| Colorless  | 30    | 1    |
 | Land       | 12    | 0    |
 
 ---
@@ -207,7 +207,7 @@
 - [ ] Song of Freyalise
 - [ ] Sorcerer's Wand
 - [ ] Soul Salvage
-- [ ] Sparring Construct
+- [x] Sparring Construct
 - [ ] Spore Swarm
 - [ ] Sporecrown Thallid
 - [ ] Squee, the Immortal
