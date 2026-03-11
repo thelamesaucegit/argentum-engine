@@ -2,11 +2,11 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 21 / 249
+**Implemented:** 22 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 3    |
+| White      | 38    | 4    |
 | Blue       | 37    | 4    |
 | Black      | 38    | 4    |
 | Red        | 38    | 4    |
@@ -30,7 +30,7 @@
 - [ ] Artificer's Assistant
 - [x] Arvad the Cursed
 - [ ] Aryel, Knight of Windgrace
-- [ ] Aven Sentry
+- [x] Aven Sentry
 - [ ] Baird, Steward of Argive
 - [ ] Baloth Gorger
 - [x] Befuddle
