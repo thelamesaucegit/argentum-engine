@@ -2,11 +2,11 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 9 / 249
+**Implemented:** 10 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 1    |
+| White      | 38    | 2    |
 | Blue       | 37    | 1    |
 | Black      | 38    | 2    |
 | Red        | 38    | 2    |
@@ -190,7 +190,7 @@
 - [ ] Seismic Shift
 - [ ] Sentinel of the Pearl Trident
 - [ ] Sergeant-at-Arms
-- [ ] Serra Angel
+- [x] Serra Angel
 - [ ] Serra Disciple
 - [ ] Settle the Score
 - [ ] Shalai, Voice of Plenty

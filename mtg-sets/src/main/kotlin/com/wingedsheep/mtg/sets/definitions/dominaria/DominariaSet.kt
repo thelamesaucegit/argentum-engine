@@ -28,6 +28,7 @@ object DominariaSet {
         MesaUnicorn,
         Opt,
         RunAmok,
+        SerraAngel,
         SparringConstruct,
         YargleGluttonOfUrborg,
     )
