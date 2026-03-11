@@ -19,6 +19,7 @@ test.describe('Sparksmith', () => {
           { name: 'Sparksmith', tapped: false, summoningSickness: false },
           { name: 'Goblin Sky Raider', tapped: false, summoningSickness: false },
         ],
+        library: ['Mountain'],
       },
       player2: {
         // Glory Seeker is 2/2 — will die to 2 damage (2 Goblins on battlefield)

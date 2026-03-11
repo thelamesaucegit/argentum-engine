@@ -22,6 +22,7 @@ test.describe('Starstorm', () => {
           { name: 'Mountain' },
           { name: 'Mountain' },
         ],
+        library: ['Mountain'],
       },
       player2: {
         battlefield: [{ name: 'Glory Seeker' }, { name: 'Grizzly Bears' }],
