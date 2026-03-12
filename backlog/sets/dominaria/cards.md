@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 73 / 249
+**Implemented:** 74 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 13   |
 | Blue       | 37    | 13   |
 | Black      | 38    | 13   |
-| Red        | 38    | 12   |
+| Red        | 38    | 13   |
 | Green      | 37    | 13   |
 | Multicolor | 19    | 2    |
 | Colorless  | 30    | 7    |
@@ -101,7 +101,7 @@
 - [x] Gift of Growth
 - [ ] Gilded Lotus
 - [ ] Goblin Barrage
-- [ ] Goblin Chainwhirler
+- [x] Goblin Chainwhirler
 - [ ] Goblin Warchief
 - [ ] Grand Warlord Radha
 - [ ] Grow from the Ashes

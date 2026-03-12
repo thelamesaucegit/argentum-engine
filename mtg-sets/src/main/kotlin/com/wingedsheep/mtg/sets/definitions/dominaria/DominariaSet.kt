@@ -54,6 +54,7 @@ object DominariaSet {
         FungalInfection,
         GhituChronicler,
         GideonsReproach,
+        GoblinChainwhirler,
         GiftOfGrowth,
         InvokeTheDivine,
         HomaridExplorer,
