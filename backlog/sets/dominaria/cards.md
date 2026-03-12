@@ -2,17 +2,17 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 78 / 249
+**Implemented:** 81 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 13   |
+| White      | 38    | 14   |
 | Blue       | 37    | 13   |
-| Black      | 38    | 13   |
+| Black      | 38    | 14   |
 | Red        | 38    | 13   |
 | Green      | 37    | 14   |
 | Multicolor | 19    | 4    |
-| Colorless  | 30    | 8    |
+| Colorless  | 30    | 9    |
 | Land       | 12    | 0    |
 
 ---
@@ -41,7 +41,7 @@
 - [ ] Blessing of Belzenlok
 - [x] Blink of an Eye
 - [ ] Bloodstone Goblin
-- [ ] Bloodtallow Candle
+- [x] Bloodtallow Candle
 - [ ] Board the Weatherlight
 - [ ] Broken Bond
 - [x] Cabal Evangel
@@ -52,7 +52,7 @@
 - [x] Cast Down
 - [ ] Chainer's Torment
 - [ ] Champion of the Flame
-- [ ] Charge
+- [x] Charge
 - [ ] Clifftop Retreat
 - [x] Cloudreader Sphinx
 - [x] Cold-Water Snapper
@@ -70,7 +70,7 @@
 - [ ] Demonic Vigor
 - [ ] Demonlord Belzenlok
 - [ ] Diligent Excavator
-- [ ] Divest
+- [x] Divest
 - [x] Divination
 - [ ] Dread Shade
 - [x] Drudge Sentinel
