@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 57 / 249
+**Implemented:** 58 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 10   |
 | Blue       | 37    | 10   |
 | Black      | 38    | 12   |
-| Red        | 38    | 9    |
+| Red        | 38    | 10   |
 | Green      | 37    | 10   |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 5    |
@@ -201,7 +201,7 @@
 - [ ] Siege-Gang Commander
 - [x] Skirk Prospector
 - [x] Skittering Surveyor
-- [ ] Skizzik
+- [x] Skizzik
 - [ ] Slimefoot, the Stowaway
 - [ ] Slinn Voda, the Rising Deep
 - [ ] Song of Freyalise
