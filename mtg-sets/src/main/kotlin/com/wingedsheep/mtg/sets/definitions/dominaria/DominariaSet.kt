@@ -54,6 +54,7 @@ object DominariaSet {
         FeralAbomination,
         FieryIntervention,
         FerventStrike,
+        FirefistAdept,
         FireElemental,
         FrenziedRage,
         FungalInfection,

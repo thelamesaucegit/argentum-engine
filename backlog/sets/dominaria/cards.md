@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 89 / 249
+**Implemented:** 90 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 15   |
 | Blue       | 37    | 14   |
 | Black      | 38    | 15   |
-| Red        | 38    | 15   |
+| Red        | 38    | 16   |
 | Green      | 37    | 16   |
 | Multicolor | 19    | 4    |
 | Colorless  | 30    | 9    |
@@ -86,7 +86,7 @@
 - [ ] Fight with Fire
 - [ ] Final Parting
 - [x] Fire Elemental
-- [ ] Firefist Adept
+- [x] Firefist Adept
 - [ ] Forebear's Blade
 - [x] Frenzied Rage
 - [x] Fungal Infection
