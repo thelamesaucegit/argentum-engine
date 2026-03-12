@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 48 / 249
+**Implemented:** 49 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 8    |
 | Blue       | 37    | 8    |
 | Black      | 38    | 11   |
-| Red        | 38    | 7    |
+| Red        | 38    | 8    |
 | Green      | 37    | 8    |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 5    |
@@ -94,7 +94,7 @@
 - [ ] Gaea's Blessing
 - [ ] Gaea's Protector
 - [ ] Garna, the Bloodflame
-- [ ] Ghitu Chronicler
+- [x] Ghitu Chronicler
 - [ ] Ghitu Journeymage
 - [ ] Ghitu Lavarunner
 - [ ] Gideon's Reproach
