@@ -38,6 +38,6 @@ val ShivanFire = card("Shivan Fire") {
         collectorNumber = "175"
         artist = "Svetlin Velinov"
         flavorText = "The Keldons didn't come to Dominaria for a vacation."
-        imageUri = "https://cards.scryfall.io/normal/front/2/1/21b0d542-f54f-4b2c-a2c7-aeee85ed3542.jpg?1562732478"
+        imageUri = "https://cards.scryfall.io/normal/front/2/1/21b9d339-99ed-4923-8f56-be37f29a0bfa.jpg?1562732568"
     }
 }
