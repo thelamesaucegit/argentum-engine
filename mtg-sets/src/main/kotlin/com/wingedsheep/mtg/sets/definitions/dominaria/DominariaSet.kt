@@ -29,6 +29,7 @@ object DominariaSet {
         ArvadTheCursed,
         BalothGorger,
         Befuddle,
+        BlinkOfAnEye,
         BlessedLight,
         CaligoSkinWitch,
         CallTheCavalry,
