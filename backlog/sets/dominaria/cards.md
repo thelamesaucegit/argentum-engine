@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 75 / 249
+**Implemented:** 76 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 13   |
 | Green      | 37    | 13   |
 | Multicolor | 19    | 3    |
-| Colorless  | 30    | 7    |
+| Colorless  | 30    | 8    |
 | Land       | 12    | 0    |
 
 ---
@@ -99,7 +99,7 @@
 - [ ] Ghitu Lavarunner
 - [x] Gideon's Reproach
 - [x] Gift of Growth
-- [ ] Gilded Lotus
+- [x] Gilded Lotus
 - [ ] Goblin Barrage
 - [x] Goblin Chainwhirler
 - [ ] Goblin Warchief

@@ -55,6 +55,7 @@ object DominariaSet {
         GhituChronicler,
         GideonsReproach,
         GoblinChainwhirler,
+        GildedLotus,
         GiftOfGrowth,
         InvokeTheDivine,
         HomaridExplorer,
