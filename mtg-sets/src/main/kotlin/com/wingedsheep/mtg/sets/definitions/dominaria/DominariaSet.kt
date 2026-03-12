@@ -39,6 +39,7 @@ object DominariaSet {
         FerventStrike,
         FireElemental,
         FrenziedRage,
+        FungalInfection,
         HomaridExplorer,
         KnightOfNewBenalia,
         KeldonRaider,

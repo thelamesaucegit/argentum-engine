@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 38 / 249
+**Implemented:** 39 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 6    |
 | Blue       | 37    | 7    |
-| Black      | 38    | 9    |
+| Black      | 38    | 10   |
 | Red        | 38    | 6    |
 | Green      | 37    | 6    |
 | Multicolor | 19    | 1    |
@@ -89,7 +89,7 @@
 - [ ] Firefist Adept
 - [ ] Forebear's Blade
 - [x] Frenzied Rage
-- [ ] Fungal Infection
+- [x] Fungal Infection
 - [ ] Fungal Plots
 - [ ] Gaea's Blessing
 - [ ] Gaea's Protector
