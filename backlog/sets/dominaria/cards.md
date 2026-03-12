@@ -2,15 +2,15 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 94 / 249
+**Implemented:** 98 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 16   |
+| White      | 38    | 17   |
 | Blue       | 37    | 14   |
-| Black      | 38    | 16   |
-| Red        | 38    | 17   |
-| Green      | 37    | 17   |
+| Black      | 38    | 17   |
+| Red        | 38    | 18   |
+| Green      | 37    | 18   |
 | Multicolor | 19    | 4    |
 | Colorless  | 30    | 9    |
 | Land       | 12    | 0    |
@@ -96,7 +96,7 @@
 - [ ] Garna, the Bloodflame
 - [x] Ghitu Chronicler
 - [x] Ghitu Journeymage
-- [ ] Ghitu Lavarunner
+- [x] Ghitu Lavarunner
 - [x] Gideon's Reproach
 - [x] Gift of Growth
 - [x] Gilded Lotus
@@ -142,7 +142,7 @@
 - [ ] Lich's Mastery
 - [ ] Lingering Phantom
 - [x] Llanowar Elves
-- [ ] Llanowar Envoy
+- [x] Llanowar Envoy
 - [ ] Llanowar Scout
 - [x] Lyra Dawnbringer
 - [x] Mammoth Spider
@@ -167,7 +167,7 @@
 - [x] Opt
 - [x] Orcish Vandal
 - [x] Pardic Wanderer
-- [ ] Pegasus Courser
+- [x] Pegasus Courser
 - [ ] Phyrexian Scriptures
 - [x] Pierce the Sky
 - [ ] Powerstone Shard
@@ -177,7 +177,7 @@
 - [ ] Radiating Lightning
 - [ ] Raff Capashen, Ship's Mage
 - [ ] Rampaging Cyclops
-- [ ] Rat Colony
+- [x] Rat Colony
 - [ ] Relic Runner
 - [x] Rescue
 - [ ] Rite of Belzenlok
