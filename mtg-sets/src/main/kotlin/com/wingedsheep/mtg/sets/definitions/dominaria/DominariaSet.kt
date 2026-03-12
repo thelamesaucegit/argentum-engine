@@ -45,5 +45,6 @@ object DominariaSet {
         SparringConstruct,
         TolarianScholar,
         YargleGluttonOfUrborg,
+        YavimayaSapherd,
     )
 }
