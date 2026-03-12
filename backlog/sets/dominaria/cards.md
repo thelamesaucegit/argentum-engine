@@ -2,15 +2,15 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 60 / 249
+**Implemented:** 62 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 10   |
-| Blue       | 37    | 11   |
+| Blue       | 37    | 12   |
 | Black      | 38    | 12   |
 | Red        | 38    | 10   |
-| Green      | 37    | 11   |
+| Green      | 37    | 12   |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 5    |
 | Land       | 12    | 0    |
@@ -26,7 +26,7 @@
 - [ ] Amaranthine Wall
 - [ ] Ancient Animus
 - [x] Arbor Armament
-- [ ] Arcane Flight
+- [x] Arcane Flight
 - [ ] Artificer's Assistant
 - [x] Arvad the Cursed
 - [ ] Aryel, Knight of Windgrace
@@ -169,7 +169,7 @@
 - [x] Pardic Wanderer
 - [ ] Pegasus Courser
 - [ ] Phyrexian Scriptures
-- [ ] Pierce the Sky
+- [x] Pierce the Sky
 - [ ] Powerstone Shard
 - [ ] Precognition Field
 - [ ] Primevals' Glorious Rebirth
