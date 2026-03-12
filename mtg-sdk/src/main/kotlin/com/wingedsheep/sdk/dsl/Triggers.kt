@@ -509,6 +509,15 @@ object Triggers {
     )
 
     /**
+     * Whenever the enchanted creature dies.
+     * Used for auras like Demonic Vigor.
+     */
+    val EnchantedCreatureDies: TriggerSpec = TriggerSpec(
+        event = EnchantedCreatureDiesEvent,
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * Whenever the enchanted creature is dealt damage.
      * Used for auras like Frozen Solid.
      */

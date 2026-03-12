@@ -498,7 +498,8 @@ class StateBasedActionChecker(
                                 cardComponent.name,
                                 Zone.BATTLEFIELD,
                                 Zone.GRAVEYARD,
-                                ownerId
+                                ownerId,
+                                lastKnownAttachedTo = attachedTo.targetId
                             )
                         )
                     } else {

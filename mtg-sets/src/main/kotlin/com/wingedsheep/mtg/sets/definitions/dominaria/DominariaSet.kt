@@ -47,6 +47,7 @@ object DominariaSet {
         ColdWaterSnapper,
         DarkBargain,
         DeathbloomThallid,
+        DemonicVigor,
         DreadShade,
         Divest,
         Divination,

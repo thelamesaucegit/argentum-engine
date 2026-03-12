@@ -539,6 +539,17 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     }
 
     /**
+     * When the enchanted creature dies.
+     * Special case for auras like Demonic Vigor.
+     */
+    @SerialName("EnchantedCreatureDiesEvent")
+    @Serializable
+    data object EnchantedCreatureDiesEvent : GameEvent {
+        override val description: String = "when enchanted creature dies"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    }
+
+    /**
      * When the enchanted creature deals damage (any type).
      * Special case for auras like Guilty Conscience.
      */

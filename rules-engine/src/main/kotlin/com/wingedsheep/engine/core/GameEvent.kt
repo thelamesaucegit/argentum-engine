@@ -32,7 +32,9 @@ data class ZoneChangeEvent(
     /** Last known +1/+1 counter count when leaving battlefield (for death triggers needing last known info) */
     val lastKnownCounterCount: Int = 0,
     /** The original card name when this permanent entered as a copy (e.g., "Clever Impersonator") */
-    val copyOfOriginalName: String? = null
+    val copyOfOriginalName: String? = null,
+    /** For auras: the entity this aura was attached to when it left the battlefield (for "enchanted creature dies" triggers) */
+    val lastKnownAttachedTo: EntityId? = null
 ) : GameEvent
 
 // =============================================================================

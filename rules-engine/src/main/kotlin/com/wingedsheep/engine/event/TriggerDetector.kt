@@ -636,6 +636,9 @@ class TriggerDetector(
             detectDeathTriggers(state, event, triggers)
             // Handle "whenever a creature dealt damage by this creature this turn dies" triggers
             detectCreatureDealtDamageBySourceDiesTriggers(state, event, triggers, projected, index)
+            // Handle "when enchanted creature dies" triggers on auras that went to graveyard
+            // (detected on the AURA's zone change event using lastKnownAttachedTo)
+            detectEnchantedCreatureDiesTriggers(state, event, triggers)
         }
 
         // Handle leaves-the-battlefield triggers (source is no longer on battlefield)
@@ -824,6 +827,50 @@ class TriggerDetector(
                     // "Whenever another creature dies" - never matches its own death
                 }
             }
+        }
+    }
+
+    /**
+     * Detect "when enchanted creature dies" triggers on auras.
+     * When an aura goes to graveyard because its enchanted creature died, the ZoneChangeEvent
+     * for the aura carries [ZoneChangeEvent.lastKnownAttachedTo] = the dying creature's ID.
+     * We look up the aura's card definition for EnchantedCreatureDiesEvent triggers.
+     */
+    private fun detectEnchantedCreatureDiesTriggers(
+        state: GameState,
+        event: ZoneChangeEvent,
+        triggers: MutableList<PendingTrigger>
+    ) {
+        // Only process if this is an aura that was attached to something
+        val attachedCreatureId = event.lastKnownAttachedTo ?: return
+
+        // "Dies" means moved to graveyard — verify the creature is actually in a graveyard
+        // (not exiled or bounced). Check all graveyards for the creature.
+        val creatureInGraveyard = state.turnOrder.any { playerId ->
+            attachedCreatureId in state.getGraveyard(playerId)
+        }
+        if (!creatureInGraveyard) return
+
+        val auraEntityId = event.entityId
+        val container = state.getEntity(auraEntityId) ?: return
+        val cardComponent = container.get<CardComponent>() ?: return
+
+        // Look up abilities from card definition (aura is now in graveyard, so use card def)
+        val abilities = getTriggeredAbilities(auraEntityId, cardComponent.cardDefinitionId, state)
+
+        for (ability in abilities) {
+            if (ability.trigger !is GameEvent.EnchantedCreatureDiesEvent) continue
+
+            val controllerId = event.ownerId
+            triggers.add(
+                PendingTrigger(
+                    ability = ability,
+                    sourceId = auraEntityId,
+                    sourceName = cardComponent.name,
+                    controllerId = controllerId,
+                    triggerContext = TriggerContext(triggeringEntityId = attachedCreatureId)
+                )
+            )
         }
     }
 
@@ -1599,6 +1646,7 @@ class TriggerDetector(
             is GameEvent.EnchantedCreatureDamageReceivedEvent -> false
             is GameEvent.EnchantedCreatureDealsCombatDamageToPlayerEvent -> false
             is GameEvent.EnchantedCreatureDealsDamageEvent -> false
+            is GameEvent.EnchantedCreatureDiesEvent -> false
             is GameEvent.EnchantedCreatureTurnedFaceUpEvent -> false
             is GameEvent.EnchantedPermanentBecomesTappedEvent -> false
             // Creature-dealt-damage-by-source-dies triggers are handled separately
