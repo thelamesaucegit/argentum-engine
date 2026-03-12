@@ -618,6 +618,8 @@ class LobbyHandler(
                         isTournamentComplete = false
                     ))
                 }
+                // Send active matches so player can watch live games while waiting
+                sendActiveMatchesToPlayer(identity, session)
                 // Send ready status
                 val readyPlayerIds = lobby.getReadyPlayerIds()
                 if (readyPlayerIds.isNotEmpty()) {
@@ -650,6 +652,13 @@ class LobbyHandler(
                         nextRoundHasBye = nm.isBye,
                         isTournamentComplete = false
                     ))
+                    // Send active matches so player can watch live games while waiting
+                    val spectatingGameId = identity.currentSpectatingGameId
+                    if (spectatingGameId != null && playerSession != null) {
+                        restoreSpectating(identity, playerSession, session, spectatingGameId)
+                    } else {
+                        sendActiveMatchesToPlayer(identity, session)
+                    }
                 } else if (tournament.isComplete) {
                     // Tournament is done
                     sender.send(session, ServerMessage.RoundComplete(
