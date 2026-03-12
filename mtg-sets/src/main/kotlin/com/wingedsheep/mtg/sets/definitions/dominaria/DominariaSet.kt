@@ -61,6 +61,7 @@ object DominariaSet {
         KnightOfNewBenalia,
         KeldonRaider,
         LlanowarElves,
+        LyraDawnbringer,
         MammothSpider,
         MesaUnicorn,
         NaturesSpiral,
