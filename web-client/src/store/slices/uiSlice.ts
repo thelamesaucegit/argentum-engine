@@ -65,10 +65,6 @@ export interface UISliceState {
   coinFlipAnimations: readonly CoinFlipAnimation[]
   targetReselectedAnimations: readonly TargetReselectedAnimation[]
   matchIntro: MatchIntro | null
-  /** Custom hand card ordering (EntityId[]). When set, hand cards are displayed in this order. */
-  handCardOrder: readonly EntityId[]
-  /** Flag to suppress GameCard click after a reorder drag */
-  handReorderJustFinished: boolean
 }
 
 export interface UISliceActions {
@@ -146,8 +142,6 @@ export interface UISliceActions {
   setAutoTapPreview: (preview: readonly EntityId[] | null) => void
   setMatchIntro: (intro: MatchIntro) => void
   clearMatchIntro: () => void
-  setHandCardOrder: (order: readonly EntityId[]) => void
-  clearHandReorderFlag: () => void
 }
 
 export type UISlice = UISliceState & UISliceActions
@@ -181,8 +175,6 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
   coinFlipAnimations: [],
   targetReselectedAnimations: [],
   matchIntro: null,
-  handCardOrder: [],
-  handReorderJustFinished: false,
 
   // Card selection actions
   selectCard: (cardId) => {
@@ -1283,17 +1275,5 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
 
   clearMatchIntro: () => {
     set({ matchIntro: null })
-  },
-
-  setHandCardOrder: (order) => {
-    set({ handCardOrder: order, handReorderJustFinished: true })
-    // Clear the flag after a short delay so GameCard's click handler can check it
-    setTimeout(() => {
-      set({ handReorderJustFinished: false })
-    }, 50)
-  },
-
-  clearHandReorderFlag: () => {
-    set({ handReorderJustFinished: false })
   },
 })

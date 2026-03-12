@@ -483,17 +483,10 @@ export function GameCard({
     }
   }, [draggingAttackerId, card.id, stopDraggingAttacker, toggleAttacker, combatState, setAttackTarget])
 
-  const handReorderJustFinished = useGameStore((state) => state.handReorderJustFinished)
-
   const handleClick = () => {
     // If the drag handler already processed this interaction, skip
     if (handledByDrag.current) {
       handledByDrag.current = false
-      return
-    }
-
-    // If a hand reorder drag just finished, suppress click
-    if (handReorderJustFinished) {
       return
     }
 
