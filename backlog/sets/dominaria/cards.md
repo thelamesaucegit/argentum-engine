@@ -2,15 +2,15 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 53 / 249
+**Implemented:** 55 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 9    |
-| Blue       | 37    | 9    |
+| Blue       | 37    | 10   |
 | Black      | 38    | 12   |
 | Red        | 38    | 8    |
-| Green      | 37    | 9    |
+| Green      | 37    | 10   |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 5    |
 | Land       | 12    | 0    |
@@ -208,7 +208,7 @@
 - [ ] Sorcerer's Wand
 - [ ] Soul Salvage
 - [x] Sparring Construct
-- [ ] Spore Swarm
+- [x] Spore Swarm
 - [ ] Sporecrown Thallid
 - [ ] Squee, the Immortal
 - [ ] Steel Leaf Champion
@@ -254,7 +254,7 @@
 - [ ] Warcry Phoenix
 - [ ] Warlord's Fury
 - [ ] Weatherlight
-- [ ] Weight of Memory
+- [x] Weight of Memory
 - [ ] Whisper, Blood Liturgist
 - [ ] Wild Onslaught
 - [x] Windgrace Acolyte
