@@ -1368,20 +1368,27 @@ data class AnimateLandGroup(
 // =============================================================================
 
 /**
- * Grants flash to spells matching a filter for all players.
+ * Grants flash to spells matching a filter.
  * Used for Quick Sliver: "Any player may cast Sliver spells as though they had flash."
+ * Used for Raff Capashen: "You may cast historic spells as though they had flash."
  *
  * The engine checks for this static ability on any permanent on the battlefield
  * when determining if a non-instant spell can be cast at instant speed.
  *
  * @property filter The filter that spells must match to gain flash
+ * @property controllerOnly If true, only the permanent's controller benefits (default: false = any player)
  */
 @SerialName("GrantFlashToSpellType")
 @Serializable
 data class GrantFlashToSpellType(
-    val filter: GameObjectFilter
+    val filter: GameObjectFilter,
+    val controllerOnly: Boolean = false
 ) : StaticAbility {
-    override val description: String = "Any player may cast ${filter.description} spells as though they had flash"
+    override val description: String = if (controllerOnly) {
+        "You may cast ${filter.description} spells as though they had flash"
+    } else {
+        "Any player may cast ${filter.description} spells as though they had flash"
+    }
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
         val newFilter = filter.applyTextReplacement(replacer)
         return if (newFilter !== filter) copy(filter = newFilter) else this

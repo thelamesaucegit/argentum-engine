@@ -2234,6 +2234,8 @@ class LegalActionsCalculator(
                 val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
                 for (ability in cardDef.script.staticAbilities) {
                     if (ability is GrantFlashToSpellType) {
+                        // If controllerOnly, only the permanent's controller benefits
+                        if (ability.controllerOnly && playerId != spellOwner) continue
                         if (predicateEvaluator.matches(state, spellCardId, ability.filter, context)) {
                             return true
                         }

@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 116 / 249
+**Implemented:** 117 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -11,7 +11,7 @@
 | Black      | 38    | 19   |
 | Red        | 38    | 21   |
 | Green      | 37    | 18   |
-| Multicolor | 19    | 4    |
+| Multicolor | 19    | 5    |
 | Colorless  | 30    | 12   |
 | Land       | 12    | 5    |
 
@@ -175,7 +175,7 @@
 - [ ] Primevals' Glorious Rebirth
 - [x] Primordial Wurm
 - [x] Radiating Lightning
-- [ ] Raff Capashen, Ship's Mage
+- [x] Raff Capashen, Ship's Mage
 - [x] Rampaging Cyclops
 - [x] Rat Colony
 - [ ] Relic Runner

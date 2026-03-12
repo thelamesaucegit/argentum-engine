@@ -124,6 +124,15 @@ data class GameObjectFilter(
         val NoncreaturePermanent = GameObjectFilter(
             cardPredicates = listOf(CardPredicate.IsNoncreature, CardPredicate.IsPermanent)
         )
+        val Historic = GameObjectFilter(
+            cardPredicates = listOf(
+                CardPredicate.Or(listOf(
+                    CardPredicate.IsArtifact,
+                    CardPredicate.IsLegendary,
+                    CardPredicate.HasSubtype(Subtype("Saga"))
+                ))
+            )
+        )
     }
 
     // =============================================================================
