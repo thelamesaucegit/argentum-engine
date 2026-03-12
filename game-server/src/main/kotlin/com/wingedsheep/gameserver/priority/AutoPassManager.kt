@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory
  * ## Rule 2: The "Opponent's Turn" Compression
  * When it's the opponent's turn:
  * - Upkeep/Draw: AUTO-PASS
- * - Main Phase: AUTO-PASS
+ * - Main Phase: STOP if you have instant-speed responses
  * - Combat (Start/Attackers): STOP (crucial window for tapping/killing attackers)
  * - End Step: STOP if you have instant-speed responses (golden rule for control players)
  *
@@ -372,7 +372,8 @@ class AutoPassManager {
      * You only stop when you actually need to make a blocking decision.
      * Having instants in hand doesn't mean you stop at every phase.
      *
-     * - Upkeep/Draw/Main: AUTO-PASS
+     * - Upkeep/Draw: AUTO-PASS
+     * - Main: STOP if you have instant-speed responses
      * - Begin Combat: AUTO-PASS
      * - Declare Attackers (after declaration): STOP if you have instant-speed responses
      * - Declare Blockers: STOP if you have blockers or instant-speed actions
@@ -399,10 +400,17 @@ class AutoPassManager {
                 true
             }
 
-            // Main Phases - auto-pass (wait for end step if you want to cast instants)
+            // Main Phases - STOP if we have instant-speed responses
+            // (like Arena stopping at begin combat / end step, but also catching
+            // the case where the opponent does nothing on main phase and we could act)
             Step.PRECOMBAT_MAIN, Step.POSTCOMBAT_MAIN -> {
-                logger.debug("AUTO-PASS: Opponent's main phase")
-                true
+                if (hasInstantSpeedResponses) {
+                    logger.debug("STOP: Opponent's main phase (have instant-speed responses)")
+                    false
+                } else {
+                    logger.debug("AUTO-PASS: Opponent's main phase (no responses)")
+                    true
+                }
             }
 
             // Begin Combat - AUTO-PASS (Arena-style)
@@ -651,7 +659,7 @@ class AutoPassManager {
         return when (step) {
             // Auto-pass through most phases
             Step.UPKEEP, Step.DRAW -> true
-            Step.PRECOMBAT_MAIN, Step.POSTCOMBAT_MAIN -> true
+            Step.PRECOMBAT_MAIN, Step.POSTCOMBAT_MAIN -> !hasMeaningfulActions
             Step.BEGIN_COMBAT -> true
             Step.DECLARE_ATTACKERS -> !hasMeaningfulActions // Stop if we have responses
             Step.DECLARE_BLOCKERS -> !hasMeaningfulActions // Stop only if we have blockers/responses

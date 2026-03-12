@@ -305,11 +305,20 @@ class AutoPassManagerTest : FunSpec({
             autoPassManager.shouldAutoPass(state, player2, actions) shouldBe true
         }
 
-        test("Auto-pass during opponent's main phase even with instants") {
+        test("STOP during opponent's main phase when player has instant-speed responses") {
             val state = createMockState(player2, player1, Step.PRECOMBAT_MAIN)
             val actions = listOf(
                 passPriorityAction(player2),
                 instantSpellAction(player2)
+            )
+
+            autoPassManager.shouldAutoPass(state, player2, actions) shouldBe false
+        }
+
+        test("Auto-pass during opponent's main phase when no instant-speed responses") {
+            val state = createMockState(player2, player1, Step.PRECOMBAT_MAIN)
+            val actions = listOf(
+                passPriorityAction(player2)
             )
 
             autoPassManager.shouldAutoPass(state, player2, actions) shouldBe true
@@ -785,16 +794,16 @@ class AutoPassManagerTest : FunSpec({
             autoPassManager.getNextStopPoint(state, player1, false) shouldBe "Pass to Main"
         }
 
-        test("returns 'Pass to End Step' from declare attackers on opponent's turn with no attackers") {
-            // Now stops at opponent's end step when player has meaningful actions
+        test("returns 'Pass to Main 2' from declare attackers on opponent's turn with no attackers and meaningful actions") {
+            // Stops at opponent's postcombat main when player has instant-speed responses
             val state = createMockState(player1, player2, Step.DECLARE_ATTACKERS)
-            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass to End Step"
+            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass to Main 2"
         }
 
-        test("returns 'Pass to End Step' from opponent's combat with meaningful actions") {
-            // Now stops at opponent's end step when player has meaningful actions
+        test("returns 'Pass to Main 2' from opponent's combat with meaningful actions") {
+            // Stops at opponent's postcombat main when player has instant-speed responses
             val state = createMockState(player1, player2, Step.COMBAT_DAMAGE)
-            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass to End Step"
+            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass to Main 2"
         }
     }
 
