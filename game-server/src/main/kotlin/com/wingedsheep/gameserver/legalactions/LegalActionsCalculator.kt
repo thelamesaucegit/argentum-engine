@@ -1300,9 +1300,6 @@ class LegalActionsCalculator(
                         ))
                     }
                 }
-                else -> {
-                    // Future morph cost types — skip for now
-                }
             }
         }
 
@@ -1615,7 +1612,7 @@ class LegalActionsCalculator(
                 val abilityHasXCost = abilityHasXInManaCost || hasRemoveXCountersCost
 
                 val abilityMaxAffordableX: Int? = if (abilityHasXCost) {
-                    var maxX = if (abilityHasXInManaCost && abilityManaCost != null) {
+                    var maxX = if (abilityHasXInManaCost) {
                         val availableSources = manaSolver.getAvailableManaCount(state, playerId)
                         val fixedCost = abilityManaCost.cmc  // X contributes 0 to CMC
                         (availableSources - fixedCost).coerceAtLeast(0)
@@ -1925,7 +1922,7 @@ class LegalActionsCalculator(
                     else -> null
                 }
                 val abilityHasXCost = abilityManaCost?.hasX == true
-                val abilityMaxAffordableX: Int? = if (abilityHasXCost && abilityManaCost != null) {
+                val abilityMaxAffordableX: Int? = if (abilityHasXCost) {
                     val availableSources = manaSolver.getAvailableManaCount(state, playerId)
                     val fixedCost = abilityManaCost.cmc
                     (availableSources - fixedCost).coerceAtLeast(0)
