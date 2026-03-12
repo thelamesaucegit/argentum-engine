@@ -29,6 +29,7 @@ object DominariaSet {
         CabalEvangel,
         CastDown,
         CloudreaderSphinx,
+        ColdWaterSnapper,
         DeathbloomThallid,
         Divination,
         DrudgeSentinel,

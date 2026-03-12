@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 31 / 249
+**Implemented:** 32 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 5    |
-| Blue       | 37    | 5    |
+| Blue       | 37    | 6    |
 | Black      | 38    | 8    |
 | Red        | 38    | 5    |
 | Green      | 37    | 5    |
@@ -55,7 +55,7 @@
 - [ ] Charge
 - [ ] Clifftop Retreat
 - [x] Cloudreader Sphinx
-- [ ] Cold-Water Snapper
+- [x] Cold-Water Snapper
 - [ ] Corrosive Ooze
 - [ ] Curator's Ward
 - [ ] D'Avenant Trapper
