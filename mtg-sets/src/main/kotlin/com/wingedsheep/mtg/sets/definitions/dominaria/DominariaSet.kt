@@ -132,6 +132,7 @@ object DominariaSet {
         WeightOfMemory,
         WhisperBloodLiturgist,
         WindgraceAcolyte,
+        WizardsRetort,
         YargleGluttonOfUrborg,
         YavimayaSapherd,
         ZhalfirinVoid,
