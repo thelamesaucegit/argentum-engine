@@ -22,6 +22,7 @@ object DominariaSet {
      */
     val allCards = listOf(
         AcademyDrake,
+        AcademyJourneymage,
         AdventurousImpulse,
         AdelizTheCinderWind,
         AmaranthineWall,

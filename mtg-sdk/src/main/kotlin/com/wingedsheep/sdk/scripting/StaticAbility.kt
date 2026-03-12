@@ -576,6 +576,17 @@ sealed interface CostReductionSource {
     data object ArtifactsYouControl : CostReductionSource {
         override val description: String = "the number of artifacts you control"
     }
+
+    /**
+     * Reduces cost by a fixed amount if you control a permanent matching the filter.
+     * Used for cards like Academy Journeymage ("This spell costs {1} less to cast if you control a Wizard").
+     * Returns the fixed amount if any controlled permanent matches, otherwise 0.
+     */
+    @SerialName("FixedIfControlFilter")
+    @Serializable
+    data class FixedIfControlFilter(val amount: Int, val filter: GameObjectFilter) : CostReductionSource {
+        override val description: String = "$amount if you control a permanent matching ${filter.description}"
+    }
 }
 
 // =============================================================================

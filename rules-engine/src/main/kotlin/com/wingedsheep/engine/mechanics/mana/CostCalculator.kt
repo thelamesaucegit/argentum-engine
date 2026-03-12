@@ -102,6 +102,10 @@ class CostCalculator(
             is CostReductionSource.TotalPowerYouControl -> sumPower(state, playerId)
             is CostReductionSource.ArtifactsYouControl -> countArtifacts(state, playerId)
             is CostReductionSource.ColorsAmongPermanentsYouControl -> countColors(state, playerId)
+            is CostReductionSource.FixedIfControlFilter -> {
+                val controls = controlsMatchingPermanent(state, playerId, source.filter)
+                if (controls) source.amount else 0
+            }
         }
     }
 
@@ -152,6 +156,41 @@ class CostCalculator(
         return state.getBattlefield(playerId).count { entityId ->
             val card = state.getEntity(entityId)?.get<CardComponent>()
             card?.typeLine?.isArtifact == true
+        }
+    }
+
+    /**
+     * Check if a player controls any permanent matching a GameObjectFilter.
+     * Uses projected state for type/subtype matching to account for continuous effects.
+     */
+    private fun controlsMatchingPermanent(state: GameState, playerId: EntityId, filter: GameObjectFilter): Boolean {
+        val projectedState = state.projectedState
+        return state.getBattlefield(playerId).any { entityId ->
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: return@any false
+            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: return@any false
+            filter.cardPredicates.all { predicate ->
+                matchesBattlefieldPredicate(entityId, cardDef, predicate, projectedState)
+            }
+        }
+    }
+
+    /**
+     * Match a battlefield permanent against a card predicate.
+     * Uses projected state when available for type/subtype checks.
+     */
+    private fun matchesBattlefieldPredicate(
+        entityId: EntityId,
+        cardDef: CardDefinition,
+        predicate: CardPredicate,
+        projectedState: com.wingedsheep.engine.mechanics.layers.ProjectedState?
+    ): Boolean {
+        return when (predicate) {
+            is CardPredicate.IsCreature -> projectedState?.isCreature(entityId) ?: cardDef.typeLine.isCreature
+            is CardPredicate.IsArtifact -> projectedState?.hasType(entityId, "ARTIFACT") ?: cardDef.typeLine.isArtifact
+            is CardPredicate.IsEnchantment -> projectedState?.hasType(entityId, "ENCHANTMENT") ?: cardDef.typeLine.isEnchantment
+            is CardPredicate.IsLand -> projectedState?.hasType(entityId, "LAND") ?: cardDef.typeLine.isLand
+            is CardPredicate.HasSubtype -> projectedState?.hasSubtype(entityId, predicate.subtype.value) ?: (predicate.subtype in cardDef.typeLine.subtypes)
+            else -> false // Only common predicates supported for cost reduction checks
         }
     }
 
