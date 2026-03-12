@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 51 / 249
+**Implemented:** 52 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 9    |
 | Black      | 38    | 12   |
 | Red        | 38    | 8    |
-| Green      | 37    | 8    |
+| Green      | 37    | 9    |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 5    |
 | Land       | 12    | 0    |
@@ -240,7 +240,7 @@
 - [ ] Traxos, Scourge of Kroog
 - [ ] Triumph of Gerrard
 - [ ] Two-Headed Giant
-- [ ] Untamed Kavu
+- [x] Untamed Kavu
 - [ ] Unwind
 - [ ] Urgoros, the Empty One
 - [ ] Urza's Ruinous Blast
