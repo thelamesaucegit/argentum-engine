@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 29 / 249
+**Implemented:** 30 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 5    |
 | Blue       | 37    | 5    |
-| Black      | 38    | 6    |
+| Black      | 38    | 7    |
 | Red        | 38    | 5    |
 | Green      | 37    | 5    |
 | Multicolor | 19    | 1    |
@@ -212,7 +212,7 @@
 - [ ] Sporecrown Thallid
 - [ ] Squee, the Immortal
 - [ ] Steel Leaf Champion
-- [ ] Stronghold Confessor
+- [x] Stronghold Confessor
 - [ ] Sulfur Falls
 - [ ] Sylvan Awakening
 - [ ] Syncopate

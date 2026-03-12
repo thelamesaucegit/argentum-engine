@@ -47,6 +47,7 @@ object DominariaSet {
         SerraAngel,
         ShivanFire,
         SparringConstruct,
+        StrongholdConfessor,
         TolarianScholar,
         YargleGluttonOfUrborg,
         YavimayaSapherd,
