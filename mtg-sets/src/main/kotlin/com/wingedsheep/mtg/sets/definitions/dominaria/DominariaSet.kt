@@ -22,6 +22,7 @@ object DominariaSet {
      */
     val allCards = listOf(
         AdamantWill,
+        ArborArmament,
         AvenSentry,
         ArvadTheCursed,
         Befuddle,

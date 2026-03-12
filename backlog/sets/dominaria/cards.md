@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 27 / 249
+**Implemented:** 28 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 5    |
 | Black      | 38    | 5    |
 | Red        | 38    | 5    |
-| Green      | 37    | 4    |
+| Green      | 37    | 5    |
 | Multicolor | 19    | 1    |
 | Colorless  | 30    | 2    |
 | Land       | 12    | 0    |
@@ -25,7 +25,7 @@
 - [ ] Aesthir Glider
 - [ ] Amaranthine Wall
 - [ ] Ancient Animus
-- [ ] Arbor Armament
+- [x] Arbor Armament
 - [ ] Arcane Flight
 - [ ] Artificer's Assistant
 - [x] Arvad the Cursed
