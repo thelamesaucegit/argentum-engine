@@ -2024,6 +2024,11 @@ class LegalActionsCalculator(
                 val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) }
                 creatures + players
             }
+            is TargetCreatureOrPlaneswalker -> {
+                val creatures = findValidPermanentTargets(state, playerId, TargetFilter.Creature, sourceId)
+                val planeswalkers = findValidPermanentTargets(state, playerId, TargetFilter.Planeswalker, sourceId)
+                creatures + planeswalkers
+            }
             is TargetObject -> findValidObjectTargets(state, playerId, requirement.filter, sourceId)
             is TargetSpellOrPermanent -> {
                 val permanents = findValidPermanentTargets(state, playerId, TargetFilter.Permanent, sourceId)
