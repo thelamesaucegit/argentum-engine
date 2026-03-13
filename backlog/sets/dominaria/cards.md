@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 129 / 249
+**Implemented:** 130 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 20   |
 | Black      | 38    | 21   |
 | Red        | 38    | 21   |
-| Green      | 37    | 20   |
+| Green      | 37    | 21   |
 | Multicolor | 19    | 8    |
 | Colorless  | 30    | 13   |
 | Land       | 12    | 5    |
@@ -157,7 +157,7 @@
 - [ ] Mishra's Self-Replicator
 - [ ] Mox Amber
 - [ ] Muldrotha, the Gravetide
-- [ ] Multani, Yavimaya's Avatar
+- [x] Multani, Yavimaya's Avatar
 - [ ] Naban, Dean of Iteration
 - [ ] Naru Meha, Master Wizard
 - [x] Nature's Spiral

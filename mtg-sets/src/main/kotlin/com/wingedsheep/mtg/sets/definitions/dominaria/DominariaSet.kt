@@ -97,6 +97,7 @@ object DominariaSet {
         MemorialToWar,
         MerfolkTrickster,
         MesaUnicorn,
+        MultaniYavimayasAvatar,
         NaturesSpiral,
         Opt,
         OrcishVandal,
