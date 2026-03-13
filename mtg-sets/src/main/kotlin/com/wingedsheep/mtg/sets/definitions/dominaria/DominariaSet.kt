@@ -127,6 +127,7 @@ object DominariaSet {
         Syncopate,
         TatyovaBenthicDruid,
         TempestDjinn,
+        TetsukoUmezawaFugitive,
         ThallidSoothsayer,
         TolarianScholar,
         TragicPoet,

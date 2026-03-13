@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.scripting.CantBeBlockedByPowerOrLess
 import com.wingedsheep.sdk.scripting.CantBeBlockedBySubtype
 import com.wingedsheep.sdk.scripting.CantBeBlockedExceptByKeyword
 import com.wingedsheep.sdk.scripting.CantBeBlockedUnlessDefenderSharesCreatureType
+import com.wingedsheep.sdk.scripting.GrantCantBeBlockedToSmallCreatures
 
 /**
  * Unblockable: Cannot be blocked at all (CANT_BE_BLOCKED flag).
@@ -371,6 +372,35 @@ class CantBlockCreaturesWithGreaterPowerRule : BlockEvasionRule {
 }
 
 /**
+ * GrantCantBeBlockedToSmallCreatures: Attacker can't be blocked if it has power or toughness
+ * at most N and its controller controls a permanent with this static ability
+ * (e.g., Tetsuko Umezawa, Fugitive).
+ *
+ * Scans the attacking player's battlefield for permanents with GrantCantBeBlockedToSmallCreatures,
+ * then checks whether the attacker's projected power or toughness meets the threshold.
+ */
+class GrantCantBeBlockedToSmallCreaturesRule : BlockEvasionRule {
+    override fun check(ctx: BlockCheckContext): String? {
+        val attackerController = ctx.projected.getController(ctx.attackerId) ?: return null
+        val attackerPower = ctx.projected.getPower(ctx.attackerId) ?: return null
+        val attackerToughness = ctx.projected.getToughness(ctx.attackerId) ?: return null
+
+        // Scan the attacking player's battlefield for permanents with this ability
+        for (entityId in ctx.projected.getBattlefieldControlledBy(attackerController)) {
+            val card = ctx.state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = ctx.cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            for (ability in cardDef.staticAbilities.filterIsInstance<GrantCantBeBlockedToSmallCreatures>()) {
+                if (attackerPower <= ability.maxValue || attackerToughness <= ability.maxValue) {
+                    val attackerName = ctx.state.getEntity(ctx.attackerId)?.get<CardComponent>()?.name ?: "Creature"
+                    return "$attackerName can't be blocked (power or toughness ${ability.maxValue} or less)"
+                }
+            }
+        }
+        return null
+    }
+}
+
+/**
  * Default set of block evasion rules, ordered for efficient short-circuiting.
  */
 fun defaultBlockEvasionRules(): List<BlockEvasionRule> = listOf(
@@ -387,6 +417,7 @@ fun defaultBlockEvasionRules(): List<BlockEvasionRule> = listOf(
     CantBeBlockedExceptByKeywordRule(),
     CantBeBlockedExceptBySubtypeRule(),
     CantBeBlockedUnlessDefenderSharesCreatureTypeRule(),
+    GrantCantBeBlockedToSmallCreaturesRule(),
     ProtectionFromColorRule(),
     ProtectionFromSubtypeRule(),
     CanOnlyBlockCreaturesWithKeywordRule(),

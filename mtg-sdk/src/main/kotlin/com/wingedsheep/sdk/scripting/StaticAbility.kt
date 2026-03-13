@@ -826,6 +826,27 @@ data class CantBeBlockedByMoreThan(
 }
 
 /**
+ * Creatures you control with power or toughness N or less can't be blocked.
+ * Used for Tetsuko Umezawa, Fugitive: "Creatures you control with power or
+ * toughness 1 or less can't be blocked."
+ *
+ * This is implemented as a blocking restriction checked at declare blockers,
+ * using fully projected power/toughness values. The check scans the attacking
+ * player's battlefield for permanents with this ability.
+ *
+ * @property maxValue The maximum power or toughness value for the evasion
+ */
+@SerialName("GrantCantBeBlockedToSmallCreatures")
+@Serializable
+data class GrantCantBeBlockedToSmallCreatures(
+    val maxValue: Int
+) : StaticAbility {
+    override val description: String =
+        "Creatures you control with power or toughness $maxValue or less can't be blocked"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * This creature can block any number of creatures.
  * Used for Ironfist Crusher and similar cards.
  *

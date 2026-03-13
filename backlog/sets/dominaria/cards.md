@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 121 / 249
+**Implemented:** 122 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 20   |
-| Blue       | 37    | 18   |
+| Blue       | 37    | 19   |
 | Black      | 38    | 19   |
 | Red        | 38    | 21   |
 | Green      | 37    | 19   |
@@ -221,7 +221,7 @@
 - [x] Tempest Djinn
 - [ ] Territorial Allosaurus
 - [ ] Teshar, Ancestor's Apostle
-- [ ] Tetsuko Umezawa, Fugitive
+- [x] Tetsuko Umezawa, Fugitive
 - [ ] Thallid Omnivore
 - [x] Thallid Soothsayer
 - [ ] The Antiquities War
