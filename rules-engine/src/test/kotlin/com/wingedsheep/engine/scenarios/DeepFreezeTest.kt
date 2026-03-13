@@ -1,6 +1,8 @@
 package com.wingedsheep.engine.scenarios
 
+import com.wingedsheep.engine.mechanics.layers.StateProjector
 import com.wingedsheep.engine.support.GameTestDriver
+import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.*
 import com.wingedsheep.sdk.scripting.ActivatedAbility
@@ -18,65 +20,57 @@ import io.kotest.matchers.shouldBe
  */
 class DeepFreezeTest : FunSpec({
 
-    // A 3/3 creature with flying and an activated ability
+    // A 3/3 red creature with flying
     val FlyingCreature = CardDefinition.creature(
         name = "Flying Creature",
-        manaCost = ManaCost.parse("{2}{W}"),
+        manaCost = ManaCost.parse("{2}{R}"),
         subtypes = setOf(Subtype("Bird")),
         power = 3,
         toughness = 3,
-        keywords = setOf(Keyword.FLYING),
-        script = CardScript(
-            activatedAbilities = listOf(
-                ActivatedAbility(
-                    id = "ping",
-                    cost = PayCost.ManaCost("{1}"),
-                    description = "{1}: This creature deals 1 damage to any target.",
-                    effect = com.wingedsheep.sdk.scripting.effects.DamageEffects.DealDamageEffect(
-                        amount = com.wingedsheep.sdk.scripting.values.DynamicAmount.Fixed(1),
-                        target = com.wingedsheep.sdk.scripting.targets.EffectTarget.Controller
-                    )
-                )
-            )
-        )
+        keywords = setOf(Keyword.FLYING)
     )
 
-    test("Deep Freeze sets base P/T to 0/4") {
+    val projector = StateProjector()
+
+    fun createDriver(): GameTestDriver {
         val driver = GameTestDriver()
-        driver.cardRegistry.register(FlyingCreature)
-        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Deep Freeze" to 10))
+        driver.registerCards(TestCards.all + listOf(FlyingCreature))
+        return driver
+    }
 
-        val activePlayer = driver.activePlayer
-        val opponent = driver.opponent
+    test("Deep Freeze sets base P/T to 0/4") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Mountain" to 20))
 
-        driver.putOnBattlefield(opponent, "Flying Creature")
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
 
+        val creature = driver.putCreatureOnBattlefield(activePlayer, "Flying Creature")
+
+        val deepFreeze = driver.putCardInHand(activePlayer, "Deep Freeze")
+        driver.giveMana(activePlayer, Color.BLUE, 1)
         driver.giveColorlessMana(activePlayer, 2)
-        driver.giveBlueMana(activePlayer, 1)
-        val creature = driver.getCreaturesOnBattlefield(opponent).first()
-        driver.castSpellTargeting(activePlayer, "Deep Freeze", creature)
-        driver.resolveTopOfStack()
+        driver.castSpell(activePlayer, deepFreeze, listOf(creature))
+        driver.bothPass()
 
-        val projected = driver.state.projectedState
-        projected.getPower(creature) shouldBe 0
-        projected.getToughness(creature) shouldBe 4
+        projector.getProjectedPower(driver.state, creature) shouldBe 0
+        projector.getProjectedToughness(driver.state, creature) shouldBe 4
     }
 
     test("Deep Freeze grants defender and removes flying") {
-        val driver = GameTestDriver()
-        driver.cardRegistry.register(FlyingCreature)
-        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Deep Freeze" to 10))
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Mountain" to 20))
 
-        val activePlayer = driver.activePlayer
-        val opponent = driver.opponent
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
 
-        driver.putOnBattlefield(opponent, "Flying Creature")
+        val creature = driver.putCreatureOnBattlefield(activePlayer, "Flying Creature")
 
+        val deepFreeze = driver.putCardInHand(activePlayer, "Deep Freeze")
+        driver.giveMana(activePlayer, Color.BLUE, 1)
         driver.giveColorlessMana(activePlayer, 2)
-        driver.giveBlueMana(activePlayer, 1)
-        val creature = driver.getCreaturesOnBattlefield(opponent).first()
-        driver.castSpellTargeting(activePlayer, "Deep Freeze", creature)
-        driver.resolveTopOfStack()
+        driver.castSpell(activePlayer, deepFreeze, listOf(creature))
+        driver.bothPass()
 
         val projected = driver.state.projectedState
         projected.hasKeyword(creature, Keyword.DEFENDER) shouldBe true
@@ -84,20 +78,19 @@ class DeepFreezeTest : FunSpec({
     }
 
     test("Deep Freeze adds Wall subtype and blue color") {
-        val driver = GameTestDriver()
-        driver.cardRegistry.register(FlyingCreature)
-        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Deep Freeze" to 10))
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Mountain" to 20))
 
-        val activePlayer = driver.activePlayer
-        val opponent = driver.opponent
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
 
-        driver.putOnBattlefield(opponent, "Flying Creature")
+        val creature = driver.putCreatureOnBattlefield(activePlayer, "Flying Creature")
 
+        val deepFreeze = driver.putCardInHand(activePlayer, "Deep Freeze")
+        driver.giveMana(activePlayer, Color.BLUE, 1)
         driver.giveColorlessMana(activePlayer, 2)
-        driver.giveBlueMana(activePlayer, 1)
-        val creature = driver.getCreaturesOnBattlefield(opponent).first()
-        driver.castSpellTargeting(activePlayer, "Deep Freeze", creature)
-        driver.resolveTopOfStack()
+        driver.castSpell(activePlayer, deepFreeze, listOf(creature))
+        driver.bothPass()
 
         val projected = driver.state.projectedState
         projected.hasSubtype(creature, "Wall") shouldBe true
@@ -105,21 +98,20 @@ class DeepFreezeTest : FunSpec({
         projected.hasColor(creature, Color.BLUE) shouldBe true
     }
 
-    test("Deep Freeze suppresses activated abilities") {
-        val driver = GameTestDriver()
-        driver.cardRegistry.register(FlyingCreature)
-        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Deep Freeze" to 10))
+    test("Deep Freeze sets lostAllAbilities flag") {
+        val driver = createDriver()
+        driver.initMirrorMatch(deck = Deck.of("Island" to 20, "Mountain" to 20))
 
-        val activePlayer = driver.activePlayer
-        val opponent = driver.opponent
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
 
-        driver.putOnBattlefield(opponent, "Flying Creature")
+        val creature = driver.putCreatureOnBattlefield(activePlayer, "Flying Creature")
 
+        val deepFreeze = driver.putCardInHand(activePlayer, "Deep Freeze")
+        driver.giveMana(activePlayer, Color.BLUE, 1)
         driver.giveColorlessMana(activePlayer, 2)
-        driver.giveBlueMana(activePlayer, 1)
-        val creature = driver.getCreaturesOnBattlefield(opponent).first()
-        driver.castSpellTargeting(activePlayer, "Deep Freeze", creature)
-        driver.resolveTopOfStack()
+        driver.castSpell(activePlayer, deepFreeze, listOf(creature))
+        driver.bothPass()
 
         val projected = driver.state.projectedState
         projected.hasLostAllAbilities(creature) shouldBe true

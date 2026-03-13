@@ -30,6 +30,7 @@ import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.MulliganStateComponent
 import com.wingedsheep.engine.state.components.player.PlayerLostComponent
 import com.wingedsheep.sdk.core.ManaCost
+import com.wingedsheep.sdk.core.ManaSymbol
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.Deck
@@ -1036,6 +1037,12 @@ class GameSession(
             }
         }
 
+        // Account for delve — reduce generic mana by the number of exiled cards
+        val delveCount = action.alternativePayment?.delveReduction ?: 0
+        if (delveCount > 0) {
+            manaCost = reduceGenericCost(manaCost, delveCount)
+        }
+
         val xValue = action.xValue ?: 0
         val manaPoolAfterCast = result.state.getEntity(action.playerId)?.get<ManaPoolComponent>() ?: ManaPoolComponent()
 
@@ -1047,6 +1054,25 @@ class GameSession(
             manaPoolBeforePayment = manaPoolBeforeCast,
             manaPoolAfterPayment = manaPoolAfterCast
         )
+    }
+
+    /**
+     * Reduce the generic mana portion of a ManaCost by a given amount.
+     * Used to account for Delve/Convoke reducing the mana that needs to be tapped.
+     */
+    private fun reduceGenericCost(cost: ManaCost, reduction: Int): ManaCost {
+        var remaining = reduction
+        val newSymbols = cost.symbols.map { symbol ->
+            if (remaining > 0 && symbol is ManaSymbol.Generic) {
+                val reduce = minOf(remaining, symbol.amount)
+                remaining -= reduce
+                val newAmount = symbol.amount - reduce
+                if (newAmount > 0) ManaSymbol.generic(newAmount) else null
+            } else {
+                symbol
+            }
+        }.filterNotNull()
+        return ManaCost(newSymbols)
     }
 
     /**
