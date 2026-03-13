@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 128 / 249
+**Implemented:** 129 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 20   |
 | Blue       | 37    | 20   |
-| Black      | 38    | 20   |
+| Black      | 38    | 21   |
 | Red        | 38    | 21   |
 | Green      | 37    | 20   |
 | Multicolor | 19    | 8    |
@@ -68,7 +68,7 @@
 - [x] Deathbloom Thallid
 - [x] Deep Freeze
 - [x] Demonic Vigor
-- [ ] Demonlord Belzenlok
+- [x] Demonlord Belzenlok
 - [ ] Diligent Excavator
 - [x] Divest
 - [x] Divination

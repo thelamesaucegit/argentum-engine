@@ -50,6 +50,7 @@ object DominariaSet {
         DeathbloomThallid,
         DeepFreeze,
         DemonicVigor,
+        DemonlordBelzenlok,
         DreadShade,
         Divest,
         Divination,

@@ -45,6 +45,7 @@ import com.wingedsheep.sdk.scripting.effects.LoseLifeEffect
 import com.wingedsheep.sdk.scripting.effects.SetLifeTotalEffect
 import com.wingedsheep.sdk.scripting.effects.ModifyStatsEffect
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
+import com.wingedsheep.sdk.scripting.effects.ExileFromTopRepeatingEffect
 import com.wingedsheep.sdk.scripting.effects.ExileUntilLeavesEffect
 import com.wingedsheep.sdk.scripting.effects.CreatePermanentGlobalTriggeredAbilityEffect
 import com.wingedsheep.sdk.scripting.effects.ReturnCreaturesPutInGraveyardThisTurnEffect
@@ -414,6 +415,20 @@ object Effects {
      * Used by Parallel Thoughts and similar cards.
      */
     fun TakeFromLinkedExile(): Effect = EffectPatterns.takeFromLinkedExile()
+
+    /**
+     * Repeatedly exile cards from the top of your library until you exile a card
+     * matching [matchFilter], then put that card into your hand. If the card's mana
+     * value is at least [repeatIfManaValueAtLeast], repeat the process. Deal
+     * [damagePerCard] damage to you for each card put into your hand this way.
+     *
+     * Used for Demonlord Belzenlok and similar repeating exile-to-hand effects.
+     */
+    fun ExileFromTopRepeating(
+        matchFilter: GameObjectFilter = GameObjectFilter.Nonland,
+        repeatIfManaValueAtLeast: Int = 4,
+        damagePerCard: Int = 1
+    ): Effect = ExileFromTopRepeatingEffect(matchFilter, repeatIfManaValueAtLeast, damagePerCard)
 
     // =========================================================================
     // Stat Modification Effects

@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting.effects
 
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import kotlinx.serialization.SerialName
@@ -68,6 +69,36 @@ data object PutCreatureFromHandSharingTypeWithTappedEffect : Effect {
  *
  * If the linked exile pile is empty, nothing happens.
  */
+/**
+ * Repeatedly exile cards from the top of a player's library until a card matching
+ * [matchFilter] is found, then put that card into the player's hand. If the matched
+ * card's mana value is at least [repeatIfManaValueAtLeast], repeat the process.
+ * After the process completes, the source deals damage to the player equal to the
+ * number of cards put into their hand this way (multiplied by [damagePerCard]).
+ *
+ * Land cards exiled this way remain in exile.
+ *
+ * Used for Demonlord Belzenlok and similar "exile-reveal-repeat" library effects.
+ */
+@SerialName("ExileFromTopRepeating")
+@Serializable
+data class ExileFromTopRepeatingEffect(
+    val matchFilter: GameObjectFilter = GameObjectFilter.Nonland,
+    val repeatIfManaValueAtLeast: Int = 4,
+    val damagePerCard: Int = 1
+) : Effect {
+    override val description: String = buildString {
+        append("Exile cards from the top of your library until you exile a ${matchFilter.description} card, ")
+        append("then put that card into your hand. ")
+        append("If the card's mana value is $repeatIfManaValueAtLeast or greater, repeat this process. ")
+        if (damagePerCard > 0) {
+            append("Deal $damagePerCard damage to you for each card put into your hand this way.")
+        }
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
 @Deprecated("Use Effects.TakeFromLinkedExile() or EffectPatterns.takeFromLinkedExile() instead")
 @SerialName("TakeFromLinkedExile")
 @Serializable

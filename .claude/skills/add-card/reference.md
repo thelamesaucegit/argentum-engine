@@ -135,6 +135,7 @@ constructors.
 - `Effects.Scry(count)` — returns CompositeEffect (Gather → Select → Move pipeline)
 - `Effects.Surveil(count)` — returns CompositeEffect (Gather → Select → Move pipeline)
 - `Effects.TakeFromLinkedExile()` — put top card of linked exile pile into hand
+- `Effects.ExileFromTopRepeating(matchFilter, repeatIfManaValueAtLeast, damagePerCard)` — exile from top until match, put in hand, repeat if MV >= threshold, deal damage per card to hand (Demonlord Belzenlok)
 
 ### Stack
 
@@ -313,6 +314,7 @@ constructors.
 | `TakeFromLinkedExileEffect`                                                         | (object)                                            | Put top card of linked exile pile into hand       |
 | `GrantMayPlayFromExileEffect`                                                       | `from`                                              | Grant play-from-exile permission to cards in collection |
 | `GrantPlayWithoutPayingCostEffect`                                                  | `from`                                              | Grant play-without-paying-cost to cards in collection  |
+| `ExileFromTopRepeatingEffect`                                                       | `matchFilter, repeatIfManaValueAtLeast, damagePerCard` | Exile from top until match, put in hand, repeat if MV >= threshold, deal damage (Demonlord Belzenlok) |
 
 ### Mana
 

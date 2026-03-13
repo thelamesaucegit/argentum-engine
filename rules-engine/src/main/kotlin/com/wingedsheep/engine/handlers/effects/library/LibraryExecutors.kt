@@ -17,6 +17,7 @@ class LibraryExecutors(
         GrantMayPlayFromExileExecutor(),
         GrantPlayWithoutPayingCostExecutor(),
         RevealUntilExecutor(),
+        ExileFromTopRepeatingExecutor(),
         PutCreatureFromHandSharingTypeExecutor(),
         ChooseCreatureTypePipelineExecutor(),
         ChooseOptionPipelineExecutor(),
