@@ -8,7 +8,7 @@ import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.Player
+import com.wingedsheep.sdk.scripting.references.Player
 
 /**
  * Grand Warlord Radha
@@ -37,7 +37,7 @@ val GrandWarlordRadha = card("Grand Warlord Radha") {
     triggeredAbility {
         trigger = Triggers.YouAttack
         effect = Effects.AddDynamicMana(
-            amount = DynamicAmounts.battlefield(Player.You, GameObjectFilter.Creature.attacking()),
+            amount = DynamicAmounts.battlefield(Player.You, GameObjectFilter.Creature.attacking()).count(),
             allowedColors = setOf(Color.RED, Color.GREEN)
         )
     }
