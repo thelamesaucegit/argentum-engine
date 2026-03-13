@@ -345,12 +345,12 @@ class CombatContinuationResumer(
         response: DecisionResponse,
         checkForMore: CheckForMore
     ): ExecutionResult {
-        if (response !is OptionChosenResponse) {
-            return ExecutionResult.error(state, "Expected option choice response for source selection")
+        if (response !is CardsSelectedResponse) {
+            return ExecutionResult.error(state, "Expected cards selected response for source selection")
         }
 
-        val chosenSourceId = continuation.sourceOptions.getOrNull(response.optionIndex)
-            ?: return ExecutionResult.error(state, "Invalid source option index: ${response.optionIndex}")
+        val chosenSourceId = response.selectedCards.firstOrNull()
+            ?: return ExecutionResult.error(state, "No source selected")
 
         val deflectSourceId = continuation.sourceId ?: EntityId.generate()
 

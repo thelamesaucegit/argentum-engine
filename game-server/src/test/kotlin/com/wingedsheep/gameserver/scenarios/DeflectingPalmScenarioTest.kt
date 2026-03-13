@@ -1,7 +1,8 @@
 package com.wingedsheep.gameserver.scenarios
 
-import com.wingedsheep.engine.core.ChooseOptionDecision
-import com.wingedsheep.engine.core.OptionChosenResponse
+import com.wingedsheep.engine.core.CardsSelectedResponse
+import com.wingedsheep.engine.core.SelectCardsDecision
+import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
@@ -21,11 +22,12 @@ class DeflectingPalmScenarioTest : ScenarioTestBase() {
     private fun ScenarioTestBase.TestGame.chooseSource(sourceName: String) {
         val decision = getPendingDecision()
         decision.shouldNotBeNull()
-        decision.shouldBeInstanceOf<ChooseOptionDecision>()
-        val options = (decision as ChooseOptionDecision).options
-        val index = options.indexOfFirst { it.contains(sourceName) }
-        check(index >= 0) { "Source '$sourceName' not found in options: $options" }
-        submitDecision(OptionChosenResponse(decision.id, index))
+        decision.shouldBeInstanceOf<SelectCardsDecision>()
+        val selectDecision = decision as SelectCardsDecision
+        val entityId = selectDecision.options.first { id ->
+            state.getEntity(id)?.get<CardComponent>()?.name == sourceName
+        }
+        submitDecision(CardsSelectedResponse(decision.id, listOf(entityId)))
     }
 
     init {

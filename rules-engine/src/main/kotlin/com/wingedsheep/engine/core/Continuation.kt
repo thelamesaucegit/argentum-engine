@@ -1605,15 +1605,13 @@ data class ManaSourceOption(
  * @property controllerId The player who controls the spell
  * @property sourceId The Deflecting Palm card entity (source of reflected damage)
  * @property sourceName Name of the source for display
- * @property sourceOptions List of entity IDs corresponding to the option indices
  */
 @Serializable
 data class DeflectDamageSourceChoiceContinuation(
     override val decisionId: String,
     val controllerId: EntityId,
     val sourceId: EntityId?,
-    val sourceName: String?,
-    val sourceOptions: List<EntityId>
+    val sourceName: String?
 ) : ContinuationFrame
 
 /**
