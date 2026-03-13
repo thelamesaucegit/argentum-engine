@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 140 / 249
+**Implemented:** 141 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 23   |
 | Blue       | 37    | 22   |
-| Black      | 38    | 22   |
+| Black      | 38    | 23   |
 | Red        | 38    | 22   |
 | Green      | 37    | 22   |
 | Multicolor | 19    | 9    |
@@ -45,7 +45,7 @@
 - [ ] Board the Weatherlight
 - [ ] Broken Bond
 - [x] Cabal Evangel
-- [ ] Cabal Paladin
+- [x] Cabal Paladin
 - [ ] Cabal Stronghold
 - [x] Caligo Skin-Witch
 - [x] Call the Cavalry

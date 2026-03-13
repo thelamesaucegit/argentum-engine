@@ -41,6 +41,7 @@ object DominariaSet {
         BloodtallowCandle,
         CaligoSkinWitch,
         CallTheCavalry,
+        CabalPaladin,
         CabalEvangel,
         CastDown,
         Charge,
