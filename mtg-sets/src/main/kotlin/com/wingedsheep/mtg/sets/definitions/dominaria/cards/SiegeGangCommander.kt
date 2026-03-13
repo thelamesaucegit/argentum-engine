@@ -31,7 +31,8 @@ val SiegeGangCommander = card("Siege-Gang Commander") {
             toughness = 1,
             colors = setOf(Color.RED),
             creatureTypes = setOf("Goblin"),
-            count = 3
+            count = 3,
+            imageUri = "https://cards.scryfall.io/normal/front/b/d/bd79264f-0734-48b7-8333-4035e518d46c.jpg?1562702307"
         )
     }
 
