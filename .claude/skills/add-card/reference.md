@@ -1000,7 +1000,7 @@ Used in card definitions for effects that intercept events before they happen:
 
 - `RedirectZoneChange(newDestination, appliesTo)` — Anafenza, Rest in Peace. Redirects zone changes matching `appliesTo` filter (e.g., creatures going to graveyard → exile). Engine hooks: SBA death, destroy, moveCardToZone, MoveCollectionExecutor.
 - `RedirectZoneChangeWithEffect(newDestination, additionalEffect, selfOnly, appliesTo)` — Ugin's Nexus. Like RedirectZoneChange but also executes an additional effect (e.g., TakeExtraTurnEffect) when the redirect applies. `selfOnly=true` means only applies when the entity being moved IS the permanent with this effect.
-- `EntersTapped(appliesTo)` — tap lands
+- `EntersTapped(unlessCondition?, appliesTo)` — tap lands. Use `unlessCondition` for check lands (e.g., `Conditions.Any(Exists(Player.You, Zone.BATTLEFIELD, GameObjectFilter.Land.withSubtype("Island")), ...)`) — enters tapped unless condition is met.
 - `EntersWithCounters(counterType, count, appliesTo)` — Master Biomancer
 - `EntersWithDynamicCounters(counterType, count: DynamicAmount, appliesTo)` — dynamic counter entry
 - `UndyingEffect(appliesTo)` / `PersistEffect(appliesTo)`

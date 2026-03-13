@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting
 
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.scripting.conditions.Condition
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.events.RecipientFilter
@@ -189,16 +190,24 @@ data class RedirectZoneChange(
 /**
  * Permanent enters the battlefield tapped.
  * Example: Glacial Fortress (conditional), tap lands, Thalia Heretic Cathar
+ *
+ * @param unlessCondition If non-null, the permanent only enters tapped when this condition is NOT met.
+ *                        Used for "check lands" like Sulfur Falls ("enters tapped unless you control an Island or a Mountain").
  */
 @SerialName("EntersTapped")
 @Serializable
 data class EntersTapped(
+    val unlessCondition: Condition? = null,
     override val appliesTo: GameEvent = GameEvent.ZoneChangeEvent(
         filter = GameObjectFilter.Any,
         to = Zone.BATTLEFIELD
     )
 ) : ReplacementEffect {
-    override val description: String = "If ${appliesTo.description}, it enters tapped"
+    override val description: String = if (unlessCondition != null) {
+        "This permanent enters tapped unless ${unlessCondition.description}"
+    } else {
+        "If ${appliesTo.description}, it enters tapped"
+    }
 
     override fun applyTextReplacement(replacer: TextReplacer): ReplacementEffect {
         val newAppliesTo = appliesTo.applyTextReplacement(replacer)

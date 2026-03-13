@@ -17,6 +17,8 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.engine.handlers.ConditionEvaluator
+import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.sdk.scripting.EntersTapped
 import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
 import kotlin.reflect.KClass
@@ -115,9 +117,25 @@ class PlayLandHandler(
 
         // Check for "enters the battlefield tapped" replacement effect
         val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
-        if (cardDef != null && cardDef.script.replacementEffects.any { it is EntersTapped }) {
-            newState = newState.updateEntity(action.cardId) { c ->
-                c.with(TappedComponent)
+        if (cardDef != null) {
+            val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()
+            if (entersTapped != null) {
+                val shouldEnterTapped = if (entersTapped.unlessCondition != null) {
+                    // Conditional: enters tapped UNLESS condition is met
+                    val context = EffectContext(
+                        sourceId = action.cardId,
+                        controllerId = action.playerId,
+                        opponentId = newState.turnOrder.firstOrNull { it != action.playerId }
+                    )
+                    !ConditionEvaluator().evaluate(newState, entersTapped.unlessCondition!!, context)
+                } else {
+                    true
+                }
+                if (shouldEnterTapped) {
+                    newState = newState.updateEntity(action.cardId) { c ->
+                        c.with(TappedComponent)
+                    }
+                }
             }
         }
 

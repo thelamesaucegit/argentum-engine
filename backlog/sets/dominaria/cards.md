@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 155 / 249
+**Implemented:** 156 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -13,7 +13,7 @@
 | Green      | 37    | 26   |
 | Multicolor | 19    | 10   |
 | Colorless  | 30    | 15   |
-| Land       | 12    | 5    |
+| Land       | 12    | 6    |
 
 ---
 
@@ -213,7 +213,7 @@
 - [ ] Squee, the Immortal
 - [x] Steel Leaf Champion
 - [x] Stronghold Confessor
-- [ ] Sulfur Falls
+- [x] Sulfur Falls
 - [ ] Sylvan Awakening
 - [x] Syncopate
 - [x] Tatyova, Benthic Druid

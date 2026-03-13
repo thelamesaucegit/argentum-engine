@@ -149,6 +149,7 @@ object DominariaSet {
         SparringConstruct,
         SteelLeafChampion,
         StrongholdConfessor,
+        SulfurFalls,
         Syncopate,
         TatyovaBenthicDruid,
         TempestDjinn,

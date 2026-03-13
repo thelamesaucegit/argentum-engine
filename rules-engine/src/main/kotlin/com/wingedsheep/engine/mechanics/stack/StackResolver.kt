@@ -612,9 +612,25 @@ class StackResolver(
         }
 
         // Handle "enters the battlefield tapped" replacement effect
-        if (cardDef != null && !spellComponent.castFaceDown &&
-            cardDef.script.replacementEffects.any { it is EntersTapped }) {
-            newState = newState.updateEntity(spellId) { c -> c.with(TappedComponent) }
+        if (cardDef != null && !spellComponent.castFaceDown) {
+            val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()
+            if (entersTapped != null) {
+                val shouldEnterTapped = if (entersTapped.unlessCondition != null) {
+                    val context = EffectContext(
+                        sourceId = spellId,
+                        controllerId = controllerId,
+                        opponentId = newState.turnOrder.firstOrNull { it != controllerId }
+                    )
+                    !com.wingedsheep.engine.handlers.ConditionEvaluator().evaluate(
+                        newState, entersTapped.unlessCondition!!, context
+                    )
+                } else {
+                    true
+                }
+                if (shouldEnterTapped) {
+                    newState = newState.updateEntity(spellId) { c -> c.with(TappedComponent) }
+                }
+            }
         }
 
         // Handle "enters with counters" replacement effects (before adding to battlefield)
