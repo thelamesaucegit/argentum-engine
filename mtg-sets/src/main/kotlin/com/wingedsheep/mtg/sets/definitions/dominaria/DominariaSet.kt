@@ -85,6 +85,7 @@ object DominariaSet {
         GrandWarlordRadha,
         GuardiansOfKoilos,
         GiftOfGrowth,
+        GrowFromTheAshes,
         IcyManipulator,
         InvokeTheDivine,
         JhoiraWeatherlightCaptain,
