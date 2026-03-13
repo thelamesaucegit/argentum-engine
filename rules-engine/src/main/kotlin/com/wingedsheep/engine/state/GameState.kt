@@ -8,6 +8,7 @@ import com.wingedsheep.engine.event.GrantedTriggeredAbility
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.engine.state.components.battlefield.GraveyardEntryTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
@@ -165,6 +166,11 @@ data class GameState(
             val container = newState.getEntity(entityId)
             if (container != null && container.get<TappedComponent>() != null) {
                 newState = newState.updateEntity(entityId) { c -> c.without<TappedComponent>() }
+            }
+        }
+        if (key.zoneType == Zone.GRAVEYARD) {
+            newState = newState.updateEntity(entityId) { c ->
+                c.with(GraveyardEntryTurnComponent(turnNumber))
             }
         }
         return newState

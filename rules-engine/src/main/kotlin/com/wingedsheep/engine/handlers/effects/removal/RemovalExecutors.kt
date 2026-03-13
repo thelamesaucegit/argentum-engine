@@ -39,6 +39,7 @@ class RemovalExecutors(
         payOrSufferExecutor,
         RegenerateExecutor(),
 
+        ReturnCreaturesPutInGraveyardThisTurnExecutor(),
         ReturnOneFromLinkedExileExecutor(),
         SacrificeExecutor(),
         SacrificeSelfExecutor(),

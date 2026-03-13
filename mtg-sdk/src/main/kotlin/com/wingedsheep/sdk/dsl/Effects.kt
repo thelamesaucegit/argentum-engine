@@ -46,6 +46,7 @@ import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
 import com.wingedsheep.sdk.scripting.effects.ExileGroupAndLinkEffect
 import com.wingedsheep.sdk.scripting.effects.ExileUntilLeavesEffect
 import com.wingedsheep.sdk.scripting.effects.CreatePermanentGlobalTriggeredAbilityEffect
+import com.wingedsheep.sdk.scripting.effects.ReturnCreaturesPutInGraveyardThisTurnEffect
 import com.wingedsheep.sdk.scripting.effects.ReturnOneFromLinkedExileEffect
 import com.wingedsheep.sdk.scripting.effects.ReturnSelfToBattlefieldAttachedEffect
 import com.wingedsheep.sdk.scripting.effects.DrawUpToEffect
@@ -326,6 +327,13 @@ object Effects {
      * The active player chooses one of their owned exiled cards.
      */
     fun ReturnOneFromLinkedExile(): Effect = ReturnOneFromLinkedExileEffect
+
+    /**
+     * Return to hand all creature cards in a player's graveyard that were put there this turn.
+     * Used by Garna, the Bloodflame and similar effects.
+     */
+    fun ReturnCreaturesPutInGraveyardThisTurn(player: Player = Player.You): Effect =
+        ReturnCreaturesPutInGraveyardThisTurnEffect(player)
 
     /**
      * Create a global triggered ability that lasts permanently.

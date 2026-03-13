@@ -66,6 +66,7 @@ constructors.
 - `Effects.ReturnLinkedExile()` — return all cards linked via LinkedExileComponent to battlefield under controller's control (Day of the Dragons LTB)
 - `Effects.ReturnLinkedExileUnderOwnersControl()` — return all linked exiled cards to battlefield under their owners' control (Planar Guide)
 - `Effects.ReturnOneFromLinkedExile()` — return one owned card from linked exile to battlefield (Dimensional Breach upkeep trigger)
+- `Effects.ReturnCreaturesPutInGraveyardThisTurn(player)` — return to hand all creature cards in graveyard that were put there this turn (Garna, the Bloodflame)
 - `Effects.CreatePermanentGlobalTriggeredAbility(ability)` — create a permanent global triggered ability (for sorcery-created recurring triggers)
 - `Effects.ShuffleGraveyardIntoLibrary(target)` — shuffle graveyard into library
 

@@ -70,6 +70,7 @@ object DominariaSet {
         GideonsReproach,
         GoblinChainwhirler,
         GoblinWarchief,
+        GarnaTheBloodflame,
         GildedLotus,
         GiftOfGrowth,
         IcyManipulator,

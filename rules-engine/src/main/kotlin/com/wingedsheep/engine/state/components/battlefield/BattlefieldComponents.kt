@@ -162,6 +162,14 @@ data class DamageDealtToCreaturesThisTurnComponent(
 data object GrantsControllerShroudComponent : Component
 
 /**
+ * Marks a permanent as unable to be targeted by abilities opponents control.
+ * Unlike hexproof, spells can still target this permanent.
+ * Used for Shanna, Sisay's Legacy: "Shanna can't be the target of abilities your opponents control."
+ */
+@Serializable
+data object CantBeTargetedByOpponentAbilitiesComponent : Component
+
+/**
  * Tracks entity IDs of cards exiled by this permanent, so they can be
  * returned when the permanent leaves the battlefield.
  *
@@ -174,4 +182,15 @@ data object GrantsControllerShroudComponent : Component
 @Serializable
 data class LinkedExileComponent(
     val exiledIds: List<EntityId> = emptyList()
+) : Component
+
+/**
+ * Tracks the turn number when a card was put into the graveyard.
+ * Used by effects like Garna, the Bloodflame to return creature cards
+ * that were put into the graveyard this turn.
+ * Set automatically by GameState.addToZone when zone is GRAVEYARD.
+ */
+@Serializable
+data class GraveyardEntryTurnComponent(
+    val turnNumber: Int
 ) : Component

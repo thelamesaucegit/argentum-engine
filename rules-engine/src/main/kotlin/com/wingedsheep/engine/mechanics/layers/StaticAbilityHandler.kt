@@ -2,6 +2,7 @@ package com.wingedsheep.engine.mechanics.layers
 
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.ComponentContainer
+import com.wingedsheep.engine.state.components.battlefield.CantBeTargetedByOpponentAbilitiesComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShroudComponent
 import com.wingedsheep.engine.state.components.battlefield.ReplacementEffectSourceComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -30,6 +31,7 @@ import com.wingedsheep.sdk.scripting.AnimateLandGroup
 import com.wingedsheep.sdk.scripting.GrantColor
 import com.wingedsheep.sdk.scripting.LoseAllAbilities
 import com.wingedsheep.sdk.scripting.SetBasePowerToughnessStatic
+import com.wingedsheep.sdk.scripting.CantBeTargetedByOpponentAbilities
 import com.wingedsheep.sdk.scripting.GrantShroudToController
 import com.wingedsheep.sdk.scripting.conditions.EnchantedCreatureHasSubtype
 import com.wingedsheep.sdk.scripting.conditions.Exists
@@ -108,6 +110,11 @@ class StaticAbilityHandler(
         // Add tag component for abilities that grant controller-level effects
         if (cardDefinition.staticAbilities.any { it is GrantShroudToController }) {
             result = result.with(GrantsControllerShroudComponent)
+        }
+
+        // Add tag component for "can't be the target of abilities your opponents control"
+        if (cardDefinition.staticAbilities.any { it is CantBeTargetedByOpponentAbilities }) {
+            result = result.with(CantBeTargetedByOpponentAbilitiesComponent)
         }
 
         return result
@@ -557,6 +564,11 @@ class StaticAbilityHandler(
         // Handle "other tapped creatures you control" pattern
         if (hasExcludeSelf && hasTappedPredicate && controllerPredicate == ControllerPredicate.ControlledByYou) {
             return AffectsFilter.OtherTappedCreaturesYouControl
+        }
+
+        // Handle "other creatures you control" pattern
+        if (hasExcludeSelf && subtypePredicate == null && controllerPredicate == ControllerPredicate.ControlledByYou && baseFilter.statePredicates.isEmpty()) {
+            return AffectsFilter.OtherCreaturesYouControl
         }
 
         // Handle "other creatures" pattern (only when no other restrictions)

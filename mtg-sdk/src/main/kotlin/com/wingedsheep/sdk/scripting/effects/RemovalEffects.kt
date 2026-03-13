@@ -386,3 +386,24 @@ data object ReturnOneFromLinkedExileEffect : Effect {
         "Return one of the exiled cards you own to the battlefield"
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
+
+/**
+ * Return to owner's hand all creature cards in a player's graveyard that were put there
+ * from anywhere this turn.
+ *
+ * Uses GraveyardEntryTurnComponent (stamped by GameState.addToZone) to determine which
+ * cards entered the graveyard during the current turn.
+ *
+ * Reusable for any "return creatures put into your graveyard this turn" effect.
+ *
+ * @property player Which player's graveyard to check (defaults to Controller)
+ */
+@SerialName("ReturnCreaturesPutInGraveyardThisTurn")
+@Serializable
+data class ReturnCreaturesPutInGraveyardThisTurnEffect(
+    val player: Player = Player.You
+) : Effect {
+    override val description: String =
+        "Return to your hand all creature cards in your graveyard that were put there from anywhere this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
