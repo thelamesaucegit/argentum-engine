@@ -1762,7 +1762,8 @@ class LegalActionsCalculator(
                         additionalCostInfo = costInfo,
                         hasXCost = abilityHasXCost,
                         maxAffordableX = abilityMaxAffordableX,
-                        autoTapPreview = abilityAutoTapPreview
+                        autoTapPreview = abilityAutoTapPreview,
+                        maxRepeatableActivations = maxRepeatableActivations
                     ))
                 }
             }
