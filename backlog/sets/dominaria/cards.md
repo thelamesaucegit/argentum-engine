@@ -2,11 +2,11 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 138 / 249
+**Implemented:** 139 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 22   |
+| White      | 38    | 23   |
 | Blue       | 37    | 21   |
 | Black      | 38    | 22   |
 | Red        | 38    | 22   |
@@ -62,7 +62,7 @@
 - [ ] Damping Sphere
 - [ ] Danitha Capashen, Paragon
 - [ ] Darigaaz Reincarnated
-- [ ] Daring Archaeologist
+- [x] Daring Archaeologist
 - [x] Dark Bargain
 - [ ] Dauntless Bodyguard
 - [x] Deathbloom Thallid
