@@ -182,6 +182,8 @@ export function getEffectIcon(icon: string): string {
       return '♻️'
     case 'emblem':
       return '👑'
+    case 'copy-spell':
+      return '📋'
     default:
       return '⚡'
   }

@@ -1044,6 +1044,22 @@ class ClientStateTransformer(
             )
         }
 
+        // Check for pending spell copies (e.g., Howl of the Horde)
+        val pendingCopies = state.pendingSpellCopies.filter { it.controllerId == playerId }
+        if (pendingCopies.isNotEmpty()) {
+            val totalCopies = pendingCopies.sumOf { it.copies }
+            val sourceName = pendingCopies.joinToString(", ") { it.sourceName }
+            val copyWord = if (totalCopies == 1) "copy" else "copies"
+            effects.add(
+                ClientPlayerEffect(
+                    effectId = "pending_spell_copy",
+                    name = "Copy Spell",
+                    description = "Your next instant or sorcery spell will be copied $totalCopies time(s) ($sourceName)",
+                    icon = "copy-spell"
+                )
+            )
+        }
+
         // Check for permanent global triggered abilities (emblems) controlled by this player
         // Group by source name so a single emblem with multiple abilities shows as one badge
         val emblemsBySource = state.globalGrantedTriggeredAbilities
