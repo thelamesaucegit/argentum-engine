@@ -78,6 +78,7 @@ object DominariaSet {
         GiftOfGrowth,
         IcyManipulator,
         InvokeTheDivine,
+        JhoiraWeatherlightCaptain,
         JosuVessLichKnight,
         JoustingLance,
         Juggernaut,
