@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers
 
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.CantBeTargetedByOpponentAbilitiesComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShroudComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -11,6 +12,20 @@ import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.*
+
+/**
+ * Identifies the type of source that is doing the targeting.
+ * Used to implement restrictions like "can't be the target of abilities your opponents control"
+ * which only block abilities, not spells.
+ */
+enum class TargetingSourceType {
+    /** The source is a spell (instant/sorcery/aura/etc.) */
+    SPELL,
+    /** The source is an activated or triggered ability */
+    ABILITY,
+    /** Unknown or default — no source-type-based restrictions apply */
+    ANY
+}
 
 /**
  * Finds legal targets for a given target requirement.
@@ -40,20 +55,21 @@ class TargetFinder(
         requirement: TargetRequirement,
         controllerId: EntityId,
         sourceId: EntityId? = null,
-        ignoreTargetingRestrictions: Boolean = false
+        ignoreTargetingRestrictions: Boolean = false,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         return when (requirement) {
             is TargetPlayer -> findPlayerTargets(state, requirement, controllerId)
             is TargetOpponent -> findOpponentTargets(state, controllerId)
-            is AnyTarget -> findAnyTargets(state, controllerId, sourceId)
-            is TargetCreatureOrPlayer -> findCreatureOrPlayerTargets(state, controllerId, sourceId)
-            is TargetOpponentOrPlaneswalker -> findOpponentOrPlaneswalkerTargets(state, controllerId, sourceId)
-            is TargetCreatureOrPlaneswalker -> findCreatureOrPlaneswalkerTargets(state, controllerId, sourceId)
-            is TargetObject -> findObjectTargets(state, requirement, controllerId, sourceId, ignoreTargetingRestrictions)
-            is TargetSpellOrPermanent -> findSpellOrPermanentTargets(state, controllerId, sourceId)
+            is AnyTarget -> findAnyTargets(state, controllerId, sourceId, targetingSourceType)
+            is TargetCreatureOrPlayer -> findCreatureOrPlayerTargets(state, controllerId, sourceId, targetingSourceType)
+            is TargetOpponentOrPlaneswalker -> findOpponentOrPlaneswalkerTargets(state, controllerId, sourceId, targetingSourceType)
+            is TargetCreatureOrPlaneswalker -> findCreatureOrPlaneswalkerTargets(state, controllerId, sourceId, targetingSourceType)
+            is TargetObject -> findObjectTargets(state, requirement, controllerId, sourceId, ignoreTargetingRestrictions, targetingSourceType)
+            is TargetSpellOrPermanent -> findSpellOrPermanentTargets(state, controllerId, sourceId, targetingSourceType)
             is TargetOther -> {
                 // For TargetOther, find targets for the base requirement but exclude the source
-                val baseTargets = findLegalTargets(state, requirement.baseRequirement, controllerId, sourceId, ignoreTargetingRestrictions)
+                val baseTargets = findLegalTargets(state, requirement.baseRequirement, controllerId, sourceId, ignoreTargetingRestrictions, targetingSourceType)
                 val excludeId = requirement.excludeSourceId ?: sourceId
                 if (excludeId != null) baseTargets.filter { it != excludeId } else baseTargets
             }
@@ -74,10 +90,35 @@ class TargetFinder(
         return state.turnOrder.filter { it != controllerId && state.hasEntity(it) && !playerHasShroud(state, it) }
     }
 
+    /**
+     * Check if a permanent is restricted from being targeted by the given source type.
+     * Checks for CantBeTargetedByOpponentAbilitiesComponent — which blocks opponent abilities
+     * but not opponent spells.
+     */
+    private fun hasCantBeTargetedRestriction(
+        state: GameState,
+        entityId: EntityId,
+        entityController: EntityId?,
+        controllerId: EntityId,
+        targetingSourceType: TargetingSourceType
+    ): Boolean {
+        if (entityController == controllerId) return false  // own permanents are never restricted
+        if (targetingSourceType == TargetingSourceType.SPELL) return false  // spells bypass this restriction
+
+        val container = state.getEntity(entityId) ?: return false
+        if (container.has<CantBeTargetedByOpponentAbilitiesComponent>()) {
+            // For ABILITY source type, always blocked
+            // For ANY (unknown), conservatively block since we don't know the source type
+            return true
+        }
+        return false
+    }
+
     private fun findOpponentOrPlaneswalkerTargets(
         state: GameState,
         controllerId: EntityId,
-        sourceId: EntityId?
+        sourceId: EntityId?,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val projected = state.projectedState
         val targets = mutableListOf<EntityId>()
@@ -97,6 +138,8 @@ class TargetFinder(
             // Check hexproof/shroud
             if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != controllerId) continue
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) continue
+            // Check can't-be-targeted-by-abilities
+            if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) continue
 
             targets.add(entityId)
         }
@@ -109,7 +152,8 @@ class TargetFinder(
         requirement: TargetObject,
         controllerId: EntityId,
         sourceId: EntityId?,
-        ignoreTargetingRestrictions: Boolean = false
+        ignoreTargetingRestrictions: Boolean = false,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val projected = state.projectedState
         val battlefield = state.getBattlefield()
@@ -133,6 +177,10 @@ class TargetFinder(
                 if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
                     return@filter false
                 }
+                // Check can't-be-targeted-by-abilities
+                if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) {
+                    return@filter false
+                }
             }
 
             // Use unified filter with projected state
@@ -144,7 +192,8 @@ class TargetFinder(
     private fun findAnyTargets(
         state: GameState,
         controllerId: EntityId,
-        sourceId: EntityId?
+        sourceId: EntityId?,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val projected = state.projectedState
         val targets = mutableListOf<EntityId>()
@@ -171,6 +220,10 @@ class TargetFinder(
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
                 continue
             }
+            // Check can't-be-targeted-by-abilities
+            if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) {
+                continue
+            }
 
             targets.add(entityId)
         }
@@ -181,7 +234,8 @@ class TargetFinder(
     private fun findCreatureOrPlayerTargets(
         state: GameState,
         controllerId: EntityId,
-        sourceId: EntityId?
+        sourceId: EntityId?,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val targets = mutableListOf<EntityId>()
 
@@ -189,7 +243,7 @@ class TargetFinder(
         targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) })
 
         // Add all creatures
-        targets.addAll(findPermanentTargets(state, TargetCreature(), controllerId, sourceId))
+        targets.addAll(findPermanentTargets(state, TargetCreature(), controllerId, sourceId, targetingSourceType = targetingSourceType))
 
         return targets
     }
@@ -197,7 +251,8 @@ class TargetFinder(
     private fun findCreatureOrPlaneswalkerTargets(
         state: GameState,
         controllerId: EntityId,
-        sourceId: EntityId?
+        sourceId: EntityId?,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val projected = state.projectedState
         val battlefield = state.getBattlefield()
@@ -217,6 +272,10 @@ class TargetFinder(
                 return@filter false
             }
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
+                return@filter false
+            }
+            // Check can't-be-targeted-by-abilities
+            if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) {
                 return@filter false
             }
 
@@ -267,11 +326,12 @@ class TargetFinder(
         requirement: TargetObject,
         controllerId: EntityId,
         sourceId: EntityId?,
-        ignoreTargetingRestrictions: Boolean = false
+        ignoreTargetingRestrictions: Boolean = false,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val filter = requirement.filter
         return when (filter.zone) {
-            Zone.BATTLEFIELD -> findPermanentTargets(state, requirement, controllerId, sourceId, ignoreTargetingRestrictions)
+            Zone.BATTLEFIELD -> findPermanentTargets(state, requirement, controllerId, sourceId, ignoreTargetingRestrictions, targetingSourceType)
             Zone.GRAVEYARD -> findGraveyardTargets(state, filter, controllerId)
             Zone.STACK -> findSpellTargets(state, requirement, controllerId)
             else -> findCardTargetsInZone(state, filter, controllerId)
@@ -285,7 +345,8 @@ class TargetFinder(
     private fun findSpellOrPermanentTargets(
         state: GameState,
         controllerId: EntityId,
-        sourceId: EntityId?
+        sourceId: EntityId?,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<EntityId> {
         val projected = state.projectedState
         val targets = mutableListOf<EntityId>()
@@ -298,6 +359,7 @@ class TargetFinder(
 
             if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != controllerId) continue
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) continue
+            if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) continue
 
             targets.add(entityId)
         }

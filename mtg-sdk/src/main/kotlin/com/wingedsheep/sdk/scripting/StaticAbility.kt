@@ -1228,6 +1228,19 @@ data object GrantShroudToController : StaticAbility {
 }
 
 /**
+ * This permanent can't be the target of abilities your opponents control.
+ * Unlike hexproof, this does NOT prevent targeting by spells — only by activated
+ * and triggered abilities.
+ * Used for Shanna, Sisay's Legacy.
+ */
+@SerialName("CantBeTargetedByOpponentAbilities")
+@Serializable
+data object CantBeTargetedByOpponentAbilities : StaticAbility {
+    override val description: String = "Can't be the target of abilities your opponents control"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Whenever enchanted land is tapped for mana, its controller adds additional mana.
  * Used for auras like Elvish Guidance: "Whenever enchanted land is tapped for mana,
  * its controller adds an additional {G} for each Elf on the battlefield."

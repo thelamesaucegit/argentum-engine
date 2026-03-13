@@ -38,6 +38,8 @@ import com.wingedsheep.sdk.scripting.EntersWithDynamicCounters
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
+import com.wingedsheep.engine.handlers.TargetingSourceType
+import com.wingedsheep.engine.state.components.battlefield.CantBeTargetedByOpponentAbilitiesComponent
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.*
 
@@ -292,7 +294,8 @@ class StackResolver(
             val validTargets = validateTargets(
                 state, targetsComponent.targets, sourceColors, sourceSubtypes,
                 spellComponent.casterId, targetsComponent.targetRequirements,
-                sourceId = spellId
+                sourceId = spellId,
+                targetingSourceType = TargetingSourceType.SPELL
             )
             if (validTargets.isEmpty()) {
                 // All targets invalid - spell fizzles
@@ -783,7 +786,8 @@ class StackResolver(
             val validTargets = validateTargets(
                 state, targetsComponent.targets, sourceColors, sourceSubtypes,
                 abilityComponent.controllerId, targetsComponent.targetRequirements,
-                sourceId = abilityComponent.sourceId
+                sourceId = abilityComponent.sourceId,
+                targetingSourceType = TargetingSourceType.ABILITY
             )
             if (validTargets.isEmpty()) {
                 // Fizzle - remove ability entity
@@ -1160,7 +1164,8 @@ class StackResolver(
         sourceSubtypes: Set<String> = emptySet(),
         controllerId: EntityId,
         targetRequirements: List<TargetRequirement> = emptyList(),
-        sourceId: EntityId? = null
+        sourceId: EntityId? = null,
+        targetingSourceType: TargetingSourceType = TargetingSourceType.ANY
     ): List<ChosenTarget> {
         // Always project state for shroud/hexproof checks (Rule 702.18, 702.11)
         val projected = state.projectedState
@@ -1183,6 +1188,14 @@ class StackResolver(
                     // Check hexproof — can't be targeted by opponents (Rule 702.11)
                     val entityController = state.getEntity(target.entityId)?.get<ControllerComponent>()?.playerId
                     if (projected.hasKeyword(target.entityId, "HEXPROOF") && entityController != controllerId) return@filterIndexed false
+
+                    // Check can't-be-targeted-by-abilities (Shanna, Sisay's Legacy)
+                    if (targetingSourceType != TargetingSourceType.SPELL && entityController != controllerId) {
+                        val container = state.getEntity(target.entityId)
+                        if (container?.has<CantBeTargetedByOpponentAbilitiesComponent>() == true) {
+                            return@filterIndexed false
+                        }
+                    }
 
                     // Check protection from source colors/subtypes (Rule 702.16)
                     for (color in sourceColors) {
