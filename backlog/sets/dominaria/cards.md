@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 143 / 249
+**Implemented:** 144 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 22   |
 | Black      | 38    | 23   |
 | Red        | 38    | 22   |
-| Green      | 37    | 22   |
+| Green      | 37    | 23   |
 | Multicolor | 19    | 10   |
 | Colorless  | 30    | 14   |
 | Land       | 12    | 5    |
@@ -43,7 +43,7 @@
 - [ ] Bloodstone Goblin
 - [x] Bloodtallow Candle
 - [ ] Board the Weatherlight
-- [ ] Broken Bond
+- [x] Broken Bond
 - [x] Cabal Evangel
 - [x] Cabal Paladin
 - [ ] Cabal Stronghold
