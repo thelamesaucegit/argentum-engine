@@ -205,6 +205,64 @@ const SET_SYNERGIES: Record<string, SetSynergies> = {
       },
     ],
   },
+  DOM: {
+    setCode: 'DOM',
+    setName: 'Dominaria',
+    archetypes: [
+      {
+        name: 'Historic Fliers',
+        colors: ['W', 'U'],
+        description: 'Evasive flying creatures backed by historic synergies. Artifacts, legendaries, and Sagas trigger payoffs while your flyers close the game in the air.',
+      },
+      {
+        name: 'Historic Control',
+        colors: ['U', 'B'],
+        description: 'Grind opponents out with Sagas, removal, and card advantage. Sagas schedule value over three turns while efficient answers keep the board in check.',
+      },
+      {
+        name: 'Reckless Aggro',
+        colors: ['B', 'R'],
+        description: 'Fast creatures with first strike and haste backed by sacrifice synergies. Tokens serve as expendable resources while you race to close the game.',
+      },
+      {
+        name: 'Kicker Ramp',
+        colors: ['R', 'G'],
+        description: 'Ramp into large creatures and leverage kicker for late-game flexibility. Cards scale from on-curve plays to devastating threats when you have extra mana.',
+      },
+      {
+        name: 'Tokens',
+        colors: ['G', 'W'],
+        description: 'Flood the board with Saproling and Knight tokens, then use anthems and equipment to turn your wide board into lethal damage.',
+      },
+      {
+        name: 'Legendary Creatures',
+        colors: ['W', 'B'],
+        description: 'Individually powerful legendary creatures backed by premium removal. A minor Knight tribal subtheme adds synergy to this value-oriented strategy.',
+        creatureTypes: ['Knight'],
+      },
+      {
+        name: 'Wizard Spells',
+        colors: ['U', 'R'],
+        creatureTypes: ['Wizard'],
+        description: 'Wizards grow stronger with every instant and sorcery you cast. Build a critical mass of spells and Wizards for explosive prowess-style turns.',
+      },
+      {
+        name: 'Saproling Sacrifice',
+        colors: ['B', 'G'],
+        description: 'Generate Saprolings and sacrifice them for value. Thallids and fungus creatures create a self-sustaining engine of tokens and drain effects.',
+      },
+      {
+        name: 'Auras & Equipment',
+        colors: ['R', 'W'],
+        description: 'Cheap creatures augmented by Auras and Equipment for an aggressive voltron strategy. Tiana recovers lost Auras to mitigate card disadvantage.',
+      },
+      {
+        name: 'Ramp',
+        colors: ['G', 'U'],
+        description: 'Green mana acceleration paired with blue card draw and kicker payoffs. Reach expensive threats and draw extra cards off land drops with Tatyova.',
+      },
+    ],
+  },
   KTK: {
     setCode: 'KTK',
     setName: 'Khans of Tarkir',
