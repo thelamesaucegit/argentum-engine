@@ -1946,6 +1946,13 @@ class LegalActionsCalculator(
                                         break
                                     }
                                 }
+                                is AbilityCost.ReturnToHand -> {
+                                    val targets = findAbilityBounceTargets(state, playerId, subCost.filter)
+                                    if (targets.size < subCost.count) {
+                                        costCanBePaid = false
+                                        break
+                                    }
+                                }
                                 else -> {}
                             }
                         }
@@ -1954,8 +1961,21 @@ class LegalActionsCalculator(
                 }
                 if (!costCanBePaid) continue
 
-                // Build discard cost info if needed
-                val costInfo = if (hasDiscardCost) {
+                // Build cost info for bounce or discard costs
+                val bounceCostFromGraveyard = when (effectiveCost) {
+                    is AbilityCost.Composite -> effectiveCost.costs.filterIsInstance<AbilityCost.ReturnToHand>().firstOrNull()
+                    is AbilityCost.ReturnToHand -> effectiveCost
+                    else -> null
+                }
+                val costInfo = if (bounceCostFromGraveyard != null) {
+                    val bounceTargets = findAbilityBounceTargets(state, playerId, bounceCostFromGraveyard.filter)
+                    AdditionalCostInfo(
+                        description = bounceCostFromGraveyard.description,
+                        costType = "BouncePermanent",
+                        validBounceTargets = bounceTargets,
+                        bounceCount = bounceCostFromGraveyard.count
+                    )
+                } else if (hasDiscardCost) {
                     AdditionalCostInfo(
                         description = "Discard a card",
                         costType = "DiscardCard",
@@ -2531,6 +2551,7 @@ class LegalActionsCalculator(
     ): List<EntityId> {
         val playerBattlefield = ZoneKey(playerId, Zone.BATTLEFIELD)
         val predicateContext = PredicateContext(controllerId = playerId)
+        val projected = state.projectedState
 
         return state.getZone(playerBattlefield).filter { entityId ->
             val container = state.getEntity(entityId) ?: return@filter false
@@ -2538,7 +2559,7 @@ class LegalActionsCalculator(
             val controllerId = container.get<ControllerComponent>()?.playerId
             if (controllerId != playerId) return@filter false
 
-            predicateEvaluator.matches(state, entityId, filter, predicateContext)
+            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, predicateContext)
         }
     }
 
