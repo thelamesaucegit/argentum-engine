@@ -18,6 +18,7 @@ val ChiefOfTheEdge = card("Chief of the Edge") {
     typeLine = "Creature — Human Warrior"
     power = 3
     toughness = 2
+    oracleText = "Other Warrior creatures you control get +1/+0."
 
     staticAbility {
         ability = ModifyStatsForCreatureGroup(

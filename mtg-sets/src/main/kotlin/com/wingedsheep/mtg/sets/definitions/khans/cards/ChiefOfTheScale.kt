@@ -18,6 +18,7 @@ val ChiefOfTheScale = card("Chief of the Scale") {
     typeLine = "Creature — Human Warrior"
     power = 2
     toughness = 3
+    oracleText = "Other Warrior creatures you control get +0/+1."
 
     staticAbility {
         ability = ModifyStatsForCreatureGroup(

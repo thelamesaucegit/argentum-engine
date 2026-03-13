@@ -19,6 +19,7 @@ import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 val DigThroughTime = card("Dig Through Time") {
     manaCost = "{6}{U}{U}"
     typeLine = "Instant"
+    oracleText = "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nLook at the top seven cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order."
 
     keywords(Keyword.DELVE)
 

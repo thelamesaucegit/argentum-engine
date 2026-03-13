@@ -17,6 +17,7 @@ val HootingMandrills = card("Hooting Mandrills") {
     typeLine = "Creature — Ape"
     power = 4
     toughness = 4
+    oracleText = "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nTrample"
 
     keywords(Keyword.DELVE, Keyword.TRAMPLE)
 

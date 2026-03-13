@@ -15,6 +15,7 @@ import com.wingedsheep.sdk.model.Rarity
 val TreasureCruise = card("Treasure Cruise") {
     manaCost = "{7}{U}"
     typeLine = "Sorcery"
+    oracleText = "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nDraw three cards."
 
     keywords(Keyword.DELVE)
 

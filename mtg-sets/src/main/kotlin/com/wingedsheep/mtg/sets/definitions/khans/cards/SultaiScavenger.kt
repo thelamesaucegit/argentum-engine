@@ -17,6 +17,7 @@ val SultaiScavenger = card("Sultai Scavenger") {
     typeLine = "Creature — Bird Warrior"
     power = 3
     toughness = 3
+    oracleText = "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nFlying"
 
     keywords(Keyword.DELVE, Keyword.FLYING)
 

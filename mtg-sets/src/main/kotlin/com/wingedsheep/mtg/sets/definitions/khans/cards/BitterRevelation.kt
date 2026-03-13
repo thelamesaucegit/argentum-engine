@@ -16,6 +16,7 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
 val BitterRevelation = card("Bitter Revelation") {
     manaCost = "{3}{B}"
     typeLine = "Sorcery"
+    oracleText = "Look at the top four cards of your library. Put two of them into your hand and the rest into your graveyard. You lose 2 life."
 
     spell {
         effect = EffectPatterns.lookAtTopAndKeep(

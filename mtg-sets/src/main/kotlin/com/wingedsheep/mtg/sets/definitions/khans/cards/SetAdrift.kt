@@ -16,6 +16,7 @@ import com.wingedsheep.sdk.model.Rarity
 val SetAdrift = card("Set Adrift") {
     manaCost = "{5}{U}"
     typeLine = "Sorcery"
+    oracleText = "Delve (Each card you exile from your graveyard while casting this spell pays for {1}.)\nPut target nonland permanent on top of its owner's library."
 
     keywords(Keyword.DELVE)
 

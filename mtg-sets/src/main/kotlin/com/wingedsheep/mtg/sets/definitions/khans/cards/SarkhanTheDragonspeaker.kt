@@ -30,6 +30,7 @@ val SarkhanTheDragonspeaker = card("Sarkhan, the Dragonspeaker") {
     manaCost = "{3}{R}{R}"
     typeLine = "Legendary Planeswalker — Sarkhan"
     startingLoyalty = 4
+    oracleText = "+1: Until end of turn, Sarkhan becomes a legendary 4/4 red Dragon creature with flying, indestructible, and haste. (He doesn't lose loyalty while he's not a planeswalker.)\n−3: Sarkhan deals 4 damage to target creature.\n−6: You get an emblem with \"At the beginning of your draw step, draw two additional cards\" and \"At the beginning of your end step, discard your hand.\""
 
     // +1: Become a 4/4 red Dragon creature with flying, indestructible, and haste
     loyaltyAbility(+1) {

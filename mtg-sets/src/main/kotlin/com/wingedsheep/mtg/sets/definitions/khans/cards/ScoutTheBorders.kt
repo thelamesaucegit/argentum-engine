@@ -23,6 +23,7 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
 val ScoutTheBorders = card("Scout the Borders") {
     manaCost = "{2}{G}"
     typeLine = "Sorcery"
+    oracleText = "Reveal the top five cards of your library. You may put a creature or land card from among them into your hand. Put the rest into your graveyard."
 
     spell {
         effect = CompositeEffect(
