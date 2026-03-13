@@ -570,6 +570,10 @@ class GameSession(
                 if (action is CastSpell && manaPoolBeforeCast != null) {
                     createRetapCheckpoint(action, state, result, manaPoolBeforeCast)
                 }
+                // Clear retap checkpoint when the game moves to a new step
+                if (result.events.any { it is StepChangedEvent }) {
+                    retapCheckpoint = null
+                }
                 gameState = result.state
                 if (messageId != null) lastProcessedMessageId[playerId] = messageId
                 ActionResult.Success(result.state, result.events)
