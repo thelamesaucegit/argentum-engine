@@ -328,6 +328,8 @@ class GameInitializer(
         val deckLandRatio = calculateDeckLandRatio(state, library)
         val deckColorRatios = calculateDeckColorRatios(state, library)
 
+        println("[HandSmoother] deck=${library.size} cards, landRatio=${"%.3f".format(deckLandRatio)}, colorRatios=$deckColorRatios")
+
         // Generate candidate hands
         val candidates = mutableListOf<List<EntityId>>()
         val effectiveCandidateCount = candidateCount.coerceIn(2, 3)
@@ -342,6 +344,16 @@ class GameInitializer(
         val bestCandidate = candidates.minByOrNull { candidate ->
             scoreHand(state, candidate, deckLandRatio, deckColorRatios)
         } ?: candidates.first()
+
+        // Log candidate details for debugging
+        candidates.forEachIndexed { index, candidate ->
+            val landCount = candidate.count { cardId ->
+                state.getEntity(cardId)?.get<CardComponent>()?.typeLine?.isLand == true
+            }
+            val score = scoreHand(state, candidate, deckLandRatio, deckColorRatios)
+            val selected = if (candidate === bestCandidate) " [SELECTED]" else ""
+            println("[HandSmoother] candidate ${index + 1}: ${landCount} lands, score=${"%.4f".format(score)}$selected")
+        }
 
         // Apply the selected hand to the state
         var currentState = state
@@ -480,7 +492,13 @@ class GameInitializer(
             if (card.typeLine.isLand) lands.add(card)
         }
 
-        // Land ratio deviation (same as before)
+        // Heavily penalize extreme land counts (0 lands or all lands) in mixed decks.
+        // Without this, a 0-land hand gets zero color deviation (no lands to evaluate),
+        // which can make it outscore hands that have lands but poor color distribution.
+        if (lands.isEmpty() && deckLandRatio > 0.0) return 10.0
+        if (lands.size == hand.size && deckLandRatio < 1.0) return 10.0
+
+        // Land ratio deviation
         val handLandRatio = lands.size.toDouble() / hand.size
         val landRatioDeviation = kotlin.math.abs(handLandRatio - deckLandRatio)
 
@@ -503,8 +521,10 @@ class GameInitializer(
             0.0
         }
 
-        // Weight: land ratio is most important, colour distribution is secondary
-        return landRatioDeviation + colorDeviation * 0.5
+        // Land ratio is primary, colour distribution is a light tiebreaker.
+        // The color weight must be low enough that it can never make a hand with
+        // correct land count score worse than one with wrong land count.
+        return landRatioDeviation + colorDeviation * 0.15
     }
 
     companion object {

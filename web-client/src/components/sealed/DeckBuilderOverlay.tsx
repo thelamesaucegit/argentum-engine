@@ -1712,6 +1712,7 @@ function suggestLands(
 
   // Step 1: Categorize deck cards — identify non-basic lands and mana sources
   let nonBasicLandCount = 0
+  let nonLandManaSourceCount = 0
   const existingSources: Record<string, number> = { W: 0, U: 0, B: 0, R: 0, G: 0 }
 
   for (const info of cardInfos) {
@@ -1722,14 +1723,18 @@ function suggestLands(
       nonBasicLandCount++
       for (const c of producedColors) existingSources[c] = (existingSources[c] ?? 0) + 1.0
     } else if (producedColors.length > 0) {
-      // Mana dork / mana-producing non-land: half credit
+      nonLandManaSourceCount++
+      // Mana dork / mana rock: half credit for color sources
       for (const c of producedColors) existingSources[c] = (existingSources[c] ?? 0) + 0.5
     }
   }
 
   // Step 2: Calculate target basic lands based on curve, non-basic lands, and min deck size
+  // Mana-producing non-lands (rocks, dorks) partially reduce the land target:
+  // every 2 mana rocks ≈ 1 fewer land needed
+  const manaRockReduction = Math.floor(nonLandManaSourceCount / 2)
   const curveBasedTotal = targetLandCount(cardInfos)
-  const ratioBasedLands = curveBasedTotal - nonBasicLandCount
+  const ratioBasedLands = curveBasedTotal - nonBasicLandCount - manaRockReduction
   const minBasedLands = MIN_DECK_SIZE - spellCount
   const targetBasicLands = Math.max(ratioBasedLands, minBasedLands, 0)
   if (targetBasicLands === 0) {
