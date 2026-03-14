@@ -119,6 +119,11 @@ class CostHandler(
             is AbilityCost.TapPermanents -> {
                 findUntappedMatchingPermanentsUnified(state, controllerId, cost.filter).size >= cost.count
             }
+            is AbilityCost.TapXPermanents -> {
+                // X can be 0, so this is always payable
+                // maxAffordableX is capped by untapped permanent count in LegalActionsCalculator
+                true
+            }
             is AbilityCost.TapAttachedCreature -> {
                 val attachedId = state.getEntity(sourceId)?.get<AttachedToComponent>()?.targetId
                     ?: return false
@@ -466,6 +471,24 @@ class CostHandler(
                 }
 
                 CostPaymentResult.success(newState, manaPool)
+            }
+            is AbilityCost.TapXPermanents -> {
+                val xCount = choices.xValue
+                if (xCount == 0) {
+                    CostPaymentResult.success(state, manaPool)
+                } else {
+                    val toTap = choices.tapChoices
+                    if (toTap.size < xCount) {
+                        return CostPaymentResult.failure("Not enough permanents chosen to tap (need $xCount, got ${toTap.size})")
+                    }
+
+                    var newState = state
+                    for (permanentId in toTap.take(xCount)) {
+                        newState = newState.updateEntity(permanentId) { it.with(TappedComponent) }
+                    }
+
+                    CostPaymentResult.success(newState, manaPool)
+                }
             }
             is AbilityCost.RemoveXPlusOnePlusOneCounters -> {
                 val xCount = choices.xValue

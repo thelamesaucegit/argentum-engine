@@ -286,6 +286,25 @@ sealed interface AbilityCost : TextReplaceable<AbilityCost> {
         }
     }
 
+    /**
+     * Tap a variable number of permanents you control, where the count equals the ability's X value.
+     * Example: "Tap X untapped Knights you control" for Aryel, Knight of Windgrace.
+     *
+     * @property filter Which permanents can be tapped
+     */
+    @SerialName("CostTapXPermanents")
+    @Serializable
+    data class TapXPermanents(
+        val filter: GameObjectFilter = GameObjectFilter.Creature
+    ) : AbilityCost {
+        override val description: String = "Tap X untapped ${filter.description}s you control"
+
+        override fun applyTextReplacement(replacer: TextReplacer): AbilityCost {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+    }
+
     /** Multiple costs combined */
     @SerialName("CostComposite")
     @Serializable

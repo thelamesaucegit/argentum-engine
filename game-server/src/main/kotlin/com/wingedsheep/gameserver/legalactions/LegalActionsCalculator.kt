@@ -1584,6 +1584,11 @@ class LegalActionsCalculator(
                                 is AbilityCost.RemoveXPlusOnePlusOneCounters -> {
                                     // RemoveXPlusOnePlusOneCounters: validated via maxAffordableX cap below
                                 }
+                                is AbilityCost.TapXPermanents -> {
+                                    // TapXPermanents: validated via maxAffordableX cap below
+                                    // Also provide tap targets for the UI
+                                    tapTargets = findAbilityTapTargets(state, playerId, subCost.filter)
+                                }
                                 else -> {}
                             }
                         }
@@ -1602,11 +1607,18 @@ class LegalActionsCalculator(
                 }
                 if (!restrictionsMet) continue
 
-                // Check for X-variable costs early (needed for counter removal info)
+                // Check for X-variable costs early (needed for counter removal info and cost info)
                 val hasRemoveXCountersCostEarly = when (ability.cost) {
                     is AbilityCost.RemoveXPlusOnePlusOneCounters -> true
                     is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
                         .any { it is AbilityCost.RemoveXPlusOnePlusOneCounters }
+                    else -> false
+                }
+
+                val hasTapXPermanentsCost = when (ability.cost) {
+                    is AbilityCost.TapXPermanents -> true
+                    is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
+                        .any { it is AbilityCost.TapXPermanents }
                     else -> false
                 }
 
@@ -1637,6 +1649,22 @@ class LegalActionsCalculator(
                         costType = "TapPermanents",
                         validTapTargets = tapTargets,
                         tapCount = tapCost.count,
+                        counterRemovalCreatures = counterRemovalCreatures
+                    )
+                } else if (tapTargets != null && hasTapXPermanentsCost) {
+                    // TapXPermanents: tap count is variable (chosen by player as X value)
+                    val tapXDesc = when (ability.cost) {
+                        is AbilityCost.TapXPermanents -> (ability.cost as AbilityCost.TapXPermanents).description
+                        is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
+                            .filterIsInstance<AbilityCost.TapXPermanents>().firstOrNull()?.description
+                            ?: "Tap X permanents you control"
+                        else -> "Tap X permanents you control"
+                    }
+                    AdditionalCostInfo(
+                        description = tapXDesc,
+                        costType = "TapPermanents",
+                        validTapTargets = tapTargets,
+                        tapCount = 0, // Variable — UI uses X value selector instead
                         counterRemovalCreatures = counterRemovalCreatures
                     )
                 } else if (sacrificeTargets != null && sacrificeCost != null) {
@@ -1682,9 +1710,9 @@ class LegalActionsCalculator(
                 }
                 val abilityHasXInManaCost = abilityManaCost?.hasX == true
 
-                // Reuse the early check for X-variable costs
+                // Reuse the early checks for X-variable costs
                 val hasRemoveXCountersCost = hasRemoveXCountersCostEarly
-                val abilityHasXCost = abilityHasXInManaCost || hasRemoveXCountersCost
+                val abilityHasXCost = abilityHasXInManaCost || hasRemoveXCountersCost || hasTapXPermanentsCost
 
                 val abilityMaxAffordableX: Int? = if (abilityHasXCost) {
                     var maxX = if (abilityHasXInManaCost) {
@@ -1718,6 +1746,20 @@ class LegalActionsCalculator(
                             }
                         }
                         maxX = minOf(maxX, totalCounters)
+                    }
+
+                    // Cap by untapped matching permanents if ability has TapXPermanents cost
+                    if (hasTapXPermanentsCost) {
+                        val tapXCost = when (ability.cost) {
+                            is AbilityCost.TapXPermanents -> ability.cost as AbilityCost.TapXPermanents
+                            is AbilityCost.Composite -> (ability.cost as AbilityCost.Composite).costs
+                                .filterIsInstance<AbilityCost.TapXPermanents>().firstOrNull()
+                            else -> null
+                        }
+                        if (tapXCost != null) {
+                            val availableTapTargets = findAbilityTapTargets(state, playerId, tapXCost.filter)
+                            maxX = minOf(maxX, availableTapTargets.size)
+                        }
                     }
 
                     maxX

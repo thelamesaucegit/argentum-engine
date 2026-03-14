@@ -167,6 +167,13 @@ object Costs {
     fun TapPermanents(count: Int, filter: GameObjectFilter = GameObjectFilter.Creature): AbilityCost =
         AbilityCost.TapPermanents(count, filter)
 
+    /**
+     * Tap X permanents you control, where X is the ability's chosen X value.
+     * Example: "Tap X untapped Knights you control" for Aryel, Knight of Windgrace.
+     */
+    fun TapXPermanents(filter: GameObjectFilter = GameObjectFilter.Creature): AbilityCost =
+        AbilityCost.TapXPermanents(filter)
+
     // =========================================================================
     // Return to Hand Costs
     // =========================================================================

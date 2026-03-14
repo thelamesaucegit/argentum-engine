@@ -32,6 +32,7 @@ object DominariaSet {
         AdamantWill,
         ArborArmament,
         AvenSentry,
+        AryelKnightOfWindgrace,
         ArvadTheCursed,
         BalothGorger,
         BenalishHonorGuard,
