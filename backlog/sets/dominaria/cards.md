@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 156 / 249
+**Implemented:** 157 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 25   |
 | Green      | 37    | 26   |
 | Multicolor | 19    | 10   |
-| Colorless  | 30    | 15   |
+| Colorless  | 30    | 16   |
 | Land       | 12    | 6    |
 
 ---
@@ -121,7 +121,7 @@
 - [ ] Isolated Chapel
 - [ ] Jaya Ballard
 - [ ] Jaya's Immolating Inferno
-- [ ] Jhoira's Familiar
+- [x] Jhoira's Familiar
 - [x] Jhoira, Weatherlight Captain
 - [ ] Jodah, Archmage Eternal
 - [x] Josu Vess, Lich Knight

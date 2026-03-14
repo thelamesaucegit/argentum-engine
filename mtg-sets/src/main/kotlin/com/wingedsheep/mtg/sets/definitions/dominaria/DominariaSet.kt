@@ -90,6 +90,7 @@ object DominariaSet {
         GrowFromTheAshes,
         IcyManipulator,
         InvokeTheDivine,
+        JhoirasFamiliar,
         JhoiraWeatherlightCaptain,
         JosuVessLichKnight,
         JoustingLance,
