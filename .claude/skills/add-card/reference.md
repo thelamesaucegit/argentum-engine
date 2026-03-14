@@ -332,7 +332,7 @@ constructors.
 
 | Effect                           | Parameters                                                                                  | Purpose                        |
 |----------------------------------|---------------------------------------------------------------------------------------------|--------------------------------|
-| `CreateTokenEffect`              | `count: DynamicAmount, power, toughness, colors, creatureTypes, keywords, name?, imageUri?, tapped?, attacking?, legendary?` | Create token (tapped = enter tapped, attacking = enter attacking, legendary = legendary supertype) |
+| `CreateTokenEffect`              | `count: DynamicAmount, power, toughness, colors, creatureTypes, keywords, name?, imageUri?, tapped?, attacking?, legendary?, exileAtStep?` | Create token (tapped = enter tapped, attacking = enter attacking, legendary = legendary supertype, exileAtStep = create delayed trigger to exile tokens at that step) |
 | `CreateChosenTokenEffect`        | `dynamicPower: DynamicAmount, dynamicToughness: DynamicAmount`                              | Create token with chosen stats |
 | `CreateTreasureTokensEffect`     | `count: DynamicAmount`                                                                      | Create Treasure                |
 | `CreateTokenCopyOfSourceEffect`  | `count: Int`                                                                                | Create token copy of source permanent |

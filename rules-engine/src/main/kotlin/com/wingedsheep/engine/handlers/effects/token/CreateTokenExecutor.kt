@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.handlers.effects.token
 
 import com.wingedsheep.engine.core.ExecutionResult
+import com.wingedsheep.engine.event.DelayedTriggeredAbility
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
@@ -23,6 +24,9 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
+import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import java.util.UUID
 import kotlin.reflect.KClass
 
 /**
@@ -113,6 +117,26 @@ class CreateTokenExecutor(
             // Add to battlefield
             val battlefieldZone = ZoneKey(tokenControllerId, Zone.BATTLEFIELD)
             newState = newState.addToZone(battlefieldZone, tokenId)
+        }
+
+        // If exileAtStep is set, create delayed triggers to exile each created token
+        val exileStep = effect.exileAtStep
+        if (exileStep != null) {
+            val sourceId = context.sourceId ?: context.controllerId
+            val sourceName = sourceId.let { id ->
+                state.getEntity(id)?.get<CardComponent>()?.name ?: "Unknown"
+            }
+            for (tokenId in createdTokens) {
+                val delayedTrigger = DelayedTriggeredAbility(
+                    id = UUID.randomUUID().toString(),
+                    effect = MoveToZoneEffect(EffectTarget.SpecificEntity(tokenId), Zone.EXILE),
+                    fireAtStep = exileStep,
+                    sourceId = sourceId,
+                    sourceName = sourceName,
+                    controllerId = tokenControllerId
+                )
+                newState = newState.addDelayedTrigger(delayedTrigger)
+            }
         }
 
         val events = createdTokens.map { tokenId ->

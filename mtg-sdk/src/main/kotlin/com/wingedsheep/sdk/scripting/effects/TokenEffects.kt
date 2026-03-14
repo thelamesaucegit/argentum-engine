@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.scripting.StaticAbility
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.text.TextReplacer
@@ -61,6 +62,8 @@ data class CreateChosenTokenEffect(
  * @property imageUri Optional image URI for the token artwork
  * @property controller Who receives the token. Null means the spell/ability controller (default).
  *   Use [EffectTarget.TargetController] to give the token to the controller of a targeted permanent.
+ * @property exileAtStep If set, create delayed triggers to exile the created tokens at this step.
+ *   Used for "Create tokens... Exile them at the beginning of the next end step" patterns (e.g., Valduk, Kiki-Jiki).
  */
 @SerialName("CreateToken")
 @Serializable
@@ -80,7 +83,8 @@ data class CreateTokenEffect(
     val attacking: Boolean = false,
     val legendary: Boolean = false,
     val artifactToken: Boolean = false,
-    val staticAbilities: List<StaticAbility> = emptyList()
+    val staticAbilities: List<StaticAbility> = emptyList(),
+    val exileAtStep: Step? = null
 ) : Effect {
     constructor(
         count: Int,

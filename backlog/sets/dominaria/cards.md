@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 176 / 249
+**Implemented:** 177 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
 | Blue       | 37    | 25   |
 | Black      | 38    | 26   |
-| Red        | 38    | 28   |
+| Red        | 38    | 29   |
 | Green      | 37    | 28   |
 | Multicolor | 19    | 13   |
 | Colorless  | 30    | 20   |
@@ -245,7 +245,7 @@
 - [ ] Urgoros, the Empty One
 - [ ] Urza's Ruinous Blast
 - [ ] Urza's Tome
-- [ ] Valduk, Keeper of the Flame
+- [x] Valduk, Keeper of the Flame
 - [x] Verdant Force
 - [x] Verix Bladewing
 - [x] Vicious Offering
