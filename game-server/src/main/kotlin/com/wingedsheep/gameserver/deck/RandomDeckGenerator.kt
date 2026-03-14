@@ -15,8 +15,9 @@ import kotlin.random.Random
  * - Uses random art variants for basic lands
  */
 class RandomDeckGenerator(
-    private val cardPool: List<CardDefinition>,
-    private val basicLandVariants: List<CardDefinition> = emptyList(),
+    val cardPool: List<CardDefinition>,
+    val basicLandVariants: List<CardDefinition> = emptyList(),
+    val setCodes: List<String> = emptyList(),
     private val random: Random = Random.Default
 ) {
     companion object {

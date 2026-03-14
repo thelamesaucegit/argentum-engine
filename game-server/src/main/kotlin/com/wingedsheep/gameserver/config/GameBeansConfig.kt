@@ -70,6 +70,13 @@ class GameBeansConfig(
             if (gameProperties.sets.khansEnabled) addAll(KhansOfTarkirSet.allCards)
             if (gameProperties.sets.dominariaEnabled) addAll(DominariaSet.allCards)
         },
-        basicLandVariants = PortalSet.basicLands
+        basicLandVariants = PortalSet.basicLands,
+        setCodes = buildList {
+            if (gameProperties.sets.onslaughtEnabled) add("ONS")
+            if (gameProperties.sets.scourgeEnabled) add("SCG")
+            if (gameProperties.sets.legionsEnabled) add("LGN")
+            if (gameProperties.sets.khansEnabled) add("KTK")
+            if (gameProperties.sets.dominariaEnabled) add("DOM")
+        }
     )
 }

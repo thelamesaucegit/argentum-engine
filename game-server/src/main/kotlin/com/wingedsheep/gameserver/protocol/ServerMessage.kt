@@ -34,7 +34,8 @@ sealed interface ServerMessage {
         /** Current context: "lobby", "deckBuilding", "game", "tournament", or null */
         val context: String? = null,
         /** Session/lobby ID the player is currently in */
-        val contextId: String? = null
+        val contextId: String? = null,
+        val aiEnabled: Boolean = false
     ) : ServerMessage
 
     /**
@@ -229,7 +230,11 @@ sealed interface ServerMessage {
     @Serializable
     data class MulliganCardInfo(
         val name: String,
-        val imageUri: String? = null
+        val imageUri: String? = null,
+        val manaCost: String? = null,
+        val typeLine: String? = null,
+        val power: Int? = null,
+        val toughness: Int? = null
     )
 
     /**
@@ -259,7 +264,9 @@ sealed interface ServerMessage {
         /** The player's current hand card IDs */
         val hand: List<EntityId>,
         /** How many cards must be put on bottom */
-        val cardsToPutOnBottom: Int
+        val cardsToPutOnBottom: Int,
+        /** Card info for display (entity ID -> card info) — used by AI for informed decisions */
+        val cards: Map<EntityId, MulliganCardInfo> = emptyMap()
     ) : ServerMessage
 
     /**

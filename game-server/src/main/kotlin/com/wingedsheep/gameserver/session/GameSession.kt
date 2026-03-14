@@ -423,7 +423,11 @@ class GameSession(
                 }
                 ServerMessage.MulliganCardInfo(
                     name = cardComponent?.name ?: "Unknown",
-                    imageUri = imageUri
+                    imageUri = imageUri,
+                    manaCost = cardComponent?.manaCost?.toString(),
+                    typeLine = cardComponent?.typeLine?.toString(),
+                    power = cardComponent?.baseStats?.basePower,
+                    toughness = cardComponent?.baseStats?.baseToughness
                 )
             }
         } else {
@@ -446,9 +450,29 @@ class GameSession(
         val count = getCardsToBottom(playerId)
         if (count == 0) return null
         val hand = getHand(playerId)
+        val state = gameState
+        val cards = if (state != null) {
+            hand.associateWith { entityId ->
+                val cardComponent = state.getEntity(entityId)?.get<CardComponent>()
+                val imageUri = cardComponent?.cardDefinitionId?.let { defId ->
+                    cardRegistry.getCard(defId)?.metadata?.imageUri
+                }
+                ServerMessage.MulliganCardInfo(
+                    name = cardComponent?.name ?: "Unknown",
+                    imageUri = imageUri,
+                    manaCost = cardComponent?.manaCost?.toString(),
+                    typeLine = cardComponent?.typeLine?.toString(),
+                    power = cardComponent?.baseStats?.basePower,
+                    toughness = cardComponent?.baseStats?.baseToughness
+                )
+            }
+        } else {
+            emptyMap()
+        }
         return ServerMessage.ChooseBottomCards(
             hand = hand,
-            cardsToPutOnBottom = count
+            cardsToPutOnBottom = count,
+            cards = cards
         )
     }
 

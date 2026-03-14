@@ -1,5 +1,7 @@
 package com.wingedsheep.gameserver.ai
 
+import com.wingedsheep.gameserver.ai.decision.AiDecisionHandler
+import com.wingedsheep.gameserver.ai.decision.AiDecisionHandlerRegistry
 import com.wingedsheep.gameserver.config.AiProperties
 import com.wingedsheep.gameserver.dto.ClientGameState
 import com.wingedsheep.gameserver.protocol.LegalActionInfo
@@ -23,7 +25,8 @@ class AiPlayerController(
     private val openRouterClient: OpenRouterClient,
     private val playerId: EntityId
 ) {
-    private val formatter = GameStateFormatter()
+    private val decisionRegistry = AiDecisionHandlerRegistry()
+    private val formatter = GameStateFormatter(decisionRegistry)
     private val parser = AiResponseParser()
 
     private val conversationHistory = mutableListOf<ChatMessage>()
@@ -37,8 +40,13 @@ class AiPlayerController(
      * Provide the AI with its deck composition so it can make informed decisions.
      * Called once when a game starts. The AI knows what cards are in the deck but not their order.
      */
-    fun setDeckList(deckList: Map<String, Int>) {
+    fun setDeckList(deckList: Map<String, Int>, archetype: String? = null) {
         val deckDescription = buildString {
+            if (archetype != null) {
+                appendLine("=== YOUR DECK ARCHETYPE ===")
+                appendLine(archetype)
+                appendLine()
+            }
             appendLine("=== YOUR DECK (${deckList.values.sum()} cards) ===")
             appendLine("You know the cards in your deck but not their order.")
             appendLine()
@@ -76,12 +84,16 @@ class AiPlayerController(
             }
         }
 
-        // Shortcut: pending decision with auto-resolve
+        // Shortcut: pending decision with auto-resolve via handler
         if (pendingDecision != null) {
-            val autoResponse = tryAutoResolveDecision(pendingDecision)
-            if (autoResponse != null) {
-                logger.info("AI auto-resolved decision: {}", pendingDecision::class.simpleName)
-                return autoResponse
+            val handler = decisionRegistry.getHandler(pendingDecision)
+            if (handler != null) {
+                @Suppress("UNCHECKED_CAST")
+                val typedHandler = handler as AiDecisionHandler<PendingDecision>
+                if (typedHandler.canAutoResolve(pendingDecision)) {
+                    logger.info("AI auto-resolved decision: {}", pendingDecision::class.simpleName)
+                    return ActionResponse.SubmitDecision(playerId, typedHandler.autoResolve(pendingDecision))
+                }
             }
         }
 
@@ -133,8 +145,17 @@ class AiPlayerController(
      */
     fun decideMulligan(mulliganMessage: ServerMessage.MulliganDecision): Boolean {
         val cards = mulliganMessage.cards
-        val cardNames = cards.values.map { it.name }
-        val prompt = formatter.formatMulligan(cardNames, mulliganMessage.mulliganCount, mulliganMessage.isOnThePlay)
+        val cardDisplays = mulliganMessage.hand.map { entityId ->
+            val info = cards[entityId]
+            MulliganCardDisplay(
+                name = info?.name ?: "Unknown",
+                manaCost = info?.manaCost,
+                typeLine = info?.typeLine,
+                power = info?.power,
+                toughness = info?.toughness
+            )
+        }
+        val prompt = formatter.formatMulligan(cardDisplays, mulliganMessage.mulliganCount, mulliganMessage.isOnThePlay)
 
         // Shortcut: always keep if mulliganCount >= 3 (5 or fewer cards)
         if (mulliganMessage.mulliganCount >= 3) {
@@ -152,7 +173,6 @@ class AiPlayerController(
         }
 
         // Heuristic: keep if mulliganCount >= 2, otherwise mulligan
-        // We don't have card type info, so just use mulligan count
         val keep = mulliganMessage.mulliganCount >= 2
         logger.info("AI mulligan heuristic: ${if (keep) "keep" else "mulligan"} (mulligan count: ${mulliganMessage.mulliganCount})")
         return keep
@@ -168,15 +188,32 @@ class AiPlayerController(
 
         if (cardCount <= 0 || hand.isEmpty()) return emptyList()
 
-        val cards = hand.mapNotNull { id ->
-            // We don't have card info in ChooseBottomCards, so we can't do much
-            id
+        // If we have card info, ask the LLM
+        if (message.cards.isNotEmpty()) {
+            val cardDisplays = hand.map { entityId ->
+                val info = message.cards[entityId]
+                MulliganCardDisplay(
+                    name = info?.name ?: "Unknown",
+                    manaCost = info?.manaCost,
+                    typeLine = info?.typeLine,
+                    power = info?.power,
+                    toughness = info?.toughness
+                )
+            }
+            val prompt = formatter.formatChooseBottomCards(cardDisplays, hand, cardCount)
+            val response = queryLlm(prompt)
+            if (response != null) {
+                val indices = parser.parseMultipleSelections(response, hand.size - 1)
+                if (indices != null && indices.size == cardCount) {
+                    val bottomCards = indices.map { hand[it] }
+                    logger.info("AI LLM chose bottom cards: {}", bottomCards)
+                    return bottomCards
+                }
+            }
         }
 
-        // Heuristic: bottom the last N cards (least desirable)
-        // In practice the LLM won't have card info either since ChooseBottomCards
-        // only sends entity IDs. Just pick the last ones.
-        return cards.takeLast(cardCount)
+        // Heuristic: bottom the last N cards
+        return hand.takeLast(cardCount)
     }
 
     // =========================================================================
@@ -208,9 +245,57 @@ class AiPlayerController(
     // =========================================================================
 
     private fun parseActionResponse(response: String, legalActions: List<LegalActionInfo>, state: ClientGameState? = null): ActionResponse? {
+        // Phase 3: Try parsing action + target together (e.g., "C2")
+        val actionWithTarget = parseActionWithTarget(response, legalActions, state)
+        if (actionWithTarget != null) return actionWithTarget
+
         val index = parser.parseActionChoice(response, legalActions.size - 1) ?: return null
         val chosen = legalActions[index]
         val action = maybeAddTargets(chosen, state)
+        return ActionResponse.SubmitAction(action)
+    }
+
+    /**
+     * Parse responses like "C2", "C 2", "C, target 2" where the letter is the action
+     * and the number is the target index (1-based).
+     */
+    private fun parseActionWithTarget(
+        response: String,
+        legalActions: List<LegalActionInfo>,
+        state: ClientGameState?
+    ): ActionResponse? {
+        val cleaned = response.trim().uppercase()
+        // Match patterns: "C2", "C 2", "C,2", "C, 2"
+        val pattern = Regex("""^([A-Z]{1,2})\s*[,:]?\s*(\d+)\s*$""")
+        val match = pattern.find(cleaned) ?: return null
+
+        val actionIndex = GameStateFormatter.letterToIndex(match.groupValues[1]) ?: return null
+        val targetNum = match.groupValues[2].toIntOrNull()?.minus(1) ?: return null // 1-based to 0-based
+
+        if (actionIndex >= legalActions.size) return null
+        val chosen = legalActions[actionIndex]
+
+        if (!chosen.requiresTargets || chosen.targetRequirements.isNullOrEmpty()) return null
+
+        // Collect all valid targets across all requirements
+        val allValidTargets = chosen.targetRequirements.flatMap { req ->
+            req.validTargets ?: emptyList()
+        }
+
+        if (targetNum !in allValidTargets.indices) return null
+
+        val targetId = allValidTargets[targetNum]
+        val playerIds = state?.players?.map { it.playerId }?.toSet() ?: emptySet()
+        val target = resolveTargetType(targetId, null, playerIds, state)
+
+        val action = when (val base = chosen.action) {
+            is CastSpell -> base.copy(targets = listOf(target))
+            is ActivateAbility -> base.copy(targets = listOf(target))
+            else -> return null
+        }
+
+        logger.info("AI parsed action+target: action={}, target={} ({})",
+            chosen.description, targetId.value, target::class.simpleName)
         return ActionResponse.SubmitAction(action)
     }
 
@@ -221,21 +306,21 @@ class AiPlayerController(
     private fun maybeAddTargets(legalAction: LegalActionInfo, state: ClientGameState? = null): GameAction {
         if (!legalAction.requiresTargets) return legalAction.action
 
+        // If there are multiple valid targets, the LLM should have picked via inline targets.
+        // Only auto-select when there's exactly one valid target per requirement.
         val playerIds = state?.players?.map { it.playerId }?.toSet() ?: emptySet()
         val targets = mutableListOf<ChosenTarget>()
 
         if (!legalAction.targetRequirements.isNullOrEmpty()) {
-            // Multiple target requirements — pick first valid for each
             for (req in legalAction.targetRequirements) {
                 val validTargets = req.validTargets
-                if (validTargets.isEmpty()) continue
+                if (validTargets.isNullOrEmpty()) continue
                 val targetId = validTargets.first()
                 val target = resolveTargetType(targetId, req.targetZone, playerIds)
                 targets.add(target)
                 logger.info("AI auto-targeting req {}: {} -> {} ({})", req.index, req.description, targetId.value, target::class.simpleName)
             }
         } else if (!legalAction.validTargets.isNullOrEmpty()) {
-            // Single target requirement — use validTargets directly
             val targetId = legalAction.validTargets.first()
             val target = resolveTargetType(targetId, null, playerIds, state)
             targets.add(target)
@@ -251,7 +336,6 @@ class AiPlayerController(
 
         logger.info("AI targeting: {} targets for {}", targets.size, legalAction.description)
 
-        // Modify the action to include targets
         return when (val action = legalAction.action) {
             is CastSpell -> action.copy(targets = targets)
             is ActivateAbility -> action.copy(targets = targets)
@@ -268,18 +352,15 @@ class AiPlayerController(
         playerIds: Set<EntityId>,
         state: ClientGameState? = null
     ): ChosenTarget {
-        // Player target
         if (targetId in playerIds) return ChosenTarget.Player(targetId)
 
-        // Zone-based: explicit zone from LegalActionTargetInfo
         if (targetZone != null) {
             return when (targetZone) {
                 "Stack" -> ChosenTarget.Spell(targetId)
-                else -> ChosenTarget.Permanent(targetId) // Graveyard, Exile, etc. — engine accepts Permanent for these
+                else -> ChosenTarget.Permanent(targetId)
             }
         }
 
-        // Infer from game state: check if the entity is on the stack
         if (state != null) {
             val stackZone = state.zones.find { it.zoneId.zoneType == com.wingedsheep.sdk.core.Zone.STACK }
             if (stackZone != null && targetId in stackZone.cardIds) {
@@ -287,7 +368,6 @@ class AiPlayerController(
             }
         }
 
-        // Default: battlefield permanent
         return ChosenTarget.Permanent(targetId)
     }
 
@@ -296,153 +376,11 @@ class AiPlayerController(
         decision: PendingDecision,
         state: ClientGameState
     ): ActionResponse? {
-        val decisionResponse = parseDecisionResponseInner(response, decision, state) ?: return null
+        val handler = decisionRegistry.getHandler(decision) ?: return null
+        @Suppress("UNCHECKED_CAST")
+        val typedHandler = handler as AiDecisionHandler<PendingDecision>
+        val decisionResponse = typedHandler.parse(response, decision, state, parser) ?: return null
         return ActionResponse.SubmitDecision(playerId, decisionResponse)
-    }
-
-    private fun parseDecisionResponseInner(
-        response: String,
-        decision: PendingDecision,
-        state: ClientGameState
-    ): DecisionResponse? {
-        return when (decision) {
-            is ChooseTargetsDecision -> {
-                // For single target requirement, parse as single choice
-                if (decision.targetRequirements.size == 1) {
-                    val req = decision.targetRequirements[0]
-                    val validTargets = decision.legalTargets[req.index] ?: return null
-                    val index = parser.parseActionChoice(response, validTargets.size - 1) ?: return null
-                    TargetsResponse(
-                        decisionId = decision.id,
-                        selectedTargets = mapOf(req.index to listOf(validTargets[index]))
-                    )
-                } else {
-                    // Multi-target: try to parse multiple choices
-                    val result = mutableMapOf<Int, List<EntityId>>()
-                    for (req in decision.targetRequirements) {
-                        val validTargets = decision.legalTargets[req.index] ?: continue
-                        val index = parser.parseActionChoice(response, validTargets.size - 1)
-                        if (index != null) {
-                            result[req.index] = listOf(validTargets[index])
-                        }
-                    }
-                    if (result.isNotEmpty()) {
-                        TargetsResponse(decisionId = decision.id, selectedTargets = result)
-                    } else null
-                }
-            }
-
-            is SelectCardsDecision -> {
-                val indices = parser.parseMultipleSelections(response, decision.options.size - 1)
-                if (indices != null) {
-                    val selected = indices.map { decision.options[it] }
-                    CardsSelectedResponse(decisionId = decision.id, selectedCards = selected)
-                } else null
-            }
-
-            is YesNoDecision -> {
-                val choice = parser.parseYesNo(response) ?: return null
-                YesNoResponse(decisionId = decision.id, choice = choice)
-            }
-
-            is ChooseModeDecision -> {
-                val index = parser.parseActionChoice(response, decision.modes.size - 1) ?: return null
-                ModesChosenResponse(decisionId = decision.id, selectedModes = listOf(decision.modes[index].index))
-            }
-
-            is ChooseColorDecision -> {
-                val colors = decision.availableColors.toList()
-                val index = parser.parseActionChoice(response, colors.size - 1) ?: return null
-                ColorChosenResponse(decisionId = decision.id, color = colors[index])
-            }
-
-            is ChooseNumberDecision -> {
-                val number = parser.parseNumber(response, decision.minValue, decision.maxValue) ?: return null
-                NumberChosenResponse(decisionId = decision.id, number = number)
-            }
-
-            is DistributeDecision -> {
-                val dist = parser.parseDistribution(response, decision.targets.size, decision.totalAmount)
-                    ?: return null
-                val entityDist = dist.entries.associate { (idx, amount) -> decision.targets[idx] to amount }
-                DistributionResponse(decisionId = decision.id, distribution = entityDist)
-            }
-
-            is OrderObjectsDecision -> {
-                val ordering = parser.parseOrdering(response, decision.objects.size) ?: return null
-                OrderedResponse(decisionId = decision.id, orderedObjects = ordering.map { decision.objects[it] })
-            }
-
-            is SplitPilesDecision -> {
-                // Simple split: try to parse which cards go in pile 1 vs pile 2
-                val pile1Indices = parser.parseMultipleSelections(response, decision.cards.size - 1)
-                if (pile1Indices != null) {
-                    val pile1 = pile1Indices.map { decision.cards[it] }
-                    val pile2 = decision.cards.filter { it !in pile1 }
-                    PilesSplitResponse(decisionId = decision.id, piles = listOf(pile1, pile2))
-                } else null
-            }
-
-            is ChooseOptionDecision -> {
-                val index = parser.parseActionChoice(response, decision.options.size - 1) ?: return null
-                OptionChosenResponse(decisionId = decision.id, optionIndex = index)
-            }
-
-            is AssignDamageDecision -> {
-                // Use default assignments
-                DamageAssignmentResponse(decisionId = decision.id, assignments = decision.defaultAssignments)
-            }
-
-            is SearchLibraryDecision -> {
-                val indices = parser.parseMultipleSelections(response, decision.options.size - 1)
-                val selected = if (indices != null) {
-                    indices.take(decision.maxSelections).map { decision.options[it] }
-                } else {
-                    // Pick first option
-                    if (decision.options.isNotEmpty()) listOf(decision.options.first()) else emptyList()
-                }
-                CardsSelectedResponse(decisionId = decision.id, selectedCards = selected)
-            }
-
-            is ReorderLibraryDecision -> {
-                val ordering = parser.parseOrdering(response, decision.cards.size) ?: return null
-                CardsSelectedResponse(decisionId = decision.id, selectedCards = ordering.map { decision.cards[it] })
-            }
-
-            is SelectManaSourcesDecision -> {
-                // Always auto-pay
-                ManaSourcesSelectedResponse(decisionId = decision.id, autoPay = true)
-            }
-        }
-    }
-
-    // =========================================================================
-    // Auto-resolve shortcuts (skip LLM call)
-    // =========================================================================
-
-    private fun tryAutoResolveDecision(decision: PendingDecision): ActionResponse? {
-        return when (decision) {
-            is SelectManaSourcesDecision -> {
-                logger.debug("AI auto-paying mana sources")
-                ActionResponse.SubmitDecision(
-                    playerId,
-                    ManaSourcesSelectedResponse(decisionId = decision.id, autoPay = true)
-                )
-            }
-
-            is AssignDamageDecision -> {
-                logger.debug("AI using default damage assignment")
-                ActionResponse.SubmitDecision(
-                    playerId,
-                    DamageAssignmentResponse(
-                        decisionId = decision.id,
-                        assignments = decision.defaultAssignments
-                    )
-                )
-            }
-
-            else -> null
-        }
     }
 
     /**
@@ -464,7 +402,6 @@ class AiPlayerController(
             val opponentId = state.players.find { it.playerId != state.viewingPlayerId }?.playerId
                 ?: return ActionResponse.SubmitAction(declareAttackers.action)
 
-            // Build prompt listing available attackers and opponent's blockers
             val prompt = buildString {
                 appendLine("=== DECLARE ATTACKERS ===")
                 appendLine("Choose which creatures to attack with. The opponent can block with their untapped creatures.")
@@ -476,7 +413,6 @@ class AiPlayerController(
                     val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
                     appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr")
                 }
-                // Show opponent's potential blockers
                 val opponentCreatures = state.cards.values.filter {
                     it.controllerId == opponentId && "Creature" in it.cardTypes && !it.isTapped
                 }
@@ -508,7 +444,6 @@ class AiPlayerController(
                             }
                         }
                     } else {
-                        // Parsing failed — fall back to attacking with all
                         logger.info("AI combat: failed to parse attacker selection, attacking with all")
                         for (attackerId in validAttackers) {
                             val card = state.cards[attackerId] ?: continue
@@ -517,7 +452,6 @@ class AiPlayerController(
                     }
                 }
             } else {
-                // LLM failed — fall back to attacking with all
                 logger.info("AI combat: LLM failed, attacking with all")
                 for (attackerId in validAttackers) {
                     val card = state.cards[attackerId] ?: continue
@@ -544,7 +478,6 @@ class AiPlayerController(
                 return ActionResponse.SubmitAction(declareBlockers.action)
             }
 
-            // Build prompt listing attackers and available blockers
             val prompt = buildString {
                 appendLine("=== DECLARE BLOCKERS ===")
                 appendLine("Opponent is attacking. Choose how to block.")
@@ -577,12 +510,11 @@ class AiPlayerController(
                 logger.info("AI combat LLM response: {}", response.take(200))
                 val upper = response.trim().uppercase()
                 if (upper != "NONE" && upper != "PASS" && upper != "NO") {
-                    // Parse "A blocks 1, C blocks 2" format
                     val blockPattern = Regex("""([A-Z])\s*(?:blocks?|->|:)\s*(\d+)""", RegexOption.IGNORE_CASE)
                     val matches = blockPattern.findAll(response).toList()
-                    for (match in matches) {
-                        val blockerIdx = GameStateFormatter.letterToIndex(match.groupValues[1])
-                        val attackerNum = match.groupValues[2].toIntOrNull()?.minus(1) // 1-based to 0-based
+                    for (m in matches) {
+                        val blockerIdx = GameStateFormatter.letterToIndex(m.groupValues[1])
+                        val attackerNum = m.groupValues[2].toIntOrNull()?.minus(1)
                         if (blockerIdx != null && blockerIdx < validBlockers.size &&
                             attackerNum != null && attackerNum < combat.attackers.size) {
                             val blockerId = validBlockers[blockerIdx]
@@ -593,7 +525,6 @@ class AiPlayerController(
                         }
                     }
                     if (matches.isEmpty()) {
-                        // Try simpler format: just letters = block the first attacker
                         val indices = parser.parseMultipleSelections(response, validBlockers.size - 1)
                         if (indices != null && combat.attackers.isNotEmpty()) {
                             val firstAttacker = combat.attackers.first().creatureId
@@ -606,7 +537,6 @@ class AiPlayerController(
                     }
                 }
             }
-            // No heuristic fallback — if LLM says nothing, take the damage
 
             if (blockerMap.isEmpty()) {
                 logger.info("AI combat: no blocks declared")
@@ -623,13 +553,11 @@ class AiPlayerController(
     // =========================================================================
 
     private fun heuristicAction(legalActions: List<LegalActionInfo>, state: ClientGameState? = null): ActionResponse {
-        // Prefer playing a land
         val playLand = legalActions.find { it.actionType == "PlayLand" }
         if (playLand != null) {
             logger.info("AI heuristic: playing land")
             return ActionResponse.SubmitAction(playLand.action)
         }
-        // Try casting an affordable spell
         val castSpell = legalActions.find {
             (it.actionType == "CastSpell" || it.actionType == "CastFaceDown") && it.isAffordable
         }
@@ -637,107 +565,25 @@ class AiPlayerController(
             logger.info("AI heuristic: casting {}", castSpell.description)
             return ActionResponse.SubmitAction(maybeAddTargets(castSpell, state))
         }
-        // Find PassPriority
         val passAction = legalActions.find { it.actionType == "PassPriority" }
         if (passAction != null) {
             logger.info("AI heuristic: passing priority")
             return ActionResponse.SubmitAction(passAction.action)
         }
-        // Otherwise submit first action
         logger.info("AI heuristic: selecting first legal action")
         return ActionResponse.SubmitAction(legalActions.first().action)
     }
 
     private fun heuristicDecision(decision: PendingDecision, state: ClientGameState): ActionResponse {
         logger.info("AI heuristic for decision: ${decision::class.simpleName}")
-        val response: DecisionResponse = when (decision) {
-            is ChooseTargetsDecision -> {
-                // Pick first valid target for each requirement
-                val targets = decision.targetRequirements.associate { req ->
-                    val valid = decision.legalTargets[req.index] ?: emptyList()
-                    req.index to valid.take(req.minTargets)
-                }
-                TargetsResponse(decisionId = decision.id, selectedTargets = targets)
-            }
-
-            is SelectCardsDecision -> {
-                CardsSelectedResponse(
-                    decisionId = decision.id,
-                    selectedCards = decision.options.take(decision.minSelections)
-                )
-            }
-
-            is YesNoDecision -> {
-                // Default to yes for beneficial effects
-                YesNoResponse(decisionId = decision.id, choice = true)
-            }
-
-            is ChooseModeDecision -> {
-                val firstAvailable = decision.modes.firstOrNull { it.available }
-                ModesChosenResponse(
-                    decisionId = decision.id,
-                    selectedModes = listOf(firstAvailable?.index ?: 0)
-                )
-            }
-
-            is ChooseColorDecision -> {
-                // Pick first available color
-                ColorChosenResponse(
-                    decisionId = decision.id,
-                    color = decision.availableColors.firstOrNull() ?: Color.WHITE
-                )
-            }
-
-            is ChooseNumberDecision -> {
-                NumberChosenResponse(decisionId = decision.id, number = decision.minValue)
-            }
-
-            is DistributeDecision -> {
-                // Equal distribution
-                val perTarget = decision.totalAmount / decision.targets.size
-                val remainder = decision.totalAmount % decision.targets.size
-                val dist = decision.targets.withIndex().associate { (i, tid) ->
-                    tid to (perTarget + if (i < remainder) 1 else 0)
-                }
-                DistributionResponse(decisionId = decision.id, distribution = dist)
-            }
-
-            is OrderObjectsDecision -> {
-                OrderedResponse(decisionId = decision.id, orderedObjects = decision.objects)
-            }
-
-            is SplitPilesDecision -> {
-                val half = decision.cards.size / 2
-                PilesSplitResponse(
-                    decisionId = decision.id,
-                    piles = listOf(decision.cards.take(half), decision.cards.drop(half))
-                )
-            }
-
-            is ChooseOptionDecision -> {
-                OptionChosenResponse(decisionId = decision.id, optionIndex = 0)
-            }
-
-            is AssignDamageDecision -> {
-                DamageAssignmentResponse(decisionId = decision.id, assignments = decision.defaultAssignments)
-            }
-
-            is SearchLibraryDecision -> {
-                val selected = if (decision.options.isNotEmpty()) {
-                    decision.options.take(decision.maxSelections.coerceAtMost(1))
-                } else {
-                    emptyList()
-                }
-                CardsSelectedResponse(decisionId = decision.id, selectedCards = selected)
-            }
-
-            is ReorderLibraryDecision -> {
-                CardsSelectedResponse(decisionId = decision.id, selectedCards = decision.cards)
-            }
-
-            is SelectManaSourcesDecision -> {
-                ManaSourcesSelectedResponse(decisionId = decision.id, autoPay = true)
-            }
+        val handler = decisionRegistry.getHandler(decision)
+        val response = if (handler != null) {
+            @Suppress("UNCHECKED_CAST")
+            (handler as AiDecisionHandler<PendingDecision>).heuristic(decision, state)
+        } else {
+            logger.warn("No handler for decision type: ${decision::class.simpleName}")
+            // Last resort: try to pass priority
+            return heuristicAction(emptyList(), state)
         }
         return ActionResponse.SubmitDecision(playerId, response)
     }
@@ -747,7 +593,9 @@ class AiPlayerController(
             You are an AI playing Magic: The Gathering. You will be shown the game state and asked to choose ONE action at a time.
 
             RESPONSE FORMAT — CRITICAL:
-            - Reply with EXACTLY ONE letter. Nothing else. Example: B
+            - Reply with EXACTLY ONE letter (or letter+number for targeting). Nothing else.
+            - Example action: B
+            - Example action with target: C2 (action C, target 2)
             - Do NOT chain multiple actions (e.g., "D, E, F, C" is WRONG)
             - You can only take ONE action per prompt. After you act, you will get a new prompt with updated state.
             - For selection decisions (discard, scry, etc.), reply with the letter(s) of the card(s) to select.
@@ -760,12 +608,25 @@ class AiPlayerController(
             - Mana abilities (like "{T}: Add {G}") are activated automatically when you cast a spell — you do NOT need to activate them manually.
             - Actions marked "(can't afford)" cannot be chosen.
 
-            STRATEGY:
-            - Play a land every turn (choose PlayLand actions like "Play Forest")
-            - Cast creatures to build your board
-            - Attack when your creatures are bigger or opponent is open
-            - Use removal on opponent's best creatures
-            - Pass priority when you have nothing useful to do
+            STRATEGY PRIORITIES:
+            1. LANDS: Play a land every turn — never miss a land drop.
+            2. CURVE: Cast spells efficiently — use all your mana each turn if possible.
+            3. REMOVAL: Remove opponent's biggest threats first (highest power/toughness creatures, dangerous abilities).
+            4. CREATURES: Build your board — cast creatures on curve to establish presence.
+            5. COMBAT: Attack when favorable (evasion creatures, opponent has no blockers, or your creatures trade up). Don't attack into unfavorable blocks where you lose creatures for nothing.
+            6. PASS: Pass priority when you have nothing productive to do.
+
+            TARGETING PRIORITIES:
+            - Removal: Target opponent's biggest/most dangerous creature.
+            - Burn spells: Target opponent's face when they're at low life, otherwise remove creatures.
+            - Pump spells: Target your biggest unblocked attacker for maximum damage.
+            - Never waste removal on small creatures if the opponent has bigger threats.
+
+            COMBAT GUIDELINES:
+            - Always attack with evasion creatures (flying, unblockable) when opponent is open.
+            - Don't attack a 2/2 into a 3/3 with no combat tricks available.
+            - Gang-block large attackers when possible to trade favorably.
+            - Consider trample — blocking a 5/5 trampler with a 1/1 still lets 4 damage through.
         """.trimIndent()
     }
 }

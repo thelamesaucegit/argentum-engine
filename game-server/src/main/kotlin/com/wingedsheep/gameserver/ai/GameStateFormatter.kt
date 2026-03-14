@@ -1,5 +1,7 @@
 package com.wingedsheep.gameserver.ai
 
+import com.wingedsheep.gameserver.ai.decision.AiDecisionHandler
+import com.wingedsheep.gameserver.ai.decision.AiDecisionHandlerRegistry
 import com.wingedsheep.gameserver.dto.*
 import com.wingedsheep.gameserver.protocol.LegalActionInfo
 import com.wingedsheep.engine.core.*
@@ -12,7 +14,9 @@ import com.wingedsheep.sdk.model.EntityId
  *
  * Entity IDs are mapped to short numeric labels, and legal actions to letter labels.
  */
-class GameStateFormatter {
+class GameStateFormatter(
+    private val decisionHandlerRegistry: AiDecisionHandlerRegistry = AiDecisionHandlerRegistry()
+) {
 
     /**
      * Format a full state update for the LLM.
@@ -78,20 +82,53 @@ class GameStateFormatter {
     }
 
     /**
-     * Format a mulligan decision.
+     * Format a mulligan decision with full card info.
      */
-    fun formatMulligan(cardNames: List<String>, mulliganCount: Int, isOnThePlay: Boolean): String {
+    fun formatMulligan(
+        cards: List<MulliganCardDisplay>,
+        mulliganCount: Int,
+        isOnThePlay: Boolean
+    ): String {
         val sb = StringBuilder()
         sb.appendLine("=== MULLIGAN DECISION ===")
         sb.appendLine("You are on the ${if (isOnThePlay) "play" else "draw"}.")
         sb.appendLine("Mulligan count: $mulliganCount (keeping ${7 - mulliganCount} cards)")
         sb.appendLine()
         sb.appendLine("Your hand:")
-        for ((i, name) in cardNames.withIndex()) {
-            sb.appendLine("  [${i + 1}] $name")
+        for ((i, card) in cards.withIndex()) {
+            sb.append("  [${i + 1}] ${card.name}")
+            if (card.manaCost != null) sb.append(" ${card.manaCost}")
+            if (card.typeLine != null) sb.append(" — ${card.typeLine}")
+            if (card.power != null && card.toughness != null) sb.append(" ${card.power}/${card.toughness}")
+            sb.appendLine()
         }
         sb.appendLine()
         sb.appendLine("Choose: [A] Keep hand, [B] Mulligan")
+        return sb.toString()
+    }
+
+    /**
+     * Format a choose-bottom-cards decision with full card info.
+     */
+    fun formatChooseBottomCards(
+        cards: List<MulliganCardDisplay>,
+        cardIds: List<EntityId>,
+        count: Int
+    ): String {
+        val sb = StringBuilder()
+        sb.appendLine("=== CHOOSE CARDS TO PUT ON BOTTOM ===")
+        sb.appendLine("You must put $count card(s) on the bottom of your library.")
+        sb.appendLine()
+        sb.appendLine("Your hand:")
+        for ((i, card) in cards.withIndex()) {
+            sb.append("  [${actionLetter(i)}] ${card.name}")
+            if (card.manaCost != null) sb.append(" ${card.manaCost}")
+            if (card.typeLine != null) sb.append(" — ${card.typeLine}")
+            if (card.power != null && card.toughness != null) sb.append(" ${card.power}/${card.toughness}")
+            sb.appendLine()
+        }
+        sb.appendLine()
+        sb.appendLine("Reply with the letter(s) of the $count card(s) to put on bottom.")
         return sb.toString()
     }
 
@@ -125,6 +162,19 @@ class GameStateFormatter {
     ) {
         sb.appendLine("Life: ${player.life} | Hand: ${player.handSize} | Library: ${player.librarySize}")
 
+        // Mana pool (floating mana)
+        if (isYou && player.manaPool != null && !player.manaPool.isEmpty) {
+            val pool = player.manaPool
+            val parts = mutableListOf<String>()
+            if (pool.white > 0) parts.add("{W}x${pool.white}")
+            if (pool.blue > 0) parts.add("{U}x${pool.blue}")
+            if (pool.black > 0) parts.add("{B}x${pool.black}")
+            if (pool.red > 0) parts.add("{R}x${pool.red}")
+            if (pool.green > 0) parts.add("{G}x${pool.green}")
+            if (pool.colorless > 0) parts.add("{C}x${pool.colorless}")
+            sb.appendLine("Mana pool: ${parts.joinToString(", ")}")
+        }
+
         // Battlefield
         val battlefield = state.zones
             .filter { it.zoneId.zoneType == Zone.BATTLEFIELD && it.zoneId.ownerId == player.playerId }
@@ -133,24 +183,8 @@ class GameStateFormatter {
 
         if (battlefield.isNotEmpty()) {
             sb.appendLine("Battlefield:")
-            // Lands
-            val lands = battlefield.filter { "Land" in it.second.cardTypes }
-            if (lands.isNotEmpty()) {
-                val landGroups = lands.groupBy { Triple(it.second.name, it.second.isTapped, it.second.controllerId) }
-                for ((key, group) in landGroups) {
-                    val (name, tapped, _) = key
-                    val tappedStr = if (tapped) " (tapped)" else ""
-                    if (group.size > 1) {
-                        sb.appendLine("  ${group.size}x $name$tappedStr")
-                    } else {
-                        val label = labels[group.first().first] ?: "?"
-                        sb.appendLine("  [$label] $name$tappedStr")
-                    }
-                }
-            }
-            // Non-lands
-            val nonLands = battlefield.filter { "Land" !in it.second.cardTypes }
-            for ((id, card) in nonLands) {
+            // Show all permanents individually (no land grouping) so each has a label
+            for ((id, card) in battlefield) {
                 val label = labels[id] ?: "?"
                 sb.append("  [$label] ${card.name}")
                 if (card.power != null && card.toughness != null) {
@@ -169,8 +203,8 @@ class GameStateFormatter {
                     val attachNames = card.attachments.mapNotNull { state.cards[it]?.name }
                     if (attachNames.isNotEmpty()) sb.append(" equipped: ${attachNames.joinToString(", ")}")
                 }
-                // Oracle text for non-vanilla creatures (skip if face-down since text is hidden)
-                if (!card.isFaceDown && card.oracleText.isNotBlank()) {
+                // Oracle text for non-vanilla, non-land permanents (skip if face-down)
+                if (!card.isFaceDown && card.oracleText.isNotBlank() && "Land" !in card.cardTypes) {
                     sb.append(" — \"${card.oracleText}\"")
                 }
                 sb.appendLine()
@@ -213,9 +247,18 @@ class GameStateFormatter {
             }
         }
 
-        // Exile summary
+        // Exile with card names
         if (player.exileSize > 0) {
-            sb.appendLine("Exile: ${player.exileSize} cards")
+            val exileZone = state.zones
+                .find { it.zoneId.zoneType == Zone.EXILE && it.zoneId.ownerId == player.playerId }
+            val exileCards = exileZone?.cardIds?.mapNotNull { id ->
+                state.cards[id]?.name
+            } ?: emptyList()
+            if (exileCards.isNotEmpty()) {
+                sb.appendLine("Exile (${player.exileSize}): ${exileCards.joinToString(", ")}")
+            } else {
+                sb.appendLine("Exile: ${player.exileSize} cards")
+            }
         }
     }
 
@@ -267,16 +310,32 @@ class GameStateFormatter {
             sb.append("[$letter] ${action.description}")
             if (action.manaCostString != null) sb.append(" ${action.manaCostString}")
             if (!action.isAffordable) sb.append(" (can't afford)")
+
+            // Phase 3: Inline targets for LLM selection
             if (action.requiresTargets && action.targetRequirements != null) {
-                val targetDescs = action.targetRequirements.map { req ->
-                    val validNames = req.validTargets?.mapNotNull { tid ->
+                val allTargets = action.targetRequirements.flatMap { req ->
+                    req.validTargets?.map { tid ->
                         val card = state.cards[tid]
                         val label = labels[tid] ?: tid.value
-                        if (card != null) "[$label] ${card.name}" else "[$label] player"
+                        if (card != null) {
+                            val stats = if (card.power != null) " ${card.power}/${card.toughness}" else ""
+                            Triple(tid, "[$label] ${card.name}$stats", req.description)
+                        } else {
+                            Triple(tid, "[$label] player", req.description)
+                        }
                     } ?: emptyList()
-                    "${req.description}: ${validNames.joinToString(", ")}"
                 }
-                sb.append(" — targets: ${targetDescs.joinToString("; ")}")
+
+                if (allTargets.size >= 2) {
+                    sb.appendLine()
+                    sb.append("    Choose target: ")
+                    sb.appendLine(allTargets.mapIndexed { j, (_, name, _) ->
+                        "[${j + 1}] $name"
+                    }.joinToString(", "))
+                    sb.append("    Reply \"$letter${1}\" for ${allTargets.first().second}")
+                } else if (allTargets.size == 1) {
+                    sb.append(" — target: ${allTargets.first().second}")
+                }
             }
             sb.appendLine()
         }
@@ -292,144 +351,11 @@ class GameStateFormatter {
         sb.appendLine(decision.prompt)
         sb.appendLine()
 
-        when (decision) {
-            is ChooseTargetsDecision -> {
-                for (req in decision.targetRequirements) {
-                    sb.appendLine("Target ${req.index + 1}: ${req.description} (choose ${req.minTargets}-${req.maxTargets})")
-                    val validIds = decision.legalTargets[req.index] ?: emptyList()
-                    for ((j, tid) in validIds.withIndex()) {
-                        val card = state.cards[tid]
-                        val label = labels[tid] ?: tid.value
-                        val name = card?.name ?: "Player"
-                        val letter = actionLetter(j)
-                        sb.appendLine("  [$letter] [$label] $name${card?.let { " ${it.power ?: ""}/${it.toughness ?: ""}" } ?: ""}")
-                    }
-                }
-            }
-
-            is SelectCardsDecision -> {
-                sb.appendLine("Select ${decision.minSelections}-${decision.maxSelections} card(s):")
-                for ((j, eid) in decision.options.withIndex()) {
-                    val card = state.cards[eid]
-                    val info = decision.cardInfo?.get(eid)
-                    val name = card?.name ?: info?.name ?: "Unknown"
-                    val letter = actionLetter(j)
-                    sb.appendLine("  [$letter] $name")
-                }
-            }
-
-            is YesNoDecision -> {
-                sb.appendLine("[A] ${decision.yesText}")
-                sb.appendLine("[B] ${decision.noText}")
-            }
-
-            is ChooseModeDecision -> {
-                sb.appendLine("Choose ${decision.minModes}-${decision.maxModes} mode(s):")
-                for (mode in decision.modes) {
-                    val letter = actionLetter(mode.index)
-                    val available = if (mode.available) "" else " (unavailable)"
-                    sb.appendLine("  [$letter] ${mode.text}$available")
-                }
-            }
-
-            is ChooseColorDecision -> {
-                sb.appendLine("Choose a color:")
-                val colors = decision.availableColors.toList()
-                for ((j, color) in colors.withIndex()) {
-                    sb.appendLine("  [${actionLetter(j)}] ${color.name}")
-                }
-            }
-
-            is ChooseNumberDecision -> {
-                sb.appendLine("Choose a number between ${decision.minValue} and ${decision.maxValue}.")
-                sb.appendLine("Reply with the number.")
-            }
-
-            is DistributeDecision -> {
-                sb.appendLine("Distribute ${decision.totalAmount} among targets (min ${decision.minPerTarget} each):")
-                for ((j, tid) in decision.targets.withIndex()) {
-                    val card = state.cards[tid]
-                    val name = card?.name ?: "Player"
-                    val label = labels[tid] ?: tid.value
-                    sb.appendLine("  [${actionLetter(j)}] [$label] $name")
-                }
-                sb.appendLine("Reply with amounts per target (e.g., \"A:2, B:1\").")
-            }
-
-            is OrderObjectsDecision -> {
-                sb.appendLine("Order these objects (first receives priority):")
-                for ((j, eid) in decision.objects.withIndex()) {
-                    val card = state.cards[eid]
-                    val info = decision.cardInfo?.get(eid)
-                    val name = card?.name ?: info?.name ?: "Unknown"
-                    sb.appendLine("  [${actionLetter(j)}] $name")
-                }
-                sb.appendLine("Reply with the order (e.g., \"B, A, C\").")
-            }
-
-            is SplitPilesDecision -> {
-                sb.appendLine("Split into ${decision.numberOfPiles} piles:")
-                if (decision.pileLabels.isNotEmpty()) {
-                    sb.appendLine("Piles: ${decision.pileLabels.joinToString(", ")}")
-                }
-                for ((j, eid) in decision.cards.withIndex()) {
-                    val card = state.cards[eid]
-                    val info = decision.cardInfo?.get(eid)
-                    val name = card?.name ?: info?.name ?: "Unknown"
-                    sb.appendLine("  [${actionLetter(j)}] $name")
-                }
-                sb.appendLine("Reply with pile assignment (e.g., \"Pile 1: A, B; Pile 2: C\").")
-            }
-
-            is ChooseOptionDecision -> {
-                for ((j, option) in decision.options.withIndex()) {
-                    sb.appendLine("  [${actionLetter(j)}] $option")
-                }
-            }
-
-            is AssignDamageDecision -> {
-                // Should be handled by auto-default, but format just in case
-                sb.appendLine("Assign ${decision.availablePower} damage:")
-                for ((j, tid) in decision.orderedTargets.withIndex()) {
-                    val name = state.cards[tid]?.name ?: "Creature"
-                    val min = decision.minimumAssignments[tid] ?: 0
-                    sb.appendLine("  [${actionLetter(j)}] $name (min: $min)")
-                }
-                if (decision.hasTrample && decision.defenderId != null) {
-                    sb.appendLine("  Remaining goes to defending player (trample)")
-                }
-            }
-
-            is SearchLibraryDecision -> {
-                sb.appendLine("Search library (${decision.filterDescription}):")
-                sb.appendLine("Select ${decision.minSelections}-${decision.maxSelections} card(s):")
-                for ((j, eid) in decision.options.withIndex()) {
-                    val info = decision.cards[eid]
-                    val name = info?.name ?: "Unknown"
-                    val cost = info?.manaCost ?: ""
-                    val type = info?.typeLine ?: ""
-                    sb.appendLine("  [${actionLetter(j)}] $name $cost — $type")
-                }
-                if (decision.minSelections == 0) {
-                    sb.appendLine("  [${actionLetter(decision.options.size)}] Fail to find (select nothing)")
-                }
-            }
-
-            is ReorderLibraryDecision -> {
-                sb.appendLine("Reorder cards on top of library (first = top):")
-                for ((j, eid) in decision.cards.withIndex()) {
-                    val info = decision.cardInfo[eid]
-                    val name = info?.name ?: "Unknown"
-                    sb.appendLine("  [${actionLetter(j)}] $name")
-                }
-                sb.appendLine("Reply with the order (e.g., \"B, A, C\").")
-            }
-
-            is SelectManaSourcesDecision -> {
-                // Should be handled by auto-pay shortcut
-                sb.appendLine("Select mana sources to pay ${decision.requiredCost}:")
-                sb.appendLine("Reply: [A] Auto Pay")
-            }
+        // Delegate to the handler registry
+        val handler = decisionHandlerRegistry.getHandler(decision)
+        if (handler != null) {
+            @Suppress("UNCHECKED_CAST")
+            (handler as AiDecisionHandler<PendingDecision>).format(sb, decision, state, labels)
         }
     }
 
@@ -453,3 +379,13 @@ class GameStateFormatter {
     }
 }
 
+/**
+ * Card display info for mulligan/bottom-cards decisions.
+ */
+data class MulliganCardDisplay(
+    val name: String,
+    val manaCost: String? = null,
+    val typeLine: String? = null,
+    val power: Int? = null,
+    val toughness: Int? = null
+)

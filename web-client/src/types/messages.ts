@@ -88,6 +88,7 @@ export interface ReconnectedMessage {
   readonly token: string
   readonly context: 'lobby' | 'drafting' | 'deckBuilding' | 'game' | 'tournament' | null
   readonly contextId: string | null
+  readonly aiEnabled?: boolean
 }
 
 /**

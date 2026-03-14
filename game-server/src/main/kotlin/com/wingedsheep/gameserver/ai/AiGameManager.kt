@@ -82,12 +82,13 @@ class AiGameManager(
         identity.webSocketSession = aiSession
         sessionRegistry.register(identity, aiSession, playerSession)
 
-        // Generate a random deck for the AI
-        val aiDeck = deckGenerator.generate()
+        // Build a deck — try LLM-assisted deckbuilding, fall back to random
+        val deckResult = tryAiDeckBuild(openRouterClient) ?: AiDeckResult(deckGenerator.generate(), null, null)
+        val aiDeck = deckResult.deckList
         gameSession.addPlayer(playerSession, aiDeck)
 
-        // Give the AI knowledge of its deck composition
-        controller.setDeckList(aiDeck)
+        // Give the AI knowledge of its deck composition and archetype
+        controller.setDeckList(aiDeck, deckResult.archetypeDescription)
 
         // Store persistence info
         gameSession.setPlayerPersistenceInfo(aiPlayerId, "AI Opponent", identity.token)
@@ -223,4 +224,24 @@ class AiGameManager(
      * Check if a game has an AI player.
      */
     fun hasAiPlayer(gameSessionId: String): Boolean = activeSessions.containsKey(gameSessionId)
+
+    /**
+     * Try to build a deck using LLM-assisted deckbuilding.
+     * Returns null if the required data isn't available (e.g., no card pool on the generator).
+     */
+    private fun tryAiDeckBuild(openRouterClient: OpenRouterClient): AiDeckResult? {
+        return try {
+            val builder = AiDeckBuilder(
+                properties = gameProperties.ai,
+                openRouterClient = openRouterClient,
+                cardPool = deckGenerator.cardPool,
+                basicLandVariants = deckGenerator.basicLandVariants,
+                setCodes = deckGenerator.setCodes
+            )
+            builder.build()
+        } catch (e: Exception) {
+            logger.warn("AI deckbuilder failed, falling back to random: {}", e.message)
+            null
+        }
+    }
 }

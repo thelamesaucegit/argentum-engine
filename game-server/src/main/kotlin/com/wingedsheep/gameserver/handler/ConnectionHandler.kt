@@ -152,7 +152,8 @@ class ConnectionHandler(
             playerId = identity.playerId.value,
             token = identity.token,
             context = context,
-            contextId = contextId
+            contextId = contextId,
+            aiEnabled = aiGameManager.isEnabled
         ))
 
         when (context) {

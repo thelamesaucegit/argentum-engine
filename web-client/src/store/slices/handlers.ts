@@ -320,6 +320,7 @@ export function createMessageHandlers(set: SetState, get: GetState): MessageHand
       const updates: Partial<GameStore> = {
         connectionStatus: 'connected',
         playerId: entityId(msg.playerId),
+        aiEnabled: msg.aiEnabled ?? false,
       }
       if (msg.context === 'game' && msg.contextId) {
         updates.sessionId = msg.contextId
