@@ -94,6 +94,7 @@ object DominariaSet {
         GrowFromTheAshes,
         IcyManipulator,
         InvokeTheDivine,
+        IsolatedChapel,
         JhoirasFamiliar,
         JhoiraWeatherlightCaptain,
         JodahArchmageEternal,

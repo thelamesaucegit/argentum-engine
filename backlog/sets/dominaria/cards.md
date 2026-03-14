@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 171 / 249
+**Implemented:** 172 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -13,7 +13,7 @@
 | Green      | 37    | 27   |
 | Multicolor | 19    | 13   |
 | Colorless  | 30    | 18   |
-| Land       | 12    | 8    |
+| Land       | 12    | 9    |
 
 ---
 
@@ -118,7 +118,7 @@
 - [x] Icy Manipulator
 - [ ] In Bolas's Clutches
 - [x] Invoke the Divine
-- [ ] Isolated Chapel
+- [x] Isolated Chapel
 - [ ] Jaya Ballard
 - [ ] Jaya's Immolating Inferno
 - [x] Jhoira's Familiar
