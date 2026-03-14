@@ -969,6 +969,7 @@ Set via `staticAbility { ability = ... }`:
 - `ReduceSpellColoredCostBySubtype(subtype, manaReduction)` — reduce colored mana cost per subtype (e.g., Edgewalker: `"{W}{B}"`)
 - `ReduceSpellCostByFilter(filter, amount)` — reduce spell cost for spells matching a GameObjectFilter
 - `ReduceFaceDownCastingCost(amount)` — reduce face-down casting cost
+- `GrantAlternativeCastingCost(cost: String)` — grants an alternative mana cost for all spells cast by this permanent's controller (e.g., Jodah: `"{W}{U}{B}{R}{G}"`)
 - `ConditionalStaticAbility(ability, condition)` — conditional static
 
 ### GlobalEffectType values

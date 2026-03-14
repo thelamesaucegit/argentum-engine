@@ -364,6 +364,29 @@ abstract class ScenarioTestBase : FunSpec() {
         }
 
         /**
+         * Cast a spell using an alternative casting cost (e.g., Jodah's {W}{U}{B}{R}{G}).
+         */
+        fun castSpellWithAlternativeCost(
+            playerNumber: Int,
+            spellName: String,
+            targetId: EntityId? = null
+        ): ExecutionResult {
+            val playerId = if (playerNumber == 1) player1Id else player2Id
+            val hand = state.getHand(playerId)
+            val cardId = hand.find { entityId ->
+                state.getEntity(entityId)?.get<CardComponent>()?.name == spellName
+            } ?: error("Card '$spellName' not found in player $playerNumber's hand")
+
+            val targets = if (targetId != null) {
+                listOf(ChosenTarget.Permanent(targetId))
+            } else {
+                emptyList()
+            }
+
+            return execute(CastSpell(playerId, cardId, targets, useAlternativeCost = true))
+        }
+
+        /**
          * Cast a spell by name, sacrificing a creature and targeting a player.
          */
         fun castSpellWithSacrifice(

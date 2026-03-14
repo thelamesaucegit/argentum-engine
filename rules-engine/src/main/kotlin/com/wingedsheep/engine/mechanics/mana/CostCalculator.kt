@@ -15,6 +15,7 @@ import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.scripting.CostReductionSource
 import com.wingedsheep.sdk.scripting.FaceDownSpellCostReduction
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.GrantAlternativeCastingCost
 import com.wingedsheep.sdk.scripting.IncreaseMorphCost
 import com.wingedsheep.sdk.scripting.IncreaseSpellCostByFilter
 import com.wingedsheep.sdk.scripting.KeywordAbility
@@ -570,6 +571,45 @@ class CostCalculator(
         }
 
         return ManaCost(newSymbols)
+    }
+
+    /**
+     * Find alternative casting costs available to the caster from battlefield permanents.
+     * Scans permanents controlled by the caster for GrantAlternativeCastingCost abilities.
+     *
+     * @return List of alternative ManaCosts available (may be empty)
+     */
+    fun findAlternativeCastingCosts(state: GameState, casterId: EntityId): List<ManaCost> {
+        val costs = mutableListOf<ManaCost>()
+        for (entityId in state.getBattlefield(casterId)) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val permanentDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+
+            for (ability in permanentDef.script.staticAbilities) {
+                if (ability is GrantAlternativeCastingCost) {
+                    costs.add(ManaCost.parse(ability.cost))
+                }
+            }
+        }
+        return costs
+    }
+
+    /**
+     * Calculate the effective cost of casting a spell using an alternative base cost.
+     * Applies cost increases (tax effects) to the alternative cost.
+     * Per Rule 118.9a, cost reductions and increases apply to alternative costs.
+     *
+     * Note: SpellCostReduction (self-reduction on the card) and Affinity are NOT applied
+     * to alternative costs, since those modify the card's own mana cost. Only global
+     * tax effects (IncreaseSpellCostByFilter) apply.
+     */
+    fun calculateEffectiveCostWithAlternativeBase(
+        state: GameState,
+        cardDef: CardDefinition,
+        alternativeCost: ManaCost
+    ): ManaCost {
+        val totalIncrease = calculateFilterCostIncrease(state, cardDef)
+        return increaseGenericCost(alternativeCost, totalIncrease)
     }
 
     companion object {

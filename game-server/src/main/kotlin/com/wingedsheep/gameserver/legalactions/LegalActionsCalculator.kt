@@ -170,6 +170,9 @@ class LegalActionsCalculator(
 
         val hand = state.getHand(playerId)
 
+        // Pre-compute alternative casting costs from battlefield permanents (e.g., Jodah)
+        val alternativeCastingCosts = costCalculator.findAlternativeCastingCosts(state, playerId)
+
         // Check for morph cards that can be cast face-down (sorcery speed only)
         if (canPlaySorcerySpeed) {
             val morphCost = costCalculator.calculateFaceDownCost(state, playerId)
@@ -322,7 +325,14 @@ class LegalActionsCalculator(
                         manaSolver.canPay(state, playerId, effectiveCost)
                     }
 
-                    if (canAfford) {
+                    // Check alternative casting cost affordability (e.g., Jodah's {W}{U}{B}{R}{G})
+                    val canAffordAlternative = alternativeCastingCosts.isNotEmpty() && cardDef != null &&
+                        alternativeCastingCosts.any { altCost ->
+                            val altEffective = costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCost)
+                            manaSolver.canPay(state, playerId, altEffective)
+                        }
+
+                    if (canAfford || canAffordAlternative) {
                         val targetReqs = buildList {
                             addAll(cardDef?.script?.targetRequirements ?: emptyList())
                             cardDef?.script?.auraTarget?.let { add(it) }
@@ -387,6 +397,14 @@ class LegalActionsCalculator(
                         val totalDamageToDistribute = dividedDamageEffect?.totalDamage
                         val minDamagePerTarget = if (dividedDamageEffect != null) 1 else null
 
+                        // Compute alternative cost info for this spell
+                        val altCostInfo = if (canAffordAlternative && cardDef != null) {
+                            val altCost = alternativeCastingCosts.first()
+                            val altEffective = costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCost)
+                            val altSolution = manaSolver.solve(state, playerId, altEffective)
+                            Triple(altEffective.toString(), altSolution?.sources?.map { it.entityId }, manaSolver.canPay(state, playerId, altEffective))
+                        } else null
+
                         if (targetReqs.isNotEmpty()) {
                             // Spell requires targets - find valid targets for all requirements
                             val targetReqInfos = targetReqs.mapIndexed { index, req ->
@@ -422,68 +440,113 @@ class LegalActionsCalculator(
                                 if (canAutoSelect) {
                                     // Auto-select the single valid player target
                                     val autoSelectedTarget = ChosenTarget.Player(firstReqInfo.validTargets.first())
-                                    result.add(LegalActionInfo(
-                                        actionType = "CastSpell",
-                                        description = "Cast ${cardComponent.name}",
-                                        action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget)),
-                                        hasXCost = hasXCost,
-                                        maxAffordableX = maxAffordableX,
-                                        additionalCostInfo = costInfo,
-                                        hasConvoke = hasConvoke,
-                                        validConvokeCreatures = convokeCreatures,
-                                        hasDelve = hasDelve,
-                                        validDelveCards = delveCards,
-                                        minDelveNeeded = minDelveNeeded,
-                                        manaCostString = manaCostString,
-                                        requiresDamageDistribution = requiresDamageDistribution,
-                                        totalDamageToDistribute = totalDamageToDistribute,
-                                        minDamagePerTarget = minDamagePerTarget,
-                                        autoTapPreview = autoTapPreview
-                                    ))
+                                    if (canAfford) {
+                                        result.add(LegalActionInfo(
+                                            actionType = "CastSpell",
+                                            description = "Cast ${cardComponent.name}",
+                                            action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget)),
+                                            hasXCost = hasXCost,
+                                            maxAffordableX = maxAffordableX,
+                                            additionalCostInfo = costInfo,
+                                            hasConvoke = hasConvoke,
+                                            validConvokeCreatures = convokeCreatures,
+                                            hasDelve = hasDelve,
+                                            validDelveCards = delveCards,
+                                            minDelveNeeded = minDelveNeeded,
+                                            manaCostString = manaCostString,
+                                            requiresDamageDistribution = requiresDamageDistribution,
+                                            totalDamageToDistribute = totalDamageToDistribute,
+                                            minDamagePerTarget = minDamagePerTarget,
+                                            autoTapPreview = autoTapPreview
+                                        ))
+                                    }
+                                    if (altCostInfo?.third == true) {
+                                        result.add(LegalActionInfo(
+                                            actionType = "CastWithAlternativeCost",
+                                            description = "Cast ${cardComponent.name} (${altCostInfo.first})",
+                                            action = CastSpell(playerId, cardId, targets = listOf(autoSelectedTarget), useAlternativeCost = true),
+                                            manaCostString = altCostInfo.first,
+                                            requiresDamageDistribution = requiresDamageDistribution,
+                                            totalDamageToDistribute = totalDamageToDistribute,
+                                            minDamagePerTarget = minDamagePerTarget,
+                                            autoTapPreview = altCostInfo.second
+                                        ))
+                                    }
                                 } else {
-                                    result.add(LegalActionInfo(
-                                        actionType = "CastSpell",
-                                        description = "Cast ${cardComponent.name}",
-                                        action = CastSpell(playerId, cardId),
-                                        validTargets = firstReqInfo.validTargets,
-                                        requiresTargets = true,
-                                        targetCount = firstReq.count,
-                                        minTargets = firstReq.effectiveMinCount,
-                                        targetDescription = firstReq.description,
-                                        targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
-                                        hasXCost = hasXCost,
-                                        maxAffordableX = maxAffordableX,
-                                        additionalCostInfo = costInfo,
-                                        hasConvoke = hasConvoke,
-                                        validConvokeCreatures = convokeCreatures,
-                                        hasDelve = hasDelve,
-                                        validDelveCards = delveCards,
-                                        minDelveNeeded = minDelveNeeded,
-                                        manaCostString = manaCostString,
-                                        requiresDamageDistribution = requiresDamageDistribution,
-                                        totalDamageToDistribute = totalDamageToDistribute,
-                                        minDamagePerTarget = minDamagePerTarget,
-                                        autoTapPreview = autoTapPreview
-                                    ))
+                                    if (canAfford) {
+                                        result.add(LegalActionInfo(
+                                            actionType = "CastSpell",
+                                            description = "Cast ${cardComponent.name}",
+                                            action = CastSpell(playerId, cardId),
+                                            validTargets = firstReqInfo.validTargets,
+                                            requiresTargets = true,
+                                            targetCount = firstReq.count,
+                                            minTargets = firstReq.effectiveMinCount,
+                                            targetDescription = firstReq.description,
+                                            targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
+                                            hasXCost = hasXCost,
+                                            maxAffordableX = maxAffordableX,
+                                            additionalCostInfo = costInfo,
+                                            hasConvoke = hasConvoke,
+                                            validConvokeCreatures = convokeCreatures,
+                                            hasDelve = hasDelve,
+                                            validDelveCards = delveCards,
+                                            minDelveNeeded = minDelveNeeded,
+                                            manaCostString = manaCostString,
+                                            requiresDamageDistribution = requiresDamageDistribution,
+                                            totalDamageToDistribute = totalDamageToDistribute,
+                                            minDamagePerTarget = minDamagePerTarget,
+                                            autoTapPreview = autoTapPreview
+                                        ))
+                                    }
+                                    if (altCostInfo?.third == true) {
+                                        result.add(LegalActionInfo(
+                                            actionType = "CastWithAlternativeCost",
+                                            description = "Cast ${cardComponent.name} (${altCostInfo.first})",
+                                            action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                                            validTargets = firstReqInfo.validTargets,
+                                            requiresTargets = true,
+                                            targetCount = firstReq.count,
+                                            minTargets = firstReq.effectiveMinCount,
+                                            targetDescription = firstReq.description,
+                                            targetRequirements = if (targetReqInfos.size > 1) targetReqInfos else null,
+                                            manaCostString = altCostInfo.first,
+                                            requiresDamageDistribution = requiresDamageDistribution,
+                                            totalDamageToDistribute = totalDamageToDistribute,
+                                            minDamagePerTarget = minDamagePerTarget,
+                                            autoTapPreview = altCostInfo.second
+                                        ))
+                                    }
                                 }
                             }
                         } else {
                             // No targets required
-                            result.add(LegalActionInfo(
-                                actionType = "CastSpell",
-                                description = "Cast ${cardComponent.name}",
-                                action = CastSpell(playerId, cardId),
-                                hasXCost = hasXCost,
-                                maxAffordableX = maxAffordableX,
-                                additionalCostInfo = costInfo,
-                                hasConvoke = hasConvoke,
-                                validConvokeCreatures = convokeCreatures,
-                                hasDelve = hasDelve,
-                                validDelveCards = delveCards,
-                                minDelveNeeded = minDelveNeeded,
-                                manaCostString = manaCostString,
-                                autoTapPreview = autoTapPreview
-                            ))
+                            if (canAfford) {
+                                result.add(LegalActionInfo(
+                                    actionType = "CastSpell",
+                                    description = "Cast ${cardComponent.name}",
+                                    action = CastSpell(playerId, cardId),
+                                    hasXCost = hasXCost,
+                                    maxAffordableX = maxAffordableX,
+                                    additionalCostInfo = costInfo,
+                                    hasConvoke = hasConvoke,
+                                    validConvokeCreatures = convokeCreatures,
+                                    hasDelve = hasDelve,
+                                    validDelveCards = delveCards,
+                                    minDelveNeeded = minDelveNeeded,
+                                    manaCostString = manaCostString,
+                                    autoTapPreview = autoTapPreview
+                                ))
+                            }
+                            if (altCostInfo?.third == true) {
+                                result.add(LegalActionInfo(
+                                    actionType = "CastWithAlternativeCost",
+                                    description = "Cast ${cardComponent.name} (${altCostInfo.first})",
+                                    action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                                    manaCostString = altCostInfo.first,
+                                    autoTapPreview = altCostInfo.second
+                                ))
+                            }
                         }
                     }
                 }

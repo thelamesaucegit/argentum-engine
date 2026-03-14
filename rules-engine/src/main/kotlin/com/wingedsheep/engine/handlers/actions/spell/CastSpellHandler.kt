@@ -166,6 +166,11 @@ class CastSpellHandler(
         val playForFree = hasPlayWithoutPayingCost(state, action.playerId, action.cardId)
         var effectiveCost = if (playForFree) {
             ManaCost.ZERO
+        } else if (action.useAlternativeCost && cardDef != null) {
+            // Use alternative casting cost (e.g., Jodah's {W}{U}{B}{R}{G})
+            val altCosts = costCalculator.findAlternativeCastingCosts(state, action.playerId)
+            if (altCosts.isEmpty()) return "No alternative casting cost available"
+            costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCosts.first())
         } else if (cardDef != null) {
             costCalculator.calculateEffectiveCost(state, cardDef, action.playerId)
         } else {
@@ -173,7 +178,7 @@ class CastSpellHandler(
         }
 
         // Add kicker mana cost if kicked (only for mana-based kicker)
-        if (action.wasKicked && !playForFree && cardDef != null) {
+        if (action.wasKicked && !playForFree && !action.useAlternativeCost && cardDef != null) {
             val kickerAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>().firstOrNull()
             if (kickerAbility != null) {
                 effectiveCost = ManaCost(effectiveCost.symbols + kickerAbility.cost.symbols)
@@ -481,6 +486,13 @@ class CastSpellHandler(
         val playForFreeInExecute = hasPlayWithoutPayingCost(currentState, action.playerId, action.cardId)
         var effectiveCost = if (playForFreeInExecute) {
             ManaCost.ZERO
+        } else if (action.useAlternativeCost && cardDef != null) {
+            val altCosts = costCalculator.findAlternativeCastingCosts(currentState, action.playerId)
+            if (altCosts.isNotEmpty()) {
+                costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, altCosts.first())
+            } else {
+                cardComponent.manaCost
+            }
         } else if (action.castFaceDown) {
             costCalculator.calculateFaceDownCost(currentState, action.playerId)
         } else if (cardDef != null) {
@@ -489,8 +501,8 @@ class CastSpellHandler(
             cardComponent.manaCost
         }
 
-        // Add kicker cost if kicked
-        if (action.wasKicked && !playForFreeInExecute && cardDef != null) {
+        // Add kicker cost if kicked (not applicable with alternative costs)
+        if (action.wasKicked && !playForFreeInExecute && !action.useAlternativeCost && cardDef != null) {
             val kickerAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Kicker>().firstOrNull()
             if (kickerAbility != null) {
                 effectiveCost = ManaCost(effectiveCost.symbols + kickerAbility.cost.symbols)

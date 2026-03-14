@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 169 / 249
+**Implemented:** 170 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -11,7 +11,7 @@
 | Black      | 38    | 26   |
 | Red        | 38    | 26   |
 | Green      | 37    | 27   |
-| Multicolor | 19    | 12   |
+| Multicolor | 19    | 13   |
 | Colorless  | 30    | 18   |
 | Land       | 12    | 8    |
 
@@ -123,7 +123,7 @@
 - [ ] Jaya's Immolating Inferno
 - [x] Jhoira's Familiar
 - [x] Jhoira, Weatherlight Captain
-- [ ] Jodah, Archmage Eternal
+- [x] Jodah, Archmage Eternal
 - [x] Josu Vess, Lich Knight
 - [x] Jousting Lance
 - [x] Juggernaut

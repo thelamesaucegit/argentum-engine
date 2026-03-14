@@ -96,6 +96,7 @@ object DominariaSet {
         InvokeTheDivine,
         JhoirasFamiliar,
         JhoiraWeatherlightCaptain,
+        JodahArchmageEternal,
         JosuVessLichKnight,
         JoustingLance,
         Juggernaut,

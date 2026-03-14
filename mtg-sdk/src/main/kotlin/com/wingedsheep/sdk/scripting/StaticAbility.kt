@@ -1584,3 +1584,30 @@ data class UntapFilteredDuringOtherUntapSteps(
     override val description: String = "Untap each ${filter.description} you control during each other player's untap step"
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
+
+// =============================================================================
+// Alternative Casting Costs
+// =============================================================================
+
+/**
+ * Grants an alternative casting cost for spells cast by this permanent's controller.
+ * Used for cards like Jodah, Archmage Eternal: "You may pay {W}{U}{B}{R}{G} rather than pay
+ * the mana cost for spells you cast."
+ *
+ * When a player controls a permanent with this ability, they may choose to pay the
+ * alternative cost instead of the spell's normal mana cost. Alternative costs cannot
+ * be combined with other alternative costs (e.g., flashback).
+ *
+ * Per Rule 118.9a, additional costs, cost increases, and cost reductions still apply
+ * to the alternative cost.
+ *
+ * @property cost The alternative mana cost string (e.g., "{W}{U}{B}{R}{G}")
+ */
+@SerialName("GrantAlternativeCastingCost")
+@Serializable
+data class GrantAlternativeCastingCost(
+    val cost: String
+) : StaticAbility {
+    override val description: String = "You may pay $cost rather than pay the mana cost for spells you cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
