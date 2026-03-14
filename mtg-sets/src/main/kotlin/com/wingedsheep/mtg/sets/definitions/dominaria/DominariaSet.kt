@@ -99,6 +99,7 @@ object DominariaSet {
         JosuVessLichKnight,
         JoustingLance,
         Juggernaut,
+        KarnScionOfUrza,
         HowlingGolem,
         HomaridExplorer,
         KrosanDruid,

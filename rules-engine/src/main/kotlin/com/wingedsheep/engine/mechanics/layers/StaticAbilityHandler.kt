@@ -132,6 +132,21 @@ class StaticAbilityHandler(
     }
 
     /**
+     * Add continuous effect component from a list of static abilities directly.
+     * Used for tokens with static abilities that don't have a CardDefinition.
+     */
+    fun addContinuousEffectComponentFromAbilities(
+        container: ComponentContainer,
+        staticAbilities: List<StaticAbility>
+    ): ComponentContainer {
+        val effectsData = staticAbilities.flatMap { ability ->
+            convertStaticAbilities(ability)
+        }
+        return if (effectsData.isNotEmpty()) container.with(ContinuousEffectSourceComponent(effectsData))
+        else container
+    }
+
+    /**
      * Convert a static ability to a list of ContinuousEffectData.
      * Most abilities produce a single effect, but some (like AnimateLandGroup) produce multiple.
      */

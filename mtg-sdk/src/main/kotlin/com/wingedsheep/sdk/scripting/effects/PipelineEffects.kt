@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.scripting.effects
 
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
@@ -359,7 +360,8 @@ data class MoveCollectionEffect(
     val faceDown: Boolean = false,
     val noRegenerate: Boolean = false,
     val storeMovedAs: String? = null,
-    val underOwnersControl: Boolean = false
+    val underOwnersControl: Boolean = false,
+    val addCounterType: CounterType? = null
 ) : Effect {
     override val description: String = buildString {
         if (revealed) append("Reveal and put") else append("Put")

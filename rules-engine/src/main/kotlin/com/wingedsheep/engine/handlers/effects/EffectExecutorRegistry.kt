@@ -19,6 +19,7 @@ import com.wingedsheep.engine.handlers.effects.player.PlayerExecutors
 import com.wingedsheep.engine.handlers.effects.removal.RemovalExecutors
 import com.wingedsheep.engine.handlers.effects.stack.StackExecutors
 import com.wingedsheep.engine.handlers.effects.token.TokenExecutors
+import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.sdk.scripting.effects.Effect
 import kotlin.reflect.KClass
@@ -49,7 +50,7 @@ class EffectExecutorRegistry(
         registerModule(DamageExecutors(amountEvaluator, decisionHandler))
         registerModule(PermanentExecutors(decisionHandler, amountEvaluator, cardRegistry))
         registerModule(ManaExecutors(amountEvaluator))
-        registerModule(TokenExecutors(amountEvaluator))
+        registerModule(TokenExecutors(amountEvaluator, StaticAbilityHandler(cardRegistry)))
         registerModule(LibraryExecutors(cardRegistry = cardRegistry, targetFinder = TargetFinder()))
         registerModule(StackExecutors(amountEvaluator, cardRegistry))
         registerModule(PlayerExecutors(decisionHandler))

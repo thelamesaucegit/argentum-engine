@@ -2,6 +2,7 @@ package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
+import com.wingedsheep.sdk.scripting.StaticAbility
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -77,7 +78,9 @@ data class CreateTokenEffect(
     val dynamicToughness: DynamicAmount? = null,
     val tapped: Boolean = false,
     val attacking: Boolean = false,
-    val legendary: Boolean = false
+    val legendary: Boolean = false,
+    val artifactToken: Boolean = false,
+    val staticAbilities: List<StaticAbility> = emptyList()
 ) : Effect {
     constructor(
         count: Int,
@@ -90,7 +93,7 @@ data class CreateTokenEffect(
         imageUri: String? = null,
         controller: EffectTarget? = null,
         legendary: Boolean = false
-    ) : this(DynamicAmount.Fixed(count), power, toughness, colors, creatureTypes, keywords, name, imageUri, controller, legendary = legendary)
+    ) : this(DynamicAmount.Fixed(count), power, toughness, colors, creatureTypes, keywords, name, imageUri, controller, legendary = legendary, artifactToken = false)
 
     override val description: String = buildString {
         append("Create ")

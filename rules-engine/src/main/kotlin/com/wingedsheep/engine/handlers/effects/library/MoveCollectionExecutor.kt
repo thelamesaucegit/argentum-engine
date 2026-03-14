@@ -12,10 +12,12 @@ import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.combat.AttackingComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -78,6 +80,17 @@ class MoveCollectionExecutor(
                 }
                 if (effect.unlinkFromSource && result.isSuccess) {
                     result = unlinkCardsFromSource(result, context, cards)
+                }
+                val counterType = effect.addCounterType
+                if (counterType != null && result.isSuccess) {
+                    var newState = result.state
+                    for (cardId in cards) {
+                        newState = newState.updateEntity(cardId) { c ->
+                            val existing = c.get<CountersComponent>() ?: CountersComponent()
+                            c.with(existing.withAdded(counterType, 1))
+                        }
+                    }
+                    result = ExecutionResult.success(newState, result.events).copy(updatedCollections = result.updatedCollections)
                 }
                 result
             }

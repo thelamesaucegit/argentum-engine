@@ -13,6 +13,7 @@ enum class CounterType {
     CHARGE,
     GEM,
     POISON,
+    SILVER,
     GOLD,
     PLAGUE,
     TRAP,

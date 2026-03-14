@@ -21,6 +21,7 @@ import com.wingedsheep.sdk.model.CreatureStats
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
+import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
 import kotlin.reflect.KClass
 
@@ -31,7 +32,8 @@ import kotlin.reflect.KClass
  * Supports both fixed and dynamic counts via [DynamicAmountEvaluator].
  */
 class CreateTokenExecutor(
-    private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator()
+    private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
+    private val staticAbilityHandler: StaticAbilityHandler? = null
 ) : EffectExecutor<CreateTokenEffect> {
 
     override val effectType: KClass<CreateTokenEffect> = CreateTokenEffect::class
@@ -66,7 +68,11 @@ class CreateTokenExecutor(
             val tokenPower = effect.dynamicPower?.let { amountEvaluator.evaluate(state, it, context) } ?: effect.power
             val tokenToughness = effect.dynamicToughness?.let { amountEvaluator.evaluate(state, it, context) } ?: effect.toughness
 
-            val typeLinePrefix = if (effect.legendary) "Legendary Creature" else "Creature"
+            val typeLinePrefix = buildString {
+                if (effect.legendary) append("Legendary ")
+                if (effect.artifactToken) append("Artifact ")
+                append("Creature")
+            }
             val tokenComponent = CardComponent(
                 cardDefinitionId = "token:${effect.creatureTypes.joinToString("-")}",
                 name = tokenName,
@@ -95,7 +101,12 @@ class CreateTokenExecutor(
                     components.add(AttackingComponent(defenderId))
                 }
             }
-            val container = ComponentContainer.of(*components.toTypedArray())
+            var container = ComponentContainer.of(*components.toTypedArray())
+            if (effect.staticAbilities.isNotEmpty() && staticAbilityHandler != null) {
+                container = staticAbilityHandler.addContinuousEffectComponentFromAbilities(
+                    container, effect.staticAbilities
+                )
+            }
 
             newState = newState.withEntity(tokenId, container)
 
