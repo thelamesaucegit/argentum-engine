@@ -1300,6 +1300,26 @@ data object PlayFromTopOfLibrary : StaticAbility {
 }
 
 /**
+ * You may cast spells matching a filter from the top of your library.
+ * Unlike PlayFromTopOfLibrary, this only allows specific spell types (not all spells/lands).
+ * Used for Precognition Field (instant and sorcery only).
+ *
+ * @property filter The filter that spells on top of library must match to be castable
+ */
+@SerialName("CastSpellTypesFromTopOfLibrary")
+@Serializable
+data class CastSpellTypesFromTopOfLibrary(
+    val filter: GameObjectFilter
+) : StaticAbility {
+    override val description: String =
+        "You may cast ${filter.description} spells from the top of your library."
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
  * You may look at the top card of your library any time.
  * Unlike PlayFromTopOfLibrary, this only reveals the top card privately to the controller,
  * not to all players. Used for Lens of Clarity, Vizier of the Menagerie, etc.

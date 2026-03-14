@@ -945,6 +945,7 @@ Set via `staticAbility { ability = ... }`:
 - `SkipNextTurn(target)` — target player skips their next turn
 - `AdditionalManaOnTap(color, amount: DynamicAmount)` — produce additional mana
 - `PlayFromTopOfLibrary` — play cards from top of library (revealed to all)
+- `CastSpellTypesFromTopOfLibrary(filter: GameObjectFilter)` — cast matching spells from top of library (e.g., instants/sorceries only)
 - `LookAtTopOfLibrary` — look at top card of your library any time (private, controller only)
 - `LookAtFaceDownCreatures` — look at face-down creatures you don't control any time
 - `PreventCycling` — players can't cycle cards

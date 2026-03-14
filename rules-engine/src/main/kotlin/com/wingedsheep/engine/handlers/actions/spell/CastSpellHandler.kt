@@ -49,7 +49,10 @@ import com.wingedsheep.sdk.scripting.effects.DividedDamageEffect
 import com.wingedsheep.sdk.scripting.effects.StormCopyEffect
 import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.scripting.GrantFlashToSpellType
+import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
+import com.wingedsheep.sdk.scripting.predicates.CardPredicate
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.toEntityId
 import com.wingedsheep.engine.state.components.stack.TriggeredAbilityOnStackComponent
@@ -1121,7 +1124,8 @@ class CastSpellHandler(
 
     /**
      * Check if a card is on top of the player's library and the player controls
-     * a permanent with PlayFromTopOfLibrary (e.g., Future Sight).
+     * a permanent with PlayFromTopOfLibrary (e.g., Future Sight) or
+     * CastSpellTypesFromTopOfLibrary (e.g., Precognition Field).
      */
     private fun isOnTopOfLibraryWithPermission(
         state: GameState,
@@ -1130,7 +1134,56 @@ class CastSpellHandler(
     ): Boolean {
         val library = state.getLibrary(playerId)
         if (library.isEmpty() || library.first() != cardId) return false
-        return hasPlayFromTopOfLibrary(state, playerId)
+        if (hasPlayFromTopOfLibrary(state, playerId)) return true
+        return hasCastFromTopOfLibraryPermission(state, playerId, cardId)
+    }
+
+    /**
+     * Check if a card on top of library can be cast via CastSpellTypesFromTopOfLibrary.
+     * Validates the card matches the ability's filter.
+     */
+    private fun hasCastFromTopOfLibraryPermission(
+        state: GameState,
+        playerId: EntityId,
+        cardId: EntityId
+    ): Boolean {
+        val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
+        for (entityId in state.getBattlefield(playerId)) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            for (ability in cardDef.script.staticAbilities) {
+                if (ability is CastSpellTypesFromTopOfLibrary) {
+                    if (matchesCardFilter(cardComponent, ability.filter)) return true
+                }
+            }
+        }
+        return false
+    }
+
+    /**
+     * Simple card type check against a GameObjectFilter for non-battlefield cards.
+     */
+    private fun matchesCardFilter(card: CardComponent, filter: GameObjectFilter): Boolean {
+        // Check card predicates from the filter
+        for (predicate in filter.cardPredicates) {
+            if (!matchesCardPredicate(card, predicate)) return false
+        }
+        return true
+    }
+
+    private fun matchesCardPredicate(card: CardComponent, predicate: CardPredicate): Boolean {
+        return when (predicate) {
+            is CardPredicate.IsInstant -> card.typeLine.isInstant
+            is CardPredicate.IsSorcery -> card.typeLine.isSorcery
+            is CardPredicate.IsCreature -> card.typeLine.isCreature
+            is CardPredicate.IsEnchantment -> card.typeLine.isEnchantment
+            is CardPredicate.IsArtifact -> card.typeLine.isArtifact
+            is CardPredicate.IsLand -> card.typeLine.isLand
+            is CardPredicate.Or -> predicate.predicates.any { matchesCardPredicate(card, it) }
+            is CardPredicate.And -> predicate.predicates.all { matchesCardPredicate(card, it) }
+            is CardPredicate.Not -> !matchesCardPredicate(card, predicate.predicate)
+            else -> true // Conservative: allow unknown predicates
+        }
     }
 
     /**

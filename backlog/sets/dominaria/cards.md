@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 160 / 249
+**Implemented:** 161 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 25   |
-| Blue       | 37    | 24   |
+| Blue       | 37    | 25   |
 | Black      | 38    | 25   |
 | Red        | 38    | 25   |
 | Green      | 37    | 26   |
@@ -171,7 +171,7 @@
 - [ ] Phyrexian Scriptures
 - [x] Pierce the Sky
 - [ ] Powerstone Shard
-- [ ] Precognition Field
+- [x] Precognition Field
 - [ ] Primevals' Glorious Rebirth
 - [x] Primordial Wurm
 - [x] Radiating Lightning

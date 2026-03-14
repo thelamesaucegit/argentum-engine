@@ -53,6 +53,7 @@ import com.wingedsheep.sdk.scripting.CanBlockAnyNumber
 import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToAttachedCreature
 import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToCreatureGroup
 import com.wingedsheep.sdk.scripting.GrantFlashToSpellType
+import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.PreventCycling
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
@@ -778,7 +779,10 @@ class LegalActionsCalculator(
         }
 
         // Check for top-of-library cards playable via PlayFromTopOfLibrary (e.g., Future Sight)
-        if (hasPlayFromTopOfLibrary(state, playerId)) {
+        // or CastSpellTypesFromTopOfLibrary (e.g., Precognition Field — instants and sorceries only)
+        val canPlayAllFromTop = hasPlayFromTopOfLibrary(state, playerId)
+        val castFromTopFilter = if (!canPlayAllFromTop) getCastFromTopOfLibraryFilter(state, playerId) else null
+        if (canPlayAllFromTop || castFromTopFilter != null) {
             val library = state.getLibrary(playerId)
             if (library.isNotEmpty()) {
                 val topCardId = library.first()
@@ -786,8 +790,8 @@ class LegalActionsCalculator(
                 if (topCardComponent != null) {
                     val topCardDef = cardRegistry.getCard(topCardComponent.name)
 
-                    // Land on top of library
-                    if (topCardComponent.typeLine.isLand && canPlayLand) {
+                    // Land on top of library (only for PlayFromTopOfLibrary, not filtered cast)
+                    if (canPlayAllFromTop && topCardComponent.typeLine.isLand && canPlayLand) {
                         result.add(LegalActionInfo(
                             actionType = "PlayLand",
                             description = "Play ${topCardComponent.name}",
@@ -797,7 +801,12 @@ class LegalActionsCalculator(
                     }
 
                     // Non-land spell on top of library
-                    if (!topCardComponent.typeLine.isLand) {
+                    // For CastSpellTypesFromTopOfLibrary, also check the filter matches
+                    val topCardMatchesFilter = canPlayAllFromTop ||
+                        (castFromTopFilter != null && predicateEvaluator.matches(
+                            state, topCardId, castFromTopFilter, PredicateContext(controllerId = playerId)
+                        ))
+                    if (!topCardComponent.typeLine.isLand && topCardMatchesFilter) {
                         // Check timing
                         val isInstant = topCardComponent.typeLine.isInstant
                         if (isInstant || canPlaySorcerySpeed) {
@@ -878,8 +887,8 @@ class LegalActionsCalculator(
                             }
                         }
 
-                        // Check for morph on top of library
-                        if (canPlaySorcerySpeed && topCardDef != null) {
+                        // Check for morph on top of library (only for PlayFromTopOfLibrary)
+                        if (canPlayAllFromTop && canPlaySorcerySpeed && topCardDef != null) {
                             val hasMorph = topCardDef.keywordAbilities
                                 .any { it is com.wingedsheep.sdk.scripting.KeywordAbility.Morph }
                             if (hasMorph) {
@@ -2284,6 +2293,26 @@ class LegalActionsCalculator(
             }
         }
         return false
+    }
+
+    /**
+     * Get the filter for CastSpellTypesFromTopOfLibrary if the player controls
+     * a permanent with that ability. Returns null if no such ability exists.
+     * If multiple exist, returns the most permissive (Any).
+     */
+    private fun getCastFromTopOfLibraryFilter(state: GameState, playerId: EntityId): GameObjectFilter? {
+        var filter: GameObjectFilter? = null
+        for (entityId in state.getBattlefield(playerId)) {
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
+            for (ability in cardDef.script.staticAbilities) {
+                if (ability is CastSpellTypesFromTopOfLibrary) {
+                    if (ability.filter == GameObjectFilter.Any) return GameObjectFilter.Any
+                    filter = ability.filter
+                }
+            }
+        }
+        return filter
     }
 
     /**

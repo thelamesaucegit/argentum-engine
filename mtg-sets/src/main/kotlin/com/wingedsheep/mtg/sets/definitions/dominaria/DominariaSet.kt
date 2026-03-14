@@ -124,6 +124,7 @@ object DominariaSet {
         PardicWanderer,
         PegasusCourser,
         PierceTheSky,
+        PrecognitionField,
         PrimordialWurm,
         RaffCapashenShipsMage,
         RadiatingLightning,
