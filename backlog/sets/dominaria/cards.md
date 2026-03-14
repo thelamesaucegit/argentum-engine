@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 174 / 249
+**Implemented:** 175 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 25   |
 | Black      | 38    | 26   |
 | Red        | 38    | 27   |
-| Green      | 37    | 27   |
+| Green      | 37    | 28   |
 | Multicolor | 19    | 13   |
 | Colorless  | 30    | 20   |
 | Land       | 12    | 9    |
@@ -228,7 +228,7 @@
 - [ ] The Eldest Reborn
 - [ ] The First Eruption
 - [x] The Flame of Keld
-- [ ] The Mending of Dominaria
+- [x] The Mending of Dominaria
 - [ ] The Mirari Conjecture
 - [ ] Thorn Elemental
 - [ ] Thran Temporal Gateway

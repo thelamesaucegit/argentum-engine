@@ -173,6 +173,7 @@ object DominariaSet {
         TesharAncestorsApostle,
         TerritorialAllosaurus,
         TheFlameOfKeld,
+        TheMendingOfDominaria,
         TetsukoUmezawaFugitive,
         ThallidOmnivore,
         ThallidSoothsayer,
