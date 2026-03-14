@@ -24,9 +24,19 @@ class GameStateFormatter(
     fun format(
         state: ClientGameState,
         legalActions: List<LegalActionInfo>,
-        pendingDecision: PendingDecision?
+        pendingDecision: PendingDecision?,
+        recentGameLog: List<String> = emptyList()
     ): String {
         val sb = StringBuilder()
+
+        // Recent game log — gives the AI context about what just happened
+        if (recentGameLog.isNotEmpty()) {
+            sb.appendLine("=== RECENT GAME LOG ===")
+            for (entry in recentGameLog) {
+                sb.appendLine("  - $entry")
+            }
+            sb.appendLine()
+        }
 
         // Build entity ID label map for readable references
         val entityLabels = buildEntityLabels(state)
@@ -64,8 +74,28 @@ class GameStateFormatter(
             for (cardId in stackZone.cardIds.reversed()) {
                 val card = state.cards[cardId] ?: continue
                 val label = entityLabels[cardId] ?: cardId.value
+                val cost = card.manaCost.takeIf { it.isNotBlank() }?.let { " $it" } ?: ""
+                val typeLine = " — ${card.typeLine}"
                 val description = card.stackText ?: card.oracleText.takeIf { it.isNotBlank() }
-                sb.appendLine("  [$label] ${card.name}${description?.let { " — $it" } ?: ""}")
+                val xValue = card.chosenX?.let { " (X=$it)" } ?: ""
+                val targets = if (card.targets.isNotEmpty()) {
+                    val targetNames = card.targets.mapNotNull { t ->
+                        val tid = when (t) {
+                            is ClientChosenTarget.Player -> t.playerId
+                            is ClientChosenTarget.Permanent -> t.entityId
+                            is ClientChosenTarget.Spell -> t.spellEntityId
+                            is ClientChosenTarget.Card -> t.cardId
+                        }
+                        state.cards[tid]?.let { c ->
+                            val owner = if (c.controllerId == state.viewingPlayerId) "your" else "opponent's"
+                            "$owner ${c.name}"
+                        } ?: state.players.find { it.playerId == tid }?.let { p ->
+                            if (p.playerId == state.viewingPlayerId) "you" else "opponent"
+                        }
+                    }
+                    if (targetNames.isNotEmpty()) " → targeting: ${targetNames.joinToString(", ")}" else ""
+                } else ""
+                sb.appendLine("  [$label] ${card.name}$cost$typeLine$xValue$targets${description?.let { " — \"$it\"" } ?: ""}")
             }
         }
 
@@ -175,6 +205,13 @@ class GameStateFormatter(
             sb.appendLine("Mana pool: ${parts.joinToString(", ")}")
         }
 
+        // Active player effects
+        if (player.activeEffects.isNotEmpty()) {
+            for (effect in player.activeEffects) {
+                sb.appendLine("Active effect: ${effect.name}${effect.description?.let { " — $it" } ?: ""}")
+            }
+        }
+
         // Battlefield
         val battlefield = state.zones
             .filter { it.zoneId.zoneType == Zone.BATTLEFIELD && it.zoneId.ownerId == player.playerId }
@@ -182,31 +219,18 @@ class GameStateFormatter(
             .mapNotNull { id -> state.cards[id]?.let { id to it } }
 
         if (battlefield.isNotEmpty()) {
+            // Available mana summary (count untapped lands/mana sources)
+            if (isYou) {
+                val untappedMana = computeAvailableMana(battlefield)
+                if (untappedMana.isNotEmpty()) {
+                    sb.appendLine("Available mana (untapped): ${untappedMana.joinToString("")} — ${untappedMana.size} sources")
+                }
+            }
+
             sb.appendLine("Battlefield:")
-            // Show all permanents individually (no land grouping) so each has a label
             for ((id, card) in battlefield) {
-                val label = labels[id] ?: "?"
-                sb.append("  [$label] ${card.name}")
-                if (card.power != null && card.toughness != null) {
-                    sb.append(" ${card.power}/${card.toughness}")
-                    if (card.damage != null && card.damage > 0) sb.append(" (${card.damage} dmg)")
-                }
-                if (card.isTapped) sb.append(" (tapped)")
-                if (card.hasSummoningSickness) sb.append(" (summoning sick)")
-                if (card.isFaceDown) sb.append(" (face-down)")
-                val keywords = card.keywords
-                if (keywords.isNotEmpty()) sb.append(" [${keywords.joinToString(", ") { it.name.lowercase() }}]")
-                if (card.counters.isNotEmpty()) {
-                    sb.append(" {${card.counters.entries.joinToString(", ") { "${it.value} ${it.key.name.lowercase()}" }}}")
-                }
-                if (card.attachments.isNotEmpty()) {
-                    val attachNames = card.attachments.mapNotNull { state.cards[it]?.name }
-                    if (attachNames.isNotEmpty()) sb.append(" equipped: ${attachNames.joinToString(", ")}")
-                }
-                // Oracle text for non-vanilla, non-land permanents (skip if face-down)
-                if (!card.isFaceDown && card.oracleText.isNotBlank() && "Land" !in card.cardTypes) {
-                    sb.append(" — \"${card.oracleText}\"")
-                }
+                sb.append("  [${ labels[id] ?: "?" }] ")
+                formatBattlefieldCard(sb, card, state)
                 sb.appendLine()
             }
         }
@@ -220,24 +244,27 @@ class GameStateFormatter(
                 sb.appendLine("Hand:")
                 for ((id, card) in handCards) {
                     val label = labels[id] ?: "?"
-                    sb.append("  [$label] ${card.name} ${card.manaCost}")
+                    sb.append("  [$label] ${card.name}")
+                    if (card.manaCost.isNotBlank()) sb.append(" ${card.manaCost}")
                     sb.append(" — ${card.typeLine}")
                     if (card.power != null && card.toughness != null) sb.append(" ${card.power}/${card.toughness}")
                     if (card.keywords.isNotEmpty()) sb.append(" [${card.keywords.joinToString(", ") { it.name.lowercase() }}]")
+                    if (card.abilityFlags.isNotEmpty()) sb.append(" [${card.abilityFlags.joinToString(", ") { it.displayName }}]")
                     if (card.oracleText.isNotBlank()) sb.append(" — \"${card.oracleText}\"")
                     sb.appendLine()
                 }
             }
         }
 
-        // Graveyard
+        // Graveyard with full card info
         if (player.graveyardSize > 0) {
             val graveyardZone = state.zones
                 .find { it.zoneId.zoneType == Zone.GRAVEYARD && it.zoneId.ownerId == player.playerId }
             val graveyardCards = graveyardZone?.cardIds?.mapNotNull { id ->
                 state.cards[id]?.let { card ->
+                    val cost = card.manaCost.takeIf { it.isNotBlank() }?.let { " $it" } ?: ""
                     val stats = if (card.power != null) " ${card.power}/${card.toughness}" else ""
-                    "${card.name}$stats"
+                    "${card.name}$cost$stats"
                 }
             } ?: emptyList()
             if (graveyardCards.isNotEmpty()) {
@@ -262,6 +289,124 @@ class GameStateFormatter(
         }
     }
 
+    /**
+     * Format a single battlefield permanent with full projected state.
+     */
+    private fun formatBattlefieldCard(sb: StringBuilder, card: ClientCard, state: ClientGameState) {
+        sb.append(card.name)
+
+        // Mana cost (for all permanents, helps LLM assess mana value/threat level)
+        if (card.manaCost.isNotBlank()) sb.append(" ${card.manaCost}")
+
+        // Type line (always show — critical for knowing what type a permanent is)
+        sb.append(" — ${card.typeLine}")
+
+        // Power/toughness with base stats comparison and damage
+        if (card.power != null && card.toughness != null) {
+            sb.append(" ${card.power}/${card.toughness}")
+            // Show base stats if different from projected (indicates buffs/debuffs)
+            if (card.basePower != null && card.baseToughness != null &&
+                (card.basePower != card.power || card.baseToughness != card.toughness)) {
+                sb.append(" (base ${card.basePower}/${card.baseToughness})")
+            }
+            // Damage marked on the creature
+            if (card.damage != null && card.damage > 0) {
+                val remaining = card.toughness - card.damage
+                sb.append(" [${card.damage} dmg, ${remaining} remaining]")
+            }
+        }
+
+        // State flags
+        if (card.isTapped) sb.append(" TAPPED")
+        if (card.hasSummoningSickness) sb.append(" (summoning sick)")
+        if (card.isFaceDown) sb.append(" (face-down)")
+
+        // Keywords
+        if (card.keywords.isNotEmpty()) {
+            sb.append(" [${card.keywords.joinToString(", ") { it.name.lowercase() }}]")
+        }
+
+        // Ability flags (non-keyword abilities like "can't be blocked")
+        if (card.abilityFlags.isNotEmpty()) {
+            sb.append(" [${card.abilityFlags.joinToString(", ") { it.displayName }}]")
+        }
+
+        // Protection
+        if (card.protections.isNotEmpty()) {
+            sb.append(" [protection from ${card.protections.joinToString(", ") { it.name.lowercase() }}]")
+        }
+
+        // Counters
+        if (card.counters.isNotEmpty()) {
+            sb.append(" {${card.counters.entries.joinToString(", ") { "${it.value} ${it.key.name.lowercase()}" }}}")
+        }
+
+        // Attachments (equipment, auras)
+        if (card.attachments.isNotEmpty()) {
+            val attachNames = card.attachments.mapNotNull { state.cards[it]?.name }
+            if (attachNames.isNotEmpty()) sb.append(" equipped: ${attachNames.joinToString(", ")}")
+        }
+
+        // Linked exile (e.g., Oblivion Ring exiled cards)
+        if (card.linkedExile.isNotEmpty()) {
+            val exiledNames = card.linkedExile.mapNotNull { state.cards[it]?.name }
+            if (exiledNames.isNotEmpty()) sb.append(" (exiling: ${exiledNames.joinToString(", ")})")
+        }
+
+        // Active temporary effects
+        if (card.activeEffects.isNotEmpty()) {
+            for (effect in card.activeEffects) {
+                sb.append(" <${effect.description}>")
+            }
+        }
+
+        // Chosen type/color (e.g., Doom Cannon choosing a creature type)
+        if (card.chosenCreatureType != null) sb.append(" (chosen type: ${card.chosenCreatureType})")
+        if (card.chosenColor != null) sb.append(" (chosen color: ${card.chosenColor})")
+
+        // Oracle text (skip for face-down cards and basic lands with no rules text beyond mana)
+        if (!card.isFaceDown && card.oracleText.isNotBlank()) {
+            sb.append(" — \"${card.oracleText}\"")
+        }
+    }
+
+    /**
+     * Compute available mana from untapped lands/sources for the AI mana summary line.
+     */
+    private fun computeAvailableMana(battlefield: List<Pair<EntityId, ClientCard>>): List<String> {
+        val manaSymbols = mutableListOf<String>()
+        for ((_, card) in battlefield) {
+            if ("Land" !in card.cardTypes || card.isTapped) continue
+            // Parse oracle text to find mana production
+            val text = card.oracleText
+            when {
+                card.subtypes.contains("Plains") -> manaSymbols.add("{W}")
+                card.subtypes.contains("Island") -> manaSymbols.add("{U}")
+                card.subtypes.contains("Swamp") -> manaSymbols.add("{B}")
+                card.subtypes.contains("Mountain") -> manaSymbols.add("{R}")
+                card.subtypes.contains("Forest") -> manaSymbols.add("{G}")
+                // Dual/multi lands — show first mana symbol from oracle text
+                text.contains("Add {W}") && text.contains("Add {B}") -> manaSymbols.add("{W}/{B}")
+                text.contains("Add {W}") && text.contains("Add {U}") -> manaSymbols.add("{W}/{U}")
+                text.contains("Add {W}") && text.contains("Add {R}") -> manaSymbols.add("{W}/{R}")
+                text.contains("Add {W}") && text.contains("Add {G}") -> manaSymbols.add("{W}/{G}")
+                text.contains("Add {U}") && text.contains("Add {B}") -> manaSymbols.add("{U}/{B}")
+                text.contains("Add {U}") && text.contains("Add {R}") -> manaSymbols.add("{U}/{R}")
+                text.contains("Add {U}") && text.contains("Add {G}") -> manaSymbols.add("{U}/{G}")
+                text.contains("Add {B}") && text.contains("Add {R}") -> manaSymbols.add("{B}/{R}")
+                text.contains("Add {B}") && text.contains("Add {G}") -> manaSymbols.add("{B}/{G}")
+                text.contains("Add {R}") && text.contains("Add {G}") -> manaSymbols.add("{R}/{G}")
+                text.contains("Add {W}") -> manaSymbols.add("{W}")
+                text.contains("Add {U}") -> manaSymbols.add("{U}")
+                text.contains("Add {B}") -> manaSymbols.add("{B}")
+                text.contains("Add {R}") -> manaSymbols.add("{R}")
+                text.contains("Add {G}") -> manaSymbols.add("{G}")
+                text.contains("Add {C}") -> manaSymbols.add("{C}")
+            }
+        }
+        return manaSymbols
+    }
+
     private fun formatCombat(
         sb: StringBuilder,
         combat: ClientCombatState,
@@ -275,12 +420,16 @@ class GameStateFormatter(
                 val card = state.cards[attacker.creatureId]
                 val label = labels[attacker.creatureId] ?: "?"
                 val stats = if (card != null) " ${card.power}/${card.toughness}" else ""
+                val damage = if (card?.damage != null && card.damage > 0) " (${card.damage} dmg)" else ""
                 val keywords = card?.keywords?.takeIf { it.isNotEmpty() }?.let { kws ->
                     " [${kws.joinToString(", ") { it.name.lowercase() }}]"
                 } ?: ""
+                val abilityFlags = card?.abilityFlags?.takeIf { it.isNotEmpty() }?.let { flags ->
+                    " [${flags.joinToString(", ") { it.displayName }}]"
+                } ?: ""
                 val blockerNames = attacker.blockedBy.mapNotNull { state.cards[it]?.name }
                 val blockedStr = if (blockerNames.isNotEmpty()) " blocked by: ${blockerNames.joinToString(", ")}" else " (unblocked)"
-                sb.appendLine("  [$label] ${attacker.creatureName}$stats$keywords$blockedStr")
+                sb.appendLine("  [$label] ${attacker.creatureName}$stats$damage$keywords$abilityFlags$blockedStr")
             }
         }
         if (combat.blockers.isNotEmpty()) {
@@ -289,11 +438,12 @@ class GameStateFormatter(
                 val card = state.cards[blocker.creatureId]
                 val label = labels[blocker.creatureId] ?: "?"
                 val stats = if (card != null) " ${card.power}/${card.toughness}" else ""
+                val damage = if (card?.damage != null && card.damage > 0) " (${card.damage} dmg)" else ""
                 val keywords = card?.keywords?.takeIf { it.isNotEmpty() }?.let { kws ->
                     " [${kws.joinToString(", ") { it.name.lowercase() }}]"
                 } ?: ""
                 val attackerName = state.cards[blocker.blockingAttacker]?.name ?: "?"
-                sb.appendLine("  [$label] ${blocker.creatureName}$stats$keywords blocking $attackerName")
+                sb.appendLine("  [$label] ${blocker.creatureName}$stats$damage$keywords blocking $attackerName")
             }
         }
     }
@@ -311,17 +461,20 @@ class GameStateFormatter(
             if (action.manaCostString != null) sb.append(" ${action.manaCostString}")
             if (!action.isAffordable) sb.append(" (can't afford)")
 
-            // Phase 3: Inline targets for LLM selection
+            // Inline targets for LLM selection
             if (action.requiresTargets && action.targetRequirements != null) {
                 val allTargets = action.targetRequirements.flatMap { req ->
                     req.validTargets?.map { tid ->
                         val card = state.cards[tid]
                         val label = labels[tid] ?: tid.value
                         if (card != null) {
+                            val owner = if (card.controllerId == state.viewingPlayerId) "your" else "opponent's"
                             val stats = if (card.power != null) " ${card.power}/${card.toughness}" else ""
-                            Triple(tid, "[$label] ${card.name}$stats", req.description)
+                            Triple(tid, "[$label] $owner ${card.name}$stats", req.description)
                         } else {
-                            Triple(tid, "[$label] player", req.description)
+                            // Check if it's a player
+                            val playerName = if (tid == state.viewingPlayerId) "you" else "opponent"
+                            Triple(tid, "[$label] $playerName", req.description)
                         }
                     } ?: emptyList()
                 }

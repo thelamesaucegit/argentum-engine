@@ -48,6 +48,10 @@ class AiWebSocketSession(
     @Volatile
     private var lastFullState: ClientGameState? = null
 
+    /** Rolling game log of recent event descriptions for AI context. */
+    private val gameLog = mutableListOf<String>()
+    private val maxGameLogSize = 30
+
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -84,6 +88,7 @@ class AiWebSocketSession(
                     message.legalActions.size,
                     message.pendingDecision?.let { it::class.simpleName })
                 lastFullState = message.state
+                accumulateEvents(message.events.map { it.description })
                 handleStateUpdate(message.state, message.legalActions, message.pendingDecision)
             }
 
@@ -92,6 +97,7 @@ class AiWebSocketSession(
                     message.legalActions.size,
                     message.pendingDecision?.let { it::class.simpleName },
                     lastFullState != null)
+                accumulateEvents(message.events.map { it.description })
                 // Use cached full state with the fresh legal actions / pending decision from the delta
                 val cachedState = lastFullState
                 if (cachedState != null && (message.legalActions.isNotEmpty() || message.pendingDecision != null)) {
@@ -157,6 +163,24 @@ class AiWebSocketSession(
         }
     }
 
+    private fun accumulateEvents(descriptions: List<String>) {
+        val newEntries = descriptions.filter { it.isNotBlank() }
+        if (newEntries.isEmpty()) return
+        synchronized(gameLog) {
+            gameLog.addAll(newEntries)
+            // Trim to keep only the most recent entries
+            while (gameLog.size > maxGameLogSize) {
+                gameLog.removeFirst()
+            }
+        }
+    }
+
+    private fun getRecentGameLog(): List<String> {
+        synchronized(gameLog) {
+            return gameLog.toList()
+        }
+    }
+
     private suspend fun handleStateUpdate(
         state: ClientGameState,
         legalActions: List<LegalActionInfo>,
@@ -183,7 +207,7 @@ class AiWebSocketSession(
 
         delay(thinkingDelayMs)
 
-        val response = controller.chooseAction(state, legalActions, pendingDecision)
+        val response = controller.chooseAction(state, legalActions, pendingDecision, getRecentGameLog())
         logger.info("AI chose response: {}", when (response) {
             is ActionResponse.SubmitAction -> "Action(${response.action::class.simpleName})"
             is ActionResponse.SubmitDecision -> "Decision(${response.response::class.simpleName})"

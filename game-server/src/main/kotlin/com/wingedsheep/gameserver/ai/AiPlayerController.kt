@@ -71,7 +71,8 @@ class AiPlayerController(
     fun chooseAction(
         state: ClientGameState,
         legalActions: List<LegalActionInfo>,
-        pendingDecision: PendingDecision?
+        pendingDecision: PendingDecision?,
+        recentGameLog: List<String> = emptyList()
     ): ActionResponse {
         // Shortcut: only one legal action (usually PassPriority)
         // Exception: DeclareAttackers/DeclareBlockers come as the only action but need
@@ -102,7 +103,7 @@ class AiPlayerController(
         if (combatAction != null) return combatAction
 
         // Format state and query LLM
-        val prompt = formatter.format(state, legalActions, pendingDecision)
+        val prompt = formatter.format(state, legalActions, pendingDecision, recentGameLog)
         logger.info("AI prompt ({} chars):\n{}", prompt.length, prompt)
 
         val response = queryLlm(prompt)
@@ -306,8 +307,6 @@ class AiPlayerController(
     private fun maybeAddTargets(legalAction: LegalActionInfo, state: ClientGameState? = null): GameAction {
         if (!legalAction.requiresTargets) return legalAction.action
 
-        // If there are multiple valid targets, the LLM should have picked via inline targets.
-        // Only auto-select when there's exactly one valid target per requirement.
         val playerIds = state?.players?.map { it.playerId }?.toSet() ?: emptySet()
         val targets = mutableListOf<ChosenTarget>()
 
@@ -315,13 +314,13 @@ class AiPlayerController(
             for (req in legalAction.targetRequirements) {
                 val validTargets = req.validTargets
                 if (validTargets.isNullOrEmpty()) continue
-                val targetId = validTargets.first()
+                val targetId = pickBestTarget(validTargets, legalAction, state)
                 val target = resolveTargetType(targetId, req.targetZone, playerIds)
                 targets.add(target)
                 logger.info("AI auto-targeting req {}: {} -> {} ({})", req.index, req.description, targetId.value, target::class.simpleName)
             }
         } else if (!legalAction.validTargets.isNullOrEmpty()) {
-            val targetId = legalAction.validTargets.first()
+            val targetId = pickBestTarget(legalAction.validTargets, legalAction, state)
             val target = resolveTargetType(targetId, null, playerIds, state)
             targets.add(target)
             logger.info("AI auto-targeting (single): {} -> {} ({})",
@@ -342,6 +341,67 @@ class AiPlayerController(
             else -> action
         }
     }
+
+    /**
+     * Heuristic target selection when the LLM didn't specify a target.
+     *
+     * For harmful effects (destroy, damage, exile, -X/-X, etc.) → prefer opponent's creatures.
+     * For beneficial effects (pump, prevent, protect, etc.) → prefer own creatures.
+     * Falls back to first valid target if we can't determine the effect type.
+     */
+    private fun pickBestTarget(
+        validTargets: List<EntityId>,
+        legalAction: LegalActionInfo,
+        state: ClientGameState?
+    ): EntityId {
+        if (validTargets.size == 1 || state == null) return validTargets.first()
+
+        val description = legalAction.description.lowercase() +
+            " " + (legalAction.targetDescription?.lowercase() ?: "")
+        val isHarmful = description.containsAny(
+            "destroy", "damage", "exile", "sacrifice", "return to",
+            "-1/-1", "-2/-2", "-3/-3", "-4/-4", "-5/-5",
+            "debilitating", "murder", "kill", "burn", "remove"
+        )
+        val isBeneficial = description.containsAny(
+            "prevent", "protect", "regenerate", "+1/+1", "+2/+2", "+3/+3",
+            "pump", "buff", "indestructible", "hexproof", "counter on",
+            "equip", "enchant", "attach"
+        )
+
+        val myId = state.viewingPlayerId
+
+        // Separate targets into own vs opponent's
+        val opponentTargets = validTargets.filter { tid ->
+            val card = state.cards[tid]
+            card != null && card.controllerId != myId
+        }
+        val ownTargets = validTargets.filter { tid ->
+            val card = state.cards[tid]
+            card != null && card.controllerId == myId
+        }
+
+        val preferred = when {
+            isHarmful && opponentTargets.isNotEmpty() -> opponentTargets
+            isBeneficial && ownTargets.isNotEmpty() -> ownTargets
+            // Default: for spells WE cast, assume harmful → target opponent
+            !isBeneficial && opponentTargets.isNotEmpty() -> opponentTargets
+            else -> validTargets
+        }
+
+        // Among preferred targets, pick the biggest threat (highest power)
+        val best = preferred.maxByOrNull { tid ->
+            state.cards[tid]?.power ?: 0
+        } ?: preferred.first()
+
+        logger.info("AI pickBestTarget: harmful={}, beneficial={}, chose {} from {} valid targets",
+            isHarmful, isBeneficial, state.cards[best]?.name ?: best.value, validTargets.size)
+
+        return best
+    }
+
+    private fun String.containsAny(vararg keywords: String): Boolean =
+        keywords.any { this.contains(it) }
 
     /**
      * Determine the correct ChosenTarget variant based on zone and entity type.
@@ -402,8 +462,12 @@ class AiPlayerController(
             val opponentId = state.players.find { it.playerId != state.viewingPlayerId }?.playerId
                 ?: return ActionResponse.SubmitAction(declareAttackers.action)
 
+            val you = state.players.find { it.playerId == state.viewingPlayerId }
+            val opp = state.players.find { it.playerId != state.viewingPlayerId }
+
             val prompt = buildString {
                 appendLine("=== DECLARE ATTACKERS ===")
+                appendLine("Your life: ${you?.life ?: "?"} | Opponent's life: ${opp?.life ?: "?"}")
                 appendLine("Choose which creatures to attack with. The opponent can block with their untapped creatures.")
                 appendLine()
                 appendLine("Your creatures that can attack:")
@@ -411,7 +475,9 @@ class AiPlayerController(
                     val card = state.cards[attackerId] ?: continue
                     val keywords = card.keywords.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name.lowercase() } ?: ""
                     val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
-                    appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr")
+                    val abilityFlags = card.abilityFlags.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.displayName } ?: ""
+                    val flagStr = if (abilityFlags.isNotEmpty()) " [$abilityFlags]" else ""
+                    appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr$flagStr")
                 }
                 val opponentCreatures = state.cards.values.filter {
                     it.controllerId == opponentId && "Creature" in it.cardTypes && !it.isTapped
@@ -424,6 +490,9 @@ class AiPlayerController(
                         val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
                         appendLine("  ${card.name} ${card.power}/${card.toughness}$keywordStr")
                     }
+                } else {
+                    appendLine()
+                    appendLine("Opponent has NO untapped creatures to block.")
                 }
                 appendLine()
                 appendLine("Reply with the letters of creatures to attack with (e.g., \"A, C\"), or \"NONE\" to not attack.")
@@ -478,9 +547,19 @@ class AiPlayerController(
                 return ActionResponse.SubmitAction(declareBlockers.action)
             }
 
+            val you = state.players.find { it.playerId == state.viewingPlayerId }
+            val opp = state.players.find { it.playerId != state.viewingPlayerId }
+            val totalAttackPower = combat.attackers.sumOf { atk ->
+                state.cards[atk.creatureId]?.power ?: 0
+            }
+
             val prompt = buildString {
                 appendLine("=== DECLARE BLOCKERS ===")
-                appendLine("Opponent is attacking. Choose how to block.")
+                appendLine("Your life: ${you?.life ?: "?"} | Opponent's life: ${opp?.life ?: "?"}")
+                appendLine("Opponent is attacking for $totalAttackPower total damage. Choose how to block.")
+                if (you != null && totalAttackPower >= you.life) {
+                    appendLine("WARNING: This attack is LETHAL if unblocked! You must block to survive!")
+                }
                 appendLine()
                 appendLine("Attacking creatures:")
                 for ((i, attacker) in combat.attackers.withIndex()) {
@@ -488,7 +567,9 @@ class AiPlayerController(
                     val stats = if (card != null) "${card.power}/${card.toughness}" else "?/?"
                     val keywords = card?.keywords?.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name.lowercase() } ?: ""
                     val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
-                    appendLine("  Attacker ${i + 1}: ${attacker.creatureName} $stats$keywordStr")
+                    val abilityFlags = card?.abilityFlags?.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.displayName } ?: ""
+                    val flagStr = if (abilityFlags.isNotEmpty()) " [$abilityFlags]" else ""
+                    appendLine("  Attacker ${i + 1}: ${attacker.creatureName} $stats$keywordStr$flagStr")
                 }
                 appendLine()
                 appendLine("Your creatures that can block:")

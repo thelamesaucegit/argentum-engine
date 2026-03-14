@@ -29,9 +29,15 @@ class ChooseTargetsHandler : AiDecisionHandler<ChooseTargetsDecision> {
             for ((j, tid) in validIds.withIndex()) {
                 val card = state.cards[tid]
                 val label = labels[tid] ?: tid.value
-                val name = card?.name ?: "Player"
                 val letter = GameStateFormatter.actionLetter(j)
-                sb.appendLine("  [$letter] [$label] $name${card?.let { " ${it.power ?: ""}/${it.toughness ?: ""}" } ?: ""}")
+                if (card != null) {
+                    val owner = if (card.controllerId == state.viewingPlayerId) "your" else "opponent's"
+                    val stats = if (card.power != null) " ${card.power}/${card.toughness}" else ""
+                    sb.appendLine("  [$letter] [$label] $owner ${card.name}$stats")
+                } else {
+                    val playerName = if (tid == state.viewingPlayerId) "you" else "opponent"
+                    sb.appendLine("  [$letter] [$label] $playerName")
+                }
             }
         }
     }
@@ -66,9 +72,18 @@ class ChooseTargetsHandler : AiDecisionHandler<ChooseTargetsDecision> {
     }
 
     override fun heuristic(decision: ChooseTargetsDecision, state: ClientGameState): DecisionResponse {
+        val myId = state.viewingPlayerId
         val targets = decision.targetRequirements.associate { req ->
             val valid = decision.legalTargets[req.index] ?: emptyList()
-            req.index to valid.take(req.minTargets)
+            // Prefer opponent's creatures for targeting heuristic (most targets are harmful)
+            val opponentTargets = valid.filter { tid ->
+                val card = state.cards[tid]
+                card != null && card.controllerId != myId
+            }
+            val preferred = if (opponentTargets.isNotEmpty()) opponentTargets else valid
+            // Pick highest-power targets first
+            val sorted = preferred.sortedByDescending { tid -> state.cards[tid]?.power ?: 0 }
+            req.index to sorted.take(req.minTargets)
         }
         return TargetsResponse(decisionId = decision.id, selectedTargets = targets)
     }
