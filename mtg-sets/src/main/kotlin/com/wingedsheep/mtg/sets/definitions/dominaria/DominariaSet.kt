@@ -67,6 +67,7 @@ object DominariaSet {
         Divination,
         Dub,
         DrudgeSentinel,
+        ElfhameDruid,
         Eviscerate,
         ExcavationElephant,
         FeralAbomination,

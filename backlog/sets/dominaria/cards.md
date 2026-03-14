@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 161 / 249
+**Implemented:** 162 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 25   |
 | Black      | 38    | 25   |
 | Red        | 38    | 25   |
-| Green      | 37    | 26   |
+| Green      | 37    | 27   |
 | Multicolor | 19    | 10   |
 | Colorless  | 30    | 16   |
 | Land       | 12    | 8    |
@@ -75,7 +75,7 @@
 - [x] Dread Shade
 - [x] Drudge Sentinel
 - [x] Dub
-- [ ] Elfhame Druid
+- [x] Elfhame Druid
 - [x] Eviscerate
 - [ ] Evra, Halcyon Witness
 - [x] Excavation Elephant
