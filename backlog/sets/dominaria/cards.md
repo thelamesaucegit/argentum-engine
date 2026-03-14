@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 173 / 249
+**Implemented:** 174 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 27   |
 | Green      | 37    | 27   |
 | Multicolor | 19    | 13   |
-| Colorless  | 30    | 19   |
+| Colorless  | 30    | 20   |
 | Land       | 12    | 9    |
 
 ---
@@ -170,7 +170,7 @@
 - [x] Pegasus Courser
 - [x] Phyrexian Scriptures
 - [x] Pierce the Sky
-- [ ] Powerstone Shard
+- [x] Powerstone Shard
 - [x] Precognition Field
 - [x] Primevals' Glorious Rebirth
 - [x] Primordial Wurm

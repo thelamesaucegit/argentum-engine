@@ -133,6 +133,7 @@ object DominariaSet {
         PhyrexianScriptures,
         PierceTheSky,
         PrecognitionField,
+        PowerstoneShard,
         PrimevalsGloriousRebirth,
         PrimordialWurm,
         RaffCapashenShipsMage,
