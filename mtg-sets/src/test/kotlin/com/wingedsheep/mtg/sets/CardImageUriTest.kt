@@ -16,8 +16,8 @@ import java.net.http.HttpResponse
  * Disabled by default (requires network access and is slow).
  * Run explicitly with: ./gradlew :mtg-sets:test --tests "*.CardImageUriTest" -DverifyImageUris=true
  */
-class VerifyImageUrisCondition : io.kotest.core.annotation.EnabledCondition {
-    override fun enabled(kclass: kotlin.reflect.KClass<out io.kotest.core.spec.Spec>): Boolean =
+class VerifyImageUrisCondition : io.kotest.core.annotation.Condition {
+    override fun evaluate(kclass: kotlin.reflect.KClass<out io.kotest.core.spec.Spec>): Boolean =
         System.getProperty("verifyImageUris") == "true"
 }
 

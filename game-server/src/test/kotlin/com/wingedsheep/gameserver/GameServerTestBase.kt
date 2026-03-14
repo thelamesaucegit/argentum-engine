@@ -48,7 +48,7 @@ abstract class GameServerTestBase : FunSpec() {
 
     protected val activeClients = mutableListOf<TestWebSocketClient>()
 
-    override suspend fun afterTest(testCase: io.kotest.core.test.TestCase, result: io.kotest.core.test.TestResult) {
+    override suspend fun afterTest(testCase: io.kotest.core.test.TestCase, result: io.kotest.engine.test.TestResult) {
         activeClients.forEach { it.close() }
         activeClients.clear()
         super.afterTest(testCase, result)
