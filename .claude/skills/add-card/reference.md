@@ -542,6 +542,7 @@ constructors.
 - `Triggers.YouCastNoncreature` / `Triggers.YouCastInstantOrSorcery`
 - `Triggers.YouCastEnchantment`
 - `Triggers.YouCastHistoric` — whenever you cast a historic spell (artifact, legendary, or Saga)
+- `Triggers.YouCastKickedSpell` — whenever you cast a kicked spell
 - `Triggers.AnySpellOrAbilityOnStack` — whenever any spell or ability is put onto the stack (any player)
 
 ### Card Drawing

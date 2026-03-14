@@ -40,6 +40,7 @@ object DominariaSet {
         Befuddle,
         BlinkOfAnEye,
         BlessedLight,
+        BloodstoneGoblin,
         BloodtallowCandle,
         BoardTheWeatherlight,
         BrokenBond,

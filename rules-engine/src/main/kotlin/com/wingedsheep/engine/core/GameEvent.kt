@@ -147,7 +147,8 @@ data class SpellCastEvent(
     val cardName: String,
     val casterId: EntityId,
     val targetNames: List<String> = emptyList(),
-    val xValue: Int? = null
+    val xValue: Int? = null,
+    val wasKicked: Boolean = false
 ) : GameEvent
 
 /**

@@ -151,7 +151,7 @@ class StackResolver(
             }
         }
 
-        val events = mutableListOf<GameEvent>(SpellCastEvent(cardId, eventName, casterId, targetNames, xValue))
+        val events = mutableListOf<GameEvent>(SpellCastEvent(cardId, eventName, casterId, targetNames, xValue, wasKicked))
 
         // Emit BecomesTargetEvent for each permanent target (Rule 601.2c)
         for (target in targets) {

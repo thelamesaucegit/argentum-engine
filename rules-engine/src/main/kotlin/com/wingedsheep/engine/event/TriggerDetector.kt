@@ -1698,7 +1698,8 @@ class TriggerDetector(
             is GameEvent.SpellCastEvent -> {
                 event is SpellCastEvent &&
                     matchesPlayer(trigger.player, event.casterId, controllerId) &&
-                    matchesSpellTypeFilter(trigger, event, state)
+                    matchesSpellTypeFilter(trigger, event, state) &&
+                    (trigger.kicked == null || trigger.kicked == event.wasKicked)
             }
             is GameEvent.SpellOrAbilityOnStackEvent -> {
                 // Intervening-if: only trigger if the spell/ability has a single target

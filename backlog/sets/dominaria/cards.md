@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 175 / 249
+**Implemented:** 176 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
 | Blue       | 37    | 25   |
 | Black      | 38    | 26   |
-| Red        | 38    | 27   |
+| Red        | 38    | 28   |
 | Green      | 37    | 28   |
 | Multicolor | 19    | 13   |
 | Colorless  | 30    | 20   |
@@ -40,7 +40,7 @@
 - [x] Blessed Light
 - [ ] Blessing of Belzenlok
 - [x] Blink of an Eye
-- [ ] Bloodstone Goblin
+- [x] Bloodstone Goblin
 - [x] Bloodtallow Candle
 - [x] Board the Weatherlight
 - [x] Broken Bond

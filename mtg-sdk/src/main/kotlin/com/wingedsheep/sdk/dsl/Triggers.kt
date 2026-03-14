@@ -492,6 +492,14 @@ object Triggers {
         binding = TriggerBinding.ANY
     )
 
+    /**
+     * Whenever you cast a kicked spell.
+     */
+    val YouCastKickedSpell: TriggerSpec = TriggerSpec(
+        event = SpellCastEvent(kicked = true, player = Player.You),
+        binding = TriggerBinding.ANY
+    )
+
     // =========================================================================
     // Stack Triggers
     // =========================================================================
