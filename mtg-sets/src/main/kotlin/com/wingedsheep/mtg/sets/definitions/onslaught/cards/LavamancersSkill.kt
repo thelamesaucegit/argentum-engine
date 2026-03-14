@@ -1,10 +1,13 @@
 package com.wingedsheep.mtg.sets.definitions.onslaught.cards
 
 import com.wingedsheep.sdk.core.Subtype
+import com.wingedsheep.sdk.dsl.Costs
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.AbilityId
+import com.wingedsheep.sdk.scripting.ActivatedAbility
+import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToAttachedCreature
 import com.wingedsheep.sdk.scripting.effects.DealDamageEffect
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
@@ -20,7 +23,7 @@ import com.wingedsheep.sdk.scripting.targets.TargetCreature
  * As long as enchanted creature is a Wizard, it has "{T}: This creature deals 2 damage
  * to target creature." instead.
  *
- * Implementation uses a single ability with conditional damage amount (2 if Wizard, 1 otherwise).
+ * Implementation uses a single granted ability with conditional damage amount (2 if Wizard, 1 otherwise).
  */
 val LavamancersSkill = card("Lavamancer's Skill") {
     manaCost = "{1}{R}"
@@ -29,17 +32,22 @@ val LavamancersSkill = card("Lavamancer's Skill") {
 
     auraTarget = Targets.Creature
 
-    activatedAbility {
-        cost = AbilityCost.TapAttachedCreature
-        val t = target("target", TargetCreature())
-        effect = DealDamageEffect(
-            amount = DynamicAmount.Conditional(
-                condition = EnchantedCreatureHasSubtype(Subtype("Wizard")),
-                ifTrue = DynamicAmount.Fixed(2),
-                ifFalse = DynamicAmount.Fixed(1)
-            ),
-            target = t,
-            damageSource = EffectTarget.EnchantedCreature
+    staticAbility {
+        ability = GrantActivatedAbilityToAttachedCreature(
+            ability = ActivatedAbility(
+                id = AbilityId.generate(),
+                cost = Costs.Tap,
+                effect = DealDamageEffect(
+                    amount = DynamicAmount.Conditional(
+                        condition = EnchantedCreatureHasSubtype(Subtype("Wizard")),
+                        ifTrue = DynamicAmount.Fixed(2),
+                        ifFalse = DynamicAmount.Fixed(1)
+                    ),
+                    target = EffectTarget.ContextTarget(0),
+                    damageSource = EffectTarget.Self
+                ),
+                targetRequirements = listOf(TargetCreature())
+            )
         )
     }
 

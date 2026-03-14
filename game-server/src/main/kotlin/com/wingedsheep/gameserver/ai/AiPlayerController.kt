@@ -102,8 +102,18 @@ class AiPlayerController(
         val combatAction = tryCombatAction(state, legalActions)
         if (combatAction != null) return combatAction
 
+        // Filter out mana abilities — the engine auto-pays mana when casting spells,
+        // so manually tapping lands is never useful and wastes resources.
+        val filteredActions = legalActions.filter { !it.isManaAbility }
+
+        // If filtering removed everything except pass, just pass
+        if (filteredActions.size == 1 && filteredActions[0].actionType == "PassPriority") {
+            logger.info("AI auto-passing: only non-mana action is PassPriority")
+            return ActionResponse.SubmitAction(filteredActions[0].action)
+        }
+
         // Format state and query LLM
-        val prompt = formatter.format(state, legalActions, pendingDecision, recentGameLog)
+        val prompt = formatter.format(state, filteredActions, pendingDecision, recentGameLog)
         logger.info("AI prompt ({} chars):\n{}", prompt.length, prompt)
 
         val response = queryLlm(prompt)
@@ -113,7 +123,7 @@ class AiPlayerController(
             val parsed = if (pendingDecision != null) {
                 parseDecisionResponse(response, pendingDecision, state)
             } else {
-                parseActionResponse(response, legalActions, state)
+                parseActionResponse(response, filteredActions, state)
             }
             if (parsed != null) {
                 logger.info("AI parsed LLM response successfully: {}", when (parsed) {
@@ -131,7 +141,7 @@ class AiPlayerController(
         val heuristic = if (pendingDecision != null) {
             heuristicDecision(pendingDecision, state)
         } else {
-            heuristicAction(legalActions, state)
+            heuristicAction(filteredActions, state)
         }
         logger.info("AI heuristic result: {}", when (heuristic) {
             is ActionResponse.SubmitAction -> "Action(${heuristic.action::class.simpleName})"
@@ -276,11 +286,15 @@ class AiPlayerController(
         if (actionIndex >= legalActions.size) return null
         val chosen = legalActions[actionIndex]
 
-        if (!chosen.requiresTargets || chosen.targetRequirements.isNullOrEmpty()) return null
+        if (!chosen.requiresTargets) return null
 
-        // Collect all valid targets across all requirements
-        val allValidTargets = chosen.targetRequirements.flatMap { req ->
-            req.validTargets ?: emptyList()
+        // Collect all valid targets across all requirements, or from validTargets
+        val allValidTargets = if (!chosen.targetRequirements.isNullOrEmpty()) {
+            chosen.targetRequirements.flatMap { req -> req.validTargets ?: emptyList() }
+        } else if (!chosen.validTargets.isNullOrEmpty()) {
+            chosen.validTargets
+        } else {
+            return null
         }
 
         if (targetNum !in allValidTargets.indices) return null
@@ -358,15 +372,28 @@ class AiPlayerController(
 
         val description = legalAction.description.lowercase() +
             " " + (legalAction.targetDescription?.lowercase() ?: "")
-        val isHarmful = description.containsAny(
+
+        // Also check the oracle text of the card being cast for effect classification
+        val oracleText = legalAction.action.let { action ->
+            if (action is CastSpell) {
+                state.cards[action.cardId]?.oracleText?.lowercase() ?: ""
+            } else ""
+        }
+        val fullText = "$description $oracleText"
+
+        val isHarmful = fullText.containsAny(
             "destroy", "damage", "exile", "sacrifice", "return to",
             "-1/-1", "-2/-2", "-3/-3", "-4/-4", "-5/-5",
-            "debilitating", "murder", "kill", "burn", "remove"
+            "debilitating", "murder", "kill", "burn", "remove",
+            "loses", "can't attack", "can't block", "tap target"
         )
-        val isBeneficial = description.containsAny(
+        val isBeneficial = fullText.containsAny(
             "prevent", "protect", "regenerate", "+1/+1", "+2/+2", "+3/+3",
+            "+1/+0", "+2/+0", "+3/+0", "+0/+1", "+0/+2", "+0/+3",
             "pump", "buff", "indestructible", "hexproof", "counter on",
-            "equip", "enchant", "attach"
+            "equip", "enchant", "attach", "gets +", "gains ",
+            "first strike", "haste", "flying", "trample", "lifelink",
+            "vigilance", "deathtouch", "double strike", "unblockable"
         )
 
         val myId = state.viewingPlayerId
@@ -402,6 +429,11 @@ class AiPlayerController(
 
     private fun String.containsAny(vararg keywords: String): Boolean =
         keywords.any { this.contains(it) }
+
+    private fun extractAnswer(response: String): String? {
+        val match = Regex("""<answer>(.*?)</answer>""", RegexOption.DOT_MATCHES_ALL).find(response)
+        return match?.groupValues?.get(1)?.trim()
+    }
 
     /**
      * Determine the correct ChosenTarget variant based on zone and entity type.
@@ -469,6 +501,7 @@ class AiPlayerController(
                 appendLine("=== DECLARE ATTACKERS ===")
                 appendLine("Your life: ${you?.life ?: "?"} | Opponent's life: ${opp?.life ?: "?"}")
                 appendLine("Choose which creatures to attack with. The opponent can block with their untapped creatures.")
+                appendLine("Note: Creatures with summoning sickness cannot attack, but they CAN block.")
                 appendLine()
                 appendLine("Your creatures that can attack:")
                 for ((i, attackerId) in validAttackers.withIndex()) {
@@ -477,7 +510,8 @@ class AiPlayerController(
                     val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
                     val abilityFlags = card.abilityFlags.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.displayName } ?: ""
                     val flagStr = if (abilityFlags.isNotEmpty()) " [$abilityFlags]" else ""
-                    appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr$flagStr")
+                    val oracle = card.oracleText.takeIf { it.isNotBlank() }?.let { " — \"$it\"" } ?: ""
+                    appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr$flagStr$oracle")
                 }
                 val opponentCreatures = state.cards.values.filter {
                     it.controllerId == opponentId && "Creature" in it.cardTypes && !it.isTapped
@@ -488,24 +522,33 @@ class AiPlayerController(
                     for (card in opponentCreatures) {
                         val keywords = card.keywords.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name.lowercase() } ?: ""
                         val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
-                        appendLine("  ${card.name} ${card.power}/${card.toughness}$keywordStr")
+                        val oracle = card.oracleText.takeIf { it.isNotBlank() }?.let { " — \"$it\"" } ?: ""
+                        appendLine("  ${card.name} ${card.power}/${card.toughness}$keywordStr$oracle")
                     }
                 } else {
                     appendLine()
                     appendLine("Opponent has NO untapped creatures to block.")
                 }
                 appendLine()
-                appendLine("Reply with the letters of creatures to attack with (e.g., \"A, C\"), or \"NONE\" to not attack.")
+                appendLine("Reply using this EXACT format:")
+                appendLine()
+                appendLine("<reasoning>")
+                appendLine("Analyze the board: lethality, trades, risk of crackback. Think about what blocks the opponent can make.")
+                appendLine("</reasoning>")
+                appendLine("<answer>A, C</answer>")
+                appendLine()
+                appendLine("Put ONLY the creature letters (e.g., \"A, C\") or \"NONE\" inside <answer> tags.")
             }
 
             val response = queryLlm(prompt)
             val attackerMap = mutableMapOf<EntityId, EntityId>()
 
             if (response != null) {
-                logger.info("AI combat LLM response: {}", response.take(200))
-                val upper = response.trim().uppercase()
+                logger.info("AI combat LLM response: {}", response.take(500))
+                val answerText = extractAnswer(response) ?: response
+                val upper = answerText.trim().uppercase()
                 if (upper != "NONE" && upper != "PASS" && upper != "NO") {
-                    val indices = parser.parseMultipleSelections(response, validAttackers.size - 1)
+                    val indices = parser.parseMultipleSelections(answerText, validAttackers.size - 1)
                     if (indices != null) {
                         for (idx in indices) {
                             if (idx < validAttackers.size) {
@@ -557,6 +600,7 @@ class AiPlayerController(
                 appendLine("=== DECLARE BLOCKERS ===")
                 appendLine("Your life: ${you?.life ?: "?"} | Opponent's life: ${opp?.life ?: "?"}")
                 appendLine("Opponent is attacking for $totalAttackPower total damage. Choose how to block.")
+                appendLine("Note: Creatures with summoning sickness CAN block — only attacking is restricted.")
                 if (you != null && totalAttackPower >= you.life) {
                     appendLine("WARNING: This attack is LETHAL if unblocked! You must block to survive!")
                 }
@@ -569,7 +613,8 @@ class AiPlayerController(
                     val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
                     val abilityFlags = card?.abilityFlags?.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.displayName } ?: ""
                     val flagStr = if (abilityFlags.isNotEmpty()) " [$abilityFlags]" else ""
-                    appendLine("  Attacker ${i + 1}: ${attacker.creatureName} $stats$keywordStr$flagStr")
+                    val oracle = card?.oracleText?.takeIf { it.isNotBlank() }?.let { " — \"$it\"" } ?: ""
+                    appendLine("  Attacker ${i + 1}: ${attacker.creatureName} $stats$keywordStr$flagStr$oracle")
                 }
                 appendLine()
                 appendLine("Your creatures that can block:")
@@ -577,10 +622,18 @@ class AiPlayerController(
                     val card = state.cards[blockerId] ?: continue
                     val keywords = card.keywords.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name.lowercase() } ?: ""
                     val keywordStr = if (keywords.isNotEmpty()) " [$keywords]" else ""
-                    appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr")
+                    val oracle = card.oracleText.takeIf { it.isNotBlank() }?.let { " — \"$it\"" } ?: ""
+                    appendLine("  [${GameStateFormatter.actionLetter(i)}] ${card.name} ${card.power}/${card.toughness}$keywordStr$oracle")
                 }
                 appendLine()
-                appendLine("Reply with blocking assignments like \"A blocks 1, C blocks 2\" or \"NONE\" to not block.")
+                appendLine("Reply using this EXACT format:")
+                appendLine()
+                appendLine("<reasoning>")
+                appendLine("Analyze the board: is this lethal? What trades are available? Is it better to take damage and keep creatures?")
+                appendLine("</reasoning>")
+                appendLine("<answer>A blocks 1, C blocks 2</answer>")
+                appendLine()
+                appendLine("Put ONLY blocking assignments (e.g., \"A blocks 1, C blocks 2\") or \"NONE\" inside <answer> tags.")
                 appendLine("Format: <blocker letter> blocks <attacker number>")
             }
 
@@ -588,11 +641,12 @@ class AiPlayerController(
             val blockerMap = mutableMapOf<EntityId, List<EntityId>>()
 
             if (response != null) {
-                logger.info("AI combat LLM response: {}", response.take(200))
-                val upper = response.trim().uppercase()
+                logger.info("AI combat LLM response: {}", response.take(500))
+                val answerText = extractAnswer(response) ?: response
+                val upper = answerText.trim().uppercase()
                 if (upper != "NONE" && upper != "PASS" && upper != "NO") {
                     val blockPattern = Regex("""([A-Z])\s*(?:blocks?|->|:)\s*(\d+)""", RegexOption.IGNORE_CASE)
-                    val matches = blockPattern.findAll(response).toList()
+                    val matches = blockPattern.findAll(answerText).toList()
                     for (m in matches) {
                         val blockerIdx = GameStateFormatter.letterToIndex(m.groupValues[1])
                         val attackerNum = m.groupValues[2].toIntOrNull()?.minus(1)
@@ -606,7 +660,7 @@ class AiPlayerController(
                         }
                     }
                     if (matches.isEmpty()) {
-                        val indices = parser.parseMultipleSelections(response, validBlockers.size - 1)
+                        val indices = parser.parseMultipleSelections(answerText, validBlockers.size - 1)
                         if (indices != null && combat.attackers.isNotEmpty()) {
                             val firstAttacker = combat.attackers.first().creatureId
                             for (idx in indices) {
@@ -687,6 +741,7 @@ class AiPlayerController(
             - You take one action, then the game state updates, then you choose again.
             - To cast a spell: first play a land, then on the next prompt you will see updated mana and can cast spells.
             - Mana abilities (like "{T}: Add {G}") are activated automatically when you cast a spell — you do NOT need to activate them manually.
+            - NEVER activate mana abilities manually (tapping lands for mana). The engine handles mana payment automatically. Tapping a land when you have nothing to cast wastes it for no benefit.
             - Actions marked "(can't afford)" cannot be chosen.
 
             STRATEGY PRIORITIES:
