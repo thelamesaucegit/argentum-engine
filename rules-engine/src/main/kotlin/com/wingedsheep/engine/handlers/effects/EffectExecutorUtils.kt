@@ -169,6 +169,27 @@ object EffectExecutorUtils {
     }
 
     /**
+     * Clean up the reverse attachment link (AttachmentsComponent) on the permanent
+     * that this entity was attached to. Called when an aura or equipment leaves the battlefield.
+     */
+    fun cleanupReverseAttachmentLink(state: GameState, entityId: EntityId): GameState {
+        val attachedTo = state.getEntity(entityId)?.get<AttachedToComponent>() ?: return state
+        return state.updateEntity(attachedTo.targetId) { container ->
+            val attachments = container.get<AttachmentsComponent>()
+            if (attachments != null) {
+                val updatedIds = attachments.attachedIds.filter { it != entityId }
+                if (updatedIds.isEmpty()) {
+                    container.without<AttachmentsComponent>()
+                } else {
+                    container.with(AttachmentsComponent(updatedIds))
+                }
+            } else {
+                container
+            }
+        }
+    }
+
+    /**
      * Strip all battlefield-specific components from an entity leaving the battlefield.
      * Per MTG Rule 400.7, when an object changes zones it becomes a new object with no
      * memory of its previous existence. This removes all transient battlefield state:
@@ -598,7 +619,12 @@ object EffectExecutorUtils {
         val lastKnownCounterCount = container.get<CountersComponent>()
             ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
 
-        var newState = state.removeFromZone(battlefieldZone, entityId)
+        var newState = state
+
+        // Clean up reverse attachment link before moving
+        newState = cleanupReverseAttachmentLink(newState, entityId)
+
+        newState = newState.removeFromZone(battlefieldZone, entityId)
         newState = newState.addToZone(destinationZoneKey, entityId)
 
         // Clean up combat references before stripping components
@@ -668,6 +694,7 @@ object EffectExecutorUtils {
 
         // Clean up combat references and remove permanent-only components if moving from battlefield
         if (currentZone.zoneType == Zone.BATTLEFIELD) {
+            newState = cleanupReverseAttachmentLink(newState, entityId)
             newState = cleanupCombatReferences(newState, entityId)
             newState = newState.updateEntity(entityId) { c -> stripBattlefieldComponents(c) }
             newState = removeFloatingEffectsTargeting(newState, entityId)

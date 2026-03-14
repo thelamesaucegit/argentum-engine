@@ -611,6 +611,15 @@ class StackResolver(
             updated
         }
 
+        // Aura: add reverse AttachmentsComponent on the enchanted permanent
+        if (auraTargetId != null) {
+            newState = newState.updateEntity(auraTargetId) { container ->
+                val existing = container.get<com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent>()
+                val updatedIds = (existing?.attachedIds ?: emptyList()) + spellId
+                container.with(com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent(updatedIds))
+            }
+        }
+
         // Handle "enters the battlefield tapped" replacement effect
         if (cardDef != null && !spellComponent.castFaceDown) {
             val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()

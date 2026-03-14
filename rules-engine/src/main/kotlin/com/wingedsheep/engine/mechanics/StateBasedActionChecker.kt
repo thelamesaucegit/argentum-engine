@@ -3,6 +3,7 @@ package com.wingedsheep.engine.mechanics
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.cleanupReverseAttachmentLink
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.stripBattlefieldComponents
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -504,6 +505,7 @@ class StateBasedActionChecker(
                         )
                     } else {
                         // Equipment's target gone - just detach, stays on battlefield
+                        newState = cleanupReverseAttachmentLink(newState, entityId)
                         newState = newState.updateEntity(entityId) { c ->
                             c.without<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()
                         }
@@ -662,6 +664,9 @@ class StateBasedActionChecker(
                 newState = newState.copy(floatingEffects = updatedEffects)
             }
         }
+
+        // Clean up reverse attachment link before moving
+        newState = cleanupReverseAttachmentLink(newState, entityId)
 
         newState = newState.removeFromZone(battlefieldZone, entityId)
         newState = newState.addToZone(destinationZoneKey, entityId)

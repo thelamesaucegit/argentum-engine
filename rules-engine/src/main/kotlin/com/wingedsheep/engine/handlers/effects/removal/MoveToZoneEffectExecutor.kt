@@ -7,6 +7,7 @@ import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.cleanupCombatReferences
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.cleanupReverseAttachmentLink
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.destroyPermanent
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.moveCardToZone
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.resolveTarget
@@ -356,7 +357,8 @@ class MoveToZoneEffectExecutor(
         fromZone: ZoneKey
     ): GameState {
         if (fromZone.zoneType != Zone.BATTLEFIELD) return state
-        val cleaned = cleanupCombatReferences(state, entityId)
+        var cleaned = cleanupReverseAttachmentLink(state, entityId)
+        cleaned = cleanupCombatReferences(cleaned, entityId)
         return cleaned.updateEntity(entityId) { c -> stripBattlefieldComponents(c) }
     }
 
