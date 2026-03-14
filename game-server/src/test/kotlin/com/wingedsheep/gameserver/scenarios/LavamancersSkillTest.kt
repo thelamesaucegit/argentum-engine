@@ -9,6 +9,7 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.gameserver.ScenarioTestBase
 import com.wingedsheep.sdk.core.Phase
 import com.wingedsheep.sdk.core.Step
+import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToAttachedCreature
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -59,12 +60,15 @@ class LavamancersSkillTest : ScenarioTestBase() {
 
                 // Activate the ability targeting Devoted Hero
                 val cardDef = cardRegistry.getCard("Lavamancer's Skill")!!
-                val ability = cardDef.script.activatedAbilities.first()
+                val grantAbility = cardDef.staticAbilities
+                    .filterIsInstance<GrantActivatedAbilityToAttachedCreature>()
+                    .first()
+                val ability = grantAbility.ability
 
                 val activateResult = game.execute(
                     ActivateAbility(
                         playerId = game.player1Id,
-                        sourceId = skillId,
+                        sourceId = bearsId,
                         abilityId = ability.id,
                         targets = listOf(ChosenTarget.Permanent(heroId))
                     )
@@ -115,12 +119,15 @@ class LavamancersSkillTest : ScenarioTestBase() {
                 // Activate the ability targeting Grizzly Bears
                 val skillId = game.findPermanent("Lavamancer's Skill")!!
                 val cardDef = cardRegistry.getCard("Lavamancer's Skill")!!
-                val ability = cardDef.script.activatedAbilities.first()
+                val grantAbility = cardDef.staticAbilities
+                    .filterIsInstance<GrantActivatedAbilityToAttachedCreature>()
+                    .first()
+                val ability = grantAbility.ability
 
                 val activateResult = game.execute(
                     ActivateAbility(
                         playerId = game.player1Id,
-                        sourceId = skillId,
+                        sourceId = wizardId,
                         abilityId = ability.id,
                         targets = listOf(ChosenTarget.Permanent(bearsId))
                     )
@@ -167,7 +174,10 @@ class LavamancersSkillTest : ScenarioTestBase() {
 
                 val skillId = game.findPermanent("Lavamancer's Skill")!!
                 val cardDef = cardRegistry.getCard("Lavamancer's Skill")!!
-                val ability = cardDef.script.activatedAbilities.first()
+                val grantAbility = cardDef.staticAbilities
+                    .filterIsInstance<GrantActivatedAbilityToAttachedCreature>()
+                    .first()
+                val ability = grantAbility.ability
 
                 // Manually tap Grizzly Bears
                 game.state = game.state.updateEntity(bearsId) { it.with(TappedComponent) }
@@ -176,7 +186,7 @@ class LavamancersSkillTest : ScenarioTestBase() {
                 val activateResult = game.execute(
                     ActivateAbility(
                         playerId = game.player1Id,
-                        sourceId = skillId,
+                        sourceId = bearsId,
                         abilityId = ability.id,
                         targets = listOf(ChosenTarget.Permanent(heroId))
                     )
@@ -206,13 +216,16 @@ class LavamancersSkillTest : ScenarioTestBase() {
 
                 val skillId = game.findPermanent("Lavamancer's Skill")!!
                 val cardDef = cardRegistry.getCard("Lavamancer's Skill")!!
-                val ability = cardDef.script.activatedAbilities.first()
+                val grantAbility = cardDef.staticAbilities
+                    .filterIsInstance<GrantActivatedAbilityToAttachedCreature>()
+                    .first()
+                val ability = grantAbility.ability
 
                 // Try to activate - should fail because Bears has summoning sickness
                 val activateResult = game.execute(
                     ActivateAbility(
                         playerId = game.player1Id,
-                        sourceId = skillId,
+                        sourceId = bearsId,
                         abilityId = ability.id,
                         targets = listOf(ChosenTarget.Permanent(heroId))
                     )

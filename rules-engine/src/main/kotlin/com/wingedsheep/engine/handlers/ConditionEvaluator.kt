@@ -301,7 +301,10 @@ class ConditionEvaluator {
         context: EffectContext
     ): Boolean {
         val sourceId = context.sourceId ?: return false
-        val attachedId = state.getEntity(sourceId)?.get<AttachedToComponent>()?.targetId ?: return false
-        return state.getEntity(attachedId)?.get<CardComponent>()?.typeLine?.hasSubtype(condition.subtype) == true
+        // If sourceId has AttachedToComponent, it's the aura — check the attached creature.
+        // Otherwise, the source IS the enchanted creature (ability was granted via GrantActivatedAbilityToAttachedCreature).
+        val creatureId = state.getEntity(sourceId)?.get<AttachedToComponent>()?.targetId ?: sourceId
+        val projected = state.projectedState
+        return projected.hasSubtype(creatureId, condition.subtype.value)
     }
 }
