@@ -182,6 +182,7 @@ object DominariaSet {
         TraxosScourgeOfKroog,
         TragicPoet,
         UntamedKavu,
+        UrgorosTheEmptyOne,
         ValdukKeeperOfTheFlame,
         VerdantForce,
         VerixBladewing,

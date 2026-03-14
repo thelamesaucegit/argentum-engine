@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 177 / 249
+**Implemented:** 178 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
 | Blue       | 37    | 25   |
-| Black      | 38    | 26   |
+| Black      | 38    | 27   |
 | Red        | 38    | 29   |
 | Green      | 37    | 28   |
 | Multicolor | 19    | 13   |
@@ -242,7 +242,7 @@
 - [ ] Two-Headed Giant
 - [x] Untamed Kavu
 - [ ] Unwind
-- [ ] Urgoros, the Empty One
+- [x] Urgoros, the Empty One
 - [ ] Urza's Ruinous Blast
 - [ ] Urza's Tome
 - [x] Valduk, Keeper of the Flame
