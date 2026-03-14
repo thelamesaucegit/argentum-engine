@@ -10,6 +10,7 @@ import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.AddCardTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
@@ -595,6 +596,13 @@ object Effects {
      */
     fun AddDynamicMana(amount: DynamicAmount, allowedColors: Set<Color>): Effect =
         AddDynamicManaEffect(amount, allowedColors)
+
+    /**
+     * Add one mana of any color among permanents matching a filter that you control.
+     * Used for cards like Mox Amber.
+     */
+    fun AddManaOfColorAmong(filter: GameObjectFilter): Effect =
+        AddManaOfColorAmongEffect(filter)
 
     // =========================================================================
     // Token Effects

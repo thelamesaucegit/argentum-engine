@@ -44,6 +44,7 @@ import com.wingedsheep.sdk.scripting.TimingRule
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
 import com.wingedsheep.engine.handlers.CostPaymentChoices
@@ -479,6 +480,38 @@ class ActivateAbilityHandler(
                         green = if (chosenColor == Color.GREEN) amount else 0,
                         colorless = 0
                     )
+                }
+                is AddManaOfColorAmongEffect -> {
+                    // Determine what color was actually added by comparing mana pools
+                    val oldPool = state.getEntity(action.playerId)?.get<com.wingedsheep.engine.state.components.player.ManaPoolComponent>()
+                    val newPool = currentState.getEntity(action.playerId)?.get<com.wingedsheep.engine.state.components.player.ManaPoolComponent>()
+                    if (oldPool != null && newPool != null && oldPool != newPool) {
+                        ManaAddedEvent(
+                            playerId = action.playerId,
+                            sourceId = action.sourceId,
+                            sourceName = cardComponent.name,
+                            white = newPool.white - oldPool.white,
+                            blue = newPool.blue - oldPool.blue,
+                            black = newPool.black - oldPool.black,
+                            red = newPool.red - oldPool.red,
+                            green = newPool.green - oldPool.green,
+                            colorless = newPool.colorless - oldPool.colorless
+                        )
+                    } else if (oldPool == null && newPool != null) {
+                        ManaAddedEvent(
+                            playerId = action.playerId,
+                            sourceId = action.sourceId,
+                            sourceName = cardComponent.name,
+                            white = newPool.white,
+                            blue = newPool.blue,
+                            black = newPool.black,
+                            red = newPool.red,
+                            green = newPool.green,
+                            colorless = newPool.colorless
+                        )
+                    } else {
+                        null
+                    }
                 }
                 is CompositeEffect -> {
                     val anyColorEffect = effect.effects.filterIsInstance<AddAnyColorManaEffect>().firstOrNull()

@@ -57,6 +57,7 @@ import com.wingedsheep.sdk.scripting.CastSpellTypesFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.PlayFromTopOfLibrary
 import com.wingedsheep.sdk.scripting.PreventCycling
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
 import com.wingedsheep.sdk.scripting.targets.*
@@ -1235,6 +1236,7 @@ class LegalActionsCalculator(
                     isManaAbility = true,
                     additionalCostInfo = costInfo,
                     requiresManaColorChoice = ability.effect is AddAnyColorManaEffect ||
+                        ability.effect is AddManaOfColorAmongEffect ||
                         (ability.effect is CompositeEffect && (ability.effect as CompositeEffect).effects.any { it is AddAnyColorManaEffect })
                 ))
             }

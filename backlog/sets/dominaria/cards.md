@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 166 / 249
+**Implemented:** 167 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 25   |
 | Green      | 37    | 27   |
 | Multicolor | 19    | 11   |
-| Colorless  | 30    | 17   |
+| Colorless  | 30    | 18   |
 | Land       | 12    | 8    |
 
 ---
@@ -155,7 +155,7 @@
 - [x] Merfolk Trickster
 - [x] Mesa Unicorn
 - [ ] Mishra's Self-Replicator
-- [ ] Mox Amber
+- [x] Mox Amber
 - [ ] Muldrotha, the Gravetide
 - [x] Multani, Yavimaya's Avatar
 - [ ] Naban, Dean of Iteration

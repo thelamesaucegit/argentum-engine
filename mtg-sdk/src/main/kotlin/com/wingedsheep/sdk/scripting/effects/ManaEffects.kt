@@ -1,6 +1,7 @@
 package com.wingedsheep.sdk.scripting.effects
 
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 import kotlinx.serialization.SerialName
@@ -104,4 +105,22 @@ data class AddDynamicManaEffect(
     }
 }
 
+/**
+ * Add one mana of any color among permanents matching a filter that you control.
+ * "{T}: Add one mana of any color among legendary creatures and planeswalkers you control."
+ *
+ * At resolution, the executor examines the controller's battlefield for permanents matching [filter],
+ * collects the union of their colors, and lets the player choose one. If no colors are available
+ * (no matching permanents, or all are colorless), no mana is produced.
+ *
+ * @property filter The filter to match permanents whose colors determine the available mana colors
+ */
+@SerialName("AddManaOfColorAmong")
+@Serializable
+data class AddManaOfColorAmongEffect(
+    val filter: GameObjectFilter
+) : Effect {
+    override val description: String = "Add one mana of any color among matching permanents you control"
 
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}

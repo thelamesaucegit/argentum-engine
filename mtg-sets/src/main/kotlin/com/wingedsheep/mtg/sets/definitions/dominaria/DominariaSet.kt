@@ -120,6 +120,7 @@ object DominariaSet {
         MemorialToWar,
         MerfolkTrickster,
         MesaUnicorn,
+        MoxAmber,
         MultaniYavimayasAvatar,
         NaturesSpiral,
         Opt,

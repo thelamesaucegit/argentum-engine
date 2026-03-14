@@ -14,6 +14,7 @@ class ManaExecutors(
         AddManaExecutor(amountEvaluator),
         AddColorlessManaExecutor(amountEvaluator),
         AddAnyColorManaExecutor(amountEvaluator),
-        AddDynamicManaExecutor(amountEvaluator)
+        AddDynamicManaExecutor(amountEvaluator),
+        AddManaOfColorAmongExecutor()
     )
 }

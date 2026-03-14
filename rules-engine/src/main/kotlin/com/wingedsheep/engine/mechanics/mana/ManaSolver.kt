@@ -23,6 +23,7 @@ import com.wingedsheep.sdk.scripting.AbilityCost
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
+import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.AdditionalManaOnTap
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
@@ -532,6 +533,22 @@ class ManaSolver(
                         combinedColors.addAll(Color.entries)
                         val manaAmount = (effect.amount as? DynamicAmount.Fixed)?.amount ?: 1
                         maxManaAmount = maxOf(maxManaAmount, manaAmount)
+                    }
+                    is AddManaOfColorAmongEffect -> {
+                        // Determine available colors from matching permanents
+                        val projected = state.projectedState
+                        val predCtx = PredicateContext(controllerId = playerId)
+                        for (bfId in state.getBattlefield()) {
+                            if (predicateEvaluator.matchesWithProjection(state, projected, bfId, effect.filter, predCtx)) {
+                                val colors = projected.getColors(bfId)
+                                for (colorName in colors) {
+                                    Color.entries.find { it.name == colorName }?.let { combinedColors.add(it) }
+                                }
+                            }
+                        }
+                        if (combinedColors.isNotEmpty()) {
+                            maxManaAmount = maxOf(maxManaAmount, 1)
+                        }
                     }
                     else -> {}
                 }
