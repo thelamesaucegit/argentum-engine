@@ -558,6 +558,12 @@ class GameSession(
             preCombatState = null
         }
 
+        // If the opponent takes any action, invalidate the retap checkpoint.
+        // The opponent has responded to the spell, so changing how it was paid for is no longer safe.
+        if (retapCheckpoint != null && playerId != retapCheckpoint!!.playerId) {
+            retapCheckpoint = null
+        }
+
         // Track pre-combat state: when the active player passes priority in precombat main,
         // save this state so that undo from combat goes back to main phase.
         // Also set undoCheckpoint so undo is available immediately upon arriving at declare attackers
@@ -603,8 +609,11 @@ class GameSession(
             preCombatState = null
         }
 
-        // Clear retap checkpoint on any non-neutral action (including CastSpell — a new cast replaces the old retap)
-        if (!isCheckpointNeutralAction(action) && action !is CastSpell) {
+        // Clear retap checkpoint when passing priority or taking any non-neutral action
+        // (including CastSpell — a new cast replaces the old retap).
+        // Passing priority means the player is done with the current priority window,
+        // so retapping is no longer appropriate.
+        if (action is PassPriority || (!isCheckpointNeutralAction(action) && action !is CastSpell)) {
             retapCheckpoint = null
         }
 
@@ -631,6 +640,11 @@ class GameSession(
                     undoCheckpointOwner = null
                     preCombatState = null
                 }
+                if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
+                    undoCheckpoint = null
+                    undoCheckpointOwner = null
+                    preCombatState = null
+                }
                 gameState = result.state
                 if (messageId != null) lastProcessedMessageId[playerId] = messageId
                 ActionResult.PausedForDecision(result.state, pendingDecision, result.events)
@@ -647,6 +661,13 @@ class GameSession(
                 // Invalidate undo checkpoint if the action produced information-revealing events
                 // (draws, reveals, looks) — undoing after gaining new information would be unfair
                 if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
+                    undoCheckpoint = null
+                    undoCheckpointOwner = null
+                    preCombatState = null
+                }
+                // Invalidate undo checkpoint when the turn changes — undoing across turn boundaries
+                // would revert the opponent's draw step and other beginning-of-turn actions
+                if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
                     undoCheckpoint = null
                     undoCheckpointOwner = null
                     preCombatState = null
