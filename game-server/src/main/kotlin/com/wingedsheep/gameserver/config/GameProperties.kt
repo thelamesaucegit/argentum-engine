@@ -30,7 +30,7 @@ data class AdminProperties(
 data class AiProperties(
     val enabled: Boolean = false,
     val openRouterApiKey: String = "",
-    val model: String = "stepfun/step-3.5-flash:free",
+    val model: String = "qwen/qwen3.5-flash-02-23",
     val deckbuildingModel: String = "",
     val maxRetries: Int = 2,
     val timeoutMs: Long = 10000,
