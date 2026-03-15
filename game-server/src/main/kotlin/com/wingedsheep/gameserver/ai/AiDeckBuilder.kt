@@ -20,13 +20,12 @@ data class AiDeckResult(
 )
 
 /**
- * LLM-assisted deckbuilder that uses set archetypes to build coherent decks.
+ * LLM-assisted deckbuilder that uses a two-step process:
  *
- * Flow:
- * 1. Pick a random archetype for the available sets
- * 2. Format the card pool for the LLM with archetype context
- * 3. Parse the LLM's deck list response
- * 4. Fall back to [RandomDeckGenerator] if the LLM fails
+ * 1. **Evaluate** — LLM reviews the card pool, finds synergies, and shortlists the best cards
+ * 2. **Build** — LLM constructs a 60-card deck from the shortlisted cards
+ *
+ * Falls back to [RandomDeckGenerator] if either step fails.
  */
 class AiDeckBuilder(
     private val properties: AiProperties,
@@ -37,7 +36,6 @@ class AiDeckBuilder(
 ) {
 
     fun build(): AiDeckResult {
-        // Pick an archetype from the available sets
         val archetype = pickArchetype()
         if (archetype == null) {
             logger.info("AI deckbuilder: no archetypes available, falling back to random deck")
@@ -48,7 +46,6 @@ class AiDeckBuilder(
         logger.info("AI deckbuilder: picked archetype '{}' ({}) for sets {}",
             archetype.name, archetype.colors.joinToString("/") { it.name }, setCodes)
 
-        // Try LLM-assisted deckbuilding
         val llmDeck = tryLlmDeckbuild(archetype)
         if (llmDeck != null) {
             logger.info("AI deckbuilder: LLM built {} unique cards, {} total",
@@ -60,8 +57,7 @@ class AiDeckBuilder(
             )
         }
 
-        // Fallback: random deck using archetype colors
-        logger.info("AI deckbuilder: LLM failed, falling back to random deck with archetype colors")
+        logger.info("AI deckbuilder: LLM failed, falling back to random deck")
         val fallbackDeck = RandomDeckGenerator(cardPool, basicLandVariants).generate()
         return AiDeckResult(
             fallbackDeck,
@@ -80,58 +76,63 @@ class AiDeckBuilder(
     private fun tryLlmDeckbuild(archetype: Archetype): Map<String, Int>? {
         val archetypeColors = archetype.colors.toSet()
 
-        // Filter card pool to matching colors + colorless
-        val matchingCards = cardPool.filter { card ->
+        // Filter spells to matching colors + colorless
+        val matchingSpells = cardPool.filter { card ->
             !card.isLand && (card.colors.isEmpty() || card.colors.all { it in archetypeColors })
         }
 
-        if (matchingCards.isEmpty()) {
+        if (matchingSpells.isEmpty()) {
             logger.warn("AI deckbuilder: no cards match archetype colors")
             return null
         }
 
-        val prompt = buildDeckbuildPrompt(archetype, matchingCards)
-        logger.info("AI deckbuilder prompt ({} chars)", prompt.length)
+        // Collect nonbasic lands from the pool
+        val nonbasicLands = cardPool.filter { it.isLand && it.name !in BASIC_LAND_NAMES }
+
+        // Step 1: Evaluate the card pool and find synergies
+        val evaluation = stepEvaluate(archetype, matchingSpells, nonbasicLands) ?: return null
+
+        // Step 2: Build the deck using the evaluation
+        return stepBuild(archetype, matchingSpells, nonbasicLands, evaluation)
+    }
+
+    // =========================================================================
+    // Step 1: Evaluate the card pool
+    // =========================================================================
+
+    private fun stepEvaluate(archetype: Archetype, matchingCards: List<CardDefinition>, nonbasicLands: List<CardDefinition>): String? {
+        val prompt = buildEvaluatePrompt(archetype, matchingCards, nonbasicLands)
+        logger.info("AI deckbuilder step 1 (evaluate) prompt ({} chars)", prompt.length)
 
         val messages = listOf(
-            ChatMessage("system", DECKBUILDING_SYSTEM_PROMPT),
+            ChatMessage("system", EVALUATE_SYSTEM_PROMPT),
             ChatMessage("user", prompt)
         )
 
-        val response = openRouterClient.chatCompletion(messages, properties.effectiveDeckbuildingModel) ?: return null
-        logger.info("AI deckbuilder response ({} chars)", response.length)
+        val response = openRouterClient.chatCompletion(messages, properties.effectiveDeckbuildingModel)
+        if (response == null) {
+            logger.warn("AI deckbuilder: step 1 (evaluate) failed")
+            return null
+        }
 
-        return parseDeckList(response, matchingCards)
+        logger.info("AI deckbuilder step 1 response ({} chars)", response.length)
+        return response
     }
 
-    private fun buildDeckbuildPrompt(archetype: Archetype, matchingCards: List<CardDefinition>): String {
+    private fun buildEvaluatePrompt(archetype: Archetype, matchingCards: List<CardDefinition>, nonbasicLands: List<CardDefinition>): String {
         val colorNames = archetype.colors.joinToString("/") { it.name }
 
         return buildString {
-            appendLine("Build a 60-card Magic: The Gathering deck.")
-            appendLine()
-            appendLine("Your archetype: ${archetype.name} ($colorNames) — ${archetype.description}")
+            appendLine("You are evaluating a card pool for a ${archetype.name} ($colorNames) deck.")
+            appendLine("Archetype guidance: ${archetype.description}")
             if (archetype.creatureTypes.isNotEmpty()) {
-                appendLine("Prioritize these creature types: ${archetype.creatureTypes.joinToString(", ")}")
+                appendLine("Suggested creature types: ${archetype.creatureTypes.joinToString(", ")}")
             }
             appendLine()
-            appendLine("DECK CONSTRAINTS:")
-            appendLine("- Exactly 60 cards total (spells + lands)")
-            appendLine("- Maximum 4 copies of any non-basic card")
-            appendLine("- 22-26 lands depending on mana curve")
+            appendLine("The archetype is a starting point, not a constraint. If you see stronger synergies or a better strategy in the card pool, pursue that instead.")
             appendLine()
-            appendLine("DECKBUILDING STRATEGY:")
-            appendLine("- Follow your archetype's strategy")
-            appendLine("- Build a good mana curve: ~4 one-drops, ~8 two-drops, ~8 three-drops, ~6 four-drops, ~3 five+ drops")
-            appendLine("- Include 4-8 removal/interaction spells")
-            if (archetype.colors.size >= 3) {
-                appendLine("- For 3-color decks, lean toward the primary color for consistency")
-            }
-            appendLine("- Colorless cards can fill gaps in any archetype")
-            appendLine()
-            appendLine("AVAILABLE CARDS:")
+            appendLine("CARD POOL:")
 
-            // Group by type
             val byType = matchingCards.groupBy { card ->
                 when {
                     card.typeLine.isCreature -> "Creatures"
@@ -153,16 +154,81 @@ class AiDeckBuilder(
                 }
             }
 
-            appendLine()
-            appendLine("AVAILABLE BASIC LANDS: Plains, Island, Swamp, Mountain, Forest")
-            appendLine()
-            appendLine("First reason about your card choices inside <reasoning> tags, then put your deck list inside <answer> tags.")
+            if (nonbasicLands.isNotEmpty()) {
+                appendLine()
+                appendLine("Nonbasic Lands:")
+                for (land in nonbasicLands.distinctBy { it.name }.sortedBy { it.name }) {
+                    val oracle = if (land.oracleText.isNotBlank()) " — ${land.oracleText}" else ""
+                    appendLine("  ${land.name} — ${land.typeLine}$oracle")
+                }
+            }
         }
     }
 
+    // =========================================================================
+    // Step 2: Build the deck
+    // =========================================================================
+
+    private fun stepBuild(
+        archetype: Archetype,
+        matchingCards: List<CardDefinition>,
+        nonbasicLands: List<CardDefinition>,
+        evaluation: String
+    ): Map<String, Int>? {
+        val prompt = buildBuildPrompt(archetype, matchingCards, nonbasicLands, evaluation)
+        logger.info("AI deckbuilder step 2 (build) prompt ({} chars)", prompt.length)
+
+        val messages = listOf(
+            ChatMessage("system", BUILD_SYSTEM_PROMPT),
+            ChatMessage("user", prompt)
+        )
+
+        val response = openRouterClient.chatCompletion(messages, properties.effectiveDeckbuildingModel)
+        if (response == null) {
+            logger.warn("AI deckbuilder: step 2 (build) failed")
+            return null
+        }
+
+        logger.info("AI deckbuilder step 2 response ({} chars)", response.length)
+        return parseDeckList(response, matchingCards + nonbasicLands)
+    }
+
+    private fun buildBuildPrompt(
+        archetype: Archetype,
+        matchingCards: List<CardDefinition>,
+        nonbasicLands: List<CardDefinition>,
+        evaluation: String
+    ): String {
+        val colorNames = archetype.colors.joinToString("/") { it.name }
+        val spellNames = matchingCards.map { it.name }.toSet()
+        val landNames = nonbasicLands.map { it.name }.toSet()
+
+        return buildString {
+            appendLine("Build a deck based on your evaluation below.")
+            appendLine()
+            appendLine("Archetype: ${archetype.name} ($colorNames)")
+            appendLine()
+            appendLine("YOUR EVALUATION:")
+            appendLine(evaluation)
+            appendLine()
+            appendLine("CONSTRAINTS:")
+            appendLine("- At least 40 cards (spells + lands)")
+            appendLine("- Maximum 4 copies of any non-basic card")
+            appendLine("- Available basic lands: Plains, Island, Swamp, Mountain, Forest")
+            appendLine()
+            appendLine("Available spells: ${spellNames.sorted().joinToString(", ")}")
+            if (landNames.isNotEmpty()) {
+                appendLine("Available nonbasic lands: ${landNames.sorted().joinToString(", ")}")
+            }
+        }
+    }
+
+    // =========================================================================
+    // Parsing
+    // =========================================================================
+
     private fun parseDeckList(response: String, availableCards: List<CardDefinition>): Map<String, Int>? {
-        val cardNames = availableCards.map { it.name }.toSet() +
-            setOf("Plains", "Island", "Swamp", "Mountain", "Forest")
+        val cardNames = availableCards.map { it.name }.toSet() + BASIC_LAND_NAMES
 
         // Extract from <answer> tags if present, otherwise use full response
         val answerMatch = Regex("""<answer>(.*?)</answer>""", RegexOption.DOT_MATCHES_ALL).find(response)
@@ -176,14 +242,12 @@ class AiDeckBuilder(
             val count = match.groupValues[1].toIntOrNull() ?: continue
             val name = match.groupValues[2].trim()
 
-            // Find closest match in card pool
             val exactMatch = cardNames.find { it.equals(name, ignoreCase = true) }
             if (exactMatch != null && count in 1..4) {
                 deckMap[exactMatch] = (deckMap[exactMatch] ?: 0) + count
             }
         }
 
-        // Validate
         val totalCards = deckMap.values.sum()
         if (totalCards < 40) {
             logger.warn("AI deckbuilder: deck too small ({} cards), rejecting", totalCards)
@@ -191,26 +255,10 @@ class AiDeckBuilder(
         }
 
         // Enforce max 4 copies for non-basics
-        val basics = setOf("Plains", "Island", "Swamp", "Mountain", "Forest")
         for ((name, count) in deckMap.toMap()) {
-            if (name !in basics && count > 4) {
+            if (name !in BASIC_LAND_NAMES && count > 4) {
                 deckMap[name] = 4
             }
-        }
-
-        // Pad or trim to 60
-        val currentTotal = deckMap.values.sum()
-        if (currentTotal < 60) {
-            // Add basic lands to reach 60
-            val primaryLand = when (availableCards.firstOrNull()?.colors?.firstOrNull()) {
-                Color.WHITE -> "Plains"
-                Color.BLUE -> "Island"
-                Color.BLACK -> "Swamp"
-                Color.RED -> "Mountain"
-                Color.GREEN -> "Forest"
-                else -> "Forest"
-            }
-            deckMap[primaryLand] = (deckMap[primaryLand] ?: 0) + (60 - currentTotal)
         }
 
         logger.info("AI deckbuilder: parsed deck with {} unique cards, {} total",
@@ -219,6 +267,8 @@ class AiDeckBuilder(
     }
 
     companion object {
+        private val BASIC_LAND_NAMES = setOf("Plains", "Island", "Swamp", "Mountain", "Forest")
+
         fun formatArchetypeContext(archetype: Archetype): String {
             val colorNames = archetype.colors.joinToString("/") { it.name }
             return buildString {
@@ -229,19 +279,27 @@ class AiDeckBuilder(
             }.trim()
         }
 
-        private val DECKBUILDING_SYSTEM_PROMPT = """
-            You are an expert Magic: The Gathering deckbuilder. Build the best possible deck from the available card pool following the given archetype strategy.
+        private val EVALUATE_SYSTEM_PROMPT = """
+            You are an expert Magic: The Gathering deckbuilder evaluating a card pool.
+
+            Look at the cards available and think about:
+            - What are the strongest individual cards?
+            - What synergies exist between cards? Which cards make other cards better?
+            - Is the suggested archetype the best use of this pool, or do you see a stronger strategy?
+            - What is a realistic game plan — how does this deck win?
+            - What removal and interaction is available?
+            - Are there enough cheap plays for the early game?
+
+            Write your analysis. Be specific — name the cards and explain what makes them good together.
+        """.trimIndent()
+
+        private val BUILD_SYSTEM_PROMPT = """
+            You are an expert Magic: The Gathering deckbuilder constructing a final deck list.
+
+            You've already evaluated the card pool. Now build the deck.
 
             Reply using this EXACT format:
 
-            <reasoning>
-            Analyze the card pool and archetype. Consider:
-            - What is the win condition for this archetype?
-            - Which cards are the key payoffs and which are filler?
-            - What does the mana curve look like? Are there enough early plays?
-            - How much removal/interaction is available?
-            - What is the right land split for the colors needed?
-            </reasoning>
             <answer>
             4x Card Name
             3x Another Card
@@ -249,6 +307,8 @@ class AiDeckBuilder(
             </answer>
 
             The <answer> section must contain ONLY the deck list, one entry per line.
+            Use only cards from the available card names list and basic lands.
+            The deck must have at least 40 cards. Use about 40% lands.
         """.trimIndent()
     }
 }
