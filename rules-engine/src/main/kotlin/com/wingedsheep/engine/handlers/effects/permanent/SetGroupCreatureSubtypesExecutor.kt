@@ -2,16 +2,14 @@ package com.wingedsheep.engine.handlers.effects.permanent
 
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
 import com.wingedsheep.engine.mechanics.layers.Layer
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.SetGroupCreatureSubtypesEffect
 import kotlin.reflect.KClass
@@ -24,37 +22,16 @@ class SetGroupCreatureSubtypesExecutor : EffectExecutor<SetGroupCreatureSubtypes
 
     override val effectType: KClass<SetGroupCreatureSubtypesEffect> = SetGroupCreatureSubtypesEffect::class
 
-    private val predicateEvaluator = PredicateEvaluator()
-
     override fun execute(
         state: GameState,
         effect: SetGroupCreatureSubtypesEffect,
         context: EffectContext
     ): ExecutionResult {
-        val affectedEntities = mutableSetOf<EntityId>()
-
         val filter = effect.filter
-        val predicateContext = PredicateContext.fromEffectContext(context)
-        val projected = state.projectedState
-
-        for (entityId in state.getBattlefield()) {
-            val container = state.getEntity(entityId) ?: continue
-            container.get<CardComponent>() ?: continue
-
-            // Face-down permanents are always creatures (Rule 707.2)
-            val isCreature = projected.isCreature(entityId) || container.has<FaceDownComponent>()
-            if (!isCreature) continue
-
-            // Check excludeSelf
-            if (filter.excludeSelf && entityId == context.sourceId) continue
-
-            // Apply unified filter
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, filter.baseFilter, predicateContext)) {
-                continue
-            }
-
-            affectedEntities.add(entityId)
-        }
+        val excludeSelfId = if (filter.excludeSelf) context.sourceId else null
+        val affectedEntities = EffectExecutorUtils.findMatchingOnBattlefield(
+            state, filter.baseFilter, context, excludeSelfId
+        ).toSet()
 
         if (affectedEntities.isEmpty()) {
             return ExecutionResult.success(state)

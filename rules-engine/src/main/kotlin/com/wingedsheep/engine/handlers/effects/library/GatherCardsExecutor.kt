@@ -101,27 +101,18 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
             }
 
             is CardSource.BattlefieldMatching -> {
-                val projected = state.projectedState
-                val allPermanents = if (source.player == Player.Each) {
-                    state.getBattlefield()
-                } else {
-                    val playerId = resolvePlayer(source.player, context, state)
+                val resolvedPlayerId = if (source.player != Player.Each) {
+                    resolvePlayer(source.player, context, state)
                         ?: return ExecutionResult.error(state, "Could not resolve player for GatherCards BattlefieldMatching")
-                    projected.getBattlefieldControlledBy(playerId)
+                } else null
+                val baseFilter = if (resolvedPlayerId != null) source.filter.youControl() else source.filter
+                val excludeSelfId = if (source.excludeSelf) context.sourceId else null
+                val predicateContext = PredicateContext.fromEffectContext(context).let {
+                    if (resolvedPlayerId != null) it.copy(controllerId = resolvedPlayerId) else it
                 }
-                val filtered = if (source.filter != GameObjectFilter.Any) {
-                    val predicateContext = PredicateContext.fromEffectContext(context)
-                    allPermanents.filter { cardId ->
-                        predicateEvaluator.matchesWithProjection(state, projected, cardId, source.filter, predicateContext)
-                    }
-                } else {
-                    allPermanents
-                }
-                val afterExclusion = if (source.excludeSelf) {
-                    filtered.filter { it != context.sourceId }
-                } else {
-                    filtered
-                }
+                val afterExclusion = EffectExecutorUtils.findMatchingOnBattlefield(
+                    state, baseFilter, predicateContext, excludeSelfId
+                )
                 if (source.includeAttachments) {
                     val withAttachments = afterExclusion.toMutableList()
                     for (entityId in afterExclusion) {

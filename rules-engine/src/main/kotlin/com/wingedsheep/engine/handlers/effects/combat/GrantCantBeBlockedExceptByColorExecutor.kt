@@ -2,9 +2,8 @@ package com.wingedsheep.engine.handlers.effects.combat
 
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
 import com.wingedsheep.engine.mechanics.layers.Layer
@@ -27,45 +26,25 @@ class GrantCantBeBlockedExceptByColorExecutor : EffectExecutor<GrantCantBeBlocke
 
     override val effectType: KClass<GrantCantBeBlockedExceptByColorEffect> = GrantCantBeBlockedExceptByColorEffect::class
 
-    private val predicateEvaluator = PredicateEvaluator()
-
     override fun execute(
         state: GameState,
         effect: GrantCantBeBlockedExceptByColorEffect,
         context: EffectContext
     ): ExecutionResult {
-        val affectedEntities = mutableSetOf<EntityId>()
-
         val filter = effect.filter
-        val predicateContext = PredicateContext.fromEffectContext(context)
-        val projected = state.projectedState
-
-        for (entityId in state.getBattlefield()) {
-            val container = state.getEntity(entityId) ?: continue
-            container.get<CardComponent>() ?: continue
-
-            if (!projected.isCreature(entityId)) continue
-
-            // Check excludeSelf
-            if (filter.excludeSelf && entityId == context.sourceId) continue
-
-            // Apply unified filter
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, filter.baseFilter, predicateContext)) {
-                continue
-            }
-
-            affectedEntities.add(entityId)
-        }
+        val excludeSelfId = if (filter.excludeSelf) context.sourceId else null
+        val affectedEntities = EffectExecutorUtils.findMatchingOnBattlefield(
+            state, filter.baseFilter, context, excludeSelfId
+        ).toSet()
 
         if (affectedEntities.isEmpty()) {
             return ExecutionResult.success(state)
         }
 
-        // Create a floating effect marking these creatures as only blockable by the specified color
         val floatingEffect = ActiveFloatingEffect(
             id = EntityId.generate(),
             effect = FloatingEffectData(
-                layer = Layer.ABILITY,  // Layer doesn't matter for this effect
+                layer = Layer.ABILITY,
                 sublayer = null,
                 modification = SerializableModification.CantBeBlockedExceptByColor(
                     color = effect.canOnlyBeBlockedByColor.name

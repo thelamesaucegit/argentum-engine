@@ -4,8 +4,8 @@ import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -33,8 +33,6 @@ class SacrificeExecutor(
 ) : EffectExecutor<SacrificeEffect> {
 
     override val effectType: KClass<SacrificeEffect> = SacrificeEffect::class
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     override fun execute(
         state: GameState,
@@ -84,14 +82,9 @@ class SacrificeExecutor(
         controllerId: EntityId,
         effect: SacrificeEffect
     ): List<EntityId> {
-        // Use projected state to account for control-changing effects (e.g., Threaten)
-        val projected = state.projectedState
-        val controlledPermanents = projected.getBattlefieldControlledBy(controllerId)
-        val context = PredicateContext(controllerId = controllerId)
-
-        return controlledPermanents.filter { permanentId ->
-            predicateEvaluator.matchesWithProjection(state, projected, permanentId, effect.filter, context)
-        }
+        return EffectExecutorUtils.findMatchingOnBattlefield(
+            state, effect.filter.youControl(), PredicateContext(controllerId = controllerId)
+        )
     }
 
     private fun presentSacrificeDecision(

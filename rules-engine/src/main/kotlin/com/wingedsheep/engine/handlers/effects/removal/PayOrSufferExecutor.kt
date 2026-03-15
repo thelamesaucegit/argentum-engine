@@ -6,6 +6,7 @@ import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -485,19 +486,16 @@ class PayOrSufferExecutor(
         filter: GameObjectFilter,
         zone: Zone
     ): List<EntityId> {
+        if (zone == Zone.BATTLEFIELD) {
+            return EffectExecutorUtils.findMatchingOnBattlefield(
+                state, filter.youControl(), PredicateContext(controllerId = playerId)
+            )
+        }
         val zoneKey = ZoneKey(playerId, zone)
         val cards = state.getZone(zoneKey)
         val context = PredicateContext(controllerId = playerId)
-
-        return if (zone == Zone.BATTLEFIELD) {
-            val projected = state.projectedState
-            cards.filter { cardId ->
-                predicateEvaluator.matchesWithProjection(state, projected, cardId, filter, context)
-            }
-        } else {
-            cards.filter { cardId ->
-                predicateEvaluator.matches(state, cardId, filter, context)
-            }
+        return cards.filter { cardId ->
+            predicateEvaluator.matches(state, cardId, filter, context)
         }
     }
 
@@ -511,15 +509,9 @@ class PayOrSufferExecutor(
         filter: GameObjectFilter,
         sourceId: EntityId
     ): List<EntityId> {
-        val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
-        val battlefield = state.getZone(battlefieldZone)
-        val context = PredicateContext(controllerId = playerId)
-        val projected = state.projectedState
-
-        return battlefield.filter { permanentId ->
-            if (permanentId == sourceId) return@filter false
-            predicateEvaluator.matchesWithProjection(state, projected, permanentId, filter, context)
-        }
+        return EffectExecutorUtils.findMatchingOnBattlefield(
+            state, filter.youControl(), PredicateContext(controllerId = playerId), excludeSelfId = sourceId
+        )
     }
 
     /**

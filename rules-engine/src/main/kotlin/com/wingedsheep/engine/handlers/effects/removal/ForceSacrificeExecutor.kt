@@ -4,8 +4,8 @@ import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.resolvePlayerTarget
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
@@ -30,8 +30,6 @@ class ForceSacrificeExecutor(
 ) : EffectExecutor<ForceSacrificeEffect> {
 
     override val effectType: KClass<ForceSacrificeEffect> = ForceSacrificeEffect::class
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     override fun execute(
         state: GameState,
@@ -73,16 +71,9 @@ class ForceSacrificeExecutor(
         playerId: EntityId,
         effect: ForceSacrificeEffect
     ): List<EntityId> {
-        // Use projected state to account for control-changing effects (e.g., Threaten).
-        // A player sacrifices permanents they *control*, which may differ from what's in
-        // their zone key when control-changing effects are in play.
-        val projected = state.projectedState
-        val controlledPermanents = projected.getBattlefieldControlledBy(playerId)
-        val context = PredicateContext(controllerId = playerId)
-
-        return controlledPermanents.filter { permanentId ->
-            predicateEvaluator.matchesWithProjection(state, projected, permanentId, effect.filter, context)
-        }
+        return EffectExecutorUtils.findMatchingOnBattlefield(
+            state, effect.filter.youControl(), PredicateContext(controllerId = playerId)
+        )
     }
 
     private fun presentSacrificeDecision(

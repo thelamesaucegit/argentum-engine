@@ -3,16 +3,14 @@ package com.wingedsheep.engine.handlers.effects.composite
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
 import com.wingedsheep.engine.mechanics.layers.Layer
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.effects.Effect
@@ -34,8 +32,6 @@ class ForEachInGroupExecutor(
 ) : EffectExecutor<ForEachInGroupEffect> {
 
     override val effectType: KClass<ForEachInGroupEffect> = ForEachInGroupEffect::class
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     override fun execute(
         state: GameState,
@@ -89,9 +85,6 @@ class ForEachInGroupExecutor(
         context: EffectContext
     ): List<EntityId> {
         val filter = effect.filter
-        val predicateContext = PredicateContext.fromEffectContext(context)
-        val projected = state.projectedState
-        val result = mutableListOf<EntityId>()
 
         // If the filter references a chosen subtype, resolve it from context
         val chosenSubtype = filter.chosenSubtypeKey?.let { key ->
@@ -102,26 +95,16 @@ class ForEachInGroupExecutor(
             return emptyList()
         }
 
-        for (entityId in state.getBattlefield()) {
-            val container = state.getEntity(entityId) ?: continue
-            container.get<CardComponent>() ?: continue
+        val excludeSelfId = if (filter.excludeSelf) context.sourceId else null
+        val matched = EffectExecutorUtils.findMatchingOnBattlefield(state, filter.baseFilter, context, excludeSelfId)
 
-            if (filter.excludeSelf && entityId == context.sourceId) continue
-
-            // Use projected state for type checking (handles animated lands etc.)
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, filter.baseFilter, predicateContext)) {
-                continue
-            }
-
-            // Additionally filter by chosen subtype if specified
-            if (chosenSubtype != null && !projected.hasSubtype(entityId, chosenSubtype)) {
-                continue
-            }
-
-            result.add(entityId)
+        // Additionally filter by chosen subtype if specified
+        return if (chosenSubtype != null) {
+            val projected = state.projectedState
+            matched.filter { projected.hasSubtype(it, chosenSubtype) }
+        } else {
+            matched
         }
-
-        return result
     }
 
     /**

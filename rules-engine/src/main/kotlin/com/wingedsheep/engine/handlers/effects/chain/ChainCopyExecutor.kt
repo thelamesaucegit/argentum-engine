@@ -4,9 +4,9 @@ import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.TargetFinder
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.dealDamageToTarget
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.destroyPermanent
 import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils.moveCardToZone
@@ -42,8 +42,6 @@ class ChainCopyExecutor(
 ) : EffectExecutor<ChainCopyEffect> {
 
     override val effectType: KClass<ChainCopyEffect> = ChainCopyEffect::class
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     override fun execute(
         state: GameState,
@@ -356,11 +354,8 @@ class ChainCopyExecutor(
     }
 
     fun findControllerLands(state: GameState, controllerId: EntityId): List<EntityId> {
-        val projected = state.projectedState
-        val controlledPermanents = projected.getBattlefieldControlledBy(controllerId)
-        val context = PredicateContext(controllerId = controllerId)
-        return controlledPermanents.filter { permanentId ->
-            predicateEvaluator.matchesWithProjection(state, projected, permanentId, GameObjectFilter.Land, context)
-        }
+        return EffectExecutorUtils.findMatchingOnBattlefield(
+            state, GameObjectFilter.Land.youControl(), PredicateContext(controllerId = controllerId)
+        )
     }
 }

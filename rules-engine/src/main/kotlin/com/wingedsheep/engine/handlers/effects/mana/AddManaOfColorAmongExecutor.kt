@@ -2,9 +2,8 @@ package com.wingedsheep.engine.handlers.effects.mana
 
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.sdk.core.Color
@@ -19,9 +18,7 @@ import kotlin.reflect.KClass
  * collects the union of their colors (using projected state), and adds one mana
  * of the chosen color. If no colors are available, no mana is produced.
  */
-class AddManaOfColorAmongExecutor(
-    private val predicateEvaluator: PredicateEvaluator = PredicateEvaluator()
-) : EffectExecutor<AddManaOfColorAmongEffect> {
+class AddManaOfColorAmongExecutor : EffectExecutor<AddManaOfColorAmongEffect> {
 
     override val effectType: KClass<AddManaOfColorAmongEffect> = AddManaOfColorAmongEffect::class
 
@@ -31,16 +28,11 @@ class AddManaOfColorAmongExecutor(
         context: EffectContext
     ): ExecutionResult {
         val projected = state.projectedState
-        val predicateContext = PredicateContext(controllerId = context.controllerId)
+        val matched = EffectExecutorUtils.findMatchingOnBattlefield(state, effect.filter, context)
 
-        // Collect colors from matching permanents controlled by this player
+        // Collect colors from matching permanents
         val availableColors = mutableSetOf<Color>()
-        for (entityId in state.getBattlefield()) {
-            if (!predicateEvaluator.matchesWithProjection(state, projected, entityId, effect.filter, predicateContext)) {
-                continue
-            }
-
-            // Get colors from projected state
+        for (entityId in matched) {
             val colors = projected.getColors(entityId)
             for (colorName in colors) {
                 Color.entries.find { it.name == colorName }?.let { availableColors.add(it) }

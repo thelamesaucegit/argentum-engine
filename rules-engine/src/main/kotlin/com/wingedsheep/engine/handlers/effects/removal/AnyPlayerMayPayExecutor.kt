@@ -4,12 +4,10 @@ import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.EffectExecutorUtils
 import com.wingedsheep.engine.state.GameState
-import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.AnyPlayerMayPayEffect
 import com.wingedsheep.sdk.scripting.costs.PayCost
@@ -32,8 +30,6 @@ class AnyPlayerMayPayExecutor(
 ) : EffectExecutor<AnyPlayerMayPayEffect> {
 
     override val effectType: KClass<AnyPlayerMayPayEffect> = AnyPlayerMayPayEffect::class
-
-    private val predicateEvaluator = PredicateEvaluator()
 
     override fun execute(
         state: GameState,
@@ -166,13 +162,8 @@ class AnyPlayerMayPayExecutor(
         filter: com.wingedsheep.sdk.scripting.GameObjectFilter,
         sourceId: EntityId
     ): List<EntityId> {
-        val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
-        val battlefield = state.getZone(battlefieldZone)
-        val context = PredicateContext(controllerId = playerId)
-        val projected = state.projectedState
-
-        return battlefield.filter { permanentId ->
-            predicateEvaluator.matchesWithProjection(state, projected, permanentId, filter, context)
-        }
+        return EffectExecutorUtils.findMatchingOnBattlefield(
+            state, filter.youControl(), PredicateContext(controllerId = playerId)
+        )
     }
 }

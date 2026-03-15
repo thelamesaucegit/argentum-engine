@@ -79,6 +79,39 @@ object EffectExecutorUtils {
     private val predicateEvaluator = PredicateEvaluator()
 
     /**
+     * Find all entities on the battlefield matching the given filter using projected state.
+     *
+     * This is the canonical way to filter battlefield permanents — it ensures projected state
+     * is always used (accounting for type-changing, color-changing, and control-changing effects).
+     *
+     * @param excludeSelfId If non-null, excludes this entity from results (for GroupFilter.excludeSelf).
+     */
+    fun findMatchingOnBattlefield(
+        state: GameState,
+        filter: GameObjectFilter,
+        context: PredicateContext,
+        excludeSelfId: EntityId? = null
+    ): List<EntityId> {
+        val projected = state.projectedState
+        return state.getBattlefield().filter { entityId ->
+            if (excludeSelfId != null && entityId == excludeSelfId) return@filter false
+            predicateEvaluator.matchesWithProjection(state, projected, entityId, filter, context)
+        }
+    }
+
+    /**
+     * Convenience overload that builds a [PredicateContext] from an [EffectContext].
+     */
+    fun findMatchingOnBattlefield(
+        state: GameState,
+        filter: GameObjectFilter,
+        context: EffectContext,
+        excludeSelfId: EntityId? = null
+    ): List<EntityId> {
+        return findMatchingOnBattlefield(state, filter, PredicateContext.fromEffectContext(context), excludeSelfId)
+    }
+
+    /**
      * Clean up combat references to a leaving entity on other creatures.
      * When a blocker leaves the battlefield, remove it from each attacker's
      * BlockedComponent.blockerIds and DamageAssignmentOrderComponent.orderedBlockers.
