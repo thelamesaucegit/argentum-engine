@@ -95,25 +95,39 @@ docker-logs:
 redis-clear:
     docker exec $(docker ps -q -f ancestor=redis:7-alpine) redis-cli FLUSHALL
 
-# Start Ollama locally via Docker
+# Start Ollama natively (GPU-accelerated, recommended for macOS)
 [group: 'ai']
 ollama-up:
-    docker compose -f docker-compose.local.yml --profile ai up -d ollama
+    @echo "Starting Ollama natively (with GPU)..."
+    @if ! command -v ollama &>/dev/null; then echo "Ollama not installed. Run: brew install ollama"; exit 1; fi
+    ollama serve &
+    @sleep 1
+    @echo "Ollama running at http://localhost:11434"
 
-# Stop Ollama
+# Stop native Ollama
 [group: 'ai']
 ollama-down:
+    @pkill ollama || echo "Ollama is not running"
+
+# Start Ollama via Docker (CPU only — no GPU on macOS Docker)
+[group: 'ai']
+ollama-docker-up:
+    docker compose -f docker-compose.local.yml --profile ai up -d ollama
+
+# Stop Ollama Docker container
+[group: 'ai']
+ollama-docker-down:
     docker compose -f docker-compose.local.yml --profile ai stop ollama
 
-# Pull a model into Ollama (e.g., just ollama-pull llama3)
+# Pull a model into Ollama (e.g., just ollama-pull qwen3:14b)
 [group: 'ai']
 ollama-pull MODEL:
-    docker exec $(docker ps -qf name=ollama) ollama pull {{MODEL}}
+    ollama pull {{MODEL}}
 
 # List models available in Ollama
 [group: 'ai']
 ollama-models:
-    docker exec $(docker ps -qf name=ollama) ollama list
+    ollama list
 
 # Run all E2E browser tests
 [group: 'e2e']

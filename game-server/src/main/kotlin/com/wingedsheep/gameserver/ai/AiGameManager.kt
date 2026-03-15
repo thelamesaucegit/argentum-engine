@@ -9,6 +9,7 @@ import com.wingedsheep.gameserver.session.SessionRegistry
 import com.wingedsheep.engine.core.GameAction
 import com.wingedsheep.sdk.model.EntityId
 import org.slf4j.LoggerFactory
+import jakarta.annotation.PostConstruct
 import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -28,6 +29,18 @@ class AiGameManager(
     private val deckGenerator: RandomDeckGenerator
 ) {
     private val activeSessions = ConcurrentHashMap<String, AiWebSocketSession>()
+
+    @PostConstruct
+    fun logConfig() {
+        val ai = gameProperties.ai
+        if (!ai.enabled) {
+            logger.info("AI opponent: disabled")
+            return
+        }
+        val provider = if (ai.baseUrl.contains("openrouter")) "OpenRouter" else "Local (${ai.baseUrl})"
+        logger.info("AI opponent: enabled | provider={} | model={} | deckbuilding-model={}",
+            provider, ai.model, ai.effectiveDeckbuildingModel)
+    }
 
     companion object {
         private val AI_NAMES = listOf(
