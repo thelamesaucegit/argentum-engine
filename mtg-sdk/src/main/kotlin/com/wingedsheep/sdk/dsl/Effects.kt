@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.AddCardTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
+import com.wingedsheep.sdk.scripting.effects.AddCountersToCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
 import com.wingedsheep.sdk.scripting.effects.BecomeCreatureEffect
@@ -534,6 +535,12 @@ object Effects {
      */
     fun AddCounters(counterType: String, count: Int, target: EffectTarget): Effect =
         AddCountersEffect(counterType, count, target)
+
+    /**
+     * Add counters to all entities in a named collection.
+     */
+    fun AddCountersToCollection(collectionName: String, counterType: String, count: Int = 1): Effect =
+        AddCountersToCollectionEffect(collectionName, counterType, count)
 
     /**
      * Distribute any number of counters from this creature onto other creatures.

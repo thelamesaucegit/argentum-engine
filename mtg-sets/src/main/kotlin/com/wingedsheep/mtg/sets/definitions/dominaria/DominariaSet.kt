@@ -96,6 +96,7 @@ object DominariaSet {
         GuardiansOfKoilos,
         GiftOfGrowth,
         GrowFromTheAshes,
+        HaphazardBombardment,
         IcyManipulator,
         InvokeTheDivine,
         IsolatedChapel,

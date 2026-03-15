@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 187 / 249
+**Implemented:** 188 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
 | Blue       | 37    | 26   |
 | Black      | 38    | 29   |
-| Red        | 38    | 31   |
+| Red        | 38    | 32   |
 | Green      | 37    | 30   |
 | Multicolor | 19    | 13   |
 | Colorless  | 30    | 22   |
@@ -108,7 +108,7 @@
 - [ ] Grunn, the Lonely King
 - [x] Guardians of Koilos
 - [ ] Hallar, the Firefletcher
-- [ ] Haphazard Bombardment
+- [x] Haphazard Bombardment
 - [ ] Healing Grace
 - [ ] Helm of the Host
 - [ ] Hinterland Harbor

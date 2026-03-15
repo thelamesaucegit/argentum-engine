@@ -79,6 +79,7 @@ constructors.
 - `Effects.GrantKeywordToAttackersBlockedBy(keyword, target, duration)` — grant keyword to attackers blocked by target
 - `Effects.GrantExileOnLeave(target)` — exile instead of leaving battlefield (Kheru Lich Lord, Whip of Erebos)
 - `Effects.AddCounters(counterType, count, target)`
+- `Effects.AddCountersToCollection(collectionName, counterType, count)` — add counters to all entities in a named collection
 - `Effects.SetBasePower(target = Self, power: DynamicAmount, duration = Permanent)` — set creature's base power
 - `Effects.AnimateLand(target, power, toughness, duration)` — turn land into creature
 - `Effects.DistributeCountersFromSelf(counterType)` — move counters from self to other creatures (player chooses)
@@ -273,6 +274,7 @@ constructors.
 | `GrantActivatedAbilityEffect` | `ability, target, duration`                                                 | Grant activated ability                  |
 | `GrantActivatedAbilityToGroupEffect`        | `ability, filter, duration`                                                 | Grant activated ability to group         |
 | `AddCountersEffect`                         | `counterType, count, target`                                                | Add counters                             |
+| `AddCountersToCollectionEffect`             | `collectionName, counterType, count`                                        | Add counters to all entities in collection |
 | `RemoveCountersEffect`                      | `counterType, count, target`                                                | Remove counters                          |
 | `AddMinusCountersEffect`                    | `count, target`                                                             | Add -1/-1 counters                       |
 | `LoseAllCreatureTypesEffect`                | `target, duration`                                                          | Remove all creature types                |

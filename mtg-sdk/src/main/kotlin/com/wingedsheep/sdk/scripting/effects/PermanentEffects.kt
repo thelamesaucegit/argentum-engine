@@ -119,6 +119,24 @@ data class AddCountersEffect(
 }
 
 /**
+ * Add counters to all entities in a named collection.
+ * Used for non-targeting "choose" effects that place counters on multiple permanents.
+ * "Put an aim counter on each of them"
+ */
+@SerialName("AddCountersToCollection")
+@Serializable
+data class AddCountersToCollectionEffect(
+    val collectionName: String,
+    val counterType: String,
+    val count: Int = 1
+) : Effect {
+    override val description: String =
+        "Put $count $counterType counter${if (count != 1) "s" else ""} on each permanent in $collectionName"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Remove counters effect.
  * "Remove X -1/-1 counters from target creature"
  */

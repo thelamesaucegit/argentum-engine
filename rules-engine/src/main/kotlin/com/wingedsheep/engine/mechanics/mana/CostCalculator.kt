@@ -384,6 +384,7 @@ class CostCalculator(
             CardPredicate.IsPermanent -> typeLine.isPermanent
             CardPredicate.IsNonland -> !typeLine.isLand
             CardPredicate.IsNoncreature -> !typeLine.isCreature
+            CardPredicate.IsNonenchantment -> !typeLine.isEnchantment
             CardPredicate.IsToken -> false
             CardPredicate.IsNontoken -> true
             CardPredicate.IsLegendary -> typeLine.isLegendary

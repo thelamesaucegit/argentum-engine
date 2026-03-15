@@ -100,6 +100,13 @@ sealed interface CardPredicate : TextReplaceable<CardPredicate> {
         override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
     }
 
+    @SerialName("IsNonenchantment")
+    @Serializable
+    data object IsNonenchantment : CardPredicate {
+        override val description: String = "nonenchantment"
+        override fun applyTextReplacement(replacer: TextReplacer): CardPredicate = this
+    }
+
     @SerialName("IsToken")
     @Serializable
     data object IsToken : CardPredicate {

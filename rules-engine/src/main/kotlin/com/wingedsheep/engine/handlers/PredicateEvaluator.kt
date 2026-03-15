@@ -162,6 +162,7 @@ class PredicateEvaluator {
             CardPredicate.IsPermanent -> types.any { it in setOf("CREATURE", "LAND", "ARTIFACT", "ENCHANTMENT", "PLANESWALKER") }
             CardPredicate.IsNonland -> "LAND" !in types
             CardPredicate.IsNoncreature -> "CREATURE" !in types
+            CardPredicate.IsNonenchantment -> "ENCHANTMENT" !in types
             CardPredicate.IsToken -> container.has<TokenComponent>()
             CardPredicate.IsNontoken -> !container.has<TokenComponent>()
             CardPredicate.IsLegendary -> "LEGENDARY" in types
@@ -391,6 +392,7 @@ class PredicateEvaluator {
             CardPredicate.IsPermanent -> typeLine.isPermanent
             CardPredicate.IsNonland -> !typeLine.isLand
             CardPredicate.IsNoncreature -> !typeLine.isCreature
+            CardPredicate.IsNonenchantment -> !typeLine.isEnchantment
             CardPredicate.IsToken -> container.has<TokenComponent>()
             CardPredicate.IsNontoken -> !container.has<TokenComponent>()
             CardPredicate.IsLegendary -> typeLine.isLegendary

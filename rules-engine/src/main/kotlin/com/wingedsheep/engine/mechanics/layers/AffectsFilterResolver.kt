@@ -256,6 +256,7 @@ internal class AffectsFilterResolver {
         CardPredicate.IsPermanent -> types.any { it in setOf("CREATURE", "LAND", "ARTIFACT", "ENCHANTMENT", "PLANESWALKER") }
         CardPredicate.IsNonland -> "LAND" !in types
         CardPredicate.IsNoncreature -> "CREATURE" !in types
+        CardPredicate.IsNonenchantment -> "ENCHANTMENT" !in types
         CardPredicate.IsBasicLand -> "LAND" in types && card.typeLine.supertypes.any { it.name == "BASIC" }
         CardPredicate.IsToken -> container.has<com.wingedsheep.engine.state.components.identity.TokenComponent>()
         CardPredicate.IsNontoken -> !container.has<com.wingedsheep.engine.state.components.identity.TokenComponent>()

@@ -850,6 +850,7 @@ object EffectExecutorUtils {
                 CardPredicate.IsEnchantment -> cardComponent.typeLine.isEnchantment
                 CardPredicate.IsNonland -> !cardComponent.typeLine.isLand
                 CardPredicate.IsNoncreature -> !cardComponent.typeLine.isCreature
+                CardPredicate.IsNonenchantment -> !cardComponent.typeLine.isEnchantment
                 CardPredicate.IsPermanent -> cardComponent.typeLine.isPermanent
                 CardPredicate.IsLegendary -> cardComponent.typeLine.isLegendary
                 CardPredicate.IsNonlegendary -> !cardComponent.typeLine.isLegendary

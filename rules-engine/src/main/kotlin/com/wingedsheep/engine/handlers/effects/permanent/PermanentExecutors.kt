@@ -21,6 +21,7 @@ class PermanentExecutors(
         GrantKeywordExecutor(),
         RemoveKeywordExecutor(),
         AddCountersExecutor(),
+        AddCountersToCollectionExecutor(),
         RemoveCountersExecutor(),
         ChooseColorProtectionExecutor(decisionHandler),
         ChooseColorProtectionTargetExecutor(decisionHandler),
