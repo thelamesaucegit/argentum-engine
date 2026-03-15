@@ -114,7 +114,11 @@ object Triggers {
      * When any creature dies.
      */
     val AnyCreatureDies: TriggerSpec = TriggerSpec(
-        event = ZoneChangeEvent(from = Zone.BATTLEFIELD, to = Zone.GRAVEYARD),
+        event = ZoneChangeEvent(
+            filter = GameObjectFilter.Creature,
+            from = Zone.BATTLEFIELD,
+            to = Zone.GRAVEYARD
+        ),
         binding = TriggerBinding.ANY
     )
 
@@ -122,7 +126,11 @@ object Triggers {
      * When another creature dies (any controller).
      */
     val AnyOtherCreatureDies: TriggerSpec = TriggerSpec(
-        event = ZoneChangeEvent(from = Zone.BATTLEFIELD, to = Zone.GRAVEYARD),
+        event = ZoneChangeEvent(
+            filter = GameObjectFilter.Creature,
+            from = Zone.BATTLEFIELD,
+            to = Zone.GRAVEYARD
+        ),
         binding = TriggerBinding.OTHER
     )
 
