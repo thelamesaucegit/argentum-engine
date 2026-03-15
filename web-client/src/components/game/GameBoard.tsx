@@ -78,8 +78,10 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
     }
     // Cast to add paymentStrategy - only actions with mana costs reach here
     const modifiedAction = { ...manaSelectionState.action, paymentStrategy } as import('../../types').GameAction
+    // Strip mana-source fields so executeAction doesn't loop back here
+    const { availableManaSources: _, autoTapPreview: _2, ...restActionInfo } = manaSelectionState.actionInfo
     const modifiedActionInfo: import('../../types').LegalActionInfo = {
-      ...manaSelectionState.actionInfo,
+      ...restActionInfo,
       action: modifiedAction,
     }
     cancelManaSelection()
