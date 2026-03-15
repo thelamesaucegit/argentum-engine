@@ -681,6 +681,9 @@ class TriggerDetector(
             // Handle "when enchanted creature dies" triggers on auras that went to graveyard
             // (detected on the AURA's zone change event using lastKnownAttachedTo)
             detectEnchantedCreatureDiesTriggers(state, event, triggers)
+            // Handle "when equipped creature dies" triggers on equipment still on battlefield
+            // (detected on the CREATURE's zone change event using aurasByTarget index)
+            detectEquippedCreatureDiesTriggers(state, event, triggers, index)
         }
 
         // Handle leaves-the-battlefield triggers (source is no longer on battlefield)
@@ -913,6 +916,41 @@ class TriggerDetector(
                     triggerContext = TriggerContext(triggeringEntityId = attachedCreatureId)
                 )
             )
+        }
+    }
+
+    /**
+     * Detect "when equipped creature dies" triggers on equipment.
+     * Unlike auras (which go to graveyard with the creature), equipment stays on the battlefield.
+     * When a creature dies, we check the aurasByTarget index for equipment attached to it
+     * that has EquippedCreatureDiesEvent triggers.
+     */
+    private fun detectEquippedCreatureDiesTriggers(
+        state: GameState,
+        event: ZoneChangeEvent,
+        triggers: MutableList<PendingTrigger>,
+        index: TriggerIndex
+    ) {
+        val dyingCreatureId = event.entityId
+
+        for (entry in index.aurasByTarget[dyingCreatureId].orEmpty()) {
+            // Only process equipment (not auras — those are handled by detectEnchantedCreatureDiesTriggers)
+            val isEquipment = entry.cardComponent.typeLine.isEquipment
+            if (!isEquipment) continue
+
+            for (ability in entry.abilities) {
+                if (ability.trigger !is GameEvent.EquippedCreatureDiesEvent) continue
+
+                triggers.add(
+                    PendingTrigger(
+                        ability = ability,
+                        sourceId = entry.entityId,
+                        sourceName = entry.cardComponent.name,
+                        controllerId = entry.controllerId,
+                        triggerContext = TriggerContext(triggeringEntityId = dyingCreatureId)
+                    )
+                )
+            }
         }
     }
 
@@ -1755,6 +1793,7 @@ class TriggerDetector(
             is GameEvent.EnchantedCreatureDealsCombatDamageToPlayerEvent -> false
             is GameEvent.EnchantedCreatureDealsDamageEvent -> false
             is GameEvent.EnchantedCreatureDiesEvent -> false
+            is GameEvent.EquippedCreatureDiesEvent -> false
             is GameEvent.EnchantedCreatureTurnedFaceUpEvent -> false
             is GameEvent.EnchantedPermanentBecomesTappedEvent -> false
             // Creature-dealt-damage-by-source-dies triggers are handled separately

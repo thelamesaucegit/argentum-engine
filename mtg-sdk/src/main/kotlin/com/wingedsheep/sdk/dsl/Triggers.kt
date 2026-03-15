@@ -573,6 +573,17 @@ object Triggers {
     )
 
     /**
+     * Whenever the equipped creature dies.
+     * Used for equipment like Forebear's Blade.
+     * Equipment stays on the battlefield; detected via aurasByTarget index
+     * on the dying creature's zone change event.
+     */
+    val EquippedCreatureDies: TriggerSpec = TriggerSpec(
+        event = EquippedCreatureDiesEvent,
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * Whenever the enchanted creature deals damage (any type).
      * Used for auras like Guilty Conscience.
      */

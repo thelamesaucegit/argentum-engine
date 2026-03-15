@@ -522,6 +522,7 @@ constructors.
 - `Triggers.EquippedCreatureAttacks` — attached creature attacks (equipment trigger, e.g., Heart-Piercer Bow)
 - `Triggers.EnchantedCreatureDealsDamage` — enchanted creature deals any damage (aura trigger, e.g., Guilty Conscience)
 - `Triggers.EnchantedCreatureDies` — enchanted creature dies (aura trigger, e.g., Demonic Vigor)
+- `Triggers.EquippedCreatureDies` — equipped creature dies (equipment trigger, e.g., Forebear's Blade)
 
 ### Phase/Step
 

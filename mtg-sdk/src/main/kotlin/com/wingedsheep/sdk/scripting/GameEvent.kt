@@ -584,6 +584,20 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     }
 
     /**
+     * When the equipped creature dies.
+     * Special case for equipment like Forebear's Blade.
+     * Unlike enchanted creature dies (where the aura goes to graveyard too),
+     * equipment stays on the battlefield — detection uses aurasByTarget index
+     * on the dying creature's zone change event.
+     */
+    @SerialName("EquippedCreatureDiesEvent")
+    @Serializable
+    data object EquippedCreatureDiesEvent : GameEvent {
+        override val description: String = "when equipped creature dies"
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent = this
+    }
+
+    /**
      * When the enchanted permanent becomes tapped.
      * Special case for auras like Uncontrolled Infestation.
      */

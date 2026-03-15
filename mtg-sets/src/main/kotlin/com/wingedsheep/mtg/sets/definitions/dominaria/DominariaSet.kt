@@ -79,6 +79,7 @@ object DominariaSet {
         FerventStrike,
         FirefistAdept,
         FireElemental,
+        ForebearsBlade,
         FrenziedRage,
         FungalInfection,
         GhituJourneymage,
