@@ -70,6 +70,10 @@ class StateBasedContinuationResumer(
         val container = state.getEntity(entityId) ?: return ExecutionResult.success(state)
         val lastKnownCounterCount = container.get<CountersComponent>()
             ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
+        // Capture last-known projected power/toughness before stripping (for trigger filters)
+        val projected = state.projectedState
+        val lastKnownPower = projected.getPower(entityId)
+        val lastKnownToughness = projected.getToughness(entityId)
         val controllerId = container.get<ControllerComponent>()?.playerId
             ?: cardComponent.ownerId
             ?: return ExecutionResult.success(state)
@@ -102,7 +106,9 @@ class StateBasedContinuationResumer(
                 Zone.BATTLEFIELD,
                 destinationZone,
                 ownerId,
-                lastKnownCounterCount = lastKnownCounterCount
+                lastKnownCounterCount = lastKnownCounterCount,
+                lastKnownPower = lastKnownPower,
+                lastKnownToughness = lastKnownToughness
             )
         )
 

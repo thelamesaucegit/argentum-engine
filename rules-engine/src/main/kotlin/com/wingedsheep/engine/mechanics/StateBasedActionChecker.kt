@@ -696,6 +696,10 @@ class StateBasedActionChecker(
         // Capture counter count before stripping (for last-known-information in death triggers)
         val lastKnownCounterCount = container.get<CountersComponent>()
             ?.getCount(com.wingedsheep.sdk.core.CounterType.PLUS_ONE_PLUS_ONE) ?: 0
+        // Capture last-known projected power/toughness before stripping (for trigger filters)
+        val projected = state.projectedState
+        val lastKnownPower = projected.getPower(entityId)
+        val lastKnownToughness = projected.getToughness(entityId)
         val controllerId = container.get<ControllerComponent>()?.playerId
             ?: cardComponent.ownerId
             ?: return ExecutionResult.success(state)
@@ -768,6 +772,8 @@ class StateBasedActionChecker(
                 destinationZone,
                 ownerId,
                 lastKnownCounterCount = lastKnownCounterCount,
+                lastKnownPower = lastKnownPower,
+                lastKnownToughness = lastKnownToughness,
                 lastKnownTypeLine = cardComponent.typeLine
             )
         )

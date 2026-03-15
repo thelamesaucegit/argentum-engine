@@ -622,6 +622,11 @@ object EffectExecutorUtils {
         val lastKnownCounterCount = container.get<CountersComponent>()
             ?.getCount(CounterType.PLUS_ONE_PLUS_ONE) ?: 0
 
+        // Capture last-known projected power/toughness before stripping (for trigger filters)
+        val projected = state.projectedState
+        val lastKnownPower = projected.getPower(entityId)
+        val lastKnownToughness = projected.getToughness(entityId)
+
         var newState = state
 
         // Clean up reverse attachment link before moving
@@ -656,6 +661,8 @@ object EffectExecutorUtils {
                     destinationZone,
                     ownerId,
                     lastKnownCounterCount = lastKnownCounterCount,
+                    lastKnownPower = lastKnownPower,
+                    lastKnownToughness = lastKnownToughness,
                     lastKnownTypeLine = cardComponent.typeLine
                 )
             )
@@ -1560,6 +1567,11 @@ object EffectExecutorUtils {
         val lastKnownCounterCount = container.get<CountersComponent>()
             ?.getCount(com.wingedsheep.sdk.core.CounterType.PLUS_ONE_PLUS_ONE) ?: 0
 
+        // Capture last-known projected power/toughness before stripping (for trigger filters)
+        val projected = state.projectedState
+        val lastKnownPower = projected.getPower(entityId)
+        val lastKnownToughness = projected.getToughness(entityId)
+
         // Move to target zone
         val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
         val targetZoneKey = ZoneKey(ownerId, targetZone)
@@ -1583,6 +1595,8 @@ object EffectExecutorUtils {
                     targetZone,
                     ownerId,
                     lastKnownCounterCount = lastKnownCounterCount,
+                    lastKnownPower = lastKnownPower,
+                    lastKnownToughness = lastKnownToughness,
                     lastKnownTypeLine = cardComponent.typeLine
                 )
             )

@@ -2,6 +2,7 @@ package com.wingedsheep.engine.scenarios
 
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
@@ -10,6 +11,7 @@ import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.engine.support.GameTestDriver
 import com.wingedsheep.engine.support.TestCards
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Subtype
@@ -272,5 +274,65 @@ class DeathTriggerTest : FunSpec({
 
         // Active player should have gained 1 life from the death trigger
         driver.getLifeTotal(activePlayer) shouldBe 21
+    }
+
+    test("filtered death trigger fires for creature with toughness boosted by +1/+1 counter") {
+        val driver = createDriver()
+        driver.initMirrorMatch(
+            deck = Deck.of(
+                "Forest" to 20,
+                "Mountain" to 20
+            ),
+            startingLife = 20
+        )
+
+        val activePlayer = driver.activePlayer!!
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        // Put the filtered death trigger creature (3/4) on the battlefield
+        // It has: "Whenever a creature you control with toughness 4 or greater dies, you gain 4 life."
+        val watcher = driver.putCreatureOnBattlefield(activePlayer, "Filtered Death Trigger Creature")
+        watcher shouldNotBe null
+
+        // Put a 3/3 creature on the battlefield and give it a +1/+1 counter (making it 4/4)
+        val creatureId = driver.putCreatureOnBattlefield(activePlayer, "Centaur Courser")
+        creatureId shouldNotBe null
+
+        // Add a +1/+1 counter to the 3/3, making it a 4/4 (projected toughness >= 4)
+        driver.replaceState(
+            driver.state.updateEntity(creatureId) { container ->
+                val counters = container.get<CountersComponent>()
+                    ?: CountersComponent()
+                container.with(counters.withAdded(CounterType.PLUS_ONE_PLUS_ONE, 1))
+            }
+        )
+
+        // Verify starting life
+        driver.getLifeTotal(activePlayer) shouldBe 20
+
+        // Kill the 4/4 creature with two Lightning Bolts (need 6 damage to kill a 4/4)
+        driver.giveMana(activePlayer, Color.RED, 2)
+        val bolt1 = driver.putCardInHand(activePlayer, "Lightning Bolt")
+        val bolt2 = driver.putCardInHand(activePlayer, "Lightning Bolt")
+
+        val castResult1 = driver.castSpellWithTargets(activePlayer, bolt1, listOf(ChosenTarget.Permanent(creatureId)))
+        castResult1.isSuccess shouldBe true
+        driver.bothPass()
+
+        val castResult2 = driver.castSpellWithTargets(activePlayer, bolt2, listOf(ChosenTarget.Permanent(creatureId)))
+        castResult2.isSuccess shouldBe true
+        driver.bothPass()
+
+        // The creature should be dead
+        driver.findPermanent(activePlayer, "Centaur Courser") shouldBe null
+
+        // The death trigger should fire — the creature had projected toughness 4 (3 base + 1 counter)
+        driver.stackSize shouldBeGreaterThan 0
+
+        // Resolve the death trigger
+        driver.bothPass()
+
+        // Active player should have gained 4 life
+        driver.getLifeTotal(activePlayer) shouldBe 24
     }
 })

@@ -1981,7 +1981,11 @@ class TriggerDetector(
                     else -> {
                         // For other predicates, check the entity's type
                         if (cardComponent == null) return false
-                        if (!matchesCardPredicate(predicate, cardComponent, projected, event.entityId, isFaceDown)) return false
+                        if (!matchesCardPredicate(
+                                predicate, cardComponent, projected, event.entityId, isFaceDown,
+                                lastKnownPower = event.lastKnownPower,
+                                lastKnownToughness = event.lastKnownToughness
+                            )) return false
                     }
                 }
             }
@@ -2017,7 +2021,9 @@ class TriggerDetector(
         cardComponent: CardComponent,
         projected: ProjectedState,
         entityId: EntityId,
-        isFaceDown: Boolean = false
+        isFaceDown: Boolean = false,
+        lastKnownPower: Int? = null,
+        lastKnownToughness: Int? = null
     ): Boolean {
         return when (predicate) {
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> cardComponent.typeLine.isCreature
@@ -2036,35 +2042,41 @@ class TriggerDetector(
                 cmc == predicate.value
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.PowerAtLeast -> {
-                val power = if (isFaceDown) 2 else cardComponent.baseStats?.basePower ?: 0
+                val power = if (isFaceDown) 2
+                    else lastKnownPower ?: projected.getPower(entityId) ?: cardComponent.baseStats?.basePower ?: 0
                 power >= predicate.min
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.PowerAtMost -> {
-                val power = if (isFaceDown) 2 else cardComponent.baseStats?.basePower ?: 0
+                val power = if (isFaceDown) 2
+                    else lastKnownPower ?: projected.getPower(entityId) ?: cardComponent.baseStats?.basePower ?: 0
                 power <= predicate.max
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.PowerEquals -> {
-                val power = if (isFaceDown) 2 else cardComponent.baseStats?.basePower ?: 0
+                val power = if (isFaceDown) 2
+                    else lastKnownPower ?: projected.getPower(entityId) ?: cardComponent.baseStats?.basePower ?: 0
                 power == predicate.value
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ToughnessAtLeast -> {
-                val toughness = if (isFaceDown) 2 else cardComponent.baseStats?.baseToughness ?: 0
+                val toughness = if (isFaceDown) 2
+                    else lastKnownToughness ?: projected.getToughness(entityId) ?: cardComponent.baseStats?.baseToughness ?: 0
                 toughness >= predicate.min
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ToughnessAtMost -> {
-                val toughness = if (isFaceDown) 2 else cardComponent.baseStats?.baseToughness ?: 0
+                val toughness = if (isFaceDown) 2
+                    else lastKnownToughness ?: projected.getToughness(entityId) ?: cardComponent.baseStats?.baseToughness ?: 0
                 toughness <= predicate.max
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.ToughnessEquals -> {
-                val toughness = if (isFaceDown) 2 else cardComponent.baseStats?.baseToughness ?: 0
+                val toughness = if (isFaceDown) 2
+                    else lastKnownToughness ?: projected.getToughness(entityId) ?: cardComponent.baseStats?.baseToughness ?: 0
                 toughness == predicate.value
             }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.Or ->
-                predicate.predicates.any { matchesCardPredicate(it, cardComponent, projected, entityId, isFaceDown) }
+                predicate.predicates.any { matchesCardPredicate(it, cardComponent, projected, entityId, isFaceDown, lastKnownPower, lastKnownToughness) }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.And ->
-                predicate.predicates.all { matchesCardPredicate(it, cardComponent, projected, entityId, isFaceDown) }
+                predicate.predicates.all { matchesCardPredicate(it, cardComponent, projected, entityId, isFaceDown, lastKnownPower, lastKnownToughness) }
             is com.wingedsheep.sdk.scripting.predicates.CardPredicate.Not ->
-                !matchesCardPredicate(predicate.predicate, cardComponent, projected, entityId, isFaceDown)
+                !matchesCardPredicate(predicate.predicate, cardComponent, projected, entityId, isFaceDown, lastKnownPower, lastKnownToughness)
             else -> true // Unknown predicates pass through
         }
     }
