@@ -193,6 +193,7 @@ val engineSerializersModule = SerializersModule {
         subclass(MorphDataComponent::class)
         subclass(TextReplacementComponent::class)
         subclass(ProtectionComponent::class)
+        subclass(HexproofFromColorComponent::class)
         subclass(CopyOfComponent::class)
         subclass(ChosenColorComponent::class)
         subclass(ChosenCreatureTypeComponent::class)

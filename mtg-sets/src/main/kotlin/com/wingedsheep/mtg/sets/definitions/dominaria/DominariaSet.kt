@@ -111,6 +111,7 @@ object DominariaSet {
         HomaridExplorer,
         KrosanDruid,
         KwendePrideOfFemeref,
+        KnightOfMalice,
         KnightOfNewBenalia,
         KeldonOverseer,
         KamahlsDruidicVow,

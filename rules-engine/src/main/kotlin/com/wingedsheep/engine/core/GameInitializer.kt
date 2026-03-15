@@ -228,6 +228,14 @@ class GameInitializer(
             container = container.with(ProtectionComponent(protectionColors, protectionSubtypes))
         }
 
+        val hexproofFromColors = cardDef.keywordAbilities
+            .filterIsInstance<KeywordAbility.HexproofFromColor>()
+            .map { it.color }
+            .toSet()
+        if (hexproofFromColors.isNotEmpty()) {
+            container = container.with(HexproofFromColorComponent(hexproofFromColors))
+        }
+
         return container
     }
 

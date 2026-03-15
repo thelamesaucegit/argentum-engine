@@ -2,6 +2,8 @@ package com.wingedsheep.engine.mechanics.layers
 
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.identity.ChosenColorComponent
@@ -233,6 +235,14 @@ internal class EffectApplicator(
         is SourceProjectionCondition.IsYourTurn -> {
             val controllerId = sourceValues?.controllerId
             controllerId != null && state.activePlayerId == controllerId
+        }
+        is SourceProjectionCondition.AnyPlayerControlsPermanentMatchingFilter -> {
+            val predicateEvaluator = PredicateEvaluator()
+            val intermediateProjected = buildIntermediateProjectedState(state, projectedValues)
+            val controllerId = sourceValues?.controllerId ?: effect.sourceId
+            state.getBattlefield().any { entityId ->
+                predicateEvaluator.matchesWithProjection(state, intermediateProjected, entityId, condition.filter, PredicateContext(controllerId = controllerId))
+            }
         }
         is SourceProjectionCondition.Not -> !evaluateSourceCondition(condition.condition, effect, state, projectedValues, sourceValues)
     }

@@ -20,6 +20,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.engine.state.components.identity.PlayerComponent
+import com.wingedsheep.engine.state.components.identity.HexproofFromColorComponent
 import com.wingedsheep.engine.state.components.identity.ProtectionComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.combat.AttackersDeclaredThisCombatComponent
@@ -316,6 +317,15 @@ abstract class ScenarioTestBase : FunSpec() {
                 .toSet()
             if (protectionColors.isNotEmpty() || protectionSubtypes.isNotEmpty()) {
                 container = container.with(ProtectionComponent(protectionColors, protectionSubtypes))
+            }
+
+            // Attach HexproofFromColorComponent for cards with hexproof from color
+            val hexproofFromColors = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.HexproofFromColor>()
+                .map { it.color }
+                .toSet()
+            if (hexproofFromColors.isNotEmpty()) {
+                container = container.with(HexproofFromColorComponent(hexproofFromColors))
             }
 
             state = state.withEntity(cardId, container)

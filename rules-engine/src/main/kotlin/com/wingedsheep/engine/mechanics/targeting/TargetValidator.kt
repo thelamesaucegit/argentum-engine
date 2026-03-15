@@ -105,8 +105,47 @@ class TargetValidator {
         }
         if (error != null) return error
 
+        // Check hexproof from color (Rule 702.11b)
+        val hexproofError = checkHexproofFromColor(state, target, casterId, sourceColors)
+        if (hexproofError != null) return hexproofError
+
         // Check protection from color and creature subtype (Rule 702.16)
         return checkProtection(state, target, sourceColors, sourceSubtypes)
+    }
+
+    /**
+     * Check if a target has hexproof from any of the source's colors.
+     * "Hexproof from [color]" prevents opponents from targeting with spells/abilities of that color.
+     * Returns an error message if hexproof blocks this targeting, null otherwise.
+     */
+    private fun checkHexproofFromColor(
+        state: GameState,
+        target: ChosenTarget,
+        casterId: EntityId,
+        sourceColors: Set<Color>
+    ): String? {
+        if (sourceColors.isEmpty()) return null
+
+        val entityId = when (target) {
+            is ChosenTarget.Permanent -> target.entityId
+            else -> return null
+        }
+
+        // Only check permanents on the battlefield
+        if (entityId !in state.getBattlefield()) return null
+
+        // Hexproof from color only blocks opponents — owner can still target
+        val entityController = state.getEntity(entityId)?.get<ControllerComponent>()?.playerId
+        if (entityController == casterId) return null
+
+        val projected = state.projectedState
+        for (color in sourceColors) {
+            if (projected.hasKeyword(entityId, "HEXPROOF_FROM_${color.name}")) {
+                val cardName = state.getEntity(entityId)?.get<CardComponent>()?.name ?: "target"
+                return "$cardName has hexproof from ${color.displayName.lowercase()}"
+            }
+        }
+        return null
     }
 
     /**

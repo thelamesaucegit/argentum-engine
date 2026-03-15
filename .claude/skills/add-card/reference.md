@@ -875,6 +875,7 @@ Used via `keywordAbility(...)` or `keywordAbilities(...)` in card DSL:
 
 - `KeywordAbility.Simple(keyword)` — wraps a basic keyword
 - **Ward**: `WardMana(cost)`, `WardLife(amount)`, `WardDiscard(count, random)`, `WardSacrifice(filter)`
+- **Hexproof**: `HexproofFromColor(color)` — hexproof from a specific color
 - **Protection**: `ProtectionFromColor(color)`, `ProtectionFromColors(colors)`, `ProtectionFromCardType(type)`,
   `ProtectionFromCreatureSubtype(subtype)`, `ProtectionFromEverything`
 - **Combat**: `Annihilator(count)`, `Bushido(count)`, `Rampage(count)`, `Flanking`, `Afflict(count)`
@@ -885,8 +886,8 @@ Used via `keywordAbility(...)` or `keywordAbilities(...)` in card DSL:
 - **Transform**: `Morph(cost, faceUpEffect?)`, `Absorb(count)` — `faceUpEffect` is an `Effect` executed as a replacement effect when turned face up (e.g., `AddCountersEffect` for Hooded Hydra)
 
 Companion helpers: `KeywordAbility.of(keyword)`, `.ward(cost)`, `.wardLife(amount)`, `.wardDiscard(count, random)`,
-`.protectionFrom(color)`, `.protectionFrom(vararg colors)`, `.protectionFromSubtype(subtype)`, `.cycling(cost)`,
-`.morph(cost)`, `.morphPayLife(amount)`
+`.hexproofFrom(color)`, `.protectionFrom(color)`, `.protectionFrom(vararg colors)`, `.protectionFromSubtype(subtype)`,
+`.cycling(cost)`, `.morph(cost)`, `.morphPayLife(amount)`
 
 ---
 

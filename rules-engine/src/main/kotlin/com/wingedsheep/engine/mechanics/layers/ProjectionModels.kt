@@ -3,6 +3,7 @@ package com.wingedsheep.engine.mechanics.layers
 import com.wingedsheep.engine.state.Component
 import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.filters.unified.GroupFilter
 import com.wingedsheep.sdk.scripting.text.TextReplacer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -228,6 +229,15 @@ sealed interface SourceProjectionCondition {
      */
     @Serializable
     data object IsYourTurn : SourceProjectionCondition
+
+    /**
+     * Any player controls a permanent matching the given filter.
+     * Used for "gets +X/+Y as long as any player controls a [color] permanent."
+     */
+    @Serializable
+    data class AnyPlayerControlsPermanentMatchingFilter(
+        val filter: GameObjectFilter
+    ) : SourceProjectionCondition
 
     /**
      * Negation wrapper for source projection conditions.

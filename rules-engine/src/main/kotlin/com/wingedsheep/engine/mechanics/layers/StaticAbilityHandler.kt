@@ -476,6 +476,12 @@ class StaticAbilityHandler(
     private fun mapExistsToSourceProjectionCondition(condition: Exists): SourceProjectionCondition? {
         if (condition.negate || condition.zone != com.wingedsheep.sdk.core.Zone.BATTLEFIELD) return null
 
+        // Handle "any player controls a permanent matching filter"
+        if (condition.player is com.wingedsheep.sdk.scripting.references.Player.Each ||
+            condition.player is com.wingedsheep.sdk.scripting.references.Player.Any) {
+            return SourceProjectionCondition.AnyPlayerControlsPermanentMatchingFilter(condition.filter)
+        }
+
         // Handle "opponent controls a creature" (any creature, no subtype filter)
         if (condition.player is com.wingedsheep.sdk.scripting.references.Player.Opponent) {
             val isCreatureFilter = condition.filter.cardPredicates

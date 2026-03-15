@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 189 / 249
+**Implemented:** 190 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
 | Blue       | 37    | 26   |
-| Black      | 38    | 29   |
+| Black      | 38    | 30   |
 | Red        | 38    | 32   |
 | Green      | 37    | 30   |
 | Multicolor | 19    | 14   |
@@ -135,7 +135,7 @@
 - [x] Keldon Raider
 - [ ] Keldon Warcaller
 - [ ] Knight of Grace
-- [ ] Knight of Malice
+- [x] Knight of Malice
 - [x] Knight of New Benalia
 - [x] Krosan Druid
 - [x] Kwende, Pride of Femeref

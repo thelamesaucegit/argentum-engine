@@ -773,6 +773,15 @@ class DevScenarioController(
                 container = container.with(ProtectionComponent(protectionColors, protectionSubtypes))
             }
 
+            // Add HexproofFromColorComponent for cards with hexproof from color
+            val hexproofFromColors = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.HexproofFromColor>()
+                .map { it.color }
+                .toSet()
+            if (hexproofFromColors.isNotEmpty()) {
+                container = container.with(HexproofFromColorComponent(hexproofFromColors))
+            }
+
             state = state.withEntity(cardId, container)
             return cardId
         }

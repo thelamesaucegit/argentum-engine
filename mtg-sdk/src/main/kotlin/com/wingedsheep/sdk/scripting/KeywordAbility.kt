@@ -93,6 +93,21 @@ sealed interface KeywordAbility {
     }
 
     // =========================================================================
+    // Hexproof Variants
+    // =========================================================================
+
+    /**
+     * Hexproof from a color.
+     * "Hexproof from white" - This creature can't be the target of white spells
+     * or abilities your opponents control.
+     */
+    @SerialName("HexproofFromColor")
+    @Serializable
+    data class HexproofFromColor(val color: Color) : KeywordAbility {
+        override val description: String = "Hexproof from ${color.displayName.lowercase()}"
+    }
+
+    // =========================================================================
     // Protection Variants
     // =========================================================================
 
@@ -418,6 +433,11 @@ sealed interface KeywordAbility {
          */
         fun wardDiscard(count: Int = 1, random: Boolean = false): KeywordAbility =
             WardDiscard(count, random)
+
+        /**
+         * Create Hexproof from a color.
+         */
+        fun hexproofFrom(color: Color): KeywordAbility = HexproofFromColor(color)
 
         /**
          * Create Protection from a color.

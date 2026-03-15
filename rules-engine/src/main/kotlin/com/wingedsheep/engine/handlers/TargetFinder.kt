@@ -7,6 +7,7 @@ import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShrou
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
+import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -139,6 +140,8 @@ class TargetFinder(
             // Check hexproof/shroud
             if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != controllerId) continue
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) continue
+            // Check hexproof from color
+            if (hasHexproofFromSourceColors(state, projected, entityId, entityController, controllerId, sourceId)) continue
             // Check can't-be-targeted-by-abilities
             if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) continue
 
@@ -172,6 +175,8 @@ class TargetFinder(
             // Check hexproof/shroud
             if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != controllerId) continue
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) continue
+            // Check hexproof from color
+            if (hasHexproofFromSourceColors(state, projected, entityId, entityController, controllerId, sourceId)) continue
             // Check can't-be-targeted-by-abilities
             if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) continue
 
@@ -209,6 +214,10 @@ class TargetFinder(
                     return@filter false
                 }
                 if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
+                    return@filter false
+                }
+                // Check hexproof from color
+                if (hasHexproofFromSourceColors(state, projected, entityId, entityController, controllerId, sourceId)) {
                     return@filter false
                 }
                 // Check can't-be-targeted-by-abilities
@@ -252,6 +261,10 @@ class TargetFinder(
                 continue
             }
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
+                continue
+            }
+            // Check hexproof from color
+            if (hasHexproofFromSourceColors(state, projected, entityId, entityController, controllerId, sourceId)) {
                 continue
             }
             // Check can't-be-targeted-by-abilities
@@ -306,6 +319,10 @@ class TargetFinder(
                 return@filter false
             }
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
+                return@filter false
+            }
+            // Check hexproof from color
+            if (hasHexproofFromSourceColors(state, projected, entityId, entityController, controllerId, sourceId)) {
                 return@filter false
             }
             // Check can't-be-targeted-by-abilities
@@ -393,6 +410,8 @@ class TargetFinder(
 
             if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != controllerId) continue
             if (projected.hasKeyword(entityId, Keyword.SHROUD)) continue
+            // Check hexproof from color
+            if (hasHexproofFromSourceColors(state, projected, entityId, entityController, controllerId, sourceId)) continue
             if (hasCantBeTargetedRestriction(state, entityId, entityController, controllerId, targetingSourceType)) continue
 
             targets.add(entityId)
@@ -423,6 +442,36 @@ class TargetFinder(
             val container = state.getEntity(entityId) ?: return@any false
             container.get<GrantsControllerShroudComponent>() != null &&
                 container.get<ControllerComponent>()?.playerId == playerId
+        }
+    }
+
+    /**
+     * Check if a permanent has hexproof from a color that matches the targeting source's colors.
+     * "Hexproof from [color]" means opponents can't target it with spells/abilities of that color.
+     *
+     * Gets source colors from projected state (for battlefield permanents) and falls back to
+     * the base CardComponent colors (for spells in hand/on the stack that aren't projected).
+     *
+     * @return true if the entity is protected by hexproof-from-color against the source
+     */
+    private fun hasHexproofFromSourceColors(
+        state: GameState,
+        projected: ProjectedState,
+        entityId: EntityId,
+        entityController: EntityId?,
+        controllerId: EntityId,
+        sourceId: EntityId?
+    ): Boolean {
+        if (entityController == controllerId || sourceId == null) return false
+        // Try projected colors first (for permanents on the battlefield),
+        // then fall back to base CardComponent colors (for spells in hand/on stack)
+        var sourceColors = projected.getColors(sourceId)
+        if (sourceColors.isEmpty()) {
+            sourceColors = state.getEntity(sourceId)?.get<CardComponent>()
+                ?.colors?.map { it.name }?.toSet() ?: emptySet()
+        }
+        return sourceColors.any { colorName ->
+            projected.hasKeyword(entityId, "HEXPROOF_FROM_$colorName")
         }
     }
 
