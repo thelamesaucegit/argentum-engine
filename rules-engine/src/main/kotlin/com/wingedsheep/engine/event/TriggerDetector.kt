@@ -40,6 +40,7 @@ import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.GrantTriggeredAbilityToCreatureGroup
+import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.events.DamageType
@@ -111,6 +112,8 @@ class TriggerDetector(
         val registry = cardRegistry ?: return emptyList()
         val targetContainer = state.getEntity(entityId) ?: return emptyList()
         val targetCard = targetContainer.get<CardComponent>() ?: return emptyList()
+        val projected = state.projectedState
+        val targetControllerId = projected.getController(entityId)
 
         val result = mutableListOf<TriggeredAbility>()
 
@@ -119,6 +122,8 @@ class TriggerDetector(
             val card = container.get<CardComponent>() ?: continue
             // Skip face-down permanents — they have no abilities
             if (container.has<FaceDownComponent>()) continue
+
+            val sourceControllerId = projected.getController(permanentId) ?: continue
 
             val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
             for (ability in cardDef.staticAbilities) {
@@ -135,7 +140,16 @@ class TriggerDetector(
                         else -> true
                     }
                 }
-                if (matchesAll) {
+                if (!matchesAll) continue
+
+                // Check controller predicate relative to the source permanent's controller
+                val controllerMatch = when (filter.controllerPredicate) {
+                    is ControllerPredicate.ControlledByYou -> targetControllerId == sourceControllerId
+                    is ControllerPredicate.ControlledByOpponent -> targetControllerId != null && targetControllerId != sourceControllerId
+                    null -> true
+                    else -> true
+                }
+                if (controllerMatch) {
                     result.add(ability.ability)
                 }
             }
@@ -160,17 +174,18 @@ class TriggerDetector(
         val projected = state.projectedState
 
         // Phase 1: Collect grant providers (needed to compute abilities for each entity)
-        val grantProviders = mutableListOf<GrantTriggeredAbilityToCreatureGroup>()
+        val grantProviders = mutableListOf<TriggerIndex.GrantProviderEntry>()
         val registry = cardRegistry
         if (registry != null) {
             for (permanentId in state.getBattlefield()) {
                 val container = state.getEntity(permanentId) ?: continue
                 val card = container.get<CardComponent>() ?: continue
                 if (container.has<FaceDownComponent>()) continue
+                val sourceControllerId = projected.getController(permanentId) ?: continue
                 val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
                 for (ability in cardDef.staticAbilities) {
                     if (ability is GrantTriggeredAbilityToCreatureGroup) {
-                        grantProviders.add(ability)
+                        grantProviders.add(TriggerIndex.GrantProviderEntry(ability, sourceControllerId))
                     }
                 }
             }
@@ -252,7 +267,7 @@ class TriggerDetector(
         entityId: EntityId,
         cardDefinitionId: String,
         state: GameState,
-        grantProviders: List<GrantTriggeredAbilityToCreatureGroup>
+        grantProviders: List<TriggerIndex.GrantProviderEntry>
     ): List<TriggeredAbility> {
         // If the entity has lost all abilities (e.g., Deep Freeze), suppress its own triggered abilities
         val hasLostAbilities = state.projectedState.hasLostAllAbilities(entityId)
@@ -295,14 +310,16 @@ class TriggerDetector(
     private fun getStaticGrantedFromProviders(
         entityId: EntityId,
         state: GameState,
-        grantProviders: List<GrantTriggeredAbilityToCreatureGroup>
+        grantProviders: List<TriggerIndex.GrantProviderEntry>
     ): List<TriggeredAbility> {
         val targetContainer = state.getEntity(entityId) ?: return emptyList()
         val targetCard = targetContainer.get<CardComponent>() ?: return emptyList()
+        val projected = state.projectedState
+        val targetControllerId = projected.getController(entityId)
 
         return buildList {
-            for (grant in grantProviders) {
-                val filter = grant.filter.baseFilter
+            for (entry in grantProviders) {
+                val filter = entry.grant.filter.baseFilter
                 val matchesAll = filter.cardPredicates.all { predicate ->
                     when (predicate) {
                         is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature ->
@@ -312,7 +329,16 @@ class TriggerDetector(
                         else -> true
                     }
                 }
-                if (matchesAll) add(grant.ability)
+                if (!matchesAll) continue
+
+                // Check controller predicate relative to the source permanent's controller
+                val controllerMatch = when (filter.controllerPredicate) {
+                    is ControllerPredicate.ControlledByYou -> targetControllerId == entry.sourceControllerId
+                    is ControllerPredicate.ControlledByOpponent -> targetControllerId != null && targetControllerId != entry.sourceControllerId
+                    null -> true
+                    else -> true
+                }
+                if (controllerMatch) add(entry.grant.ability)
             }
         }
     }
@@ -2033,6 +2059,12 @@ class TriggerDetector(
                 val toughness = if (isFaceDown) 2 else cardComponent.baseStats?.baseToughness ?: 0
                 toughness == predicate.value
             }
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.Or ->
+                predicate.predicates.any { matchesCardPredicate(it, cardComponent, projected, entityId, isFaceDown) }
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.And ->
+                predicate.predicates.all { matchesCardPredicate(it, cardComponent, projected, entityId, isFaceDown) }
+            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.Not ->
+                !matchesCardPredicate(predicate.predicate, cardComponent, projected, entityId, isFaceDown)
             else -> true // Unknown predicates pass through
         }
     }

@@ -71,7 +71,7 @@ enum class TriggerCategory {
 class TriggerIndex(
     private val byCategory: Map<TriggerCategory, List<IndexedEntity>>,
     val aurasByTarget: Map<EntityId, List<IndexedEntity>>,
-    val grantProviders: List<GrantTriggeredAbilityToCreatureGroup>,
+    val grantProviders: List<GrantProviderEntry>,
     val damageToYouObservers: List<IndexedEntity>,
     val subtypeDamageObservers: List<IndexedEntity>,
     val creatureDamageDeathTrackers: List<IndexedEntity>,
@@ -103,6 +103,15 @@ class TriggerIndex(
         val cardComponent: CardComponent,
         val controllerId: EntityId,
         val abilities: List<TriggeredAbility>,
+    )
+
+    /**
+     * A grant provider paired with the controller of the source permanent.
+     * Needed to evaluate controller predicates like "you control" relative to the source.
+     */
+    data class GrantProviderEntry(
+        val grant: GrantTriggeredAbilityToCreatureGroup,
+        val sourceControllerId: EntityId,
     )
 
     companion object {
