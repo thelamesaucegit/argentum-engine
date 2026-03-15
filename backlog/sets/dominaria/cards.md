@@ -2,14 +2,14 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 193 / 249
+**Implemented:** 194 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
 | Blue       | 37    | 28   |
 | Black      | 38    | 30   |
-| Red        | 38    | 33   |
+| Red        | 38    | 34   |
 | Green      | 37    | 30   |
 | Multicolor | 19    | 14   |
 | Colorless  | 30    | 22   |
@@ -119,7 +119,7 @@
 - [ ] In Bolas's Clutches
 - [x] Invoke the Divine
 - [x] Isolated Chapel
-- [ ] Jaya Ballard
+- [x] Jaya Ballard
 - [ ] Jaya's Immolating Inferno
 - [x] Jhoira's Familiar
 - [x] Jhoira, Weatherlight Captain

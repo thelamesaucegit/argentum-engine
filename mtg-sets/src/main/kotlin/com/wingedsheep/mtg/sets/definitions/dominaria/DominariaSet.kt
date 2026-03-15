@@ -100,6 +100,7 @@ object DominariaSet {
         IcyManipulator,
         InvokeTheDivine,
         IsolatedChapel,
+        JayaBallard,
         JhoirasFamiliar,
         JhoiraWeatherlightCaptain,
         JodahArchmageEternal,
