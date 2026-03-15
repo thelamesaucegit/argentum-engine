@@ -133,6 +133,7 @@ object DominariaSet {
         MishrasSelfReplicator,
         MoxAmber,
         MultaniYavimayasAvatar,
+        NabanDeanOfIteration,
         NaturesSpiral,
         OathOfTeferi,
         Opt,

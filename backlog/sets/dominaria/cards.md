@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 190 / 249
+**Implemented:** 191 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 26   |
-| Blue       | 37    | 26   |
+| Blue       | 37    | 27   |
 | Black      | 38    | 30   |
 | Red        | 38    | 32   |
 | Green      | 37    | 30   |
@@ -158,7 +158,7 @@
 - [x] Mox Amber
 - [ ] Muldrotha, the Gravetide
 - [x] Multani, Yavimaya's Avatar
-- [ ] Naban, Dean of Iteration
+- [x] Naban, Dean of Iteration
 - [ ] Naru Meha, Master Wizard
 - [x] Nature's Spiral
 - [ ] Navigator's Compass

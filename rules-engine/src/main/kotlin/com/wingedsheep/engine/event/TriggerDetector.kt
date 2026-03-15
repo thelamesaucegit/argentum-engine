@@ -350,6 +350,11 @@ class TriggerDetector(
         // Detect Saga chapter triggers from lore counter additions
         detectSagaChapterTriggers(state, events, triggers)
 
+        // Duplicate triggers for "additional time" static abilities (e.g., Naban, Panharmonicon).
+        // When a creature matching the filter ETBs, triggered abilities on the controller's
+        // permanents that fired from that event trigger an additional time per copy.
+        duplicateETBTriggers(state, events, triggers)
+
         // Rule 603.4: Filter out triggers with unmet intervening-if conditions
         return sortByApnapOrder(state, filterByTriggerCondition(state, triggers))
     }
@@ -1174,6 +1179,85 @@ class TriggerDetector(
                 }
             }
         }
+    }
+
+    /**
+     * Duplicate ETB triggers for "additional time" static abilities (Naban, Panharmonicon).
+     *
+     * For each ZoneChangeEvent(to=BATTLEFIELD) in the events, checks if any permanent on
+     * the battlefield has AdditionalETBTriggers whose creatureFilter matches the entering entity.
+     * If so, duplicates all triggers that fired from that ETB event for the controller's permanents.
+     *
+     * Multiple copies are additive: N copies add N extra copies of each trigger.
+     */
+    private fun duplicateETBTriggers(
+        state: GameState,
+        events: List<EngineGameEvent>,
+        triggers: MutableList<PendingTrigger>
+    ) {
+        val registry = cardRegistry ?: return
+        val projected = state.projectedState
+
+        // Find ETB events (zone changes to battlefield)
+        val etbEvents = events.filterIsInstance<ZoneChangeEvent>().filter { it.toZone == Zone.BATTLEFIELD }
+        if (etbEvents.isEmpty()) return
+
+        // Collect all AdditionalETBTriggers static abilities from battlefield permanents
+        data class ETBDoubler(val controllerId: EntityId, val filter: GameObjectFilter, val sourceId: EntityId)
+        val doublers = mutableListOf<ETBDoubler>()
+
+        for (permanentId in state.getBattlefield()) {
+            val container = state.getEntity(permanentId) ?: continue
+            val card = container.get<CardComponent>() ?: continue
+            if (container.has<FaceDownComponent>()) continue
+            val controllerId = projected.getController(permanentId) ?: continue
+            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+
+            for (ability in cardDef.staticAbilities) {
+                if (ability is AdditionalETBTriggers) {
+                    doublers.add(ETBDoubler(controllerId, ability.creatureFilter, permanentId))
+                }
+            }
+        }
+
+        if (doublers.isEmpty()) return
+
+        // For each ETB event, check if the entering creature matches any doubler
+        val duplicates = mutableListOf<PendingTrigger>()
+
+        for (etbEvent in etbEvents) {
+            val enteringEntityId = etbEvent.entityId
+
+            for (doubler in doublers) {
+                // The entering creature must be controlled by the doubler's controller
+                val enteringController = projected.getController(enteringEntityId) ?: etbEvent.ownerId
+                if (enteringController != doubler.controllerId) continue
+
+                // Check if the entering creature matches the filter
+                if (doubler.filter != GameObjectFilter.Any) {
+                    if (!predicateEvaluator.matchesWithProjection(
+                            state, projected, enteringEntityId, doubler.filter,
+                            PredicateContext(controllerId = doubler.controllerId, sourceId = doubler.sourceId)
+                        )) continue
+                }
+
+                // Find all existing triggers that fired from this ETB event
+                // and belong to permanents controlled by the doubler's controller
+                for (trigger in triggers) {
+                    if (trigger.triggerContext.triggeringEntityId != enteringEntityId) continue
+                    if (trigger.controllerId != doubler.controllerId) continue
+
+                    // Only duplicate triggers that are ETB-related (ZoneChangeEvent triggers)
+                    val triggerEvent = trigger.ability.trigger
+                    if (triggerEvent !is GameEvent.ZoneChangeEvent) continue
+                    if (triggerEvent.to != Zone.BATTLEFIELD) continue
+
+                    duplicates.add(trigger)
+                }
+            }
+        }
+
+        triggers.addAll(duplicates)
     }
 
     /**

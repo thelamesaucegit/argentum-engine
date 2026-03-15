@@ -1677,3 +1677,22 @@ data object ExtraLoyaltyActivation : StaticAbility {
     override val description: String = "You may activate loyalty abilities of planeswalkers you control twice each turn rather than only once"
     override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
 }
+
+/**
+ * When a creature matching [creatureFilter] enters the battlefield under your control,
+ * triggered abilities of permanents you control that trigger from that entering
+ * trigger an additional time.
+ *
+ * This models Naban, Dean of Iteration and similar "Panharmonicon for a subtype" effects.
+ * The [creatureFilter] restricts which entering creatures cause the doubling (e.g., Wizards).
+ *
+ * Multiple copies are additive: two copies yield three total triggers, etc.
+ */
+@SerialName("AdditionalETBTriggers")
+@Serializable
+data class AdditionalETBTriggers(
+    val creatureFilter: GameObjectFilter,
+    override val description: String = "Triggered abilities trigger an additional time"
+) : StaticAbility {
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
