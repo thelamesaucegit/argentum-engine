@@ -183,6 +183,7 @@ object DominariaSet {
         TetsukoUmezawaFugitive,
         ThallidOmnivore,
         ThallidSoothsayer,
+        ThornElemental,
         TolarianScholar,
         TraxosScourgeOfKroog,
         TragicPoet,

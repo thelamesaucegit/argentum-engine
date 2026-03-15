@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 183 / 249
+**Implemented:** 184 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 26   |
 | Black      | 38    | 28   |
 | Red        | 38    | 31   |
-| Green      | 37    | 29   |
+| Green      | 37    | 30   |
 | Multicolor | 19    | 13   |
 | Colorless  | 30    | 20   |
 | Land       | 12    | 9    |
@@ -230,7 +230,7 @@
 - [x] The Flame of Keld
 - [x] The Mending of Dominaria
 - [ ] The Mirari Conjecture
-- [ ] Thorn Elemental
+- [x] Thorn Elemental
 - [ ] Thran Temporal Gateway
 - [ ] Tiana, Ship's Caretaker
 - [ ] Time of Ice

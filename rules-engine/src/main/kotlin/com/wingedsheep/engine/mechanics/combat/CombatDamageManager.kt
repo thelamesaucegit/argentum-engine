@@ -20,6 +20,7 @@ import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.model.EntityId
+import com.wingedsheep.sdk.scripting.AssignCombatDamageAsUnblocked
 import com.wingedsheep.sdk.scripting.DivideCombatDamageFreely
 import java.util.UUID
 
@@ -63,6 +64,61 @@ internal class CombatDamageManager(
 
         val projected = state.projectedState
         val attackers = state.findEntitiesWith<AttackingComponent>()
+
+        // Pre-check: if any blocked attacker has AssignCombatDamageAsUnblocked, ask the
+        // controller whether to assign damage to the defending player instead of blockers.
+        for ((attackerId, attackingComponent) in attackers) {
+            if (attackerId !in state.getBattlefield()) continue
+            val attackerContainer = state.getEntity(attackerId) ?: continue
+            val attackerCard = attackerContainer.get<CardComponent>() ?: continue
+
+            // Only relevant when blocked
+            val blockedBy = attackerContainer.get<BlockedComponent>() ?: continue
+            if (blockedBy.blockerIds.isEmpty()) continue
+            val liveBlockers = blockedBy.blockerIds.filter { it in state.getBattlefield() }
+            if (liveBlockers.isEmpty()) continue
+
+            // Already has a manual assignment (decision already made)
+            if (attackerContainer.get<DamageAssignmentComponent>() != null) continue
+
+            val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: continue
+            val hasAssignAsUnblocked = cardDef.staticAbilities.any { it is AssignCombatDamageAsUnblocked }
+            if (!hasAssignAsUnblocked) continue
+
+            if (!dealsDamageThisStep(projected, attackerId, firstStrike)) continue
+
+            val attackerPower = projected.getPower(attackerId) ?: 0
+            if (attackerPower <= 0) continue
+
+            val attackingPlayer = projected.getController(attackerId) ?: continue
+            val decisionId = UUID.randomUUID().toString()
+
+            val decision = YesNoDecision(
+                id = decisionId,
+                playerId = attackingPlayer,
+                prompt = "Assign ${attackerCard.name}'s combat damage as though it weren't blocked?",
+                context = DecisionContext(
+                    sourceId = attackerId,
+                    sourceName = attackerCard.name,
+                    phase = DecisionPhase.COMBAT
+                ),
+                yesText = "Assign to player",
+                noText = "Assign to blockers"
+            )
+
+            val continuation = AssignAsUnblockedContinuation(
+                decisionId = decisionId,
+                attackerId = attackerId,
+                defendingPlayerId = attackingComponent.defenderId,
+                firstStrike = firstStrike
+            )
+
+            val pausedState = state
+                .withPendingDecision(decision)
+                .pushContinuation(continuation)
+
+            return ExecutionResult.paused(pausedState, decision)
+        }
 
         // Pre-check: if any attacker with DivideCombatDamageFreely needs a distribution
         // decision, pause before processing ANY damage.
@@ -293,7 +349,7 @@ internal class CombatDamageManager(
                 if (power > 0) {
                     val manualAssignment = attackerContainer.get<DamageAssignmentComponent>()
                     when {
-                        manualAssignment != null -> {
+                        manualAssignment != null && manualAssignment.assignments.isNotEmpty() -> {
                             for ((targetId, damage) in manualAssignment.assignments) {
                                 if (damage > 0) {
                                     assignments.add(CombatDamageAssignment(attackerId, targetId, damage))

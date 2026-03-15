@@ -175,6 +175,7 @@ val engineSerializersModule = SerializersModule {
         subclass(StormCopyTargetContinuation::class)
         subclass(DeflectDamageSourceChoiceContinuation::class)
         subclass(AddDynamicManaContinuation::class)
+        subclass(AssignAsUnblockedContinuation::class)
     }
 
     // Component hierarchy (for GameState persistence)

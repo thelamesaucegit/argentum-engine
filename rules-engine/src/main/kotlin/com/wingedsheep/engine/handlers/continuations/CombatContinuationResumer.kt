@@ -19,6 +19,9 @@ class CombatContinuationResumer(
         resumer(DamageAssignmentContinuation::class) { state, continuation, response, _ ->
             resumeDamageAssignment(state, continuation, response)
         },
+        resumer(AssignAsUnblockedContinuation::class) { state, continuation, response, _ ->
+            resumeAssignAsUnblocked(state, continuation, response)
+        },
         resumer(DamagePreventionContinuation::class, ::resumeDamagePrevention),
         resumer(BlockerOrderContinuation::class, ::resumeBlockerOrder),
         resumer(AttackerOrderContinuation::class, ::resumeAttackerOrder),
@@ -43,6 +46,40 @@ class CombatContinuationResumer(
                     assignments
                 )
             )
+        }
+
+        return ctx.combatManager?.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
+            ?: ExecutionResult.success(newState)
+    }
+
+    fun resumeAssignAsUnblocked(
+        state: GameState,
+        continuation: AssignAsUnblockedContinuation,
+        response: DecisionResponse
+    ): ExecutionResult {
+        if (response !is YesNoResponse) {
+            return ExecutionResult.error(state, "Expected yes/no response for assign-as-unblocked decision")
+        }
+
+        val newState = if (response.choice) {
+            // Player chose to assign damage to the defending player — store a manual assignment
+            val projected = state.projectedState
+            val power = projected.getPower(continuation.attackerId) ?: 0
+            state.updateEntity(continuation.attackerId) { container ->
+                container.with(
+                    com.wingedsheep.engine.state.components.combat.DamageAssignmentComponent(
+                        mapOf(continuation.defendingPlayerId to power)
+                    )
+                )
+            }
+        } else {
+            // Player chose to assign to blockers normally — mark with empty assignment
+            // so the pre-check doesn't re-ask; proposeDamageAssignments will auto-distribute
+            state.updateEntity(continuation.attackerId) { container ->
+                container.with(
+                    com.wingedsheep.engine.state.components.combat.DamageAssignmentComponent(emptyMap())
+                )
+            }
         }
 
         return ctx.combatManager?.applyCombatDamage(newState, firstStrike = continuation.firstStrike)

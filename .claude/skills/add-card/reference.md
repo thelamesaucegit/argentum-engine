@@ -937,6 +937,7 @@ Set via `staticAbility { ability = ... }`:
 
 - `AssignDamageEqualToToughness(target, onlyWhenToughnessGreaterThanPower)` — Doran
 - `DivideCombatDamageFreely(target)` — divide damage freely
+- `AssignCombatDamageAsUnblocked(target)` — may assign combat damage as though unblocked (Thorn Elemental)
 
 ### Type & Subtype
 

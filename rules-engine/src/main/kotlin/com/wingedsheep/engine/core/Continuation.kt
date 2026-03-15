@@ -200,6 +200,22 @@ data class DamageAssignmentContinuation(
 ) : ContinuationFrame
 
 /**
+ * Resume combat damage after player decides whether to assign damage as though unblocked.
+ * Used for creatures with AssignCombatDamageAsUnblocked (e.g. Thorn Elemental).
+ *
+ * @property attackerId The attacking creature with the ability
+ * @property defendingPlayerId The defending player
+ * @property firstStrike Whether this is during the first strike combat damage step
+ */
+@Serializable
+data class AssignAsUnblockedContinuation(
+    override val decisionId: String,
+    val attackerId: EntityId,
+    val defendingPlayerId: EntityId,
+    val firstStrike: Boolean = false
+) : ContinuationFrame
+
+/**
  * Resume spell resolution after target or mode selection.
  *
  * @property spellId The spell entity on the stack

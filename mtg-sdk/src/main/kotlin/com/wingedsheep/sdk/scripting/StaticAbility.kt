@@ -335,6 +335,21 @@ data class DivideCombatDamageFreely(
 }
 
 /**
+ * This creature may assign its combat damage as though it weren't blocked.
+ * When blocked, the controller chooses whether to assign damage to blockers
+ * or to the defending player/planeswalker. Used for Thorn Elemental.
+ */
+@SerialName("AssignCombatDamageAsUnblocked")
+@Serializable
+data class AssignCombatDamageAsUnblocked(
+    val target: StaticTarget = StaticTarget.SourceCreature
+) : StaticAbility {
+    override val description: String =
+        "You may have this creature assign its combat damage as though it weren't blocked"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Types of global effects from enchantments.
  */
 @Serializable
