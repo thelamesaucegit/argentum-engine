@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 194 / 249
+**Implemented:** 195 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -11,7 +11,7 @@
 | Black      | 38    | 30   |
 | Red        | 38    | 34   |
 | Green      | 37    | 30   |
-| Multicolor | 19    | 14   |
+| Multicolor | 19    | 15   |
 | Colorless  | 30    | 22   |
 | Land       | 12    | 9    |
 
@@ -232,7 +232,7 @@
 - [ ] The Mirari Conjecture
 - [x] Thorn Elemental
 - [ ] Thran Temporal Gateway
-- [ ] Tiana, Ship's Caretaker
+- [x] Tiana, Ship's Caretaker
 - [ ] Time of Ice
 - [x] Tolarian Scholar
 - [ ] Torgaar, Famine Incarnate

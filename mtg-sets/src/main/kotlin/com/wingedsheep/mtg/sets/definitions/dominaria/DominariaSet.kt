@@ -185,6 +185,7 @@ object DominariaSet {
         TempestDjinn,
         TesharAncestorsApostle,
         TerritorialAllosaurus,
+        TianaShipsCaretaker,
         TheAntiquitiesWar,
         TheFirstEruption,
         TheFlameOfKeld,
