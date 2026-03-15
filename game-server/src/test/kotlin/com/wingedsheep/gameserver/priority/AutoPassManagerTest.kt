@@ -819,16 +819,16 @@ class AutoPassManagerTest : FunSpec({
             autoPassManager.getNextStopPoint(state, player1, false) shouldBe "Pass to Main"
         }
 
-        test("returns 'Pass to Main 2' from declare attackers on opponent's turn with no attackers and meaningful actions") {
-            // Stops at opponent's postcombat main when player has instant-speed responses
+        test("returns 'Pass' from declare attackers on opponent's turn with no attackers and meaningful actions") {
+            // On opponent's turn, uses neutral "Pass" label instead of destination labels
             val state = createMockState(player1, player2, Step.DECLARE_ATTACKERS)
-            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass to Main 2"
+            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass"
         }
 
-        test("returns 'Pass to Main 2' from opponent's combat with meaningful actions") {
-            // Stops at opponent's postcombat main when player has instant-speed responses
+        test("returns 'Pass' from opponent's combat with meaningful actions") {
+            // On opponent's turn, uses neutral "Pass" label instead of destination labels
             val state = createMockState(player1, player2, Step.COMBAT_DAMAGE)
-            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass to Main 2"
+            autoPassManager.getNextStopPoint(state, player1, true) shouldBe "Pass"
         }
     }
 
@@ -1098,9 +1098,8 @@ class AutoPassManagerTest : FunSpec({
         test("Opponent-turn stop override in getNextStopPoint") {
             // On opponent's turn at main phase, next stop is normally declare attackers or end step
             val state = createMockState(player1, player2, Step.PRECOMBAT_MAIN)
-            // With opponent-turn override on UPKEEP → irrelevant since we're past it
-            // With opponent-turn override on BEGIN_COMBAT → should stop there
-            autoPassManager.getNextStopPoint(state, player1, false, opponentTurnStops = setOf(Step.BEGIN_COMBAT)) shouldBe "Pass to Combat"
+            // With opponent-turn override on BEGIN_COMBAT → stops there, but uses neutral "Pass" on opponent's turn
+            autoPassManager.getNextStopPoint(state, player1, false, opponentTurnStops = setOf(Step.BEGIN_COMBAT)) shouldBe "Pass"
         }
     }
 })
