@@ -398,7 +398,15 @@ class LegalActionsCalculator(
                         val manaCostString = effectiveCost.toString()
 
                         // Compute auto-tap preview for UI highlighting
-                        val autoTapSolution = manaSolver.solve(state, playerId, effectiveCost)
+                        // For Delve/Convoke spells, solve against the reduced cost so the preview
+                        // reflects what the player actually needs to tap after alternative payment
+                        val autoTapCost = if (hasDelve && delveCards != null && delveCards.isNotEmpty()) {
+                            val maxDelve = minOf(delveCards.size, effectiveCost.genericAmount)
+                            effectiveCost.reduceGeneric(maxDelve)
+                        } else {
+                            effectiveCost
+                        }
+                        val autoTapSolution = manaSolver.solve(state, playerId, autoTapCost)
                         val autoTapPreview = autoTapSolution?.sources?.map { it.entityId }
 
                         // Check for DividedDamageEffect to flag damage distribution requirement
