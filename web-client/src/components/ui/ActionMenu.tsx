@@ -358,7 +358,8 @@ function ActionOptionButton({
   // Only show separate mana cost if label doesn't already contain mana symbols
   const showSeparateCost = option.manaCost && !option.label.includes('{')
   // Show mana selection icon for actions that have mana sources available
-  const hasManaSelection = option.isAvailable && option.action?.availableManaSources != null && option.action.availableManaSources.length > 0
+  // Delve spells handle mana selection after the delve selector, so don't show the icon
+  const hasManaSelection = option.isAvailable && option.action?.availableManaSources != null && option.action.availableManaSources.length > 0 && !option.action.hasDelve
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
