@@ -2,7 +2,7 @@
  * Gameplay slice - handles game state, actions, events, and core game mechanics.
  */
 import type { SliceCreator, EntityId, LogEntry, MulliganState, GameOverState, ErrorState } from './types'
-import type { ClientGameState, ClientEvent, GameAction, LegalActionInfo, PendingDecision, OpponentDecisionStatus, RetapInfo } from '../../types'
+import type { ClientGameState, ClientEvent, GameAction, LegalActionInfo, PendingDecision, OpponentDecisionStatus } from '../../types'
 import {
   createCreateGameMessage,
   createJoinGameMessage,
@@ -16,7 +16,7 @@ import {
   createSetPriorityModeMessage,
   createSetStopOverridesMessage,
   createRequestUndoMessage,
-  createRequestRetapMessage,
+
 } from '../../types'
 import type { Step, PriorityModeValue } from '../../types'
 import { trackEvent } from '../../utils/analytics'
@@ -39,7 +39,6 @@ export interface GameplaySliceState {
   nextStopPoint: string | null
   opponentName: string | null
   undoAvailable: boolean
-  retapInfo: RetapInfo | null
   opponentDisconnectCountdown: number | null
 }
 
@@ -70,7 +69,6 @@ export interface GameplaySliceActions {
   cyclePriorityMode: () => void
   toggleStopOverride: (step: Step, isMyTurn: boolean) => void
   requestUndo: () => void
-  requestRetap: (selectedSourceIds: readonly EntityId[]) => void
   returnToMenu: () => void
   clearError: () => void
   consumeEvent: () => ClientEvent | undefined
@@ -96,7 +94,6 @@ export const createGameplaySlice: SliceCreator<GameplaySlice> = (set, get) => ({
   nextStopPoint: null,
   opponentName: null,
   undoAvailable: false,
-  retapInfo: null,
   opponentDisconnectCountdown: null,
 
   // Actions
@@ -350,10 +347,6 @@ export const createGameplaySlice: SliceCreator<GameplaySlice> = (set, get) => ({
     getWebSocket()?.send(createRequestUndoMessage())
   },
 
-  requestRetap: (selectedSourceIds: readonly EntityId[]) => {
-    getWebSocket()?.send(createRequestRetapMessage(selectedSourceIds))
-  },
-
   cancelGame: () => {
     trackEvent('game_cancelled')
     getWebSocket()?.send(createCancelGameMessage())
@@ -408,7 +401,7 @@ export const createGameplaySlice: SliceCreator<GameplaySlice> = (set, get) => ({
       damageDistributionState: null,
       distributeState: null,
       counterDistributionState: null,
-      retapSelectionState: null,
+      manaSelectionState: null,
       hoveredCardId: null,
       draggingBlockerId: null,
       draggingCardId: null,
@@ -417,7 +410,6 @@ export const createGameplaySlice: SliceCreator<GameplaySlice> = (set, get) => ({
       fullControl: false,
       priorityMode: 'auto' as PriorityModeValue,
       undoAvailable: false,
-      retapInfo: null,
       stopOverrides: { myTurnStops: [], opponentTurnStops: [] },
       nextStopPoint: null,
       opponentDisconnectCountdown: null,

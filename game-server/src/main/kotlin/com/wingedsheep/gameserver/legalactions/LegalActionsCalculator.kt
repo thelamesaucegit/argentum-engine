@@ -32,6 +32,7 @@ import com.wingedsheep.sdk.scripting.costs.PayCost
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.engine.state.components.player.LandDropsComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
+import com.wingedsheep.gameserver.protocol.ServerMessage
 import com.wingedsheep.gameserver.protocol.AdditionalCostInfo
 import com.wingedsheep.gameserver.protocol.CounterRemovalCreatureInfo
 import com.wingedsheep.gameserver.protocol.ConvokeCreatureInfo
@@ -163,6 +164,9 @@ class LegalActionsCalculator(
                 }
             }
         }
+
+        // Pre-compute available mana sources for pre-cast selection UI
+        val manaSourceInfos = buildManaSourceInfos(state, playerId)
 
         // Check for castable spells (non-instant only at sorcery speed)
         val canPlaySorcerySpeed = state.step.isMainPhase &&
@@ -2302,6 +2306,17 @@ class LegalActionsCalculator(
             }
         }
 
+        // Attach available mana sources to every action that has a mana cost (identified by autoTapPreview)
+        if (manaSourceInfos != null) {
+            return result.map { info ->
+                if (info.autoTapPreview != null) {
+                    info.copy(availableManaSources = manaSourceInfos)
+                } else {
+                    info
+                }
+            }
+        }
+
         return result
     }
 
@@ -3002,5 +3017,26 @@ class LegalActionsCalculator(
             }
         }
         return false
+    }
+
+    /**
+     * Build ManaSourceInfo list for all untapped mana sources a player controls.
+     * Returns null if the player has no available sources (avoids sending empty arrays).
+     */
+    private fun buildManaSourceInfos(state: GameState, playerId: EntityId): List<ServerMessage.ManaSourceInfo>? {
+        val sources = manaSolver.findAvailableManaSources(state, playerId)
+        if (sources.isEmpty()) return null
+        return sources.map { source ->
+            val card = state.getEntity(source.entityId)?.get<CardComponent>()
+            val imageUri = card?.let { cardRegistry.getCard(it.cardDefinitionId)?.metadata?.imageUri }
+            ServerMessage.ManaSourceInfo(
+                entityId = source.entityId,
+                name = source.name,
+                imageUri = imageUri,
+                producesColors = source.producesColors.map { it.symbol.toString() },
+                producesColorless = source.producesColorless,
+                manaAmount = source.manaAmount
+            )
+        }
     }
 }

@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useGameStore } from '../../store/gameStore'
+import { useInteraction } from '../../hooks/useInteraction'
 import { useViewingPlayer, useOpponent, useStackCards, selectPriorityMode, useGhostCards, useRevealedLibraryTopCard } from '../../store/selectors'
 import { hand, getNextStep, StepShortNames } from '../../types'
 import { StepStrip } from '../ui/StepStrip'
@@ -63,12 +64,27 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
   const undoAvailable = useGameStore((state) => state.undoAvailable)
   const requestUndo = useGameStore((state) => state.requestUndo)
   const delveSelectionState = useGameStore((state) => state.delveSelectionState)
-  const retapInfo = useGameStore((state) => state.retapInfo)
-  const retapSelectionState = useGameStore((state) => state.retapSelectionState)
-  const startRetapSelection = useGameStore((state) => state.startRetapSelection)
-  const cancelRetapSelection = useGameStore((state) => state.cancelRetapSelection)
-  const confirmRetapSelection = useGameStore((state) => state.confirmRetapSelection)
+  const manaSelectionState = useGameStore((state) => state.manaSelectionState)
+  const cancelManaSelection = useGameStore((state) => state.cancelManaSelection)
+  const { executeAction } = useInteraction()
   const responsive = useResponsive(topOffset)
+
+  // Confirm mana selection: build modified LegalActionInfo with Explicit payment and route through executeAction
+  const handleConfirmManaSelection = useCallback(() => {
+    if (!manaSelectionState) return
+    const paymentStrategy = {
+      type: 'Explicit' as const,
+      manaAbilitiesToActivate: [...manaSelectionState.selectedSources],
+    }
+    // Cast to add paymentStrategy - only actions with mana costs reach here
+    const modifiedAction = { ...manaSelectionState.action, paymentStrategy } as import('../../types').GameAction
+    const modifiedActionInfo: import('../../types').LegalActionInfo = {
+      ...manaSelectionState.actionInfo,
+      action: modifiedAction,
+    }
+    cancelManaSelection()
+    executeAction(modifiedActionInfo)
+  }, [manaSelectionState, cancelManaSelection, executeAction])
 
   // In spectator mode, use spectatingState.gameState
   const gameState = spectatorMode ? spectatingState?.gameState : playerGameState
@@ -110,14 +126,14 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
     : 0
   const distributeRemaining = distributeState ? distributeState.totalAmount - distributeTotalAllocated : 0
   const isInCounterDistMode = !spectatorMode && counterDistributionState !== null
-  const isInRetapMode = !spectatorMode && retapSelectionState !== null
+  const isInManaSelectionMode = !spectatorMode && manaSelectionState !== null
 
-  // Compute retap mana progress using most-constrained-first matching
-  const retapProgress = useMemo(() => {
-    if (!retapSelectionState) return null
+  // Compute mana selection progress using most-constrained-first matching
+  const manaProgress = useMemo(() => {
+    if (!manaSelectionState) return null
 
     // Parse mana cost into requirements
-    const symbols = retapSelectionState.manaCost.match(/\{([^}]+)\}/g)
+    const symbols = manaSelectionState.manaCost.match(/\{([^}]+)\}/g)
     if (!symbols) return { satisfied: 0, total: 0, entries: [] }
 
     // Build list of unfulfilled requirements: colored pips + generic pips
@@ -132,8 +148,8 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
         coloredReqs.push(inner)
       }
     }
-    if (retapSelectionState.xValue > 0) {
-      genericCount += retapSelectionState.xValue
+    if (manaSelectionState.xValue > 0) {
+      genericCount += manaSelectionState.xValue
     }
     const total = coloredReqs.length + genericCount
 
@@ -141,9 +157,9 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
     // A source that produces {W, B, G} can satisfy W, B, or G colored reqs, or 1 generic
     // Multi-mana sources (e.g., Gilded Lotus producing 3) contribute multiple entries
     const sources: { colors: readonly string[] }[] = []
-    for (const id of retapSelectionState.selectedSources) {
-      const colors = retapSelectionState.sourceColors[id] ?? []
-      const manaAmount = retapSelectionState.sourceManaAmounts?.[id] ?? 1
+    for (const id of manaSelectionState.selectedSources) {
+      const colors = manaSelectionState.sourceColors[id] ?? []
+      const manaAmount = manaSelectionState.sourceManaAmounts?.[id] ?? 1
       for (let i = 0; i < manaAmount; i++) {
         sources.push({ colors: colors.length > 0 ? colors : ['C'] })
       }
@@ -198,7 +214,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
     })
 
     return { satisfied, total, entries, colorSatisfied }
-  }, [retapSelectionState])
+  }, [manaSelectionState])
 
   const counterTotalAllocated = counterDistributionState
     ? Object.values(counterDistributionState.distribution).reduce<number>((sum, v) => sum + v, 0)
@@ -429,8 +445,8 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
       </div>
 
       {/* Floating pass/resolve button (bottom-right) - always present, disabled when unavailable */}
-      {!spectatorMode && viewingPlayer && !isInRetapMode && (() => {
-        const passEnabled = canAct && !isInCombatMode && !isInDistributeMode && !isInCounterDistMode && !isInRetapMode && !delveSelectionState && !targetingState
+      {!spectatorMode && viewingPlayer && !isInManaSelectionMode && (() => {
+        const passEnabled = canAct && !isInCombatMode && !isInDistributeMode && !isInCounterDistMode && !isInManaSelectionMode && !delveSelectionState && !targetingState
         return (
           <div style={{
             position: 'fixed',
@@ -467,8 +483,8 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
         )
       })()}
 
-      {/* Undo, retap, priority mode icons (bottom-right, above pass button) */}
-      {!spectatorMode && viewingPlayer && !isInRetapMode && (
+      {/* Undo, priority mode icons (bottom-right, above pass button) */}
+      {!spectatorMode && viewingPlayer && !isInManaSelectionMode && (
         <div style={{
           position: 'fixed',
           bottom: responsive.isMobile ? 64 : 66,
@@ -491,20 +507,6 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
             }}
           >
             <i className="ms ms-untap" style={{ fontSize: 14 }} />
-          </button>
-          <button
-            onClick={startRetapSelection}
-            disabled={!retapInfo}
-            title="Retap lands"
-            style={{
-              ...styles.floatingBarButton,
-              color: retapInfo ? '#60a5fa' : '#555',
-              border: retapInfo ? '1px solid #3b82f6' : '1px solid #333',
-              opacity: retapInfo ? 1 : 0.4,
-              cursor: retapInfo ? 'pointer' : 'default',
-            }}
-          >
-            <i className="ms ms-land" style={{ fontSize: 14 }} />
           </button>
           <button
             onClick={cyclePriorityMode}
@@ -808,8 +810,8 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
       {/* Target reselection animations (Grip of Chaos, etc.) */}
       <TargetReselectedAnimations />
 
-      {/* Retap selection controls (bottom-right, replaces pass button during retap mode) */}
-      {isInRetapMode && retapSelectionState && (
+      {/* Mana selection controls (bottom-right, replaces pass button during mana selection mode) */}
+      {isInManaSelectionMode && manaSelectionState && (
         <div style={{
           position: 'fixed',
           bottom: 16,
@@ -821,18 +823,18 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
           zIndex: 100,
         }}>
           {/* Mana progress indicator */}
-          {retapProgress && (
+          {manaProgress && (
             <div style={{
               backgroundColor: 'rgba(0, 0, 0, 0.9)',
-              border: `1px solid ${retapProgress.satisfied >= retapProgress.total ? 'rgba(74, 222, 128, 0.5)' : 'rgba(255, 255, 255, 0.2)'}`,
+              border: `1px solid ${manaProgress.satisfied >= manaProgress.total ? 'rgba(74, 222, 128, 0.5)' : 'rgba(255, 255, 255, 0.2)'}`,
               borderRadius: 8,
               padding: responsive.isMobile ? '8px 12px' : '10px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: 10,
             }}>
-              {retapProgress.entries.map(([symbol, required]) => {
-                const fulfilled = retapProgress.colorSatisfied?.[symbol] ?? 0
+              {manaProgress.entries.map(([symbol, required]) => {
+                const fulfilled = manaProgress.colorSatisfied?.[symbol] ?? 0
                 return (
                   <div key={symbol} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <ManaSymbol symbol={symbol} size={18} />
@@ -847,18 +849,18 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
                 )
               })}
               <span style={{
-                color: retapProgress.satisfied >= retapProgress.total ? '#4ade80' : '#888',
+                color: manaProgress.satisfied >= manaProgress.total ? '#4ade80' : '#888',
                 fontSize: responsive.fontSize.small,
                 marginLeft: 4,
               }}>
-                ({retapProgress.satisfied}/{retapProgress.total})
+                ({manaProgress.satisfied}/{manaProgress.total})
               </span>
             </div>
           )}
           {/* Confirm / Cancel buttons */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button
-              onClick={cancelRetapSelection}
+              onClick={cancelManaSelection}
               style={{
                 padding: responsive.isMobile ? '10px 20px' : '12px 24px',
                 fontSize: responsive.fontSize.normal,
@@ -873,7 +875,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
               Cancel
             </button>
             <button
-              onClick={confirmRetapSelection}
+              onClick={handleConfirmManaSelection}
               style={{
                 padding: responsive.isMobile ? '10px 20px' : '12px 24px',
                 fontSize: responsive.fontSize.normal,

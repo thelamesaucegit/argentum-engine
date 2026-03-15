@@ -93,8 +93,6 @@ sealed interface ServerMessage {
         val priorityMode: String? = null,
         /** Monotonically increasing version — clients use this to detect missed messages */
         val stateVersion: Long = 0,
-        /** Info for re-tapping lands after a spell cast (null if not available) */
-        val retapInfo: RetapInfo? = null
     ) : ServerMessage
 
     /**
@@ -120,9 +118,7 @@ sealed interface ServerMessage {
         /** Current priority mode for this player */
         val priorityMode: String? = null,
         /** Monotonically increasing version — clients use this to detect missed messages */
-        val stateVersion: Long = 0,
-        /** Info for re-tapping lands after a spell cast (null if not available) */
-        val retapInfo: RetapInfo? = null
+        val stateVersion: Long = 0
     ) : ServerMessage
 
     /**
@@ -135,32 +131,16 @@ sealed interface ServerMessage {
     )
 
     /**
-     * Info about a mana source available for re-tapping.
+     * Info about a mana source available for pre-cast selection.
      */
     @Serializable
-    data class RetapSourceInfo(
+    data class ManaSourceInfo(
         val entityId: EntityId,
         val name: String,
         val imageUri: String? = null,
         val producesColors: List<String> = emptyList(),
         val producesColorless: Boolean = false,
         val manaAmount: Int = 1
-    )
-
-    /**
-     * Info for re-tapping lands after a spell was cast with AutoPay.
-     * Allows the player to change which lands are tapped without undoing the spell.
-     */
-    @Serializable
-    data class RetapInfo(
-        /** The mana cost string (e.g., "{2}{R}") */
-        val manaCost: String,
-        /** Sources currently tapped for this spell */
-        val currentlyTappedSourceIds: List<EntityId>,
-        /** All sources available for selection (currently tapped + untapped) */
-        val availableSources: List<RetapSourceInfo>,
-        /** X value if spell has X cost */
-        val xValue: Int = 0
     )
 
     /**
@@ -976,6 +956,8 @@ data class LegalActionInfo(
     val minDamagePerTarget: Int? = null,
     /** Preview of which lands/sources would be auto-tapped if this spell is cast (for UI highlighting) */
     val autoTapPreview: List<EntityId>? = null,
+    /** Available mana sources for pre-cast selection (for mana-costing actions) */
+    val availableManaSources: List<ServerMessage.ManaSourceInfo>? = null,
     /** Whether this ability produces mana of any color and needs a color choice from the player */
     val requiresManaColorChoice: Boolean = false,
     /** Source zone if this action is from a non-hand zone (e.g., "LIBRARY" for Future Sight) */

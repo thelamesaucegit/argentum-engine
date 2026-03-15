@@ -350,36 +350,62 @@ function ActionOptionButton({
   onClick: () => void
 }) {
   const setAutoTapPreview = useGameStore((state) => state.setAutoTapPreview)
+  const startManaSelection = useGameStore((state) => state.startManaSelection)
   const viewingPlayer = useViewingPlayer()
   const manaPool = viewingPlayer?.manaPool
   const hasFloatingMana = manaPool != null && !isManaPoolEmpty(manaPool)
   const styleClass = getActionStyleClass(option.actionType, option.isAvailable)
   // Only show separate mana cost if label doesn't already contain mana symbols
   const showSeparateCost = option.manaCost && !option.label.includes('{')
+  // Show mana selection icon for actions that have mana sources available
+  const hasManaSelection = option.isAvailable && option.action?.availableManaSources != null && option.action.availableManaSources.length > 0
 
   return (
-    <button
-      onClick={onClick}
-      disabled={!option.isAvailable}
-      className={`${styles.actionButton} ${styleClass}`}
-      onMouseEnter={() => {
-        if (option.action?.autoTapPreview) {
-          setAutoTapPreview(option.action.autoTapPreview)
-        }
-      }}
-      onMouseLeave={() => {
-        setAutoTapPreview(null)
-      }}
-    >
-      <span className={styles.actionButtonLabel}>
-        <AbilityText text={option.label} size={14} />
-      </span>
-      {showSeparateCost && (
-        hasFloatingMana && manaPool
-          ? <ManaCostProgress cost={option.manaCost} manaPool={manaPool} size={16} gap={2} />
-          : <ManaCost cost={option.manaCost} size={16} gap={2} />
+    <div style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
+      <button
+        onClick={onClick}
+        disabled={!option.isAvailable}
+        className={`${styles.actionButton} ${styleClass}`}
+        style={hasManaSelection ? { borderTopRightRadius: 0, borderBottomRightRadius: 0 } : undefined}
+        onMouseEnter={() => {
+          if (option.action?.autoTapPreview) {
+            setAutoTapPreview(option.action.autoTapPreview)
+          }
+        }}
+        onMouseLeave={() => {
+          setAutoTapPreview(null)
+        }}
+      >
+        <span className={styles.actionButtonLabel}>
+          <AbilityText text={option.label} size={14} />
+        </span>
+        {showSeparateCost && (
+          hasFloatingMana && manaPool
+            ? <ManaCostProgress cost={option.manaCost} manaPool={manaPool} size={16} gap={2} />
+            : <ManaCost cost={option.manaCost} size={16} gap={2} />
+        )}
+      </button>
+      {hasManaSelection && option.action && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            startManaSelection(option.action!)
+          }}
+          className={styles.manaSelectionButton}
+          title="Choose which lands to tap"
+          onMouseEnter={() => {
+            if (option.action?.autoTapPreview) {
+              setAutoTapPreview(option.action.autoTapPreview)
+            }
+          }}
+          onMouseLeave={() => {
+            setAutoTapPreview(null)
+          }}
+        >
+          <i className="ms ms-land" style={{ fontSize: 12 }} />
+        </button>
       )}
-    </button>
+    </div>
   )
 }
 

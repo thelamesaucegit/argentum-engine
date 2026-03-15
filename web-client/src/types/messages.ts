@@ -157,34 +157,18 @@ export interface StateUpdateMessage {
   readonly priorityMode?: PriorityModeValue | null
   /** Monotonically increasing version — used to detect missed messages */
   readonly stateVersion?: number
-  /** Info for re-tapping lands after a spell cast (null if not available) */
-  readonly retapInfo?: RetapInfo | null
 }
 
 /**
- * Info about a mana source available for re-tapping.
+ * Info about a mana source available for pre-cast selection.
  */
-export interface RetapSourceInfo {
+export interface ManaSourceInfo {
   readonly entityId: EntityId
   readonly name: string
   readonly imageUri?: string | null
   readonly producesColors?: readonly string[]
   readonly producesColorless?: boolean
   readonly manaAmount?: number
-}
-
-/**
- * Info for re-tapping lands after a spell was cast with AutoPay.
- */
-export interface RetapInfo {
-  /** The mana cost string (e.g., "{2}{R}") */
-  readonly manaCost: string
-  /** Sources currently tapped for this spell */
-  readonly currentlyTappedSourceIds: readonly EntityId[]
-  /** All sources available for selection (currently tapped + untapped) */
-  readonly availableSources: readonly RetapSourceInfo[]
-  /** X value if spell has X cost */
-  readonly xValue?: number
 }
 
 /**
@@ -233,8 +217,6 @@ export interface StateDeltaUpdateMessage {
   readonly priorityMode?: PriorityModeValue | null
   /** Monotonically increasing version — used to detect missed messages */
   readonly stateVersion?: number
-  /** Info for re-tapping lands after a spell cast (null if not available) */
-  readonly retapInfo?: RetapInfo | null
 }
 
 // ============================================================================
@@ -554,6 +536,8 @@ export interface LegalActionInfo {
   readonly minDamagePerTarget?: number
   /** Preview of which lands/sources would be auto-tapped if this spell is cast (for UI highlighting) */
   readonly autoTapPreview?: readonly EntityId[]
+  /** Available mana sources for pre-cast selection */
+  readonly availableManaSources?: readonly ManaSourceInfo[]
   /** Whether this ability produces mana of any color and needs a color choice from the player */
   readonly requiresManaColorChoice?: boolean
   /** Source zone if this action is from a non-hand zone (e.g., "LIBRARY" for Future Sight) */
@@ -1237,7 +1221,6 @@ export type ClientMessage =
   | SetStopOverridesMessage
   // Undo
   | RequestUndoMessage
-  | RequestRetapMessage
   // Resync
   | RequestResyncMessage
 
@@ -1630,14 +1613,6 @@ export interface RequestUndoMessage {
 }
 
 /**
- * Request to re-tap lands after a spell was cast.
- */
-export interface RequestRetapMessage {
-  readonly type: 'requestRetap'
-  readonly selectedSourceIds: readonly EntityId[]
-}
-
-/**
  * Request a full state resync from the server.
  * Sent when the client detects it may have missed messages (tab backgrounded, version gap).
  */
@@ -1782,10 +1757,6 @@ export function createSetStopOverridesMessage(myTurnStops: readonly string[], op
 
 export function createRequestUndoMessage(): RequestUndoMessage {
   return { type: 'requestUndo' }
-}
-
-export function createRequestRetapMessage(selectedSourceIds: readonly EntityId[]): RequestRetapMessage {
-  return { type: 'requestRetap', selectedSourceIds }
 }
 
 export function createRequestResyncMessage(): RequestResyncMessage {

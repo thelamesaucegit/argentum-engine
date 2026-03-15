@@ -4,6 +4,7 @@ import com.wingedsheep.engine.core.CardCycledEvent
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.core.ManaSpentEvent
+import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.TypecycleCard
 import com.wingedsheep.engine.core.TypecycleSearchContinuation
@@ -74,7 +75,15 @@ class TypecycleCardHandler(
             .firstOrNull()
             ?: return "This card doesn't have typecycling"
 
-        if (!manaSolver.canPay(state, action.playerId, typecyclingAbility.cost)) {
+        if (action.paymentStrategy is PaymentStrategy.Explicit) {
+            for (sourceId in action.paymentStrategy.manaAbilitiesToActivate) {
+                val sourceContainer = state.getEntity(sourceId)
+                    ?: return "Mana source not found: $sourceId"
+                if (sourceContainer.has<TappedComponent>()) {
+                    return "Mana source is already tapped: $sourceId"
+                }
+            }
+        } else if (!manaSolver.canPay(state, action.playerId, typecyclingAbility.cost)) {
             return "Not enough mana to typecycle this card"
         }
 
@@ -138,24 +147,35 @@ class TypecycleCardHandler(
 
         // Tap lands for remaining cost
         if (!remainingCost.isEmpty()) {
-            val solution = manaSolver.solve(currentState, action.playerId, remainingCost, 0)
-                ?: return ExecutionResult.error(state, "Not enough mana to typecycle")
-
-            for (source in solution.sources) {
-                currentState = currentState.updateEntity(source.entityId) { c ->
-                    c.with(TappedComponent)
+            if (action.paymentStrategy is PaymentStrategy.Explicit) {
+                for (sourceId in action.paymentStrategy.manaAbilitiesToActivate) {
+                    val sourceName = currentState.getEntity(sourceId)
+                        ?.get<CardComponent>()?.name ?: "Unknown"
+                    currentState = currentState.updateEntity(sourceId) { c ->
+                        c.with(TappedComponent)
+                    }
+                    events.add(TappedEvent(sourceId, sourceName))
                 }
-                events.add(TappedEvent(source.entityId, source.name))
-            }
+            } else {
+                val solution = manaSolver.solve(currentState, action.playerId, remainingCost, 0)
+                    ?: return ExecutionResult.error(state, "Not enough mana to typecycle")
 
-            for ((_, production) in solution.manaProduced) {
-                when (production.color) {
-                    Color.WHITE -> whiteSpent++
-                    Color.BLUE -> blueSpent++
-                    Color.BLACK -> blackSpent++
-                    Color.RED -> redSpent++
-                    Color.GREEN -> greenSpent++
-                    null -> colorlessSpent += production.colorless
+                for (source in solution.sources) {
+                    currentState = currentState.updateEntity(source.entityId) { c ->
+                        c.with(TappedComponent)
+                    }
+                    events.add(TappedEvent(source.entityId, source.name))
+                }
+
+                for ((_, production) in solution.manaProduced) {
+                    when (production.color) {
+                        Color.WHITE -> whiteSpent++
+                        Color.BLUE -> blueSpent++
+                        Color.BLACK -> blackSpent++
+                        Color.RED -> redSpent++
+                        Color.GREEN -> greenSpent++
+                        null -> colorlessSpent += production.colorless
+                    }
                 }
             }
         }

@@ -154,8 +154,7 @@ export type {
   LegalActionInfo,
   ConvokeCreatureInfo,
   DelveCardInfo,
-  RetapInfo,
-  RetapSourceInfo,
+  ManaSourceInfo,
   MulliganDecisionMessage,
   ChooseBottomCardsMessage,
   MulliganCompleteMessage,
@@ -363,6 +362,5 @@ export {
   createSetPriorityModeMessage,
   createSetStopOverridesMessage,
   createRequestUndoMessage,
-  createRequestRetapMessage,
   createRequestResyncMessage,
 } from './messages'

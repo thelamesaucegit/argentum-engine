@@ -124,7 +124,8 @@ data class ActivateAbility(
     val costPayment: AdditionalCostPayment? = null,
     val manaColorChoice: Color? = null,
     val xValue: Int? = null,
-    val repeatCount: Int = 1
+    val repeatCount: Int = 1,
+    val paymentStrategy: PaymentStrategy = PaymentStrategy.AutoPay
 ) : GameAction
 
 // =============================================================================
@@ -144,7 +145,8 @@ data class ActivateAbility(
 @SerialName("CycleCard")
 data class CycleCard(
     override val playerId: EntityId,
-    val cardId: EntityId
+    val cardId: EntityId,
+    val paymentStrategy: PaymentStrategy = PaymentStrategy.AutoPay
 ) : GameAction
 
 /**
@@ -162,7 +164,8 @@ data class CycleCard(
 @SerialName("TypecycleCard")
 data class TypecycleCard(
     override val playerId: EntityId,
-    val cardId: EntityId
+    val cardId: EntityId,
+    val paymentStrategy: PaymentStrategy = PaymentStrategy.AutoPay
 ) : GameAction
 
 // =============================================================================

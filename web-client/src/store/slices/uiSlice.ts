@@ -14,7 +14,7 @@ import type {
   DamageDistributionState,
   DistributeState,
   CounterDistributionState,
-  RetapSelectionState,
+  ManaSelectionState,
   DrawAnimation,
   DamageAnimation,
   RevealAnimation,
@@ -45,7 +45,7 @@ export interface UISliceState {
   lastDamageDistribution: Record<EntityId, number> | null
   distributeState: DistributeState | null
   counterDistributionState: CounterDistributionState | null
-  retapSelectionState: RetapSelectionState | null
+  manaSelectionState: ManaSelectionState | null
   hoveredCardId: EntityId | null
   autoTapPreview: readonly EntityId[] | null
   draggingBlockerId: EntityId | null
@@ -127,10 +127,10 @@ export interface UISliceActions {
   decrementCounterRemoval: (entityId: EntityId) => void
   cancelCounterDistribution: () => void
   confirmCounterDistribution: () => void
-  startRetapSelection: () => void
-  toggleRetapSource: (entityId: EntityId) => void
-  cancelRetapSelection: () => void
-  confirmRetapSelection: () => void
+  startManaSelection: (actionInfo: import('../../types').LegalActionInfo) => void
+  toggleManaSource: (entityId: EntityId) => void
+  cancelManaSelection: () => void
+  confirmManaSelection: () => void
   showRevealedHand: (cardIds: readonly EntityId[]) => void
   dismissRevealedHand: () => void
   showRevealedCards: (cardIds: readonly EntityId[], cardNames: readonly string[], imageUris: readonly (string | null)[], source: string | null, isYourReveal: boolean) => void
@@ -166,7 +166,7 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
   lastDamageDistribution: null,
   distributeState: null,
   counterDistributionState: null,
-  retapSelectionState: null,
+  manaSelectionState: null,
   hoveredCardId: null,
   autoTapPreview: null,
   draggingBlockerId: null,
@@ -1194,40 +1194,43 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
     set({ counterDistributionState: null })
   },
 
-  // Retap selection actions
-  startRetapSelection: () => {
-    const { retapInfo } = get()
-    if (!retapInfo) return
+  // Mana source selection actions (pre-cast)
+  startManaSelection: (actionInfo) => {
+    const sources = actionInfo.availableManaSources
+    if (!sources || sources.length === 0) return
     const sourceColors: Record<string, readonly string[]> = {}
     const sourceManaAmounts: Record<string, number> = {}
-    for (const source of retapInfo.availableSources) {
+    for (const source of sources) {
       const colors: string[] = [...(source.producesColors ?? [])]
       if (source.producesColorless && colors.length === 0) colors.push('C')
       sourceColors[source.entityId] = colors
       sourceManaAmounts[source.entityId] = source.manaAmount ?? 1
     }
+    // Pre-select the autoTapPreview sources as the default
+    const preSelected = actionInfo.autoTapPreview ?? []
     set({
       selectedCardId: null,
-      retapSelectionState: {
-        validSources: retapInfo.availableSources.map(s => s.entityId),
-        selectedSources: [...retapInfo.currentlyTappedSourceIds],
-        originallyTappedSources: [...retapInfo.currentlyTappedSourceIds],
-        manaCost: retapInfo.manaCost,
-        xValue: retapInfo.xValue ?? 0,
+      manaSelectionState: {
+        action: actionInfo.action,
+        actionInfo,
+        validSources: sources.map(s => s.entityId),
+        selectedSources: [...preSelected],
+        manaCost: actionInfo.manaCostString ?? '',
+        xValue: 0,
         sourceColors,
         sourceManaAmounts,
       },
     })
   },
 
-  toggleRetapSource: (entityId) => {
+  toggleManaSource: (entityId) => {
     set((state) => {
-      if (!state.retapSelectionState) return state
-      const { selectedSources } = state.retapSelectionState
+      if (!state.manaSelectionState) return state
+      const { selectedSources } = state.manaSelectionState
       const isSelected = selectedSources.includes(entityId)
       return {
-        retapSelectionState: {
-          ...state.retapSelectionState,
+        manaSelectionState: {
+          ...state.manaSelectionState,
           selectedSources: isSelected
             ? selectedSources.filter(id => id !== entityId)
             : [...selectedSources, entityId],
@@ -1236,15 +1239,14 @@ export const createUISlice: SliceCreator<UISlice> = (set, get) => ({
     })
   },
 
-  cancelRetapSelection: () => {
-    set({ retapSelectionState: null })
+  cancelManaSelection: () => {
+    set({ manaSelectionState: null })
   },
 
-  confirmRetapSelection: () => {
-    const { retapSelectionState, requestRetap } = get()
-    if (!retapSelectionState) return
-    requestRetap(retapSelectionState.selectedSources)
-    set({ retapSelectionState: null })
+  confirmManaSelection: () => {
+    // Note: actual confirm logic is in GameBoard's handleConfirmManaSelection
+    // which routes through executeAction for proper targeting/X/convoke flows.
+    set({ manaSelectionState: null })
   },
 
   // Revealed cards actions

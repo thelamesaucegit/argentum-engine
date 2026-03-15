@@ -22,15 +22,11 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.combat.AttackersDeclaredThisCombatComponent
 import com.wingedsheep.engine.state.components.combat.BlockersDeclaredThisCombatComponent
-import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.player.LossReason
-import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.MulliganStateComponent
 import com.wingedsheep.engine.state.components.player.PlayerLostComponent
-import com.wingedsheep.sdk.core.ManaCost
-import com.wingedsheep.sdk.core.ManaSymbol
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.Deck
@@ -67,23 +63,6 @@ class GameSession(
     /** The player who owns the current undo checkpoint */
     @Volatile
     private var undoCheckpointOwner: EntityId? = null
-
-    /** Checkpoint for re-tapping lands after a CastSpell with AutoPay */
-    @Volatile
-    private var retapCheckpoint: RetapCheckpoint? = null
-
-    /**
-     * Data needed to re-tap lands after a spell was cast with AutoPay.
-     * Allows the player to change which lands are tapped without undoing the spell.
-     */
-    data class RetapCheckpoint(
-        val playerId: EntityId,
-        val manaCost: ManaCost,
-        val xValue: Int,
-        val tappedSourceIds: List<EntityId>,
-        val manaPoolBeforePayment: ManaPoolComponent,
-        val manaPoolAfterPayment: ManaPoolComponent
-    )
 
     /** State saved when the active player passes priority in precombat main, used to undo combat entry */
     @Volatile
@@ -558,12 +537,6 @@ class GameSession(
             preCombatState = null
         }
 
-        // If the opponent takes any action, invalidate the retap checkpoint.
-        // The opponent has responded to the spell, so changing how it was paid for is no longer safe.
-        if (retapCheckpoint != null && playerId != retapCheckpoint!!.playerId) {
-            retapCheckpoint = null
-        }
-
         // Track pre-combat state: when the active player passes priority in precombat main,
         // save this state so that undo from combat goes back to main phase.
         // Also set undoCheckpoint so undo is available immediately upon arriving at declare attackers
@@ -588,7 +561,7 @@ class GameSession(
         //   preserve existing checkpoint on subsequent activations
         // - Other checkpoint-neutral actions (pass priority, choose mana color): preserve existing checkpoint
         // - Everything else (non-mana abilities, decisions): clear checkpoint
-        // - CastSpell: handled separately via retap checkpoint (not undo-eligible)
+        // - CastSpell: not undo-eligible
         if (isUndoEligibleAction(action)) {
             // For DeclareAttackers, use the pre-combat state if available so undo goes back to main phase
             undoCheckpoint = if (action is DeclareAttackers && preCombatState != null) {
@@ -609,19 +582,6 @@ class GameSession(
             preCombatState = null
         }
 
-        // Clear retap checkpoint when passing priority or taking any non-neutral action
-        // (including CastSpell — a new cast replaces the old retap).
-        // Passing priority means the player is done with the current priority window,
-        // so retapping is no longer appropriate.
-        if (action is PassPriority || (!isCheckpointNeutralAction(action) && action !is CastSpell)) {
-            retapCheckpoint = null
-        }
-
-        // Capture mana pool before CastSpell for potential retap
-        val manaPoolBeforeCast = if (action is CastSpell) {
-            state.getEntity(playerId)?.get<ManaPoolComponent>() ?: ManaPoolComponent()
-        } else null
-
         val result = actionProcessor.process(state, action)
 
         val error = result.error
@@ -633,7 +593,6 @@ class GameSession(
                 ActionResult.Failure(error)
             }
             pendingDecision != null -> {
-                // CastSpell with immediate triggers/decisions: no retap (can't safely re-tap mid-trigger)
                 // Invalidate undo checkpoint if events reveal information
                 if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
                     undoCheckpoint = null
@@ -650,14 +609,6 @@ class GameSession(
                 ActionResult.PausedForDecision(result.state, pendingDecision, result.events)
             }
             else -> {
-                // Create retap checkpoint for successful CastSpell with AutoPay
-                if (action is CastSpell && manaPoolBeforeCast != null) {
-                    createRetapCheckpoint(action, state, result, manaPoolBeforeCast)
-                }
-                // Clear retap checkpoint when the game moves to a new step
-                if (result.events.any { it is StepChangedEvent }) {
-                    retapCheckpoint = null
-                }
                 // Invalidate undo checkpoint if the action produced information-revealing events
                 // (draws, reveals, looks) — undoing after gaining new information would be unfair
                 if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
@@ -762,26 +713,6 @@ class GameSession(
             PriorityMode.FULL_CONTROL -> "fullControl"
         }
 
-        // Build retap info for client
-        val retapInfo = getRetapInfo(playerId)
-        val clientRetapInfo = retapInfo?.let {
-            ServerMessage.RetapInfo(
-                manaCost = it.manaCost,
-                currentlyTappedSourceIds = it.currentlyTappedSourceIds,
-                availableSources = it.availableSources.map { source ->
-                    ServerMessage.RetapSourceInfo(
-                        entityId = source.entityId,
-                        name = source.name,
-                        imageUri = source.imageUri,
-                        producesColors = source.producesColors,
-                        producesColorless = source.producesColorless,
-                        manaAmount = source.manaAmount
-                    )
-                },
-                xValue = it.xValue
-            )
-        }
-
         // Check if we have a previous state for delta computation
         val previous = lastSentState[playerId]
         lastSentState[playerId] = stateWithLog
@@ -790,11 +721,11 @@ class GameSession(
         if (previous != null) {
             // Compute delta and send smaller message
             val delta = StateDiffCalculator.computeDelta(previous, stateWithLog)
-            return ServerMessage.StateDeltaUpdate(delta, clientEvents, legalActions, pendingDecision, nextStopPoint, opponentDecisionStatus, stopOverrideInfo, isUndoAvailable(playerId), priorityModeStr, version, retapInfo = clientRetapInfo)
+            return ServerMessage.StateDeltaUpdate(delta, clientEvents, legalActions, pendingDecision, nextStopPoint, opponentDecisionStatus, stopOverrideInfo, isUndoAvailable(playerId), priorityModeStr, version)
         }
 
         // First update — send full state
-        return ServerMessage.StateUpdate(stateWithLog, clientEvents, legalActions, pendingDecision, nextStopPoint, opponentDecisionStatus, stopOverrideInfo, isUndoAvailable(playerId), priorityModeStr, version, retapInfo = clientRetapInfo)
+        return ServerMessage.StateUpdate(stateWithLog, clientEvents, legalActions, pendingDecision, nextStopPoint, opponentDecisionStatus, stopOverrideInfo, isUndoAvailable(playerId), priorityModeStr, version)
     }
 
     /**
@@ -947,271 +878,9 @@ class GameSession(
         undoCheckpoint = null
         undoCheckpointOwner = null
         preCombatState = null
-        retapCheckpoint = null
         logger.info("Player $playerId undid their last action")
         ActionResult.Success(checkpoint, emptyList())
     }
-
-    // =========================================================================
-    // Retap (Change Lands)
-    // =========================================================================
-
-    /**
-     * Check if retap is available for a player.
-     */
-    fun isRetapAvailable(playerId: EntityId): Boolean {
-        val checkpoint = retapCheckpoint ?: return false
-        return checkpoint.playerId == playerId
-    }
-
-    /**
-     * Get retap info for the client (available sources, current tapped sources, mana cost).
-     * Returns null if retap is not available for this player.
-     */
-    fun getRetapInfo(playerId: EntityId): RetapInfo? {
-        val checkpoint = retapCheckpoint ?: return null
-        if (checkpoint.playerId != playerId) return null
-        val state = gameState ?: return null
-
-        // Temporarily untap the spell's sources so ManaSolver sees all available sources
-        var tempState = state
-        for (sourceId in checkpoint.tappedSourceIds) {
-            val container = tempState.getEntity(sourceId) ?: continue
-            if (container.has<TappedComponent>()) {
-                tempState = tempState.updateEntity(sourceId) { it.without<TappedComponent>() }
-            }
-        }
-        val allManaSources = manaSolver.findAvailableManaSources(tempState, playerId)
-        val manaSourceMap = allManaSources.associateBy { it.entityId }
-
-        // Build available sources from ManaSolver data (which has color production info)
-        // Also include tapped-for-spell sources that ManaSolver found
-        val availableSourceIds = (allManaSources.map { it.entityId } +
-            checkpoint.tappedSourceIds.filter { entityId ->
-                val container = state.getEntity(entityId) ?: return@filter false
-                container.has<TappedComponent>()
-            }).distinct()
-
-        val availableSources = availableSourceIds.mapNotNull { sourceId ->
-            val manaSource = manaSourceMap[sourceId]
-            val container = state.getEntity(sourceId) ?: return@mapNotNull null
-            val card = container.get<CardComponent>() ?: return@mapNotNull null
-            RetapSourceInfo(
-                entityId = sourceId,
-                name = card.name,
-                imageUri = cardRegistry.getCard(card.cardDefinitionId)?.metadata?.imageUri,
-                producesColors = manaSource?.producesColors?.map { it.symbol.toString() } ?: emptyList(),
-                producesColorless = manaSource?.producesColorless ?: false,
-                manaAmount = manaSource?.manaAmount ?: 1
-            )
-        }
-
-        return RetapInfo(
-            manaCost = checkpoint.manaCost.toString(),
-            currentlyTappedSourceIds = checkpoint.tappedSourceIds,
-            availableSources = availableSources,
-            manaCostObject = checkpoint.manaCost,
-            xValue = checkpoint.xValue
-        )
-    }
-
-    /**
-     * Execute a retap: untap the old sources, validate and tap the new ones.
-     */
-    fun executeRetap(playerId: EntityId, selectedSourceIds: List<EntityId>): ActionResult = synchronized(stateLock) {
-        val checkpoint = retapCheckpoint ?: return ActionResult.Failure("No retap available")
-        if (checkpoint.playerId != playerId) return ActionResult.Failure("Not your retap")
-        var state = gameState ?: return ActionResult.Failure("Game not started")
-
-        // Validate all selected sources are on the battlefield
-        for (sourceId in selectedSourceIds) {
-            val container = state.getEntity(sourceId)
-            if (container == null) return ActionResult.Failure("Source $sourceId not found")
-        }
-
-        // Step 1: Untap the originally-tapped sources
-        for (sourceId in checkpoint.tappedSourceIds) {
-            val container = state.getEntity(sourceId) ?: continue
-            if (container.has<TappedComponent>()) {
-                state = state.updateEntity(sourceId) { it.without<TappedComponent>() }
-            }
-        }
-
-        // Step 2: Restore the mana pool to before the payment
-        state = state.updateEntity(playerId) { container ->
-            container.with(checkpoint.manaPoolBeforePayment)
-        }
-
-        // Step 3: Validate the new sources can pay the cost using ManaSolver
-        // We need to exclude all sources NOT in the selected list
-        val allSources = manaSolver.findAvailableManaSources(state, playerId)
-        val selectedSet = selectedSourceIds.toSet()
-        val excludeSet = allSources.map { it.entityId }.filter { it !in selectedSet }.toSet()
-        val solution = manaSolver.solve(state, playerId, checkpoint.manaCost, checkpoint.xValue, excludeSet)
-            ?: return ActionResult.Failure("Selected lands cannot pay the mana cost")
-
-        // Step 4: Tap the new sources and update the mana pool
-        val events = mutableListOf<GameEvent>()
-        for (source in solution.sources) {
-            state = state.updateEntity(source.entityId) { it.with(TappedComponent) }
-            events.add(TappedEvent(source.entityId, source.name))
-        }
-
-        // Add mana from tapped sources to the pool, then deduct the cost
-        val poolComponent = state.getEntity(playerId)?.get<ManaPoolComponent>() ?: ManaPoolComponent()
-        var pool = com.wingedsheep.engine.mechanics.mana.ManaPool(
-            white = poolComponent.white,
-            blue = poolComponent.blue,
-            black = poolComponent.black,
-            red = poolComponent.red,
-            green = poolComponent.green,
-            colorless = poolComponent.colorless
-        )
-        for ((_, production) in solution.manaProduced) {
-            val color = production.color
-            if (color != null) {
-                pool = pool.add(color, production.amount)
-            }
-            if (production.colorless > 0) {
-                pool = pool.addColorless(production.colorless)
-            }
-        }
-        for ((color, amount) in solution.remainingBonusMana) {
-            pool = pool.add(color, amount)
-        }
-        val partialResult = pool.payPartial(checkpoint.manaCost)
-        var poolAfterPayment = partialResult.newPool
-
-        // Pay X cost from remaining pool
-        val xSymbolCount = checkpoint.manaCost.xCount.coerceAtLeast(1)
-        var xRemainingToPay = checkpoint.xValue * xSymbolCount
-        for (color in com.wingedsheep.sdk.core.Color.entries) {
-            while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
-                poolAfterPayment = poolAfterPayment.spend(color)!!
-                xRemainingToPay--
-            }
-        }
-        while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-            poolAfterPayment = poolAfterPayment.spendColorless()!!
-            xRemainingToPay--
-        }
-
-        state = state.updateEntity(playerId) { container ->
-            container.with(
-                ManaPoolComponent(
-                    white = poolAfterPayment.white,
-                    blue = poolAfterPayment.blue,
-                    black = poolAfterPayment.black,
-                    red = poolAfterPayment.red,
-                    green = poolAfterPayment.green,
-                    colorless = poolAfterPayment.colorless
-                )
-            )
-        }
-
-        // Update the retap checkpoint with the new sources
-        retapCheckpoint = checkpoint.copy(
-            tappedSourceIds = solution.sources.map { it.entityId },
-            manaPoolAfterPayment = state.getEntity(playerId)?.get<ManaPoolComponent>() ?: ManaPoolComponent()
-        )
-
-        gameState = state
-        logger.info("Player $playerId re-tapped lands for spell")
-        ActionResult.Success(state, events)
-    }
-
-    /**
-     * Create a retap checkpoint after a successful CastSpell with AutoPay.
-     */
-    private fun createRetapCheckpoint(
-        action: CastSpell,
-        preState: GameState,
-        result: ExecutionResult,
-        manaPoolBeforeCast: ManaPoolComponent
-    ) {
-        // Only support AutoPay
-        if (action.paymentStrategy !is PaymentStrategy.AutoPay) return
-
-        // Extract tapped sources from events
-        val tappedSourceIds = result.events.filterIsInstance<TappedEvent>().map { it.entityId }
-        if (tappedSourceIds.isEmpty()) return // Nothing was tapped (free spell or pool-only payment)
-
-        // Get the mana cost from the card definition
-        val cardComponent = preState.getEntity(action.cardId)?.get<CardComponent>() ?: return
-        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return
-        var manaCost = if (action.castFaceDown) {
-            ManaCost.parse("{3}")
-        } else {
-            cardDef.manaCost ?: return
-        }
-
-        // Account for kicker
-        if (action.wasKicked) {
-            val kickerAbility = cardDef.keywordAbilities
-                .filterIsInstance<com.wingedsheep.sdk.scripting.KeywordAbility.Kicker>()
-                .firstOrNull()
-            if (kickerAbility != null) {
-                manaCost = ManaCost(manaCost.symbols + kickerAbility.cost.symbols)
-            }
-        }
-
-        // Account for delve — reduce generic mana by the number of exiled cards
-        val delveCount = action.alternativePayment?.delveReduction ?: 0
-        if (delveCount > 0) {
-            manaCost = reduceGenericCost(manaCost, delveCount)
-        }
-
-        val xValue = action.xValue ?: 0
-        val manaPoolAfterCast = result.state.getEntity(action.playerId)?.get<ManaPoolComponent>() ?: ManaPoolComponent()
-
-        retapCheckpoint = RetapCheckpoint(
-            playerId = action.playerId,
-            manaCost = manaCost,
-            xValue = xValue,
-            tappedSourceIds = tappedSourceIds,
-            manaPoolBeforePayment = manaPoolBeforeCast,
-            manaPoolAfterPayment = manaPoolAfterCast
-        )
-    }
-
-    /**
-     * Reduce the generic mana portion of a ManaCost by a given amount.
-     * Used to account for Delve/Convoke reducing the mana that needs to be tapped.
-     */
-    private fun reduceGenericCost(cost: ManaCost, reduction: Int): ManaCost {
-        var remaining = reduction
-        val newSymbols = cost.symbols.map { symbol ->
-            if (remaining > 0 && symbol is ManaSymbol.Generic) {
-                val reduce = minOf(remaining, symbol.amount)
-                remaining -= reduce
-                val newAmount = symbol.amount - reduce
-                if (newAmount > 0) ManaSymbol.generic(newAmount) else null
-            } else {
-                symbol
-            }
-        }.filterNotNull()
-        return ManaCost(newSymbols)
-    }
-
-    /**
-     * Info about retap availability sent to the client.
-     */
-    data class RetapInfo(
-        val manaCost: String,
-        val currentlyTappedSourceIds: List<EntityId>,
-        val availableSources: List<RetapSourceInfo>,
-        val manaCostObject: ManaCost,
-        val xValue: Int
-    )
-
-    data class RetapSourceInfo(
-        val entityId: EntityId,
-        val name: String,
-        val imageUri: String?,
-        val producesColors: List<String> = emptyList(),
-        val producesColorless: Boolean = false,
-        val manaAmount: Int = 1
-    )
 
     /**
      * Execute auto-pass for a player.
@@ -1397,7 +1066,6 @@ class GameSession(
         synchronized(stateLock) {
             gameState = state
             undoCheckpoint = null
-            retapCheckpoint = null
             gameLogs.clear()
             lastProcessedMessageId.clear()
             lastSentState.clear()

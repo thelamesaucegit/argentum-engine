@@ -5,6 +5,7 @@ import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.core.LoyaltyChangedEvent
 import com.wingedsheep.engine.core.ManaAddedEvent
+import com.wingedsheep.engine.core.PaymentStrategy
 import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.TurnManager
 import com.wingedsheep.engine.event.TriggerDetector
@@ -23,6 +24,7 @@ import com.wingedsheep.engine.mechanics.targeting.TargetValidator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
+import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -183,8 +185,19 @@ class ActivateAbilityHandler(
             }
         }
 
+        // Validate explicit payment sources
+        if (action.paymentStrategy is PaymentStrategy.Explicit) {
+            for (sourceId in action.paymentStrategy.manaAbilitiesToActivate) {
+                val sourceContainer = state.getEntity(sourceId)
+                    ?: return "Mana source not found: $sourceId"
+                if (sourceContainer.has<TappedComponent>()) {
+                    return "Mana source is already tapped: $sourceId"
+                }
+            }
+        }
+
         // Check cost requirements (using ManaSolver for mana costs to consider untapped sources)
-        if (!canPayAbilityCostWithSources(state, effectiveCost, action.sourceId, action.playerId)) {
+        if (action.paymentStrategy !is PaymentStrategy.Explicit && !canPayAbilityCostWithSources(state, effectiveCost, action.sourceId, action.playerId)) {
             return when (effectiveCost) {
                 is AbilityCost.Tap -> "This permanent is already tapped"
                 is AbilityCost.TapAttachedCreature -> "Enchanted creature is tapped"
@@ -283,17 +296,32 @@ class ActivateAbilityHandler(
             colorless = poolComponent.colorless
         )
 
-        // Auto-tap lands for mana costs before paying
+        // Pay mana costs before paying other costs
         val manaCost = extractManaCost(effectiveCost)
         val xValue = action.xValue ?: 0
         // Only pass xValue to auto-tap when X is in the mana cost itself (not in a non-mana cost like counter removal)
         val manaXValue = if (manaCost?.hasX == true) xValue else 0
         if (manaCost != null) {
-            val autoTapResult = autoTapForManaCost(currentState, action.playerId, manaPool, manaCost, cardComponent.name, manaXValue)
-                ?: return ExecutionResult.error(state, "Not enough mana to activate this ability")
-            currentState = autoTapResult.newState
-            manaPool = autoTapResult.newPool
-            events.addAll(autoTapResult.events)
+            when (action.paymentStrategy) {
+                is PaymentStrategy.Explicit -> {
+                    // Tap specified sources explicitly
+                    for (sourceId in action.paymentStrategy.manaAbilitiesToActivate) {
+                        val sourceName = currentState.getEntity(sourceId)
+                            ?.get<CardComponent>()?.name ?: "Unknown"
+                        currentState = currentState.updateEntity(sourceId) { c ->
+                            c.with(TappedComponent)
+                        }
+                        events.add(TappedEvent(sourceId, sourceName))
+                    }
+                }
+                else -> {
+                    val autoTapResult = autoTapForManaCost(currentState, action.playerId, manaPool, manaCost, cardComponent.name, manaXValue)
+                        ?: return ExecutionResult.error(state, "Not enough mana to activate this ability")
+                    currentState = autoTapResult.newState
+                    manaPool = autoTapResult.newPool
+                    events.addAll(autoTapResult.events)
+                }
+            }
         }
 
         // Build cost payment choices from the action

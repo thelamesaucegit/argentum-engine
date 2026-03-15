@@ -110,6 +110,7 @@ export interface ActivateAbilityAction {
   readonly xValue?: number | null
   /** Number of times to repeat this activation (for batch activation) */
   readonly repeatCount?: number
+  readonly paymentStrategy?: PaymentStrategy
 }
 
 // =============================================================================
@@ -120,12 +121,14 @@ export interface CycleCardAction {
   readonly type: 'CycleCard'
   readonly playerId: EntityId
   readonly cardId: EntityId
+  readonly paymentStrategy?: PaymentStrategy
 }
 
 export interface TypecycleCardAction {
   readonly type: 'TypecycleCard'
   readonly playerId: EntityId
   readonly cardId: EntityId
+  readonly paymentStrategy?: PaymentStrategy
 }
 
 // =============================================================================
