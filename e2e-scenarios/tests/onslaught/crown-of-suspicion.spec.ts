@@ -45,9 +45,8 @@ test.describe('Crown of Suspicion', () => {
     await p1.selectTarget('Grizzly Bears')
     await p1.confirmTargets()
 
-    // P2 resolves the spell on the stack
-    await p2.page.getByText('Enchanted creature gets').waitFor({ state: 'visible', timeout: 10_000 })
-    await p2.pass()
+    // P2 resolves the aura on the stack (auras always stop opponent for priority)
+    await p2.resolveStack('Crown of Suspicion')
 
     // Grizzly Bears should have +2/-1 from static ability (2/2 → 4/1)
     await p1.expectStats('Grizzly Bears', '4/1')

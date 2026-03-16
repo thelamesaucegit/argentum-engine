@@ -66,19 +66,19 @@ test.describe('Daru Stinger — combat priority after activated ability', () => 
     // If action menu didn't appear, the ability auto-activated via the dispatchEvent click
 
     // Daru Stinger's ability is on the stack. P1 auto-passes.
-    // P2 gets priority to respond with Lavamancer's Skill.
-    // Auras render behind the creature, so use dispatchEvent to click Lavamancer's Skill.
-    await p2.page.locator('img[alt="Lavamancer\'s Skill"]').first().dispatchEvent('click')
+    // P2 gets priority to respond — activate the tap ability granted to Needleshot Gourna.
+    // (Lavamancer's Skill grants the ability to the creature, so click the creature)
+    await p2.page.locator('img[alt="Needleshot Gourna"]').first().dispatchEvent('click')
     await p2.selectAction('damage to target')
     // Combat arrow overlay blocks clicks on opponent's Daru Stinger, use dispatchEvent
     await p2.page.locator('img[alt="Daru Stinger"]').first().dispatchEvent('click')
     await p2.confirmTargets()
 
     // Resolve the stack (LIFO):
-    // 1. Lavamancer's Skill ability resolves — deals 2 damage to Daru Stinger (4/4, survives)
-    await p1.pass()
+    // 1. Lavamancer's Skill ability resolves — deals 1 damage to Daru Stinger (4/4, survives)
+    await p1.resolveStack('Needleshot Gourna')
     // 2. Daru Stinger's ability resolves — deals 3 damage to Needleshot Gourna
-    await p2.pass()
+    await p2.resolveStack('Daru Stinger')
 
     // Combat damage: Dive Bomber (2/2) vs Needleshot Gourna (3/6 with 3 damage)
     // Gourna takes 2 more (total 5 of 6 toughness — survives)
@@ -86,7 +86,7 @@ test.describe('Daru Stinger — combat priority after activated ability', () => 
     await p1.expectNotOnBattlefield('Dive Bomber')
     await p2.expectOnBattlefield('Needleshot Gourna')
 
-    // Daru Stinger survives (2 damage on 4/4)
+    // Daru Stinger survives (1 damage on 4/4 — Gourna is not a Wizard so deals 1)
     await p1.expectOnBattlefield('Daru Stinger')
     await p1.expectTapped('Daru Stinger')
 

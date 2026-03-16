@@ -67,10 +67,11 @@ test.describe('Battlefield Medic — responding to activated ability with shroud
     await p2.selectTarget('Glory Seeker')
     await p2.confirmTargets()
 
-    // Mage's Guile auto-resolves (neither player has responses)
+    // P1 resolves Mage's Guile (opponent always gets priority for stack items)
+    await p1.resolveStack("Mage's Guile")
+    // Mage's Guile resolves → Glory Seeker gains shroud
     // Medic's ability still on stack — P2 must resolve it
-    await p2.page.getByText('Prevent the next').waitFor({ state: 'visible', timeout: 10_000 })
-    await p2.page.getByRole('button', { name: 'Resolve' }).click()
+    await p2.resolveStack('Battlefield Medic')
     // Medic's ability fizzles (target has shroud)
     // Combat damage: both 2/2 creatures deal lethal to each other
 

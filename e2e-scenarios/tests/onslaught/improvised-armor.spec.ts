@@ -43,7 +43,9 @@ test.describe('Improvised Armor', () => {
     await p1.selectTarget('Glory Seeker')
     await p1.confirmTargets()
 
-    // Spell auto-resolves (P2 has no responses)
+    // P2 resolves the aura on the stack (auras always stop opponent for priority)
+    await p2.resolveStack('Improvised Armor')
+
     // Glory Seeker should now be 4/7 (base 2/2 + 2/+5 from aura)
     await p1.expectStats('Glory Seeker', '4/7')
 

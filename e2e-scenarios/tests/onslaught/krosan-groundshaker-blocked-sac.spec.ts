@@ -32,8 +32,9 @@ test.describe('Krosan Groundshaker blocked by sacrificed creature', () => {
     const p1 = player1.gamePage
     const p2 = player2.gamePage
 
-    // Advance to declare attackers
+    // Advance to declare attackers (both players must pass to end main phase)
     await p1.pass()
+    await p2.pass()
 
     // Attack with Krosan Groundshaker
     await p1.attackWith('Krosan Groundshaker')
