@@ -71,7 +71,7 @@ test.describe('Battlefield Medic — responding to activated ability with shroud
     await p1.resolveStack("Mage's Guile")
     // Mage's Guile resolves → Glory Seeker gains shroud
     // Medic's ability still on stack — P2 must resolve it
-    await p2.resolveStack('Battlefield Medic')
+    await p2.resolveStack('Battlefield Medic ability')
     // Medic's ability fizzles (target has shroud)
     // Combat damage: both 2/2 creatures deal lethal to each other
 

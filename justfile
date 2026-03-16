@@ -159,6 +159,11 @@ e2e-portal:
 e2e-onslaught:
     cd e2e-scenarios && npm run test:onslaught
 
+# Run E2E card tests (excludes tournament tests)
+[group: 'e2e']
+e2e-cards:
+    cd e2e-scenarios && npx playwright test --grep-invert /Tournament/
+
 # Run E2E tests and open HTML report with screenshots
 [group: 'e2e']
 e2e-report:
