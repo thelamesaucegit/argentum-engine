@@ -176,6 +176,7 @@ object DominariaSet {
         SlimefootTheStowaway,
         SlinnVodaTheRisingDeep,
         SkitteringSurveyor,
+        SorcerersWand,
         SoulSalvage,
         SporecrownThallid,
         SporeSwarm,

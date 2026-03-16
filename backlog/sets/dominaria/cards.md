@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 202 / 249
+**Implemented:** 203 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 34   |
 | Green      | 37    | 30   |
 | Multicolor | 19    | 17   |
-| Colorless  | 30    | 23   |
+| Colorless  | 30    | 24   |
 | Land       | 12    | 9    |
 
 ---
@@ -205,7 +205,7 @@
 - [x] Slimefoot, the Stowaway
 - [x] Slinn Voda, the Rising Deep
 - [ ] Song of Freyalise
-- [ ] Sorcerer's Wand
+- [x] Sorcerer's Wand
 - [x] Soul Salvage
 - [x] Sparring Construct
 - [x] Spore Swarm
