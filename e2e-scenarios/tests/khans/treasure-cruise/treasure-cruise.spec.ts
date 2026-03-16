@@ -62,12 +62,18 @@ test.describe('Treasure Cruise (Delve)', () => {
     }
     await p1.screenshot('All graveyard cards selected for delve')
 
-    // Click "Cast" to confirm delve and cast the spell
+    // Click "Cast" to confirm delve selection
     await p1.page.getByRole('button', { name: 'Cast' }).click()
+
+    // Mana selection appears — confirm mana payment
+    await p1.page.locator('button').filter({ hasText: /^Confirm/ }).waitFor({ state: 'visible', timeout: 10_000 })
+    await p1.page.locator('button').filter({ hasText: /^Confirm/ }).click()
     await p1.screenshot('Cast with delve')
 
     // Opponent resolves the spell
-    await p2.resolveStack('Treasure Cruise')
+    // Wait for spell to appear on P2's stack, then resolve
+    await p2.page.getByText('Draw 3 cards').waitFor({ state: 'visible', timeout: 10_000 })
+    await p2.pass()
 
     // Player 1 should have drawn 3 cards (started with Treasure Cruise which was cast)
     // Hand should now contain the 3 drawn cards
@@ -126,8 +132,14 @@ test.describe('Treasure Cruise (Delve)', () => {
     // Cast with partial delve (3 exiled + 5 islands for remaining {4}{U})
     await p1.page.getByRole('button', { name: 'Cast' }).click()
 
+    // Mana selection appears — confirm mana payment
+    await p1.page.locator('button').filter({ hasText: /^Confirm/ }).waitFor({ state: 'visible', timeout: 10_000 })
+    await p1.page.locator('button').filter({ hasText: /^Confirm/ }).click()
+
     // Opponent resolves
-    await p2.resolveStack('Treasure Cruise')
+    // Wait for spell to appear on P2's stack, then resolve
+    await p2.page.getByText('Draw 3 cards').waitFor({ state: 'visible', timeout: 10_000 })
+    await p2.pass()
 
     // Should have drawn 3 cards
     await p1.expectHandSize(3)
@@ -178,8 +190,14 @@ test.describe('Treasure Cruise (Delve)', () => {
     // Cast without exiling anything (pay full cost from lands)
     await p1.page.getByRole('button', { name: 'Cast' }).click()
 
+    // Mana selection appears — confirm mana payment
+    await p1.page.locator('button').filter({ hasText: /^Confirm/ }).waitFor({ state: 'visible', timeout: 10_000 })
+    await p1.page.locator('button').filter({ hasText: /^Confirm/ }).click()
+
     // Opponent resolves
-    await p2.resolveStack('Treasure Cruise')
+    // Wait for spell to appear on P2's stack, then resolve
+    await p2.page.getByText('Draw 3 cards').waitFor({ state: 'visible', timeout: 10_000 })
+    await p2.pass()
 
     // Should have drawn 3 cards
     await p1.expectHandSize(3)

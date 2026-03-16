@@ -33,15 +33,13 @@ test.describe('Daru Stinger — combat priority after activated ability', () => 
         ],
         library: ['Mountain'],
       },
-      phase: 'PRECOMBAT_MAIN',
+      phase: 'COMBAT',
+      step: 'DECLARE_ATTACKERS',
       activePlayer: 1,
     })
 
     const p1 = player1.gamePage
     const p2 = player2.gamePage
-
-    // P1 passes main phase to go to combat → declare attackers step
-    await p1.pass()
 
     // P1 declares Dive Bomber as attacker and confirms
     await p1.attackWith('Dive Bomber')

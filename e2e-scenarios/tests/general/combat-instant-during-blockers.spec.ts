@@ -35,25 +35,26 @@ test.describe('Combat — instant-speed actions after declare attackers', () => 
     const p1 = player1.gamePage
     const p2 = player2.gamePage
 
-    // Advance to declare attackers
+    // Advance to declare attackers (pass main → BEGIN_COMBAT → DECLARE_ATTACKERS)
     await p1.pass()
+    await p2.pass() // P2 has Spitfire Handler ability, won't auto-pass at BEGIN_COMBAT
 
     // P1 attacks with Hill Giant (3/3) — P1 auto-passes after declaring
     await p1.attackAll()
 
     // P2 has priority during declare attackers step (after declaration)
-    // P2 activates Spitfire Handler's {R}: +1/+0 ability (first activation)
-    // P2 auto-passes (own ability on stack), P1 must pass (opponent's ability always stops)
+    // P2 activates Spitfire Handler's {R}: +1/+0 ability twice via repeat selector
     await p2.clickCard('Spitfire Handler')
     await p2.selectAction('+1/+0')
-    await p1.pass()
-    await p2.expectStats('Spitfire Handler', '2/1')
+    await p2.selectXValue(2)
 
-    // P2 activates the ability again (second activation)
-    // Spitfire Handler is now 3/1 — can block Hill Giant (power 3 >= 3)
-    await p2.clickCard('Spitfire Handler')
-    await p2.selectAction('+1/+0')
+    // P1 resolves each ability on the stack
+    await p1.page.getByText('Spitfire Handler ability').waitFor({ state: 'visible', timeout: 10_000 })
     await p1.pass()
+    await p1.page.getByText('Spitfire Handler ability').waitFor({ state: 'visible', timeout: 10_000 })
+    await p1.pass()
+
+    // Spitfire Handler is now 3/1 — can block Hill Giant (power 3 >= 3)
     await p2.expectStats('Spitfire Handler', '3/1')
 
     // Both players auto-pass (P2 has no more mana for responses) → advance to declare blockers

@@ -45,7 +45,9 @@ test.describe('Crown of Suspicion', () => {
     await p1.selectTarget('Grizzly Bears')
     await p1.confirmTargets()
 
-    // Both players auto-pass (no responses), spell resolves
+    // P2 resolves the spell on the stack
+    await p2.page.getByText('Enchanted creature gets').waitFor({ state: 'visible', timeout: 10_000 })
+    await p2.pass()
 
     // Grizzly Bears should have +2/-1 from static ability (2/2 → 4/1)
     await p1.expectStats('Grizzly Bears', '4/1')

@@ -40,7 +40,8 @@ test.describe('Imagecrafter + Boneknitter interaction', () => {
         ],
         library: ['Swamp'],
       },
-      phase: 'PRECOMBAT_MAIN',
+      phase: 'COMBAT',
+      step: 'DECLARE_ATTACKERS',
       activePlayer: 2,
       // Stop P2 at declare blockers so they can activate Boneknitter's regen
       player2StopAtSteps: ['DECLARE_BLOCKERS'],
@@ -48,9 +49,6 @@ test.describe('Imagecrafter + Boneknitter interaction', () => {
 
     const p1 = player1.gamePage
     const p2 = player2.gamePage
-
-    // P2 passes main phase → advance to combat
-    await p2.pass()
 
     // P2 attacks with Boneknitter
     await p2.attackWith('Boneknitter')

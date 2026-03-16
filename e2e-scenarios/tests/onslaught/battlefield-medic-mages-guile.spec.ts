@@ -34,15 +34,13 @@ test.describe('Battlefield Medic — responding to activated ability with shroud
         hand: ["Mage's Guile"],
         library: ['Island'],
       },
-      phase: 'PRECOMBAT_MAIN',
+      phase: 'COMBAT',
+      step: 'DECLARE_ATTACKERS',
       activePlayer: 2,
     })
 
     const p1 = player1.gamePage
     const p2 = player2.gamePage
-
-    // P2 advances from main phase to combat
-    await p2.pass()
 
     // P2 attacks with Grizzly Bears (2/2)
     await p2.attackAll()
@@ -54,7 +52,7 @@ test.describe('Battlefield Medic — responding to activated ability with shroud
     await p1.declareBlocker('Glory Seeker', 'Grizzly Bears')
     await p1.confirmBlockers()
 
-    // After blockers, P2 auto-passes (nothing on stack to respond to), P1 gets priority
+    // After blockers, P1 gets priority (P2 auto-passes)
     // P1 activates Battlefield Medic's {T} ability targeting Glory Seeker
     // X = 1 (Battlefield Medic is the only Cleric) — would prevent 1 of 2 damage
     await p1.clickCard('Battlefield Medic')
@@ -69,14 +67,12 @@ test.describe('Battlefield Medic — responding to activated ability with shroud
     await p2.selectTarget('Glory Seeker')
     await p2.confirmTargets()
 
-    // P1 resolves the stack — Mage's Guile resolves first (LIFO):
-    // 1. Mage's Guile resolves → Glory Seeker gains shroud
-    await p1.pass()
-    // 2. Medic's ability still on stack — P2 must resolve
-    await p2.pass()
-    // Medic's ability resolves → target has shroud → ability fizzles
-    // 3. Combat damage: Grizzly Bears (2/2) deals 2 to Glory Seeker (2/2) — lethal
-    //    Glory Seeker (2/2) deals 2 to Grizzly Bears (2/2) — also lethal
+    // Mage's Guile auto-resolves (neither player has responses)
+    // Medic's ability still on stack — P2 must resolve it
+    await p2.page.getByText('Prevent the next').waitFor({ state: 'visible', timeout: 10_000 })
+    await p2.page.getByRole('button', { name: 'Resolve' }).click()
+    // Medic's ability fizzles (target has shroud)
+    // Combat damage: both 2/2 creatures deal lethal to each other
 
     // Both creatures die — Glory Seeker was NOT saved because prevention fizzled
     await p1.expectNotOnBattlefield('Glory Seeker')

@@ -23,6 +23,7 @@ test.describe('Improvised Armor', () => {
           { name: 'Plains' },
           { name: 'Glory Seeker', tapped: false, summoningSickness: false },
         ],
+        library: ['Plains'],
       },
       player2: {
         library: ['Mountain'],
@@ -32,6 +33,7 @@ test.describe('Improvised Armor', () => {
     })
 
     const p1 = player1.gamePage
+    const p2 = player2.gamePage
 
     // Cast Improvised Armor targeting Glory Seeker
     await p1.clickCard('Improvised Armor')
@@ -41,8 +43,7 @@ test.describe('Improvised Armor', () => {
     await p1.selectTarget('Glory Seeker')
     await p1.confirmTargets()
 
-    // Both players auto-pass (p2 has no actions), spell resolves
-
+    // Spell auto-resolves (P2 has no responses)
     // Glory Seeker should now be 4/7 (base 2/2 + 2/+5 from aura)
     await p1.expectStats('Glory Seeker', '4/7')
 
