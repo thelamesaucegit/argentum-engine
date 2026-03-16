@@ -6,6 +6,7 @@ import com.wingedsheep.engine.handlers.TargetingSourceType
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.CantBeTargetedByOpponentAbilitiesComponent
+import com.wingedsheep.engine.state.components.battlefield.GrantsControllerHexproofComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShroudComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -14,6 +15,7 @@ import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.stack.ChosenTarget
 import com.wingedsheep.sdk.core.CardType
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
@@ -92,12 +94,12 @@ class TargetValidator {
         sourceId: EntityId? = null
     ): String? {
         val error = when (requirement) {
-            is TargetPlayer -> validatePlayerTarget(state, target)
+            is TargetPlayer -> validatePlayerTarget(state, target, casterId)
             is TargetOpponent -> validateOpponentTarget(state, target, casterId)
-            is AnyTarget -> validateAnyTarget(state, target)
-            is TargetCreatureOrPlayer -> validateCreatureOrPlayerTarget(state, target)
+            is AnyTarget -> validateAnyTarget(state, target, casterId)
+            is TargetCreatureOrPlayer -> validateCreatureOrPlayerTarget(state, target, casterId)
             is TargetOpponentOrPlaneswalker -> validateOpponentOrPlaneswalkerTarget(state, target, casterId)
-            is TargetPlayerOrPlaneswalker -> validatePlayerOrPlaneswalkerTarget(state, target)
+            is TargetPlayerOrPlaneswalker -> validatePlayerOrPlaneswalkerTarget(state, target, casterId)
             is TargetCreatureOrPlaneswalker -> validateCreatureOrPlaneswalkerTarget(state, target)
             is TargetSpellOrPermanent -> validateSpellOrPermanentTarget(state, target, casterId)
             is TargetObject -> validateObjectTarget(state, target, requirement.filter, casterId, sourceId)
@@ -105,12 +107,46 @@ class TargetValidator {
         }
         if (error != null) return error
 
+        // Check hexproof and shroud on permanent targets (Rule 702.11, 702.18)
+        val hexproofShroudError = checkHexproofAndShroud(state, target, casterId)
+        if (hexproofShroudError != null) return hexproofShroudError
+
         // Check hexproof from color (Rule 702.11b)
         val hexproofError = checkHexproofFromColor(state, target, casterId, sourceColors)
         if (hexproofError != null) return hexproofError
 
         // Check protection from color and creature subtype (Rule 702.16)
         return checkProtection(state, target, sourceColors, sourceSubtypes)
+    }
+
+    /**
+     * Check if a permanent target has hexproof or shroud.
+     * Hexproof prevents opponents from targeting; shroud prevents all targeting.
+     */
+    private fun checkHexproofAndShroud(
+        state: GameState,
+        target: ChosenTarget,
+        casterId: EntityId
+    ): String? {
+        val entityId = when (target) {
+            is ChosenTarget.Permanent -> target.entityId
+            else -> return null
+        }
+
+        if (entityId !in state.getBattlefield()) return null
+
+        val projected = state.projectedState
+        val entityController = state.getEntity(entityId)?.get<ControllerComponent>()?.playerId
+
+        if (projected.hasKeyword(entityId, Keyword.SHROUD)) {
+            val cardName = state.getEntity(entityId)?.get<CardComponent>()?.name ?: "target"
+            return "$cardName has shroud"
+        }
+        if (projected.hasKeyword(entityId, Keyword.HEXPROOF) && entityController != casterId) {
+            val cardName = state.getEntity(entityId)?.get<CardComponent>()?.name ?: "target"
+            return "$cardName has hexproof"
+        }
+        return null
     }
 
     /**
@@ -214,7 +250,7 @@ class TargetValidator {
         return null
     }
 
-    private fun validatePlayerTarget(state: GameState, target: ChosenTarget): String? {
+    private fun validatePlayerTarget(state: GameState, target: ChosenTarget, casterId: EntityId): String? {
         if (target !is ChosenTarget.Player) {
             return "Target must be a player"
         }
@@ -223,6 +259,9 @@ class TargetValidator {
         }
         if (playerHasShroud(state, target.playerId)) {
             return "Target player has shroud"
+        }
+        if (playerHasHexproofAgainst(state, target.playerId, casterId)) {
+            return "Target player has hexproof"
         }
         return null
     }
@@ -240,14 +279,18 @@ class TargetValidator {
         if (playerHasShroud(state, target.playerId)) {
             return "Target player has shroud"
         }
+        if (playerHasHexproof(state, target.playerId)) {
+            return "Target player has hexproof"
+        }
         return null
     }
 
-    private fun validateAnyTarget(state: GameState, target: ChosenTarget): String? {
+    private fun validateAnyTarget(state: GameState, target: ChosenTarget, casterId: EntityId): String? {
         return when (target) {
             is ChosenTarget.Player -> {
                 if (!state.hasEntity(target.playerId)) "Target player not found"
                 else if (playerHasShroud(state, target.playerId)) "Target player has shroud"
+                else if (playerHasHexproofAgainst(state, target.playerId, casterId)) "Target player has hexproof"
                 else null
             }
             is ChosenTarget.Permanent -> {
@@ -257,11 +300,12 @@ class TargetValidator {
         }
     }
 
-    private fun validateCreatureOrPlayerTarget(state: GameState, target: ChosenTarget): String? {
+    private fun validateCreatureOrPlayerTarget(state: GameState, target: ChosenTarget, casterId: EntityId): String? {
         return when (target) {
             is ChosenTarget.Player -> {
                 if (!state.hasEntity(target.playerId)) "Target player not found"
                 else if (playerHasShroud(state, target.playerId)) "Target player has shroud"
+                else if (playerHasHexproofAgainst(state, target.playerId, casterId)) "Target player has hexproof"
                 else null
             }
             is ChosenTarget.Permanent -> {
@@ -288,6 +332,7 @@ class TargetValidator {
                 if (!state.hasEntity(target.playerId)) "Target player not found"
                 else if (target.playerId == casterId) "Target must be an opponent"
                 else if (playerHasShroud(state, target.playerId)) "Target player has shroud"
+                else if (playerHasHexproof(state, target.playerId)) "Target player has hexproof"
                 else null
             }
             is ChosenTarget.Permanent -> {
@@ -307,11 +352,12 @@ class TargetValidator {
         }
     }
 
-    private fun validatePlayerOrPlaneswalkerTarget(state: GameState, target: ChosenTarget): String? {
+    private fun validatePlayerOrPlaneswalkerTarget(state: GameState, target: ChosenTarget, casterId: EntityId): String? {
         return when (target) {
             is ChosenTarget.Player -> {
                 if (!state.hasEntity(target.playerId)) "Target player not found"
                 else if (playerHasShroud(state, target.playerId)) "Target player has shroud"
+                else if (playerHasHexproofAgainst(state, target.playerId, casterId)) "Target player has hexproof"
                 else null
             }
             is ChosenTarget.Permanent -> {
@@ -491,5 +537,17 @@ class TargetValidator {
             container.get<GrantsControllerShroudComponent>() != null &&
                 container.get<ControllerComponent>()?.playerId == playerId
         }
+    }
+
+    private fun playerHasHexproof(state: GameState, playerId: EntityId): Boolean {
+        return state.getBattlefield().any { entityId ->
+            val container = state.getEntity(entityId) ?: return@any false
+            container.get<GrantsControllerHexproofComponent>() != null &&
+                container.get<ControllerComponent>()?.playerId == playerId
+        }
+    }
+
+    private fun playerHasHexproofAgainst(state: GameState, playerId: EntityId, casterId: EntityId): Boolean {
+        return playerId != casterId && playerHasHexproof(state, playerId)
     }
 }

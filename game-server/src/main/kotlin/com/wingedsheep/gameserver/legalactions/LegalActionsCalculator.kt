@@ -13,6 +13,7 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
+import com.wingedsheep.engine.state.components.battlefield.GrantsControllerHexproofComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShroudComponent
 import com.wingedsheep.engine.state.components.player.CantCastSpellsComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
@@ -2503,21 +2504,26 @@ class LegalActionsCalculator(
         sourceId: EntityId? = null
     ): List<EntityId> {
         return when (requirement) {
-            is TargetPlayer -> state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) }
-            is TargetOpponent -> state.turnOrder.filter { it != playerId && state.hasEntity(it) && !playerHasShroud(state, it) }
+            is TargetPlayer -> state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+                !playerHasHexproofAgainst(state, it, playerId) }
+            is TargetOpponent -> state.turnOrder.filter { it != playerId && state.hasEntity(it) && !playerHasShroud(state, it) &&
+                !playerHasHexproof(state, it) }
             is AnyTarget -> {
                 // Any target = creatures + planeswalkers + players
                 val creatures = findValidPermanentTargets(state, playerId, TargetFilter.Creature, sourceId)
-                val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) }
+                val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+                    !playerHasHexproofAgainst(state, it, playerId) }
                 creatures + players
             }
             is TargetCreatureOrPlayer -> {
                 val creatures = findValidPermanentTargets(state, playerId, TargetFilter.Creature, sourceId)
-                val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) }
+                val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+                    !playerHasHexproofAgainst(state, it, playerId) }
                 creatures + players
             }
             is TargetPlayerOrPlaneswalker -> {
-                val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) }
+                val players = state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+                    !playerHasHexproofAgainst(state, it, playerId) }
                 val planeswalkers = findValidPermanentTargets(state, playerId, TargetFilter.Planeswalker, sourceId)
                 players + planeswalkers
             }
@@ -2630,6 +2636,18 @@ class LegalActionsCalculator(
             container.get<GrantsControllerShroudComponent>() != null &&
                 container.get<ControllerComponent>()?.playerId == playerId
         }
+    }
+
+    private fun playerHasHexproof(state: GameState, playerId: EntityId): Boolean {
+        return state.getBattlefield().any { entityId ->
+            val container = state.getEntity(entityId) ?: return@any false
+            container.get<GrantsControllerHexproofComponent>() != null &&
+                container.get<ControllerComponent>()?.playerId == playerId
+        }
+    }
+
+    private fun playerHasHexproofAgainst(state: GameState, playerId: EntityId, controllerId: EntityId): Boolean {
+        return playerId != controllerId && playerHasHexproof(state, playerId)
     }
 
     private fun getTargetZone(requirement: TargetRequirement): String? {

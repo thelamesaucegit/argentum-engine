@@ -1266,6 +1266,19 @@ data object GrantShroudToController : StaticAbility {
 }
 
 /**
+ * You have hexproof. (You can't be the target of spells or abilities your opponents control.)
+ * Grants hexproof to the permanent's controller (player-level hexproof).
+ * Unlike shroud, the controller can still target themselves.
+ * Used for Shalai, Voice of Plenty.
+ */
+@SerialName("GrantHexproofToController")
+@Serializable
+data object GrantHexproofToController : StaticAbility {
+    override val description: String = "You have hexproof"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * You can't lose the game.
  * Grants the "can't lose the game" effect to the permanent's controller.
  * Used for Lich's Mastery, Platinum Angel, etc.

@@ -2,11 +2,11 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 200 / 249
+**Implemented:** 201 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 27   |
+| White      | 38    | 28   |
 | Blue       | 37    | 28   |
 | Black      | 38    | 31   |
 | Red        | 38    | 34   |
@@ -193,7 +193,7 @@
 - [x] Serra Angel
 - [x] Serra Disciple
 - [ ] Settle the Score
-- [ ] Shalai, Voice of Plenty
+- [x] Shalai, Voice of Plenty
 - [x] Shanna, Sisay's Legacy
 - [ ] Shield of the Realm
 - [x] Shivan Fire

@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.CantBeTargetedByOpponentAbilitiesComponent
+import com.wingedsheep.engine.state.components.battlefield.GrantsControllerHexproofComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShroudComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -84,12 +85,14 @@ class TargetFinder(
         controllerId: EntityId
     ): List<EntityId> {
         return state.turnOrder.filter { playerId ->
-            state.hasEntity(playerId) && !playerHasShroud(state, playerId)
+            state.hasEntity(playerId) && !playerHasShroud(state, playerId) &&
+                !playerHasHexproofAgainst(state, playerId, controllerId)
         }
     }
 
     private fun findOpponentTargets(state: GameState, controllerId: EntityId): List<EntityId> {
-        return state.turnOrder.filter { it != controllerId && state.hasEntity(it) && !playerHasShroud(state, it) }
+        return state.turnOrder.filter { it != controllerId && state.hasEntity(it) && !playerHasShroud(state, it) &&
+            !playerHasHexproof(state, it) }
     }
 
     /**
@@ -125,8 +128,9 @@ class TargetFinder(
         val projected = state.projectedState
         val targets = mutableListOf<EntityId>()
 
-        // Add opponents (excluding those with shroud)
-        targets.addAll(state.turnOrder.filter { it != controllerId && state.hasEntity(it) && !playerHasShroud(state, it) })
+        // Add opponents (excluding those with shroud or hexproof)
+        targets.addAll(state.turnOrder.filter { it != controllerId && state.hasEntity(it) &&
+            !playerHasShroud(state, it) && !playerHasHexproof(state, it) })
 
         // Add all planeswalkers on the battlefield
         val battlefield = state.getBattlefield()
@@ -160,8 +164,9 @@ class TargetFinder(
         val projected = state.projectedState
         val targets = mutableListOf<EntityId>()
 
-        // Add all players (excluding those with shroud)
-        targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) })
+        // Add all players (excluding those with shroud or hexproof from opponents)
+        targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+            !playerHasHexproofAgainst(state, it, controllerId) })
 
         // Add all planeswalkers on the battlefield
         val battlefield = state.getBattlefield()
@@ -241,8 +246,9 @@ class TargetFinder(
         val projected = state.projectedState
         val targets = mutableListOf<EntityId>()
 
-        // Add all players (excluding those with shroud)
-        targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) })
+        // Add all players (excluding those with shroud or hexproof from opponents)
+        targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+            !playerHasHexproofAgainst(state, it, controllerId) })
 
         // Add all creatures and planeswalkers
         val battlefield = state.getBattlefield()
@@ -286,8 +292,9 @@ class TargetFinder(
     ): List<EntityId> {
         val targets = mutableListOf<EntityId>()
 
-        // Add all players (excluding those with shroud)
-        targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) })
+        // Add all players (excluding those with shroud or hexproof from opponents)
+        targets.addAll(state.turnOrder.filter { state.hasEntity(it) && !playerHasShroud(state, it) &&
+            !playerHasHexproofAgainst(state, it, controllerId) })
 
         // Add all creatures
         targets.addAll(findPermanentTargets(state, TargetCreature(), controllerId, sourceId, targetingSourceType = targetingSourceType))
@@ -443,6 +450,27 @@ class TargetFinder(
             container.get<GrantsControllerShroudComponent>() != null &&
                 container.get<ControllerComponent>()?.playerId == playerId
         }
+    }
+
+    /**
+     * Check if a player has hexproof (from a permanent like Shalai, Voice of Plenty).
+     * Unlike shroud, hexproof only prevents opponents from targeting — the player can still
+     * target themselves.
+     */
+    private fun playerHasHexproof(state: GameState, playerId: EntityId): Boolean {
+        return state.getBattlefield().any { entityId ->
+            val container = state.getEntity(entityId) ?: return@any false
+            container.get<GrantsControllerHexproofComponent>() != null &&
+                container.get<ControllerComponent>()?.playerId == playerId
+        }
+    }
+
+    /**
+     * Check if a player has hexproof against a specific controller.
+     * Returns true if the player has hexproof AND the controller is an opponent.
+     */
+    private fun playerHasHexproofAgainst(state: GameState, playerId: EntityId, controllerId: EntityId): Boolean {
+        return playerId != controllerId && playerHasHexproof(state, playerId)
     }
 
     /**

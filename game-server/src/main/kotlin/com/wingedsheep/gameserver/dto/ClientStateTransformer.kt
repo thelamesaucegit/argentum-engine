@@ -1027,6 +1027,23 @@ class ClientStateTransformer(
             )
         }
 
+        // Check for permanent-based player hexproof (e.g., Shalai, Voice of Plenty)
+        val hasHexproof = state.getBattlefield().any { entityId ->
+            val entityContainer = state.getEntity(entityId) ?: return@any false
+            entityContainer.get<GrantsControllerHexproofComponent>() != null &&
+                entityContainer.get<ControllerComponent>()?.playerId == playerId
+        }
+        if (hasHexproof) {
+            effects.add(
+                ClientPlayerEffect(
+                    effectId = "player_hexproof",
+                    name = "Hexproof",
+                    description = "You have hexproof (you can't be the target of spells or abilities your opponents control)",
+                    icon = "shield"
+                )
+            )
+        }
+
         // Check for MustAttackPlayerComponent (Taunt effect)
         val mustAttack = container.get<MustAttackPlayerComponent>()
         if (mustAttack != null) {

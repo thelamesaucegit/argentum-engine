@@ -114,6 +114,9 @@ data class GroupFilter(
         /** All enchantments */
         val AllEnchantments = GroupFilter(GameObjectFilter.Companion.Enchantment)
 
+        /** All planeswalkers you control */
+        val PlaneswalkersYouControl = GroupFilter(GameObjectFilter.Companion.Planeswalker.youControl())
+
         /** All lands */
         val AllLands = GroupFilter(GameObjectFilter.Companion.Land)
 

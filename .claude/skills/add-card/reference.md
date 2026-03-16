@@ -956,6 +956,7 @@ Set via `staticAbility { ability = ... }`:
 - `CantReceiveCounters(target)`
 - `ControlEnchantedPermanent` — control the enchanted permanent
 - `GrantShroudToController` — controller has shroud
+- `GrantHexproofToController` — controller has hexproof (opponents can't target; self-targeting still allowed)
 - `GrantCantLoseGame` — controller can't lose the game (Lich's Mastery, Platinum Angel)
 - `ExtraLoyaltyActivation` — activate loyalty abilities of planeswalkers you control twice each turn (Oath of Teferi)
 - `AdditionalETBTriggers(creatureFilter)` — when a creature matching the filter ETBs under your control, triggered abilities of your permanents that fired from that event trigger an additional time (Naban, Dean of Iteration)

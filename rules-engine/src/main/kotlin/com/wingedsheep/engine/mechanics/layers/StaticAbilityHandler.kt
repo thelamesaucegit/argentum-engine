@@ -5,6 +5,7 @@ import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.components.battlefield.CantBeTargetedByOpponentAbilitiesComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantCantBeBlockedToSmallCreaturesComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsCantLoseGameComponent
+import com.wingedsheep.engine.state.components.battlefield.GrantsControllerHexproofComponent
 import com.wingedsheep.engine.state.components.battlefield.GrantsControllerShroudComponent
 import com.wingedsheep.engine.state.components.battlefield.ReplacementEffectSourceComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -34,6 +35,7 @@ import com.wingedsheep.sdk.scripting.GrantColor
 import com.wingedsheep.sdk.scripting.LoseAllAbilities
 import com.wingedsheep.sdk.scripting.SetBasePowerToughnessStatic
 import com.wingedsheep.sdk.scripting.CantBeTargetedByOpponentAbilities
+import com.wingedsheep.sdk.scripting.GrantHexproofToController
 import com.wingedsheep.sdk.scripting.GrantShroudToController
 import com.wingedsheep.sdk.scripting.conditions.EnchantedCreatureHasSubtype
 import com.wingedsheep.sdk.scripting.conditions.Exists
@@ -114,6 +116,9 @@ class StaticAbilityHandler(
         // Add tag component for abilities that grant controller-level effects
         if (cardDefinition.staticAbilities.any { it is GrantShroudToController }) {
             result = result.with(GrantsControllerShroudComponent)
+        }
+        if (cardDefinition.staticAbilities.any { it is GrantHexproofToController }) {
+            result = result.with(GrantsControllerHexproofComponent)
         }
 
         // Add tag component for "you can't lose the game"
@@ -587,6 +592,15 @@ class StaticAbilityHandler(
         val hasTappedPredicate = baseFilter.statePredicates.any { it == StatePredicate.IsTapped }
         val hasFaceDownPredicate = baseFilter.statePredicates.any { it == StatePredicate.IsFaceDown }
         val subtypePredicate = baseFilter.cardPredicates.filterIsInstance<CardPredicate.HasSubtype>().firstOrNull()
+
+        // Check if the card predicates are creature-compatible (empty, IsCreature only, or IsCreature + subtype).
+        // Non-creature type predicates (e.g., IsPlaneswalker) must fall through to Generic.
+        val hasNonCreatureTypePredicate = baseFilter.cardPredicates.any {
+            it != CardPredicate.IsCreature && it !is CardPredicate.HasSubtype
+        }
+        if (hasNonCreatureTypePredicate) {
+            return AffectsFilter.Generic(filter)
+        }
 
         // Handle "face-down creatures" pattern (e.g., "Face-down creatures get +1/+1")
         if (hasFaceDownPredicate) {

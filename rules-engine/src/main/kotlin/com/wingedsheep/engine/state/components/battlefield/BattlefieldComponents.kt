@@ -186,6 +186,15 @@ data class DamageDealtToCreaturesThisTurnComponent(
 data object GrantsControllerShroudComponent : Component
 
 /**
+ * Marks a permanent as granting hexproof to its controller.
+ * Used for Shalai, Voice of Plenty: "You ... have hexproof."
+ * Unlike shroud, the controller can still target themselves.
+ * When the permanent leaves the battlefield, the component goes with it — no cleanup needed.
+ */
+@Serializable
+data object GrantsControllerHexproofComponent : Component
+
+/**
  * Marks a permanent as granting "can't lose the game" to its controller.
  * Used for Lich's Mastery: "You can't lose the game."
  * When the permanent leaves the battlefield, the component goes with it — no cleanup needed.
