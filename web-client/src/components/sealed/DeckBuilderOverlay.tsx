@@ -1687,10 +1687,14 @@ function targetLandCount(cards: SealedCardInfo[]): number {
   if (spells.length === 0) return 17
   const totalCmc = spells.reduce((sum, c) => sum + getCmc(c), 0)
   const avgCmc = totalCmc / spells.length
-  // avgCmc ~2.0 → 16 lands, ~2.8 → 17, ~3.5+ → 18
-  if (avgCmc < 2.3) return 16
-  if (avgCmc < 3.2) return 17
-  return 18
+  // Base land ratio for a 40-card deck: avgCmc ~2.0 → 40%, ~2.8 → 42.5%, ~3.5+ → 45%
+  let landRatio: number
+  if (avgCmc < 2.3) landRatio = 0.4
+  else if (avgCmc < 3.2) landRatio = 0.425
+  else landRatio = 0.45
+  // Scale total lands based on actual spell count and land ratio
+  const totalDeckSize = Math.max(Math.round(spells.length / (1 - landRatio)), 40)
+  return Math.round(totalDeckSize * landRatio)
 }
 
 function suggestLands(
