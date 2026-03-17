@@ -479,6 +479,16 @@ class GameSession(
     }
 
     /**
+     * Check if an event indicates a spell or ability resolved from the stack.
+     * Undoing after resolution would reveal whether the opponent chose to respond,
+     * which is hidden information the player shouldn't be able to exploit.
+     */
+    private fun isStackResolutionEvent(event: GameEvent): Boolean = when (event) {
+        is ResolvedEvent, is AbilityResolvedEvent -> true
+        else -> false
+    }
+
+    /**
      * Check if an action is eligible for undo (non-respondable actions where
      * the opponent can't respond before the active player passes priority).
      */
@@ -599,6 +609,13 @@ class GameSession(
                     undoCheckpointOwner = null
                     preCombatState = null
                 }
+                // Invalidate undo checkpoint when a spell or ability resolves — undoing after
+                // resolution would reveal whether the opponent chose to respond
+                if (undoCheckpoint != null && result.events.any { isStackResolutionEvent(it) }) {
+                    undoCheckpoint = null
+                    undoCheckpointOwner = null
+                    preCombatState = null
+                }
                 if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
                     undoCheckpoint = null
                     undoCheckpointOwner = null
@@ -612,6 +629,13 @@ class GameSession(
                 // Invalidate undo checkpoint if the action produced information-revealing events
                 // (draws, reveals, looks) — undoing after gaining new information would be unfair
                 if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
+                    undoCheckpoint = null
+                    undoCheckpointOwner = null
+                    preCombatState = null
+                }
+                // Invalidate undo checkpoint when a spell or ability resolves — undoing after
+                // resolution would reveal whether the opponent chose to respond
+                if (undoCheckpoint != null && result.events.any { isStackResolutionEvent(it) }) {
                     undoCheckpoint = null
                     undoCheckpointOwner = null
                     preCombatState = null
@@ -908,6 +932,32 @@ class GameSession(
             else -> PassPriority(playerId)
         }
         val result = actionProcessor.process(state, action)
+
+        // Auto-pass actions can cause stack resolution or reveal information.
+        // Invalidate undo checkpoint in the same cases as executeAction.
+        if (undoCheckpoint != null && result.error == null) {
+            // Opponent auto-passing invalidates checkpoint (opponent has acted)
+            if (undoCheckpointOwner != null && playerId != undoCheckpointOwner) {
+                undoCheckpoint = null
+                undoCheckpointOwner = null
+                preCombatState = null
+            }
+            if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
+                undoCheckpoint = null
+                undoCheckpointOwner = null
+                preCombatState = null
+            }
+            if (undoCheckpoint != null && result.events.any { isStackResolutionEvent(it) }) {
+                undoCheckpoint = null
+                undoCheckpointOwner = null
+                preCombatState = null
+            }
+            if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
+                undoCheckpoint = null
+                undoCheckpointOwner = null
+                preCombatState = null
+            }
+        }
 
         val error = result.error
         val pendingDecision = result.pendingDecision
