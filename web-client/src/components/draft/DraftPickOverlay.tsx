@@ -238,8 +238,8 @@ function DraftPicker({ draftState, settings }: { draftState: DraftState; setting
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {/* Pass direction indicator with neighbors */}
-          <PassDirectionIndicator direction={draftState.passDirection} neighbors={neighbors} />
+          {/* Pack flow indicator */}
+          <PassDirectionIndicator neighbors={neighbors} />
 
           {/* Timer - only show when player has a pack to pick from */}
           {draftState.currentPack.length > 0 ? (
@@ -491,88 +491,98 @@ function PackPickIndicator({ packNumber, pickNumber, totalPacks }: { packNumber:
 }
 
 function PassDirectionIndicator({
-  direction,
   neighbors,
 }: {
-  direction: 'LEFT' | 'RIGHT'
   neighbors: {
     passingTo: { name: string; isWaiting: boolean } | null
     receivingFrom: { name: string; isWaiting: boolean } | null
   } | null
 }) {
-  const isLeft = direction === 'LEFT'
-
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        padding: '6px 12px',
+        gap: 0,
+        padding: '4px 6px',
         backgroundColor: '#2a2a2a',
         borderRadius: 6,
         border: '1px solid #444',
       }}
     >
-      {/* Receiving from */}
+      {/* From player */}
       {neighbors?.receivingFrom && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <span style={{ color: '#888', fontSize: 9, textTransform: 'uppercase' }}>Receiving from</span>
-            <span
-              style={{
-                color: neighbors.receivingFrom.isWaiting ? '#ff9800' : '#4caf50',
-                fontSize: 11,
-                fontWeight: 600,
-                maxWidth: 100,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {neighbors.receivingFrom.name}
-              {neighbors.receivingFrom.isWaiting && ' ...'}
-            </span>
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '2px 8px',
+            borderRadius: 4,
+            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+          }}
+        >
+          <span
+            style={{
+              color: neighbors.receivingFrom.isWaiting ? '#ff9800' : '#4caf50',
+              fontSize: 11,
+              fontWeight: 600,
+              maxWidth: 100,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {neighbors.receivingFrom.name}
+            {neighbors.receivingFrom.isWaiting && ' ...'}
+          </span>
         </div>
       )}
 
-      {/* Direction indicator */}
+      {/* Arrow: from → you */}
+      <span style={{ color: '#666', fontSize: 13, padding: '0 4px' }}>→</span>
+
+      {/* You (center) */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          padding: '2px 8px',
-          backgroundColor: isLeft ? 'rgba(255, 152, 0, 0.2)' : 'rgba(33, 150, 243, 0.2)',
+          padding: '2px 10px',
+          backgroundColor: 'rgba(79, 195, 247, 0.15)',
           borderRadius: 4,
+          border: '1px solid rgba(79, 195, 247, 0.3)',
         }}
       >
-        <span style={{ color: isLeft ? '#ff9800' : '#2196f3', fontSize: 10, fontWeight: 600 }}>
-          {isLeft ? '← Pass left' : 'Pass right →'}
-        </span>
+        <span style={{ color: '#4fc3f7', fontSize: 11, fontWeight: 700 }}>You</span>
       </div>
 
-      {/* Passing to */}
+      {/* Arrow: you → to */}
+      <span style={{ color: '#666', fontSize: 13, padding: '0 4px' }}>→</span>
+
+      {/* To player */}
       {neighbors?.passingTo && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <span style={{ color: '#888', fontSize: 9, textTransform: 'uppercase' }}>Passing to</span>
-            <span
-              style={{
-                color: neighbors.passingTo.isWaiting ? '#ff9800' : '#4caf50',
-                fontSize: 11,
-                fontWeight: 600,
-                maxWidth: 100,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {neighbors.passingTo.name}
-              {neighbors.passingTo.isWaiting && ' ...'}
-            </span>
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '2px 8px',
+            borderRadius: 4,
+            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+          }}
+        >
+          <span
+            style={{
+              color: neighbors.passingTo.isWaiting ? '#ff9800' : '#4caf50',
+              fontSize: 11,
+              fontWeight: 600,
+              maxWidth: 100,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {neighbors.passingTo.name}
+            {neighbors.passingTo.isWaiting && ' ...'}
+          </span>
         </div>
       )}
     </div>
