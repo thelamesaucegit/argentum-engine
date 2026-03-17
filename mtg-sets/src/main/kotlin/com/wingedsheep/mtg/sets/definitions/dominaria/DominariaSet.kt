@@ -203,6 +203,7 @@ object DominariaSet {
         TerritorialAllosaurus,
         TianaShipsCaretaker,
         TheAntiquitiesWar,
+        TheEldestReborn,
         TheFirstEruption,
         TheFlameOfKeld,
         TheMendingOfDominaria,

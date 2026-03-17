@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 215 / 249
+**Implemented:** 216 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 32   |
 | Blue       | 37    | 31   |
-| Black      | 38    | 32   |
+| Black      | 38    | 33   |
 | Red        | 38    | 34   |
 | Green      | 37    | 31   |
 | Multicolor | 19    | 17   |
@@ -225,7 +225,7 @@
 - [x] Thallid Omnivore
 - [x] Thallid Soothsayer
 - [x] The Antiquities War
-- [ ] The Eldest Reborn
+- [x] The Eldest Reborn
 - [x] The First Eruption
 - [x] The Flame of Keld
 - [x] The Mending of Dominaria
