@@ -136,4 +136,15 @@ sealed interface StatePredicate {
     data class HasCounter(val counterType: String) : StatePredicate {
         override val description: String = "with a $counterType counter"
     }
+
+    // =============================================================================
+    // Relative Power Predicates
+    // =============================================================================
+
+    /** Has the greatest power among creatures its controller controls */
+    @SerialName("HasGreatestPower")
+    @Serializable
+    data object HasGreatestPower : StatePredicate {
+        override val description: String = "with the greatest power"
+    }
 }

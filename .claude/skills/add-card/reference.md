@@ -464,6 +464,7 @@ constructors.
 - `Targets.CreatureWithPowerAtMost(maxPower)` / `Targets.UpToCreatures(count)`
 - `TargetFilter.NonlegendaryCreature` — nonlegendary creature (use with `TargetCreature(filter = ...)`)
 - Fluent builders: `.nonlegendary()`, `.legendary()` on `TargetFilter` and `GameObjectFilter`
+- Fluent state predicate: `.hasGreatestPower()` on `TargetFilter` and `GameObjectFilter` — restricts to creatures with the greatest power among creatures their controller controls
 - `GameObjectFilter.Historic` — matches artifacts, legendaries, and Sagas (Dominaria "historic" batching)
 
 ### Permanent

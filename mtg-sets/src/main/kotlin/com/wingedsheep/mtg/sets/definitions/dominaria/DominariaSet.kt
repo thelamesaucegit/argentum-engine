@@ -214,6 +214,7 @@ object DominariaSet {
         TorgaarFamineIncarnate,
         TraxosScourgeOfKroog,
         TragicPoet,
+        TriumphOfGerrard,
         UntamedKavu,
         UrgorosTheEmptyOne,
         ValdukKeeperOfTheFlame,

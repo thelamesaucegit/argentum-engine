@@ -260,6 +260,9 @@ data class TargetFilter(
     /** Must be owned by opponent (for cards in graveyards/exile) */
     fun ownedByOpponent() = copy(baseFilter = baseFilter.ownedByOpponent())
 
+    /** Must have the greatest power among creatures its controller controls */
+    fun hasGreatestPower() = copy(baseFilter = baseFilter.hasGreatestPower())
+
     /** Exclude the source permanent */
     fun other() = copy(excludeSelf = true)
 

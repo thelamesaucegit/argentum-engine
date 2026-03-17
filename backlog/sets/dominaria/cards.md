@@ -2,11 +2,11 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 213 / 249
+**Implemented:** 214 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 38    | 31   |
+| White      | 38    | 32   |
 | Blue       | 37    | 31   |
 | Black      | 38    | 32   |
 | Red        | 38    | 34   |
@@ -238,7 +238,7 @@
 - [x] Torgaar, Famine Incarnate
 - [x] Tragic Poet
 - [x] Traxos, Scourge of Kroog
-- [ ] Triumph of Gerrard
+- [x] Triumph of Gerrard
 - [ ] Two-Headed Giant
 - [x] Untamed Kavu
 - [ ] Unwind

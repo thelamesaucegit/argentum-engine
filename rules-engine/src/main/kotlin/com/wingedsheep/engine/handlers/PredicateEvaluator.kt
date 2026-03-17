@@ -604,6 +604,24 @@ class PredicateEvaluator {
                 }
                 countersComponent.getCount(counterType) > 0
             }
+
+            // Relative power
+            StatePredicate.HasGreatestPower -> {
+                val projected = state.projectedState
+                val entityController = projected.getController(entityId)
+                    ?: container.get<ControllerComponent>()?.playerId
+                    ?: return false
+                val entityPower = projected.getPower(entityId) ?: return false
+                val maxPower = state.getBattlefield()
+                    .filter { id ->
+                        val ctrl = projected.getController(id)
+                            ?: state.getEntity(id)?.get<ControllerComponent>()?.playerId
+                        ctrl == entityController && projected.isCreature(id)
+                    }
+                    .maxOfOrNull { projected.getPower(it) ?: Int.MIN_VALUE }
+                    ?: return false
+                entityPower >= maxPower
+            }
         }
     }
 

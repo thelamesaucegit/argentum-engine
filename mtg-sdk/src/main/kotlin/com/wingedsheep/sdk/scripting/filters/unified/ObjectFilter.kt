@@ -297,6 +297,11 @@ data class GameObjectFilter(
         statePredicates = statePredicates + StatePredicate.HasCounter(counterType)
     )
 
+    /** Must have the greatest power among creatures its controller controls */
+    fun hasGreatestPower() = copy(
+        statePredicates = statePredicates + StatePredicate.HasGreatestPower
+    )
+
     // =============================================================================
     // Fluent Builder Methods - Controller Predicates
     // =============================================================================
