@@ -34,6 +34,7 @@ constructors.
 - `Effects.LoseGame(target = Controller, message = null)` — target player loses the game immediately
 - `Effects.ForceExileMultiZone(count: DynamicAmount, target = Controller)` — exile from battlefield, hand, or graveyard (Lich's Mastery)
 - `Effects.SetLifeTotal(amount, target = Controller)` — set a player's life total to a specific value
+- `Effects.ExchangeLifeAndPower(target = Self)` — exchange controller's life total with target creature's power
 
 ### Drawing
 

@@ -37,6 +37,7 @@ import com.wingedsheep.sdk.scripting.effects.FightEffect
 import com.wingedsheep.sdk.scripting.effects.ForceSacrificeEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
 import com.wingedsheep.sdk.scripting.effects.ExchangeControlEffect
+import com.wingedsheep.sdk.scripting.effects.ExchangeLifeAndPowerEffect
 import com.wingedsheep.sdk.scripting.effects.GainControlByMostOfSubtypeEffect
 import com.wingedsheep.sdk.scripting.effects.GainControlEffect
 import com.wingedsheep.sdk.scripting.effects.GainLifeEffect
@@ -194,6 +195,13 @@ object Effects {
      */
     fun SetLifeTotal(amount: DynamicAmount, target: EffectTarget = EffectTarget.Controller): Effect =
         SetLifeTotalEffect(amount, target)
+
+    /**
+     * Exchange a player's life total with a creature's power.
+     * "{4}: Exchange your life total with this creature's power."
+     */
+    fun ExchangeLifeAndPower(target: EffectTarget = EffectTarget.Self): Effect =
+        ExchangeLifeAndPowerEffect(target)
 
     /**
      * Lose half your life, rounded up.

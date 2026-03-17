@@ -75,6 +75,7 @@ object DominariaSet {
         DrudgeSentinel,
         ElfhameDruid,
         Eviscerate,
+        EvraHalcyonWitness,
         ExcavationElephant,
         FeralAbomination,
         FieryIntervention,
