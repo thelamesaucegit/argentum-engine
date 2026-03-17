@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 207 / 249
+**Implemented:** 208 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 29   |
 | Black      | 38    | 32   |
 | Red        | 38    | 34   |
-| Green      | 37    | 30   |
+| Green      | 37    | 31   |
 | Multicolor | 19    | 17   |
 | Colorless  | 30    | 25   |
 | Land       | 12    | 9    |
@@ -90,7 +90,7 @@
 - [x] Forebear's Blade
 - [x] Frenzied Rage
 - [x] Fungal Infection
-- [ ] Fungal Plots
+- [x] Fungal Plots
 - [x] Gaea's Blessing
 - [ ] Gaea's Protector
 - [x] Garna, the Bloodflame

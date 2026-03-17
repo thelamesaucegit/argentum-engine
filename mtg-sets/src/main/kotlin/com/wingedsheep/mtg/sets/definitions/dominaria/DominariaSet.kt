@@ -86,6 +86,7 @@ object DominariaSet {
         ForebearsBlade,
         FrenziedRage,
         FungalInfection,
+        FungalPlots,
         GhituJourneymage,
         GhituChronicler,
         GhituLavarunner,
