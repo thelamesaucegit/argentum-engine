@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 231 / 249
+**Implemented:** 232 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 33   |
 | Black      | 38    | 36   |
 | Red        | 38    | 34   |
-| Green      | 37    | 34   |
+| Green      | 37    | 35   |
 | Multicolor | 19    | 18   |
 | Colorless  | 30    | 29   |
 | Land       | 12    | 11   |
@@ -214,7 +214,7 @@
 - [x] Steel Leaf Champion
 - [x] Stronghold Confessor
 - [x] Sulfur Falls
-- [ ] Sylvan Awakening
+- [x] Sylvan Awakening
 - [x] Syncopate
 - [x] Tatyova, Benthic Druid
 - [x] Teferi, Hero of Dominaria

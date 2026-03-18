@@ -206,6 +206,7 @@ object DominariaSet {
         SteelLeafChampion,
         StrongholdConfessor,
         SulfurFalls,
+        SylvanAwakening,
         Syncopate,
         TatyovaBenthicDruid,
         TempestDjinn,
