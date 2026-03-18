@@ -268,202 +268,24 @@ export function handleServerMessage(message: ServerMessage, handlers: MessageHan
 }
 
 /**
- * Create a message handler that logs all messages (useful for debugging).
+ * Create a message handler proxy that logs all messages before delegating (useful for debugging).
+ * Converts handler names like "onGameStarted" to log labels like "[Server] Game Started".
  */
 export function createLoggingHandlers(handlers: MessageHandlers): MessageHandlers {
-  return {
-    onConnected: (msg) => {
-      console.log('[Server] Connected:', msg)
-      handlers.onConnected(msg)
+  return new Proxy(handlers, {
+    get(target, prop, receiver) {
+      const original = Reflect.get(target, prop, receiver)
+      if (typeof original !== 'function' || typeof prop !== 'string') return original
+      // Convert "onGameStarted" → "Game Started"
+      const label = prop
+        .replace(/^on/, '')
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+      return (...args: unknown[]) => {
+        const logFn = prop === 'onError' ? console.error : console.log
+        logFn(`[Server] ${label}:`, ...args)
+        return (original as (...a: unknown[]) => unknown).apply(target, args)
+      }
     },
-    onReconnected: (msg) => {
-      console.log('[Server] Reconnected:', msg)
-      handlers.onReconnected(msg)
-    },
-    onGameCreated: (msg) => {
-      console.log('[Server] Game created:', msg)
-      handlers.onGameCreated(msg)
-    },
-    onGameStarted: (msg) => {
-      console.log('[Server] Game started:', msg)
-      handlers.onGameStarted(msg)
-    },
-    onGameCancelled: (msg) => {
-      console.log('[Server] Game cancelled:', msg)
-      handlers.onGameCancelled(msg)
-    },
-    onStateUpdate: (msg) => {
-      console.log('[Server] State update:', msg)
-      handlers.onStateUpdate(msg)
-    },
-    onStateDeltaUpdate: (msg) => {
-      console.log('[Server] State delta update:', msg)
-      handlers.onStateDeltaUpdate(msg)
-    },
-    onMulliganDecision: (msg) => {
-      console.log('[Server] Mulligan decision:', msg)
-      handlers.onMulliganDecision(msg)
-    },
-    onChooseBottomCards: (msg) => {
-      console.log('[Server] Choose bottom cards:', msg)
-      handlers.onChooseBottomCards(msg)
-    },
-    onMulliganComplete: (msg) => {
-      console.log('[Server] Mulligan complete:', msg)
-      handlers.onMulliganComplete(msg)
-    },
-    onWaitingForOpponentMulligan: () => {
-      console.log('[Server] Waiting for opponent mulligan')
-      handlers.onWaitingForOpponentMulligan()
-    },
-    onGameOver: (msg) => {
-      console.log('[Server] Game over:', msg)
-      handlers.onGameOver(msg)
-    },
-    onError: (msg) => {
-      console.error('[Server] Error:', msg)
-      handlers.onError(msg)
-    },
-    // Sealed draft handlers
-    onSealedGameCreated: (msg) => {
-      console.log('[Server] Sealed game created:', msg)
-      handlers.onSealedGameCreated(msg)
-    },
-    onSealedPoolGenerated: (msg) => {
-      console.log('[Server] Sealed pool generated:', msg)
-      handlers.onSealedPoolGenerated(msg)
-    },
-    onOpponentDeckSubmitted: (msg) => {
-      console.log('[Server] Opponent deck submitted:', msg)
-      handlers.onOpponentDeckSubmitted(msg)
-    },
-    onWaitingForOpponent: (msg) => {
-      console.log('[Server] Waiting for opponent:', msg)
-      handlers.onWaitingForOpponent(msg)
-    },
-    onDeckSubmitted: (msg) => {
-      console.log('[Server] Deck submitted:', msg)
-      handlers.onDeckSubmitted(msg)
-    },
-    // Lobby handlers
-    onLobbyCreated: (msg) => {
-      console.log('[Server] Lobby created:', msg)
-      handlers.onLobbyCreated(msg)
-    },
-    onLobbyUpdate: (msg) => {
-      console.log('[Server] Lobby update:', msg)
-      handlers.onLobbyUpdate(msg)
-    },
-    onLobbyStopped: (msg) => {
-      console.log('[Server] Lobby stopped:', msg)
-      handlers.onLobbyStopped(msg)
-    },
-    // Draft handlers
-    onDraftPackReceived: (msg) => {
-      console.log('[Server] Draft pack received:', msg)
-      handlers.onDraftPackReceived(msg)
-    },
-    onDraftPickMade: (msg) => {
-      console.log('[Server] Draft pick made:', msg)
-      handlers.onDraftPickMade(msg)
-    },
-    onDraftPickConfirmed: (msg) => {
-      console.log('[Server] Draft pick confirmed:', msg)
-      handlers.onDraftPickConfirmed(msg)
-    },
-    onDraftComplete: (msg) => {
-      console.log('[Server] Draft complete:', msg)
-      handlers.onDraftComplete(msg)
-    },
-    onDraftTimerUpdate: (msg) => {
-      console.log('[Server] Draft timer update:', msg)
-      handlers.onDraftTimerUpdate(msg)
-    },
-    // Winston Draft handlers
-    onWinstonDraftState: (msg) => {
-      console.log('[Server] Winston draft state:', msg)
-      handlers.onWinstonDraftState(msg)
-    },
-    // Grid Draft handlers
-    onGridDraftState: (msg) => {
-      console.log('[Server] Grid draft state:', msg)
-      handlers.onGridDraftState(msg)
-    },
-    // Tournament handlers
-    onTournamentStarted: (msg) => {
-      console.log('[Server] Tournament started:', msg)
-      handlers.onTournamentStarted(msg)
-    },
-    onTournamentMatchStarting: (msg) => {
-      console.log('[Server] Tournament match starting:', msg)
-      handlers.onTournamentMatchStarting(msg)
-    },
-    onTournamentBye: (msg) => {
-      console.log('[Server] Tournament bye:', msg)
-      handlers.onTournamentBye(msg)
-    },
-    onRoundComplete: (msg) => {
-      console.log('[Server] Round complete:', msg)
-      handlers.onRoundComplete(msg)
-    },
-    onMatchComplete: (msg) => {
-      console.log('[Server] Match complete:', msg)
-      handlers.onMatchComplete(msg)
-    },
-    onPlayerReadyForRound: (msg) => {
-      console.log('[Server] Player ready for round:', msg)
-      handlers.onPlayerReadyForRound(msg)
-    },
-    onTournamentComplete: (msg) => {
-      console.log('[Server] Tournament complete:', msg)
-      handlers.onTournamentComplete(msg)
-    },
-    onTournamentResumed: (msg) => {
-      console.log('[Server] Tournament resumed:', msg)
-      handlers.onTournamentResumed(msg)
-    },
-    // Spectating handlers
-    onActiveMatches: (msg) => {
-      console.log('[Server] Active matches:', msg)
-      handlers.onActiveMatches(msg)
-    },
-    onSpectatorStateUpdate: (msg) => {
-      console.log('[Server] Spectator state update:', msg)
-      handlers.onSpectatorStateUpdate(msg)
-    },
-    onSpectatingStarted: (msg) => {
-      console.log('[Server] Spectating started:', msg)
-      handlers.onSpectatingStarted(msg)
-    },
-    onSpectatingStopped: (msg) => {
-      console.log('[Server] Spectating stopped:', msg)
-      handlers.onSpectatingStopped(msg)
-    },
-    // Combat UI handlers
-    onOpponentAttackerTargets: (msg) => {
-      console.log('[Server] Opponent attacker targets:', msg)
-      handlers.onOpponentAttackerTargets(msg)
-    },
-    onOpponentBlockerAssignments: (msg) => {
-      console.log('[Server] Opponent blocker assignments:', msg)
-      handlers.onOpponentBlockerAssignments(msg)
-    },
-    // Disconnect handlers
-    onOpponentDisconnected: (msg) => {
-      console.log('[Server] Opponent disconnected:', msg)
-      handlers.onOpponentDisconnected(msg)
-    },
-    onOpponentReconnected: (msg) => {
-      console.log('[Server] Opponent reconnected:', msg)
-      handlers.onOpponentReconnected(msg)
-    },
-    onTournamentPlayerDisconnected: (msg) => {
-      console.log('[Server] Tournament player disconnected:', msg)
-      handlers.onTournamentPlayerDisconnected(msg)
-    },
-    onTournamentPlayerReconnected: (msg) => {
-      console.log('[Server] Tournament player reconnected:', msg)
-      handlers.onTournamentPlayerReconnected(msg)
-    },
-  }
+  }) as MessageHandlers
 }
