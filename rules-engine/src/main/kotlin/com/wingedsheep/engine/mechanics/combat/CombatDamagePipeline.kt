@@ -2,11 +2,7 @@ package com.wingedsheep.engine.mechanics.combat
 
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
 import com.wingedsheep.engine.handlers.effects.DamageUtils
-import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
-import com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils
-import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.state.GameState

@@ -23,10 +23,6 @@ import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.event.GrantedTriggeredAbility
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
-import com.wingedsheep.engine.handlers.effects.DamageUtils
-import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
-import com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils
-import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect

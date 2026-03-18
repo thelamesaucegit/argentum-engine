@@ -4,10 +4,6 @@ import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.event.GrantedActivatedAbility
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
-import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils
-import com.wingedsheep.engine.handlers.effects.DamageUtils
-import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
-import com.wingedsheep.engine.handlers.effects.ReplacementEffectUtils
 import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.sdk.scripting.effects.GrantActivatedAbilityToGroupEffect
