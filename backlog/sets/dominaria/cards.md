@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 223 / 249
+**Implemented:** 224 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 34   |
-| Blue       | 37    | 31   |
+| Blue       | 37    | 32   |
 | Black      | 38    | 35   |
 | Red        | 38    | 34   |
 | Green      | 37    | 32   |
@@ -249,7 +249,7 @@
 - [x] Verdant Force
 - [x] Verix Bladewing
 - [x] Vicious Offering
-- [ ] Vodalian Arcanist
+- [x] Vodalian Arcanist
 - [x] Voltaic Servant
 - [ ] Warcry Phoenix
 - [x] Warlord's Fury

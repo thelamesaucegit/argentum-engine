@@ -230,6 +230,7 @@ object DominariaSet {
         VerixBladewing,
         ViciousOffering,
         UrzasTome,
+        VodalianArcanist,
         VoltaicServant,
         WarlordsFury,
         Weatherlight,
