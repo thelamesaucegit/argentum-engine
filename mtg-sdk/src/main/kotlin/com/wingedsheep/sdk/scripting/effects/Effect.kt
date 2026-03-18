@@ -14,7 +14,13 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  * - DamageEffects.kt - Damage dealing effects
  * - DrawingEffects.kt - Card draw/discard effects
  * - RemovalEffects.kt - Destroy/exile/sacrifice effects
- * - PermanentEffects.kt - Stats/counters/keywords/tap effects
+ * - PermanentEffects.kt - Permanent state transformations (animation, morph, equipment)
+ * - CounterEffects.kt - Counter manipulation effects
+ * - KeywordAndAbilityEffects.kt - Keyword/ability grant effects
+ * - TypeAndColorEffects.kt - Type/subtype/color change effects
+ * - ControlEffects.kt - Control change effects
+ * - StatsEffects.kt - Power/toughness modification effects
+ * - TapEffects.kt - Tap/untap effects
  * - ManaEffects.kt - Mana-producing effects
  * - TokenEffects.kt - Token creation effects
  * - LibraryEffects.kt - Library manipulation effects
