@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 227 / 249
+**Implemented:** 228 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -13,7 +13,7 @@
 | Green      | 37    | 32   |
 | Multicolor | 19    | 18   |
 | Colorless  | 30    | 29   |
-| Land       | 12    | 10   |
+| Land       | 12    | 11   |
 
 ---
 
@@ -260,7 +260,7 @@
 - [x] Windgrace Acolyte
 - [x] Wizard's Lightning
 - [x] Wizard's Retort
-- [ ] Woodland Cemetery
+- [x] Woodland Cemetery
 - [x] Yargle, Glutton of Urborg
 - [x] Yavimaya Sapherd
 - [x] Yawgmoth's Vile Offering

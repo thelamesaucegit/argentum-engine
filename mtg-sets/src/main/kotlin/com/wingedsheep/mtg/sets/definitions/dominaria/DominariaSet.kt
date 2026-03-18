@@ -243,6 +243,7 @@ object DominariaSet {
         WindgraceAcolyte,
         WizardsLightning,
         WizardsRetort,
+        WoodlandCemetery,
         YargleGluttonOfUrborg,
         YawgmothsVileOffering,
         YavimayaSapherd,
