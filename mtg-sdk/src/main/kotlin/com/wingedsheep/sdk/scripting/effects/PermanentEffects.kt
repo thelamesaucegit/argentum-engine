@@ -734,6 +734,38 @@ data class AddCreatureTypeEffect(
 }
 
 /**
+ * Add a subtype to a target permanent (any type — creature, land, etc.).
+ * "Target land becomes the basic land type of your choice in addition to its other types."
+ *
+ * This is a general-purpose version of AddCreatureTypeEffect that doesn't check
+ * if the target is a creature. Use this for adding land subtypes or any non-creature subtypes.
+ *
+ * @property subtype The subtype to add (static value)
+ * @property target Which permanent to modify
+ * @property duration How long the effect lasts
+ * @property fromChosenValueKey If set, reads the subtype from EffectContext.chosenValues instead of [subtype]
+ */
+@SerialName("AddSubtype")
+@Serializable
+data class AddSubtypeEffect(
+    val subtype: String = "",
+    val target: EffectTarget = EffectTarget.ContextTarget(0),
+    val duration: Duration = Duration.EndOfTurn,
+    val fromChosenValueKey: String? = null
+) : Effect {
+    override val description: String = buildString {
+        if (fromChosenValueKey != null) {
+            append("${target.description} becomes the chosen type in addition to its other types")
+        } else {
+            append("${target.description} gains $subtype in addition to its other types")
+        }
+        if (duration.description.isNotEmpty()) append(" ${duration.description}")
+    }
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Change color for a group of creatures.
  * "Each creature you control becomes black until end of turn."
  *

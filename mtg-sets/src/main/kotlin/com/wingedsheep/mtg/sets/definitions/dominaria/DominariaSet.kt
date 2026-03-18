@@ -150,6 +150,7 @@ object DominariaSet {
         NabanDeanOfIteration,
         NaruMehaMasterWizard,
         NaturesSpiral,
+        NavigatorsCompass,
         OathOfTeferi,
         OnSerrasWings,
         Opt,

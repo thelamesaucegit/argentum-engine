@@ -41,6 +41,7 @@ class PermanentExecutors(
         SetGroupCreatureSubtypesExecutor(),
         SetCreatureSubtypesExecutor(),
         AddCreatureTypeExecutor(),
+        AddSubtypeExecutor(),
         ChangeGroupColorExecutor(),
         GrantActivatedAbilityToGroupExecutor(),
         AnimateLandExecutor(),

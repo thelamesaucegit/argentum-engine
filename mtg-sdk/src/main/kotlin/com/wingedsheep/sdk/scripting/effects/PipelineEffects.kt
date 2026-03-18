@@ -435,7 +435,9 @@ enum class OptionType {
     /** Choose from all creature types */
     CREATURE_TYPE,
     /** Choose from the five Magic colors */
-    COLOR
+    COLOR,
+    /** Choose from the five basic land types (Plains, Island, Swamp, Mountain, Forest) */
+    BASIC_LAND_TYPE
 }
 
 /**
@@ -463,6 +465,7 @@ data class ChooseOptionEffect(
         append(when (optionType) {
             OptionType.CREATURE_TYPE -> "a creature type"
             OptionType.COLOR -> "a color"
+            OptionType.BASIC_LAND_TYPE -> "a basic land type"
         })
     }
 

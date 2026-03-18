@@ -34,6 +34,7 @@ class ChooseOptionPipelineExecutor : EffectExecutor<ChooseOptionEffect> {
         val allOptions = when (effect.optionType) {
             OptionType.CREATURE_TYPE -> Subtype.ALL_CREATURE_TYPES
             OptionType.COLOR -> listOf("White", "Blue", "Black", "Red", "Green")
+            OptionType.BASIC_LAND_TYPE -> Subtype.ALL_BASIC_LAND_TYPES.toList()
         }
 
         val excludedLower = effect.excludedOptions.map { it.lowercase() }.toSet()
@@ -42,6 +43,7 @@ class ChooseOptionPipelineExecutor : EffectExecutor<ChooseOptionEffect> {
         val prompt = effect.prompt ?: when (effect.optionType) {
             OptionType.CREATURE_TYPE -> "Choose a creature type"
             OptionType.COLOR -> "Choose a color"
+            OptionType.BASIC_LAND_TYPE -> "Choose a basic land type"
         }
 
         val decisionId = UUID.randomUUID().toString()

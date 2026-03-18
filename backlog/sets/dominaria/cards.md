@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 224 / 249
+**Implemented:** 225 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 38    | 34   |
 | Green      | 37    | 32   |
 | Multicolor | 19    | 18   |
-| Colorless  | 30    | 28   |
+| Colorless  | 30    | 29   |
 | Land       | 12    | 10   |
 
 ---
@@ -161,7 +161,7 @@
 - [x] Naban, Dean of Iteration
 - [x] Naru Meha, Master Wizard
 - [x] Nature's Spiral
-- [ ] Navigator's Compass
+- [x] Navigator's Compass
 - [x] Oath of Teferi
 - [x] On Serra's Wings
 - [x] Opt

@@ -13,6 +13,7 @@ import com.wingedsheep.sdk.scripting.effects.AddDynamicManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaOfColorAmongEffect
 import com.wingedsheep.sdk.scripting.effects.AddCardTypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersEffect
+import com.wingedsheep.sdk.scripting.effects.AddSubtypeEffect
 import com.wingedsheep.sdk.scripting.effects.AddCountersToCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
 import com.wingedsheep.sdk.scripting.effects.AnimateLandEffect
@@ -577,6 +578,13 @@ object Effects {
      */
     fun AddCardType(cardType: String, target: EffectTarget, duration: Duration = Duration.Permanent): Effect =
         AddCardTypeEffect(cardType, target, duration)
+
+    /**
+     * Add a subtype to a target permanent (any type — creature, land, artifact, etc.).
+     * "Target land becomes a Forest in addition to its other types."
+     */
+    fun AddSubtype(subtype: String, target: EffectTarget, duration: Duration = Duration.EndOfTurn): Effect =
+        AddSubtypeEffect(subtype, target, duration)
 
     /**
      * Set a creature's base power to a dynamic value.

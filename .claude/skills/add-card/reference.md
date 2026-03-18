@@ -87,6 +87,8 @@ constructors.
 - `Effects.DistributeCountersFromSelf(counterType)` — move counters from self to other creatures (player chooses)
 - `Effects.DistributeCountersAmongTargets(totalCounters, counterType, minPerTarget)` — distribute N counters among targets from context (deterministic distribution)
 
+- `Effects.AddSubtype(subtype, target, duration = EndOfTurn)` — add a subtype to any permanent (creature, land, etc.) in addition to its other types; supports `fromChosenValueKey` for pipeline composition with `ChooseOptionEffect(BASIC_LAND_TYPE)`
+
 ### Mass Effects (group)
 
 - `Effects.DestroyAll(filter: GameObjectFilter, noRegenerate = false, storeDestroyedAs?)` — board wipe via pipeline; compose with `DrawCardsEffect(VariableReference("<key>_count"))` for "draw per destroyed" patterns
