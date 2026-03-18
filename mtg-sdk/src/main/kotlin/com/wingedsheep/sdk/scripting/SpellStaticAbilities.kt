@@ -1,0 +1,97 @@
+package com.wingedsheep.sdk.scripting
+
+import com.wingedsheep.sdk.scripting.text.TextReplacer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * Grants flash to spells matching a filter.
+ * Used for Quick Sliver: "Any player may cast Sliver spells as though they had flash."
+ * Used for Raff Capashen: "You may cast historic spells as though they had flash."
+ *
+ * The engine checks for this static ability on any permanent on the battlefield
+ * when determining if a non-instant spell can be cast at instant speed.
+ *
+ * @property filter The filter that spells must match to gain flash
+ * @property controllerOnly If true, only the permanent's controller benefits (default: false = any player)
+ */
+@SerialName("GrantFlashToSpellType")
+@Serializable
+data class GrantFlashToSpellType(
+    val filter: GameObjectFilter,
+    val controllerOnly: Boolean = false
+) : StaticAbility {
+    override val description: String = if (controllerOnly) {
+        "You may cast ${filter.description} spells as though they had flash"
+    } else {
+        "Any player may cast ${filter.description} spells as though they had flash"
+    }
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
+ * Spells matching a filter can't be countered.
+ * Used for Root Sliver: "Sliver spells can't be countered."
+ *
+ * The engine checks for this static ability on any permanent on the battlefield
+ * when a spell would be countered. If the spell matches the filter, the counter
+ * attempt fails.
+ *
+ * @property filter The filter that spells must match to be uncounterable
+ */
+@SerialName("GrantCantBeCountered")
+@Serializable
+data class GrantCantBeCountered(
+    val filter: GameObjectFilter
+) : StaticAbility {
+    override val description: String = "${filter.description} spells can't be countered"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility {
+        val newFilter = filter.applyTextReplacement(replacer)
+        return if (newFilter !== filter) copy(filter = newFilter) else this
+    }
+}
+
+/**
+ * Grants an alternative casting cost for spells cast by this permanent's controller.
+ * Used for cards like Jodah, Archmage Eternal: "You may pay {W}{U}{B}{R}{G} rather than pay
+ * the mana cost for spells you cast."
+ *
+ * When a player controls a permanent with this ability, they may choose to pay the
+ * alternative cost instead of the spell's normal mana cost. Alternative costs cannot
+ * be combined with other alternative costs (e.g., flashback).
+ *
+ * Per Rule 118.9a, additional costs, cost increases, and cost reductions still apply
+ * to the alternative cost.
+ *
+ * @property cost The alternative mana cost string (e.g., "{W}{U}{B}{R}{G}")
+ */
+@SerialName("GrantAlternativeCastingCost")
+@Serializable
+data class GrantAlternativeCastingCost(
+    val cost: String
+) : StaticAbility {
+    override val description: String = "You may pay $cost rather than pay the mana cost for spells you cast"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
+ * You may cast cards exiled with this permanent (linked via LinkedExileComponent).
+ * The [filter] restricts which exiled cards can be cast (e.g., GameObjectFilter.Nonland
+ * for "you may cast spells from among cards exiled with ~").
+ *
+ * When this permanent leaves the battlefield, the static ability naturally ceases to apply
+ * and the exiled cards can no longer be cast. The cards remain in exile.
+ *
+ * Used by Rona, Disciple of Gix and similar cards.
+ */
+@SerialName("GrantMayCastFromLinkedExile")
+@Serializable
+data class GrantMayCastFromLinkedExile(
+    val filter: GameObjectFilter = GameObjectFilter.Companion.Nonland
+) : StaticAbility {
+    override val description: String = "You may cast ${filter.description} cards exiled with this permanent."
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
