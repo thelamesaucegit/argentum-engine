@@ -1,7 +1,7 @@
 /**
  * Action resolver pipeline for useInteraction.
  *
- * Crew and cycling are standalone single-phase flows handled directly here.
+ * Crew is a standalone single-phase flow handled directly here.
  * Everything else goes through the pipeline coordinator (pipelineSlice)
  * which computes the full phase sequence and advances through it.
  */
@@ -39,10 +39,6 @@ function resolveCrew(info: LegalActionInfo, ctx: ActionContext): void {
   ctx.selectCard(null)
 }
 
-function isCyclingAction(info: LegalActionInfo): boolean {
-  return info.action.type === 'CycleCard' || info.action.type === 'TypecycleCard'
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -52,15 +48,11 @@ function isCyclingAction(info: LegalActionInfo): boolean {
  * was handled (caller should not submit directly).
  */
 export function resolveAction(actionInfo: LegalActionInfo, ctx: ActionContext): boolean {
-  // Crew and cycling are standalone — not part of the pipeline
+  // Crew is standalone — not part of the pipeline
   if (isCrewAction(actionInfo)) {
     resolveCrew(actionInfo, ctx)
     return true
   }
-  if (isCyclingAction(actionInfo)) {
-    return true
-  }
-
   // Everything else goes through the pipeline coordinator.
   // computePhases inside startPipeline decides what UI phases are needed;
   // if none, startPipeline submits directly.
@@ -74,6 +66,5 @@ export function resolveAction(actionInfo: LegalActionInfo, ctx: ActionContext): 
  */
 export function needsInteraction(actionInfo: LegalActionInfo): boolean {
   if (isCrewAction(actionInfo)) return true
-  if (isCyclingAction(actionInfo)) return true
   return computePhases(actionInfo).length > 0
 }
