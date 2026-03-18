@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 241 / 249
+**Implemented:** 242 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 35   |
 | Black      | 38    | 38   |
 | Red        | 38    | 35   |
-| Green      | 37    | 35   |
+| Green      | 37    | 36   |
 | Multicolor | 19    | 19   |
 | Colorless  | 30    | 29   |
 | Land       | 12    | 12   |
@@ -92,7 +92,7 @@
 - [x] Fungal Infection
 - [x] Fungal Plots
 - [x] Gaea's Blessing
-- [ ] Gaea's Protector
+- [x] Gaea's Protector
 - [x] Garna, the Bloodflame
 - [x] Ghitu Chronicler
 - [x] Ghitu Journeymage

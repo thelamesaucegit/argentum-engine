@@ -102,6 +102,7 @@ object DominariaSet {
         GoblinChainwhirler,
         GoblinWarchief,
         GaeasBlessing,
+        GaeasProtector,
         GarnaTheBloodflame,
         GildedLotus,
         GrandWarlordRadha,
