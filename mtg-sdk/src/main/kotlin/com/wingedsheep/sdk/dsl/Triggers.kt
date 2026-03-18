@@ -179,6 +179,14 @@ object Triggers {
     )
 
     /**
+     * When this creature attacks alone (is the only declared attacker).
+     */
+    val AttacksAlone: TriggerSpec = TriggerSpec(
+        event = AttackEvent(alone = true),
+        binding = TriggerBinding.SELF
+    )
+
+    /**
      * When any creature attacks.
      */
     val AnyAttacks: TriggerSpec = TriggerSpec(

@@ -339,6 +339,17 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
         override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
     }
 
+    /**
+     * Toughness of the source entity (the permanent that has the ability).
+     * Used for effects like "double its toughness" on triggered abilities.
+     */
+    @SerialName("SourceToughness")
+    @Serializable
+    data object SourceToughness : DynamicAmount {
+        override val description: String = "its toughness"
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount = this
+    }
+
     // =========================================================================
     // Zone-based Counting — generic counting primitives
     // =========================================================================

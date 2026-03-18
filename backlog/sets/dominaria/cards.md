@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 228 / 249
+**Implemented:** 229 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 32   |
 | Black      | 38    | 36   |
 | Red        | 38    | 34   |
-| Green      | 37    | 32   |
+| Green      | 37    | 33   |
 | Multicolor | 19    | 18   |
 | Colorless  | 30    | 29   |
 | Land       | 12    | 11   |
@@ -105,7 +105,7 @@
 - [x] Goblin Warchief
 - [x] Grand Warlord Radha
 - [x] Grow from the Ashes
-- [ ] Grunn, the Lonely King
+- [x] Grunn, the Lonely King
 - [x] Guardians of Koilos
 - [ ] Hallar, the Firefletcher
 - [x] Haphazard Bombardment

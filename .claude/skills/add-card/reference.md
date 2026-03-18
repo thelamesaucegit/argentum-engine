@@ -520,8 +520,8 @@ constructors.
 
 ### Combat
 
-- `Triggers.Attacks` / `Triggers.AnyAttacks` / `Triggers.YouAttack` / `Triggers.NontokenCreatureYouControlAttacks`
-- `AttackEvent(filter: GameObjectFilter?)` — filter restricts which attackers trigger (includes controller predicate)
+- `Triggers.Attacks` / `Triggers.AttacksAlone` / `Triggers.AnyAttacks` / `Triggers.YouAttack` / `Triggers.NontokenCreatureYouControlAttacks`
+- `AttackEvent(filter: GameObjectFilter?, alone: Boolean = false)` — filter restricts which attackers trigger; `alone = true` requires the creature to be the only declared attacker
 - `Triggers.Blocks` / `Triggers.BecomesBlocked` / `Triggers.CreatureYouControlBecomesBlocked` / `Triggers.FilteredBecomesBlocked(filter: GameObjectFilter)` — any creature matching filter becomes blocked (any controller)
 - `Triggers.BecomesTarget` / `Triggers.BecomesTarget(filter: GameObjectFilter)` — when a permanent becomes target of spell/ability
 - `Triggers.DealsDamage` / `Triggers.DealsCombatDamage`
@@ -715,7 +715,7 @@ constructors.
 
 - `DynamicAmount.XValue` / `DynamicAmount.Fixed(n)` / `DynamicAmount.YourLifeTotal`
 - `DynamicAmount.SacrificedPermanentPower` / `.SacrificedPermanentToughness`
-- `DynamicAmount.SourcePower` / `.TriggerDamageAmount` / `.TriggerLifeGainAmount` / `.LastKnownCounterCount`
+- `DynamicAmount.SourcePower` / `.SourceToughness` / `.TriggerDamageAmount` / `.TriggerLifeGainAmount` / `.LastKnownCounterCount`
 - `DynamicAmount.ColorsAmongPermanentsYouControl` / `.CardTypesInAllGraveyards`
 - `DynamicAmount.CountersOnSelf(counterType)` / `.CountersOnTarget(counterType, targetIndex)` / `.CreaturesSharingTypeWithTriggeringEntity`
 - `DynamicAmount.VariableReference(variableName)` / `.StoredCardManaValue(collectionName)` / `.AdditionalCostExiledCount`

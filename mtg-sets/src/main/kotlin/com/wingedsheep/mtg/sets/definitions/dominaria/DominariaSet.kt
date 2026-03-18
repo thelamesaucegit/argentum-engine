@@ -106,6 +106,7 @@ object DominariaSet {
         GuardiansOfKoilos,
         GiftOfGrowth,
         GrowFromTheAshes,
+        GrunnTheLonelyKing,
         HealingGrace,
         HaphazardBombardment,
         HinterlandHarbor,

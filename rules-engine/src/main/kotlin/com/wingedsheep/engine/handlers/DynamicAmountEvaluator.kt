@@ -192,6 +192,35 @@ class DynamicAmountEvaluator(
                 }
             }
 
+            is DynamicAmount.SourceToughness -> {
+                val sourceId = context.sourceId ?: return 0
+                val projected = if (projectForBattlefieldCounting) {
+                    state.projectedState
+                } else null
+                if (projected != null) {
+                    val projectedToughness = projected.getToughness(sourceId)
+                    if (projectedToughness != null) {
+                        projectedToughness
+                    } else {
+                        val card = state.getEntity(sourceId)?.get<CardComponent>() ?: return 0
+                        when (val toughness = card.baseStats?.toughness) {
+                            is com.wingedsheep.sdk.model.CharacteristicValue.Fixed -> toughness.value
+                            is com.wingedsheep.sdk.model.CharacteristicValue.Dynamic -> evaluate(state, toughness.source, context)
+                            is com.wingedsheep.sdk.model.CharacteristicValue.DynamicWithOffset -> evaluate(state, toughness.source, context) + toughness.offset
+                            null -> 0
+                        }
+                    }
+                } else {
+                    val card = state.getEntity(sourceId)?.get<CardComponent>() ?: return 0
+                    when (val toughness = card.baseStats?.toughness) {
+                        is com.wingedsheep.sdk.model.CharacteristicValue.Fixed -> toughness.value
+                        is com.wingedsheep.sdk.model.CharacteristicValue.Dynamic -> evaluate(state, toughness.source, context)
+                        is com.wingedsheep.sdk.model.CharacteristicValue.DynamicWithOffset -> evaluate(state, toughness.source, context) + toughness.offset
+                        null -> 0
+                    }
+                }
+            }
+
             is DynamicAmount.CountersOnSelf -> {
                 val sourceId = context.sourceId ?: return 0
                 val countersComponent = state.getEntity(sourceId)?.get<CountersComponent>() ?: return 0

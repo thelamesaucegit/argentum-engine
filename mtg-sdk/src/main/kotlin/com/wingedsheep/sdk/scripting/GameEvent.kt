@@ -327,7 +327,8 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     @SerialName("AttackEvent")
     @Serializable
     data class AttackEvent(
-        val filter: GameObjectFilter? = null
+        val filter: GameObjectFilter? = null,
+        val alone: Boolean = false
     ) : GameEvent {
         override val description: String = buildString {
             if (filter != null) {
@@ -335,6 +336,7 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
             } else {
                 append("a creature attacks")
             }
+            if (alone) append(" alone")
         }
 
         override fun applyTextReplacement(replacer: TextReplacer): GameEvent {

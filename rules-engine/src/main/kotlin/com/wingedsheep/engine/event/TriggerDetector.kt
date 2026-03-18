@@ -1854,7 +1854,9 @@ class TriggerDetector(
                 true
             }
             is GameEvent.AttackEvent -> {
-                event is AttackersDeclaredEvent && checkBinding(binding, sourceId, event.attackers)
+                event is AttackersDeclaredEvent &&
+                    checkBinding(binding, sourceId, event.attackers) &&
+                    (!trigger.alone || event.attackers.size == 1)
             }
             is GameEvent.YouAttackEvent -> {
                 event is AttackersDeclaredEvent &&
