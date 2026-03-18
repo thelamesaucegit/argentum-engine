@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useGameStore } from '../../store/gameStore'
+import { useGameStore } from '@/store/gameStore.ts'
 import { SpectatorContext } from '../../contexts/SpectatorContext'
 import { GameBoard } from '../game/GameBoard'
 import { CombatArrows } from '../combat/CombatArrows'
-import type { SpectatingState } from '../../store/slices/types'
-import { reconstructSnapshots, type ReplayData } from '../../replay/reconstructSnapshots'
+import type { SpectatingState } from '@/store/slices'
+import { reconstructSnapshots, type ReplayData } from '@/replay/reconstructSnapshots.ts'
 
 // ============================================================================
 // Types

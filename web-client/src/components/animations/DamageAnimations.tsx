@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useGameStore, type DamageAnimation } from '../../store/gameStore'
+import { useGameStore, type DamageAnimation } from '@/store/gameStore.ts'
 
 const ANIMATION_DURATION = 800 // ms
 

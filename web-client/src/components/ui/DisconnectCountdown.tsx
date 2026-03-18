@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useGameStore } from '../../store/gameStore'
+import { useGameStore } from '@/store/gameStore.ts'
 
 /**
  * Displays a countdown when the opponent has disconnected.

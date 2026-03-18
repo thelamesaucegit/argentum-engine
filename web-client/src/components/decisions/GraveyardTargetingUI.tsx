@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import type { EntityId, ChooseTargetsDecision, ClientCard } from '../../types'
-import { calculateFittingCardWidth, type ResponsiveSizes } from '../../hooks/useResponsive'
+import { useGameStore } from '@/store/gameStore.ts'
+import type { EntityId, ChooseTargetsDecision, ClientCard } from '@/types'
+import { calculateFittingCardWidth, type ResponsiveSizes } from '@/hooks/useResponsive.ts'
 import { ZoneSelectionUI, type ZoneCardInfo } from './ZoneSelectionUI'
-import { getCardImageUrl } from '../../utils/cardImages'
+import { getCardImageUrl } from '@/utils/cardImages.ts'
 import styles from './DecisionUI.module.css'
 
 /**

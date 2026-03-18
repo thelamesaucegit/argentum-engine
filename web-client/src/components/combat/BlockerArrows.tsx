@@ -1,6 +1,6 @@
-import { useGameStore } from '../../store/gameStore'
-import type { EntityId } from '../../types'
-import { entityId } from '../../types'
+import { useGameStore } from '@/store/gameStore.ts'
+import type { EntityId } from '@/types'
+import { entityId } from '@/types'
 
 /**
  * SVG overlay for drawing blocker assignment arrows.

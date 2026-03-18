@@ -1,8 +1,8 @@
 import { useMemo, useCallback } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import { useInteraction } from '../../hooks/useInteraction'
-import { useViewingPlayer, useOpponent, useStackCards, selectPriorityMode, useGhostCards, useRevealedLibraryTopCard } from '../../store/selectors'
-import { hand, getNextStep, StepShortNames } from '../../types'
+import { useGameStore } from '@/store/gameStore'
+import { useInteraction } from '@/hooks/useInteraction'
+import { useViewingPlayer, useOpponent, useStackCards, selectPriorityMode, useGhostCards, useRevealedLibraryTopCard } from '@/store/selectors'
+import { hand, getNextStep, StepShortNames } from '@/types'
 import { StepStrip } from '../ui/StepStrip'
 import { ManaPool } from '../ui/ManaPool'
 import { ActionMenu } from '../ui/ActionMenu'
@@ -15,7 +15,7 @@ import { DamageAnimations } from '../animations/DamageAnimations'
 import { RevealAnimations } from '../animations/RevealAnimations'
 import { CoinFlipAnimations } from '../animations/CoinFlipAnimations'
 import { TargetReselectedAnimations } from '../animations/TargetReselectedAnimations'
-import { useResponsive } from '../../hooks/useResponsive'
+import { useResponsive } from '@/hooks/useResponsive'
 import { ManaSymbol } from '../ui/ManaSymbols'
 
 // Import extracted components
@@ -86,7 +86,7 @@ export function GameBoard({ spectatorMode = false, topOffset = 0 }: GameBoardPro
       return
     }
 
-    // Legacy path
+    // Direct mana-button path: build Explicit payment and enter pipeline for remaining phases
     const paymentStrategy = {
       type: 'Explicit' as const,
       manaAbilitiesToActivate: [...manaSelectionState.selectedSources],

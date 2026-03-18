@@ -17,8 +17,8 @@ import {
   createStopSpectatingMessage,
   createAddDisconnectTimeMessage,
   createKickPlayerMessage,
-} from '../../types'
-import { trackEvent } from '../../utils/analytics'
+} from '@/types'
+import { trackEvent } from '@/utils/analytics.ts'
 import { getWebSocket, clearLobbyId, clearDeckState, loadLobbyId } from './shared'
 
 export interface LobbySliceState {

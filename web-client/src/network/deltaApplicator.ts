@@ -1,6 +1,6 @@
-import type { ClientGameState, ClientCard } from '../types/gameState'
-import type { StateDelta } from '../types/messages'
-import type { EntityId } from '../types/entities'
+import type { ClientGameState, ClientCard } from '@/types'
+import type { StateDelta } from '@/types'
+import type { EntityId } from '@/types'
 
 /**
  * Apply a StateDelta to an existing ClientGameState, producing the new state.

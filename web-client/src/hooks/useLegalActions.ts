@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useGameStore } from '../store/gameStore'
-import type { EntityId, LegalActionInfo, GameAction } from '../types'
+import type { EntityId, LegalActionInfo, GameAction } from '@/types'
 
 /**
  * Categorized legal actions for the current player.

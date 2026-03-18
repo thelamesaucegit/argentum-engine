@@ -45,7 +45,7 @@ import type {
   OpponentReconnectedMessage,
   TournamentPlayerDisconnectedMessage,
   TournamentPlayerReconnectedMessage,
-} from '../types'
+} from '@/types'
 
 /**
  * Handler functions for each server message type.

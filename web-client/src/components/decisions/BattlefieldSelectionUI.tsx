@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import type { DecisionSelectionState } from '../../store/gameStore'
-import type { SelectCardsDecision } from '../../types'
+import { useGameStore } from '@/store/gameStore.ts'
+import type { DecisionSelectionState } from '@/store/slices'
+import type { SelectCardsDecision } from '@/types'
 import styles from './DecisionUI.module.css'
 
 /**

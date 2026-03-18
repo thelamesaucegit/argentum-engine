@@ -14,10 +14,13 @@ import type {
   ManaSelectionState,
   ConvokeCreatureSelection,
 } from '../types'
-import type { LegalActionInfo } from '../../../types'
-import { createSubmitActionMessage } from '../../../types'
+import type { LegalActionInfo } from '@/types'
+import { createSubmitActionMessage } from '@/types'
 import { getWebSocket } from '../shared'
-import { parseManaCost as parseManaCostUtil, getRemainingCostSymbols } from '../../../utils/manaCost'
+import { parseManaCost as parseManaCostUtil, getRemainingCostSymbols } from '@/utils/manaCost'
+
+// Note: getWebSocket/createSubmitActionMessage are still used by confirmCrewSelection
+// and confirmDecisionSelection (which are not part of the pipeline).
 
 export interface SelectionSliceState {
   xSelectionState: XSelectionState | null
@@ -94,85 +97,15 @@ export const createSelectionSlice: SliceCreator<SelectionSlice> = (set, get) => 
   },
 
   confirmXSelection: () => {
-    const { xSelectionState, pipelineState, startTargeting, playerId, gameState } = get()
-    if (!xSelectionState) return
-
-    // Pipeline path
-    if (pipelineState) {
-      set({ xSelectionState: null })
-      get().advancePipeline({
-        type: 'xSelection',
-        xValue: xSelectionState.selectedX,
-        ...(xSelectionState.isRepeatCount ? { isRepeatCount: true } : {}),
-      })
-      return
-    }
-
-    // Legacy path
-    if (!playerId || !gameState) return
-    const { actionInfo, selectedX } = xSelectionState
-
-    if (actionInfo.action.type === 'CastSpell') {
-      const baseAction = actionInfo.action
-
-      if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
-        const actionWithX = {
-          ...baseAction,
-          xValue: selectedX,
-        }
-        startTargeting({
-          action: actionWithX,
-          validTargets: [...actionInfo.validTargets],
-          selectedTargets: [],
-          minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
-          maxTargets: actionInfo.targetCount ?? 1,
-          ...(actionInfo.requiresDamageDistribution ? { pendingActionInfo: actionInfo } : {}),
-        })
-      } else {
-        const actionWithX = {
-          ...baseAction,
-          xValue: selectedX,
-        }
-        getWebSocket()?.send(createSubmitActionMessage(actionWithX))
-      }
-    } else if (actionInfo.action.type === 'ActivateAbility') {
-      const baseAction = actionInfo.action
-
-      if (xSelectionState.isRepeatCount) {
-        // Repeat count mode: action already has auto-selected targets, just set repeatCount
-        const actionWithRepeat = {
-          ...baseAction,
-          repeatCount: selectedX,
-        }
-        getWebSocket()?.send(createSubmitActionMessage(actionWithRepeat))
-      } else {
-        const actionWithX = {
-          ...baseAction,
-          xValue: selectedX,
-        }
-
-        if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
-          startTargeting({
-            action: actionWithX,
-            validTargets: [...actionInfo.validTargets],
-            selectedTargets: [],
-            minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
-            maxTargets: actionInfo.targetCount ?? 1,
-          })
-        } else {
-          getWebSocket()?.send(createSubmitActionMessage(actionWithX))
-        }
-      }
-    } else if (actionInfo.action.type === 'TurnFaceUp') {
-      const baseAction = actionInfo.action
-      const actionWithX = {
-        ...baseAction,
-        xValue: selectedX,
-      }
-      getWebSocket()?.send(createSubmitActionMessage(actionWithX))
-    }
+    const { xSelectionState, pipelineState } = get()
+    if (!xSelectionState || !pipelineState) return
 
     set({ xSelectionState: null })
+    get().advancePipeline({
+      type: 'xSelection',
+      xValue: xSelectionState.selectedX,
+      ...(xSelectionState.isRepeatCount ? { isRepeatCount: true } : {}),
+    })
   },
 
   // Convoke selection actions
@@ -209,52 +142,16 @@ export const createSelectionSlice: SliceCreator<SelectionSlice> = (set, get) => 
   },
 
   confirmConvokeSelection: () => {
-    const { convokeSelectionState, pipelineState, startTargeting, playerId } = get()
-    if (!convokeSelectionState) return
+    const { convokeSelectionState, pipelineState } = get()
+    if (!convokeSelectionState || !pipelineState) return
 
-    const { selectedCreatures } = convokeSelectionState
     const convokedCreatures: Record<string, { color: string | null }> = {}
-    for (const creature of selectedCreatures) {
+    for (const creature of convokeSelectionState.selectedCreatures) {
       convokedCreatures[creature.entityId] = { color: creature.payingColor }
     }
 
-    // Pipeline path
-    if (pipelineState) {
-      set({ convokeSelectionState: null })
-      get().advancePipeline({ type: 'convoke', convokedCreatures })
-      return
-    }
-
-    // Legacy path
-    if (!playerId) return
-    const { actionInfo } = convokeSelectionState
-
-    if (actionInfo.action.type === 'CastSpell') {
-      const baseAction = actionInfo.action
-
-      const actionWithConvoke = {
-        ...baseAction,
-        alternativePayment: {
-          delvedCards: [],
-          convokedCreatures,
-        },
-      }
-
-      if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
-        startTargeting({
-          action: actionWithConvoke,
-          validTargets: [...actionInfo.validTargets],
-          selectedTargets: [],
-          minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
-          maxTargets: actionInfo.targetCount ?? 1,
-          ...(actionInfo.requiresDamageDistribution ? { pendingActionInfo: actionInfo } : {}),
-        })
-      } else {
-        getWebSocket()?.send(createSubmitActionMessage(actionWithConvoke))
-      }
-    }
-
     set({ convokeSelectionState: null })
+    get().advancePipeline({ type: 'convoke', convokedCreatures })
   },
 
   // Crew selection actions
@@ -338,68 +235,19 @@ export const createSelectionSlice: SliceCreator<SelectionSlice> = (set, get) => 
   },
 
   confirmDelveSelection: () => {
-    const { delveSelectionState, pipelineState, startTargeting, startManaSelection } = get()
-    if (!delveSelectionState) return
+    const { delveSelectionState, pipelineState } = get()
+    if (!delveSelectionState || !pipelineState) return
 
-    const { actionInfo, selectedCards } = delveSelectionState
-
-    // Pipeline path
-    if (pipelineState) {
-      const originalSymbols = parseManaCostUtil(delveSelectionState.manaCost)
-      const remainingSymbols = getRemainingCostSymbols(originalSymbols, selectedCards.length)
-      const modifiedManaCost = remainingSymbols.map(s => `{${s}}`).join('')
-      set({ delveSelectionState: null })
-      get().advancePipeline({
-        type: 'delve',
-        delvedCards: [...selectedCards],
-        modifiedManaCost,
-      })
-      return
-    }
-
-    // Legacy path
-    if (actionInfo.action.type === 'CastSpell') {
-      const baseAction = actionInfo.action
-
-      const actionWithDelve = {
-        ...baseAction,
-        alternativePayment: {
-          delvedCards: [...selectedCards],
-          convokedCreatures: {},
-        },
-      }
-
-      // Calculate remaining cost after delve for display
-      const originalSymbols = parseManaCostUtil(delveSelectionState.manaCost)
-      const remainingSymbols = getRemainingCostSymbols(originalSymbols, selectedCards.length)
-      const remainingCostString = remainingSymbols.map(s => `{${s}}`).join('')
-
-      // Omit delve fields so executeAction won't re-open the Delve selector
-      const { hasDelve: _, validDelveCards: _2, minDelveNeeded: _3, ...restActionInfo } = actionInfo
-      const modifiedActionInfo: LegalActionInfo = {
-        ...restActionInfo,
-        action: actionWithDelve,
-        manaCostString: remainingCostString,
-      }
-
-      if (actionInfo.availableManaSources && actionInfo.availableManaSources.length > 0) {
-        // Mana selection first, then targeting (if needed) is handled after mana confirm
-        startManaSelection(modifiedActionInfo)
-      } else if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
-        startTargeting({
-          action: actionWithDelve,
-          validTargets: [...actionInfo.validTargets],
-          selectedTargets: [],
-          minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
-          maxTargets: actionInfo.targetCount ?? 1,
-          ...(actionInfo.requiresDamageDistribution ? { pendingActionInfo: actionInfo } : {}),
-        })
-      } else {
-        getWebSocket()?.send(createSubmitActionMessage(actionWithDelve))
-      }
-    }
+    const originalSymbols = parseManaCostUtil(delveSelectionState.manaCost)
+    const remainingSymbols = getRemainingCostSymbols(originalSymbols, delveSelectionState.selectedCards.length)
+    const modifiedManaCost = remainingSymbols.map(s => `{${s}}`).join('')
 
     set({ delveSelectionState: null })
+    get().advancePipeline({
+      type: 'delve',
+      delvedCards: [...delveSelectionState.selectedCards],
+      modifiedManaCost,
+    })
   },
 
   // Mana color selection actions
@@ -408,24 +256,11 @@ export const createSelectionSlice: SliceCreator<SelectionSlice> = (set, get) => 
   },
 
   confirmManaColorSelection: (color) => {
-    const { manaColorSelectionState, pipelineState, submitAction } = get()
-    if (!manaColorSelectionState) return
+    const { manaColorSelectionState, pipelineState } = get()
+    if (!manaColorSelectionState || !pipelineState) return
 
-    // Pipeline path
-    if (pipelineState) {
-      set({ manaColorSelectionState: null })
-      get().advancePipeline({ type: 'manaColorChoice', color })
-      return
-    }
-
-    // Legacy path
-    const action = manaColorSelectionState.action
-    if (action.type === 'ActivateAbility') {
-      submitAction({ ...action, manaColorChoice: color })
-    } else {
-      submitAction(action)
-    }
     set({ manaColorSelectionState: null })
+    get().advancePipeline({ type: 'manaColorChoice', color })
   },
 
   cancelManaColorSelection: () => {

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useGameStore } from '../store/gameStore'
-import type { EntityId, GameAction, ClientGameState } from '../types'
+import type { EntityId, GameAction, ClientGameState } from '@/types'
 
 /**
  * Target types that can be selected.

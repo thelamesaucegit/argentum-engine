@@ -7,10 +7,10 @@
  * current subscriptions.
  */
 import type { SliceCreator, ActionPipelineState, PhaseResult } from '../types'
-import type { CastSpellAction, LegalActionInfo } from '../../../types'
+import type { CastSpellAction, LegalActionInfo } from '@/types'
 import { computePhases, mergeResult, enterPhase } from './pipelinePhases'
 import type { PipelineStoreMethods } from './pipelinePhases'
-import { parseManaCost as parseManaCostUtil, getRemainingCostSymbols } from '../../../utils/manaCost'
+import { parseManaCost as parseManaCostUtil, getRemainingCostSymbols } from '@/utils/manaCost'
 
 export interface PipelineSliceState {
   pipelineState: ActionPipelineState | null

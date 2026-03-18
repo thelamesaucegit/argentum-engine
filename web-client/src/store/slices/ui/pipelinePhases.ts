@@ -5,7 +5,7 @@
  * - mergeResult: applies a phase result to the accumulated action
  * - enterPhase: calls the appropriate start* method for a phase
  */
-import type { EntityId, LegalActionInfo, GameAction, ClientGameState } from '../../../types'
+import type { EntityId, LegalActionInfo, GameAction, ClientGameState } from '@/types'
 import type {
   PipelinePhase,
   PhaseResult,

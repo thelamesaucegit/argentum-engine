@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import type { EntityId, ReorderLibraryDecision, SearchCardInfo } from '../../types'
-import { calculateFittingCardWidth, type ResponsiveSizes } from '../../hooks/useResponsive'
-import { getCardImageUrl } from '../../utils/cardImages'
+import { useGameStore } from '@/store/gameStore.ts'
+import type { EntityId, ReorderLibraryDecision, SearchCardInfo } from '@/types'
+import { calculateFittingCardWidth, type ResponsiveSizes } from '@/hooks/useResponsive.ts'
+import { getCardImageUrl } from '@/utils/cardImages.ts'
 
 interface ReorderCardsUIProps {
   decision: ReorderLibraryDecision

@@ -11,7 +11,7 @@ import {
   createSubmitActionMessage,
   createUpdateAttackerTargetsMessage,
   createUpdateBlockerAssignmentsMessage,
-} from '../../../types'
+} from '@/types'
 import { getWebSocket } from '../shared'
 
 export interface CombatSliceState {

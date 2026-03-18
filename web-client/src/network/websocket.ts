@@ -1,4 +1,4 @@
-import type { ClientMessage, ServerMessage } from '../types'
+import type { ClientMessage, ServerMessage } from '@/types'
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
 

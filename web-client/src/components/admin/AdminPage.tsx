@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ReplayViewer, type GameSummary } from './ReplayViewer'
-import type { ReplayData } from '../../replay/reconstructSnapshots'
+import type { ReplayData } from '@/replay/reconstructSnapshots.ts'
 
 // ============================================================================
 // AdminPage

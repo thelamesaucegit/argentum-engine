@@ -9,8 +9,8 @@ import type {
   DistributeState,
   CounterDistributionState,
 } from '../types'
-import { createSubmitActionMessage } from '../../../types'
-import { getWebSocket } from '../shared'
+// Note: getWebSocket/createSubmitActionMessage removed — no longer needed
+// after legacy routing was replaced by the pipeline coordinator.
 
 export interface DistributionSliceState {
   damageDistributionState: DamageDistributionState | null
@@ -72,29 +72,12 @@ export const createDistributionSlice: SliceCreator<DistributionSlice> = (set, ge
   },
 
   confirmDamageDistribution: () => {
-    const { damageDistributionState, pipelineState, submitAction } = get()
-    if (!damageDistributionState) return
+    const { damageDistributionState, pipelineState } = get()
+    if (!damageDistributionState || !pipelineState) return
 
     const distribution = { ...damageDistributionState.distribution }
-
-    // Pipeline path
-    if (pipelineState) {
-      set({ damageDistributionState: null, lastDamageDistribution: distribution })
-      get().advancePipeline({ type: 'damageDistribution', distribution })
-      return
-    }
-
-    // Legacy path
-    const actionWithDistribution = {
-      ...damageDistributionState.action,
-      damageDistribution: distribution,
-    }
-
-    submitAction(actionWithDistribution)
-    set({
-      damageDistributionState: null,
-      lastDamageDistribution: distribution,
-    })
+    set({ damageDistributionState: null, lastDamageDistribution: distribution })
+    get().advancePipeline({ type: 'damageDistribution', distribution })
   },
 
   // Inline distribute actions (server-driven DistributeDecision)
@@ -207,14 +190,13 @@ export const createDistributionSlice: SliceCreator<DistributionSlice> = (set, ge
   },
 
   confirmCounterDistribution: () => {
-    const { counterDistributionState, pipelineState, startTargeting } = get()
-    if (!counterDistributionState) return
+    const { counterDistributionState, pipelineState } = get()
+    if (!counterDistributionState || !pipelineState) return
 
-    const { actionInfo, distribution } = counterDistributionState
+    const { distribution } = counterDistributionState
     const totalAllocated = Object.values(distribution).reduce<number>((sum, v) => sum + v, 0)
     if (totalAllocated <= 0) return
 
-    // Filter out zero entries
     const counterRemovals: Record<string, number> = {}
     for (const [eid, count] of Object.entries(distribution) as [string, number][]) {
       if (count > 0) {
@@ -222,42 +204,11 @@ export const createDistributionSlice: SliceCreator<DistributionSlice> = (set, ge
       }
     }
 
-    // Pipeline path
-    if (pipelineState) {
-      set({ counterDistributionState: null })
-      get().advancePipeline({
-        type: 'counterDistribution',
-        xValue: totalAllocated,
-        counterRemovals,
-      })
-      return
-    }
-
-    // Legacy path
-    if (actionInfo.action.type === 'ActivateAbility') {
-      const baseAction = actionInfo.action
-      const actionWithCost = {
-        ...baseAction,
-        xValue: totalAllocated,
-        costPayment: {
-          ...baseAction.costPayment,
-          counterRemovals,
-        },
-      }
-
-      if (actionInfo.requiresTargets && actionInfo.validTargets && actionInfo.validTargets.length > 0) {
-        startTargeting({
-          action: actionWithCost,
-          validTargets: [...actionInfo.validTargets],
-          selectedTargets: [],
-          minTargets: actionInfo.minTargets ?? actionInfo.targetCount ?? 1,
-          maxTargets: actionInfo.targetCount ?? 1,
-        })
-      } else {
-        getWebSocket()?.send(createSubmitActionMessage(actionWithCost))
-      }
-    }
-
     set({ counterDistributionState: null })
+    get().advancePipeline({
+      type: 'counterDistribution',
+      xValue: totalAllocated,
+      counterRemovals,
+    })
   },
 })

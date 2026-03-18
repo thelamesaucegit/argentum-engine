@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import type { ChooseNumberDecision } from '../../types'
+import { useGameStore } from '@/store/gameStore.ts'
+import type { ChooseNumberDecision } from '@/types'
 import { ManaSymbol } from '../ui/ManaSymbols'
 import styles from './DecisionUI.module.css'
 

@@ -2,7 +2,7 @@
  * Gameplay slice - handles game state, actions, events, and core game mechanics.
  */
 import type { SliceCreator, EntityId, LogEntry, MulliganState, GameOverState, ErrorState } from './types'
-import type { ClientGameState, ClientEvent, GameAction, LegalActionInfo, PendingDecision, OpponentDecisionStatus } from '../../types'
+import type { ClientGameState, ClientEvent, GameAction, LegalActionInfo, PendingDecision, OpponentDecisionStatus } from '@/types'
 import {
   createCreateGameMessage,
   createJoinGameMessage,
@@ -17,9 +17,9 @@ import {
   createSetStopOverridesMessage,
   createRequestUndoMessage,
 
-} from '../../types'
-import type { Step, PriorityModeValue } from '../../types'
-import { trackEvent } from '../../utils/analytics'
+} from '@/types'
+import type { Step, PriorityModeValue } from '@/types'
+import { trackEvent } from '@/utils/analytics.ts'
 import { getWebSocket } from './shared'
 
 export interface GameplaySliceState {

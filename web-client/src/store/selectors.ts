@@ -7,8 +7,8 @@ import type {
   ClientPlayer,
   LegalActionInfo,
   ZoneId,
-} from '../types'
-import { ZoneType, zoneIdEquals, graveyard, library } from '../types'
+} from '@/types'
+import { ZoneType, zoneIdEquals, graveyard, library } from '@/types'
 
 /**
  * Select the game state (works for both normal play and spectating).

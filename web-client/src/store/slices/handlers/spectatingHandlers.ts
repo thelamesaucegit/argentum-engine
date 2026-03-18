@@ -1,7 +1,7 @@
 /**
  * Handlers for spectating, combat UI, and disconnect messages.
  */
-import type { MessageHandlers } from '../../../network/messageHandlers'
+import type { MessageHandlers } from '@/network/messageHandlers.ts'
 import type { SetState, GetState } from './types'
 
 type SpectatingHandlerKeys =

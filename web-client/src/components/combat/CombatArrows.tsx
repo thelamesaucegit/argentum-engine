@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import { selectGameState } from '../../store/selectors'
-import type { EntityId } from '../../types'
-import { Step, ZoneType } from '../../types'
+import { useGameStore } from '@/store/gameStore.ts'
+import { selectGameState } from '@/store/selectors.ts'
+import type { EntityId } from '@/types'
+import { Step, ZoneType } from '@/types'
 
 interface Point {
   x: number

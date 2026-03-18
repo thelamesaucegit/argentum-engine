@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useGameStore } from '../../store/gameStore'
-import { getCardImageUrl } from '../../utils/cardImages'
-import { parseManaCost, getRemainingCostSymbols } from '../../utils/manaCost'
+import { useGameStore } from '@/store/gameStore.ts'
+import { getCardImageUrl } from '@/utils/cardImages.ts'
+import { parseManaCost, getRemainingCostSymbols } from '@/utils/manaCost.ts'
 import { ManaSymbol } from './ManaSymbols'
-import type { EntityId } from '../../types'
+import type { EntityId } from '@/types'
 
 /**
  * Delve selector overlay.

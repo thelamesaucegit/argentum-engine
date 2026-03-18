@@ -1,11 +1,11 @@
-import { useBattlefieldCards, groupCards, selectGameState, selectViewingPlayerId } from '../../../store/selectors'
-import { useGameStore } from '../../../store/gameStore'
+import { useBattlefieldCards, groupCards, selectGameState, selectViewingPlayerId } from '@/store/selectors.ts'
+import { useGameStore } from '@/store/gameStore.ts'
 import { useResponsiveContext } from './shared'
 import { styles } from './styles'
 import { CardStack } from '../card'
 import { GameCard } from '../card'
-import { GroupedCard } from '../../../store/selectors'
-import type { ClientCard } from '../../../types'
+import { GroupedCard } from '@/store/selectors.ts'
+import type { ClientCard } from '@/types'
 
 /**
  * Battlefield area with two rows per player, each using a 3-column grid:

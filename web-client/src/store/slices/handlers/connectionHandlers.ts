@@ -1,8 +1,8 @@
 /**
  * Handlers for connection and reconnection messages.
  */
-import type { MessageHandlers } from '../../../network/messageHandlers'
-import { entityId, createJoinLobbyMessage } from '../../../types'
+import type { MessageHandlers } from '@/network/messageHandlers.ts'
+import { entityId, createJoinLobbyMessage } from '@/types'
 import { getWebSocket, clearLobbyId, loadLobbyId } from '../shared'
 import type { SetState, GetState } from './types'
 

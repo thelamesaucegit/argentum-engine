@@ -11,10 +11,10 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
-import { createConnectionSlice } from './slices/connectionSlice'
-import { createGameplaySlice } from './slices/gameplaySlice'
-import { createLobbySlice } from './slices/lobbySlice'
-import { createDraftSlice } from './slices/draftSlice'
+import { createConnectionSlice } from '@/store/slices'
+import { createGameplaySlice } from '@/store/slices'
+import { createLobbySlice } from '@/store/slices'
+import { createDraftSlice } from '@/store/slices'
 import { createUISlice } from './slices/ui'
 import type { GameStore } from './slices/types'
 

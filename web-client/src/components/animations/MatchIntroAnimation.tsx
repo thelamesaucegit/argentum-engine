@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useGameStore } from '../../store/gameStore'
+import { useGameStore } from '@/store/gameStore.ts'
 import styles from './MatchIntroAnimation.module.css'
 
 type Phase = 'fadeIn' | 'slideIn' | 'hold' | 'fadeOut' | 'done'

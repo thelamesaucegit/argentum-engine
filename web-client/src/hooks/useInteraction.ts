@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { useGameStore } from '../store/gameStore'
-import type { EntityId, GameAction, LegalActionInfo } from '../types'
+import { useGameStore } from '@/store/gameStore'
+import type { EntityId, GameAction, LegalActionInfo } from '@/types'
 import { resolveAction, needsInteraction } from './interaction/actionResolvers'
 import type { ActionContext } from './interaction/actionResolvers'
 
@@ -30,27 +30,14 @@ export function useInteraction() {
   const selectCard = useGameStore((state) => state.selectCard)
   const selectedCardId = useGameStore((state) => state.selectedCardId)
   const legalActions = useGameStore((state) => state.legalActions)
-  const startXSelection = useGameStore((state) => state.startXSelection)
-  const startTargeting = useGameStore((state) => state.startTargeting)
-  const startConvokeSelection = useGameStore((state) => state.startConvokeSelection)
   const startCrewSelection = useGameStore((state) => state.startCrewSelection)
-  const startDelveSelection = useGameStore((state) => state.startDelveSelection)
-  const startManaColorSelection = useGameStore((state) => state.startManaColorSelection)
-  const startCounterDistribution = useGameStore((state) => state.startCounterDistribution)
   const startPipeline = useGameStore((state) => state.startPipeline)
 
   const actionContext: ActionContext = useMemo(() => ({
-    submitAction,
     selectCard,
-    startTargeting,
-    startXSelection,
-    startConvokeSelection,
     startCrewSelection,
-    startDelveSelection,
-    startManaColorSelection,
-    startCounterDistribution,
     startPipeline,
-  }), [submitAction, selectCard, startTargeting, startXSelection, startConvokeSelection, startCrewSelection, startDelveSelection, startManaColorSelection, startCounterDistribution, startPipeline])
+  }), [selectCard, startCrewSelection, startPipeline])
 
   /**
    * Get legal actions for a card.
@@ -144,7 +131,7 @@ export function useInteraction() {
           break
       }
     },
-    [processCardClick, getCardActions, submitAction, selectCard, startXSelection]
+    [processCardClick, getCardActions, selectCard]
   )
 
   /**
@@ -154,12 +141,9 @@ export function useInteraction() {
    */
   const executeAction = useCallback(
     (actionInfo: LegalActionInfo) => {
-      if (!resolveAction(actionInfo, actionContext)) {
-        submitAction(actionInfo.action)
-        selectCard(null)
-      }
+      resolveAction(actionInfo, actionContext)
     },
-    [actionContext, submitAction, selectCard]
+    [actionContext]
   )
 
   /**
@@ -215,7 +199,7 @@ export function useInteraction() {
       // Multiple actions or complex action - open the action menu
       selectCard(cardId)
     },
-    [getCardActions, canAutoExecute, submitAction, selectCard, executeAction]
+    [getCardActions, canAutoExecute, submitAction, selectCard]
   )
 
   /**

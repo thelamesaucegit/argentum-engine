@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import type { SealedCardInfo } from '../../types'
+import type { SealedCardInfo } from '@/types'
 import { ManaSymbol } from '../ui/ManaSymbols'
 
 /**
