@@ -2,7 +2,7 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 222 / 249
+**Implemented:** 223 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 37    | 31   |
 | Black      | 38    | 35   |
 | Red        | 38    | 34   |
-| Green      | 37    | 31   |
+| Green      | 37    | 32   |
 | Multicolor | 19    | 18   |
 | Colorless  | 30    | 28   |
 | Land       | 12    | 10   |
@@ -204,7 +204,7 @@
 - [x] Skizzik
 - [x] Slimefoot, the Stowaway
 - [x] Slinn Voda, the Rising Deep
-- [ ] Song of Freyalise
+- [x] Song of Freyalise
 - [x] Sorcerer's Wand
 - [x] Soul Salvage
 - [x] Sparring Construct
