@@ -2,13 +2,13 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 232 / 249
+**Implemented:** 233 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 35   |
 | Blue       | 37    | 33   |
-| Black      | 38    | 36   |
+| Black      | 38    | 37   |
 | Red        | 38    | 34   |
 | Green      | 37    | 35   |
 | Multicolor | 19    | 18   |
@@ -140,7 +140,7 @@
 - [x] Krosan Druid
 - [x] Kwende, Pride of Femeref
 - [x] Lich's Mastery
-- [ ] Lingering Phantom
+- [x] Lingering Phantom
 - [x] Llanowar Elves
 - [x] Llanowar Envoy
 - [x] Llanowar Scout

@@ -135,6 +135,7 @@ object DominariaSet {
         KazarovSengirPureblood,
         KeldonRaider,
         LichsMastery,
+        LingeringPhantom,
         LlanowarEnvoy,
         LlanowarElves,
         LlanowarScout,
