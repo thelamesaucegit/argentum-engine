@@ -2,12 +2,12 @@
 
 **Set Size:** 280 cards (249 unique card names + basic land variants)
 **Release Date:** April 27, 2018
-**Implemented:** 233 / 249
+**Implemented:** 234 / 249
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 38    | 35   |
-| Blue       | 37    | 33   |
+| Blue       | 37    | 34   |
 | Black      | 38    | 37   |
 | Red        | 38    | 34   |
 | Green      | 37    | 35   |
@@ -241,7 +241,7 @@
 - [x] Triumph of Gerrard
 - [ ] Two-Headed Giant
 - [x] Untamed Kavu
-- [ ] Unwind
+- [x] Unwind
 - [x] Urgoros, the Empty One
 - [ ] Urza's Ruinous Blast
 - [x] Urza's Tome

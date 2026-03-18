@@ -232,6 +232,7 @@ object DominariaSet {
         TragicPoet,
         TriumphOfGerrard,
         UntamedKavu,
+        Unwind,
         UrgorosTheEmptyOne,
         ValdukKeeperOfTheFlame,
         VerdantForce,
