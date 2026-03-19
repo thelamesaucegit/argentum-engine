@@ -45,6 +45,9 @@ class ContinuationHandler(
         // Core engine resumers
         registerModule(CoreContinuationResumers())
 
+        // Core engine auto-resumers
+        registerAutoResumerModule(CoreAutoResumers())
+
         // Specialized resumer modules
         registerModule(CombatContinuationResumer(ctx))
         registerModule(ColorChoiceContinuationResumer(ctx))
@@ -104,32 +107,127 @@ class ContinuationHandler(
             resumer(AddDynamicManaContinuation::class, ::resumeAddDynamicMana),
             resumer(ReturnFromLinkedExileContinuation::class) { state, continuation, response, checkForMore ->
                 resumeReturnFromLinkedExile(state, continuation, response)
-            },
-
-            // Error-returning resumers: these should not be at top of stack during decision resume
-            errorResumer<PendingTriggersContinuation>("PendingTriggersContinuation"),
-            errorResumer<CycleDrawContinuation>("CycleDrawContinuation"),
-            errorResumer<TypecycleSearchContinuation>("TypecycleSearchContinuation"),
-            errorResumer<DrawReplacementRemainingDrawsContinuation>("DrawReplacementRemainingDrawsContinuation"),
-            errorResumer<ForEachTargetContinuation>("ForEachTargetContinuation"),
-            errorResumer<ForEachPlayerContinuation>("ForEachPlayerContinuation")
+            }
         )
     }
 
-    // ─── Core engine methods (kept here, tightly coupled to checkForMoreContinuations) ───
+    // ─── Core engine auto-resumers ───
 
-    private fun resumeEffect(
-        state: GameState,
-        continuation: EffectContinuation,
-        response: DecisionResponse,
-        checkForMore: CheckForMore
+    private inner class CoreAutoResumers : AutoResumerModule {
+        override fun autoResumers(): List<AutoResumer<*>> = listOf(
+            autoResumer(PendingTriggersContinuation::class, canResume = { triggerProcessor != null }) { state, continuation, events, _ ->
+                val result = triggerProcessor!!.processTriggers(state, continuation.remainingTriggers)
+                mergeAndContinue(result, events)
+            },
+
+            autoResumer(ForEachTargetContinuation::class, canResume = { it.remainingTargets.isNotEmpty() }) { state, continuation, events, checkForMore ->
+                val forEachTargetExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachTargetExecutor { s, e, c ->
+                    effectExecutorRegistry.execute(s, e, c)
+                }
+                val outerContext = continuation.effectContext.copy(
+                    targets = continuation.remainingTargets
+                )
+                val result = forEachTargetExecutor.processTargets(
+                    state,
+                    continuation.effects,
+                    continuation.remainingTargets,
+                    outerContext
+                )
+                mergeAndContinue(result, events, checkForMore)
+            },
+
+            autoResumer(ForEachPlayerContinuation::class, canResume = { it.remainingPlayers.isNotEmpty() }) { state, continuation, events, checkForMore ->
+                val forEachPlayerExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachPlayerExecutor { s, e, c ->
+                    effectExecutorRegistry.execute(s, e, c)
+                }
+                val result = forEachPlayerExecutor.processPlayers(
+                    state,
+                    continuation.effects,
+                    continuation.remainingPlayers,
+                    continuation.effectContext
+                )
+                mergeAndContinue(result, events, checkForMore)
+            },
+
+            autoResumer(DrawReplacementRemainingDrawsContinuation::class) { state, continuation, events, checkForMore ->
+                if (continuation.remainingDraws > 0) {
+                    if (continuation.isDrawStep) {
+                        val turnManager = com.wingedsheep.engine.core.TurnManager(cardRegistry = stackResolver.cardRegistry, effectExecutor = effectExecutorRegistry::execute)
+                        val drawResult = turnManager.drawCards(state, continuation.drawingPlayerId, continuation.remainingDraws)
+                        mergeAndContinue(drawResult, events, checkForMore)
+                    } else {
+                        val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = stackResolver.cardRegistry, effectExecutor = effectExecutorRegistry::execute)
+                        val drawResult = drawExecutor.executeDraws(state, continuation.drawingPlayerId, continuation.remainingDraws)
+                        mergeAndContinue(drawResult, events, checkForMore)
+                    }
+                } else {
+                    checkForMore(state, events)
+                }
+            },
+
+            autoResumer(CycleDrawContinuation::class) { state, continuation, events, checkForMore ->
+                val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = stackResolver.cardRegistry, effectExecutor = effectExecutorRegistry::execute)
+                val drawResult = drawExecutor.executeDraws(state, continuation.playerId, 1)
+                mergeAndContinue(drawResult, events, checkForMore)
+            },
+
+            autoResumer(TypecycleSearchContinuation::class) { state, continuation, events, checkForMore ->
+                val searchFilter = com.wingedsheep.sdk.scripting.GameObjectFilter.Any.withSubtype(continuation.subtypeFilter)
+                val searchEffect = com.wingedsheep.sdk.dsl.EffectPatterns.searchLibrary(
+                    filter = searchFilter,
+                    count = 1,
+                    reveal = true
+                )
+                val effectContext = EffectContext(
+                    sourceId = continuation.cardId,
+                    controllerId = continuation.playerId,
+                    opponentId = state.getOpponent(continuation.playerId)
+                )
+                val searchResult = effectExecutorRegistry.execute(state, searchEffect, effectContext)
+                mergeAndContinue(searchResult, events, checkForMore)
+            },
+
+            autoResumer(EffectContinuation::class, canResume = { it.remainingEffects.isNotEmpty() }) { state, continuation, events, checkForMore ->
+                val (currentState, effectEvents) = executeRemainingEffects(state, continuation.remainingEffects, continuation.effectContext)
+                checkForMore(currentState, events + effectEvents)
+            },
+
+            autoResumer(RepeatWhileContinuation::class, canResume = { it.phase == RepeatWhilePhase.AFTER_BODY }) { state, continuation, events, checkForMore ->
+                val result = com.wingedsheep.engine.handlers.effects.composite.RepeatWhileExecutor.askCondition(
+                    state = state,
+                    body = continuation.body,
+                    repeatCondition = continuation.repeatCondition,
+                    resolvedDeciderId = continuation.resolvedDeciderId,
+                    context = continuation.effectContext,
+                    sourceName = continuation.sourceName,
+                    effectExecutor = effectExecutorRegistry::execute,
+                    priorEvents = events
+                )
+                mergeAndContinue(result, events = emptyList(), checkForMore)
+            }
+        )
+    }
+
+    // ─── Shared effect execution helper ───
+
+    /**
+     * Executes a list of effects in sequence, handling pauses, errors, and context updates.
+     * Returns the final state and accumulated events.
+     *
+     * Used by both [resumeEffect] (decision-resume path) and the EffectContinuation
+     * auto-resumer (checkForMoreContinuations path) to avoid duplicating the loop.
+     */
+    private fun executeRemainingEffects(
+        initialState: GameState,
+        effects: List<com.wingedsheep.sdk.scripting.effects.Effect>,
+        initialContext: EffectContext
     ): ExecutionResult {
-        var currentContext = continuation.effectContext
-        var currentState = state
+        var currentContext = initialContext
+        var currentState = initialState
         val allEvents = mutableListOf<GameEvent>()
 
-        for ((index, effect) in continuation.remainingEffects.withIndex()) {
-            val stillRemaining = continuation.remainingEffects.drop(index + 1)
+        for ((index, effect) in effects.withIndex()) {
+            val stillRemaining = effects.drop(index + 1)
 
             val stateForExecution = if (stillRemaining.isNotEmpty()) {
                 val remainingContinuation = EffectContinuation(
@@ -178,7 +276,20 @@ class ContinuationHandler(
             }
         }
 
-        return checkForMore(currentState, allEvents)
+        return ExecutionResult.success(currentState, allEvents)
+    }
+
+    // ─── Core engine methods ───
+
+    private fun resumeEffect(
+        state: GameState,
+        continuation: EffectContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        val result = executeRemainingEffects(state, continuation.remainingEffects, continuation.effectContext)
+        if (result.isPaused) return result
+        return checkForMore(result.state, result.events.toList())
     }
 
     private fun resumeTriggeredAbility(
@@ -311,234 +422,46 @@ class ContinuationHandler(
         state: GameState,
         events: List<GameEvent>
     ): ExecutionResult {
-        val nextContinuation = state.peekContinuation()
+        return registry.tryAutoResume(state, events, ::checkForMoreContinuations)
+            ?: ExecutionResult.success(state, events)
+    }
 
-        if (nextContinuation is PendingTriggersContinuation && triggerProcessor != null) {
-            val (_, stateAfterPop) = state.popContinuation()
-            val triggerResult = triggerProcessor.processTriggers(stateAfterPop, nextContinuation.remainingTriggers)
-
-            if (triggerResult.isPaused) {
-                return ExecutionResult.paused(
-                    triggerResult.state,
-                    triggerResult.pendingDecision!!,
-                    events + triggerResult.events
-                )
-            }
-
-            if (!triggerResult.isSuccess) {
-                return ExecutionResult(
-                    state = triggerResult.state,
-                    events = events + triggerResult.events,
-                    error = triggerResult.error
-                )
-            }
-
-            return ExecutionResult.success(triggerResult.newState, events + triggerResult.events)
-        }
-
-        if (nextContinuation is ForEachTargetContinuation && nextContinuation.remainingTargets.isNotEmpty()) {
-            val (_, stateAfterPop) = state.popContinuation()
-            val forEachTargetExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachTargetExecutor { s, e, c ->
-                effectExecutorRegistry.execute(s, e, c)
-            }
-            val outerContext = nextContinuation.effectContext.copy(
-                targets = nextContinuation.remainingTargets
+    /**
+     * Merges the result of a sub-operation with accumulated events and continues.
+     *
+     * Handles the common paused/error/success branching pattern:
+     * - Paused: returns immediately with merged events
+     * - Error: returns immediately with merged events and error
+     * - Success: recursively checks for more continuations (if checkForMore provided)
+     *            or returns success with merged events
+     */
+    private fun mergeAndContinue(
+        result: ExecutionResult,
+        events: List<GameEvent>,
+        checkForMore: CheckForMore? = null
+    ): ExecutionResult {
+        if (result.isPaused) {
+            return ExecutionResult.paused(
+                result.state,
+                result.pendingDecision!!,
+                events + result.events
             )
-            val result = forEachTargetExecutor.processTargets(
-                stateAfterPop,
-                nextContinuation.effects,
-                nextContinuation.remainingTargets,
-                outerContext
+        }
+
+        if (!result.isSuccess) {
+            return ExecutionResult(
+                state = result.state,
+                events = events + result.events,
+                error = result.error
             )
-
-            if (result.isPaused) {
-                return ExecutionResult.paused(
-                    result.state,
-                    result.pendingDecision!!,
-                    events + result.events
-                )
-            }
-
-            // Recursively check for more continuations
-            return checkForMoreContinuations(result.state, events.toMutableList().apply { addAll(result.events) })
         }
 
-        if (nextContinuation is ForEachPlayerContinuation && nextContinuation.remainingPlayers.isNotEmpty()) {
-            val (_, stateAfterPop) = state.popContinuation()
-            val forEachPlayerExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachPlayerExecutor { s, e, c ->
-                effectExecutorRegistry.execute(s, e, c)
-            }
-            val outerContext = nextContinuation.effectContext
-            val result = forEachPlayerExecutor.processPlayers(
-                stateAfterPop,
-                nextContinuation.effects,
-                nextContinuation.remainingPlayers,
-                outerContext
-            )
-
-            if (result.isPaused) {
-                return ExecutionResult.paused(
-                    result.state,
-                    result.pendingDecision!!,
-                    events + result.events
-                )
-            }
-
-            // Recursively check for more continuations
-            return checkForMoreContinuations(result.state, events.toMutableList().apply { addAll(result.events) })
+        val mergedEvents = events + result.events
+        return if (checkForMore != null) {
+            checkForMore(result.newState, mergedEvents)
+        } else {
+            ExecutionResult.success(result.newState, mergedEvents)
         }
-
-        if (nextContinuation is DrawReplacementRemainingDrawsContinuation) {
-            val (_, stateAfterPop) = state.popContinuation()
-            if (nextContinuation.remainingDraws > 0) {
-                if (nextContinuation.isDrawStep) {
-                    val turnManager = com.wingedsheep.engine.core.TurnManager(cardRegistry = stackResolver.cardRegistry, effectExecutor = effectExecutorRegistry::execute)
-                    val drawResult = turnManager.drawCards(stateAfterPop, nextContinuation.drawingPlayerId, nextContinuation.remainingDraws)
-                    if (drawResult.isPaused) {
-                        return ExecutionResult.paused(
-                            drawResult.state,
-                            drawResult.pendingDecision!!,
-                            events + drawResult.events
-                        )
-                    }
-                    return checkForMoreContinuations(drawResult.newState, events + drawResult.events)
-                } else {
-                    val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = stackResolver.cardRegistry, effectExecutor = effectExecutorRegistry::execute)
-                    val drawResult = drawExecutor.executeDraws(stateAfterPop, nextContinuation.drawingPlayerId, nextContinuation.remainingDraws)
-                    if (drawResult.isPaused) {
-                        return ExecutionResult.paused(
-                            drawResult.state,
-                            drawResult.pendingDecision!!,
-                            events + drawResult.events
-                        )
-                    }
-                    return checkForMoreContinuations(drawResult.state, events + drawResult.events)
-                }
-            }
-            return checkForMoreContinuations(stateAfterPop, events)
-        }
-
-        if (nextContinuation is CycleDrawContinuation) {
-            val (_, stateAfterPop) = state.popContinuation()
-            val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = stackResolver.cardRegistry, effectExecutor = effectExecutorRegistry::execute)
-            val drawResult = drawExecutor.executeDraws(stateAfterPop, nextContinuation.playerId, 1)
-            if (drawResult.isPaused) {
-                return ExecutionResult.paused(
-                    drawResult.state,
-                    drawResult.pendingDecision!!,
-                    events + drawResult.events
-                )
-            }
-            return checkForMoreContinuations(drawResult.state, events + drawResult.events)
-        }
-
-        if (nextContinuation is TypecycleSearchContinuation) {
-            val (_, stateAfterPop) = state.popContinuation()
-            val searchFilter = com.wingedsheep.sdk.scripting.GameObjectFilter.Any.withSubtype(nextContinuation.subtypeFilter)
-            val searchEffect = com.wingedsheep.sdk.dsl.EffectPatterns.searchLibrary(
-                filter = searchFilter,
-                count = 1,
-                reveal = true
-            )
-            val effectContext = EffectContext(
-                sourceId = nextContinuation.cardId,
-                controllerId = nextContinuation.playerId,
-                opponentId = stateAfterPop.getOpponent(nextContinuation.playerId)
-            )
-            val searchResult = effectExecutorRegistry.execute(stateAfterPop, searchEffect, effectContext)
-            if (searchResult.isPaused) {
-                return ExecutionResult.paused(
-                    searchResult.state,
-                    searchResult.pendingDecision!!,
-                    events + searchResult.events
-                )
-            }
-            return checkForMoreContinuations(searchResult.state, events + searchResult.events)
-        }
-
-        if (nextContinuation is EffectContinuation && nextContinuation.remainingEffects.isNotEmpty()) {
-            val (_, stateAfterPop) = state.popContinuation()
-            var currentContext = nextContinuation.effectContext
-            var currentState = stateAfterPop
-            val allEvents = events.toMutableList()
-
-            for ((index, effect) in nextContinuation.remainingEffects.withIndex()) {
-                val stillRemaining = nextContinuation.remainingEffects.drop(index + 1)
-
-                val stateForExecution = if (stillRemaining.isNotEmpty()) {
-                    val remainingContinuation = EffectContinuation(
-                        decisionId = "pending",
-                        remainingEffects = stillRemaining,
-                        effectContext = currentContext
-                    )
-                    currentState.pushContinuation(remainingContinuation)
-                } else {
-                    currentState
-                }
-
-                val result = effectExecutorRegistry.execute(stateForExecution, effect, currentContext)
-
-                if (!result.isSuccess && !result.isPaused) {
-                    currentState = if (stillRemaining.isNotEmpty()) {
-                        val (_, stateWithoutCont) = result.state.popContinuation()
-                        stateWithoutCont
-                    } else {
-                        result.state
-                    }
-                    allEvents.addAll(result.events)
-                    continue
-                }
-
-                if (result.isPaused) {
-                    return ExecutionResult.paused(
-                        result.state,
-                        result.pendingDecision!!,
-                        allEvents + result.events
-                    )
-                }
-
-                currentState = if (stillRemaining.isNotEmpty()) {
-                    val (_, stateWithoutCont) = result.state.popContinuation()
-                    stateWithoutCont
-                } else {
-                    result.state
-                }
-                allEvents.addAll(result.events)
-
-                if (result.updatedCollections.isNotEmpty()) {
-                    currentContext = currentContext.copy(
-                        storedCollections = currentContext.storedCollections + result.updatedCollections
-                    )
-                }
-            }
-
-            // Recursively check for more continuations (e.g., outer CompositeEffect)
-            return checkForMoreContinuations(currentState, allEvents)
-        }
-
-        if (nextContinuation is RepeatWhileContinuation && nextContinuation.phase == RepeatWhilePhase.AFTER_BODY) {
-            val (_, stateAfterPop) = state.popContinuation()
-            val context = nextContinuation.effectContext
-
-            val result = com.wingedsheep.engine.handlers.effects.composite.RepeatWhileExecutor.askCondition(
-                state = stateAfterPop,
-                body = nextContinuation.body,
-                repeatCondition = nextContinuation.repeatCondition,
-                resolvedDeciderId = nextContinuation.resolvedDeciderId,
-                context = context,
-                sourceName = nextContinuation.sourceName,
-                effectExecutor = effectExecutorRegistry::execute,
-                priorEvents = events
-            )
-
-            if (result.isPaused) {
-                return result
-            }
-
-            return checkForMoreContinuations(result.state, result.events.toList())
-        }
-
-        return ExecutionResult.success(state, events)
     }
 
     // ─── Generic drawing/repeat ───
@@ -849,14 +772,4 @@ class ContinuationHandler(
 
         return checkForMore(newState, emptyList())
     }
-}
-
-/**
- * Creates a [ContinuationResumer] that always returns an error for continuation types
- * that should never be at the top of the stack during a decision resume.
- */
-private inline fun <reified T : ContinuationFrame> errorResumer(
-    typeName: String
-): ContinuationResumer<T> = resumer(T::class) { state, _, _, _ ->
-    ExecutionResult.error(state, "$typeName should not be at top of stack during decision resume")
 }

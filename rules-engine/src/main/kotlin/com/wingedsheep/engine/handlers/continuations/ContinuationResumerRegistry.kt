@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers.continuations
 import com.wingedsheep.engine.core.ContinuationFrame
 import com.wingedsheep.engine.core.DecisionResponse
 import com.wingedsheep.engine.core.ExecutionResult
+import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.state.GameState
 import kotlin.reflect.KClass
 
@@ -18,6 +19,7 @@ import kotlin.reflect.KClass
  */
 class ContinuationResumerRegistry {
     private val resumers = mutableMapOf<KClass<out ContinuationFrame>, ContinuationResumer<*>>()
+    private val autoResumers = mutableMapOf<KClass<out ContinuationFrame>, AutoResumer<*>>()
 
     /**
      * Register all resumers from a module.
@@ -29,10 +31,26 @@ class ContinuationResumerRegistry {
     }
 
     /**
+     * Register all auto-resumers from a module.
+     */
+    fun registerAutoResumerModule(module: AutoResumerModule) {
+        module.autoResumers().forEach { autoResumer ->
+            autoResumers[autoResumer.frameType] = autoResumer
+        }
+    }
+
+    /**
      * Register a single resumer.
      */
     fun <T : ContinuationFrame> register(resumer: ContinuationResumer<T>) {
         resumers[resumer.frameType] = resumer
+    }
+
+    /**
+     * Register a single auto-resumer.
+     */
+    fun <T : ContinuationFrame> registerAutoResumer(autoResumer: AutoResumer<T>) {
+        autoResumers[autoResumer.frameType] = autoResumer
     }
 
     /**
@@ -54,6 +72,32 @@ class ContinuationResumerRegistry {
         val resumer = resumers[continuation::class] as? ContinuationResumer<ContinuationFrame>
             ?: return ExecutionResult.error(state, "No resumer registered for continuation type: ${continuation::class.simpleName}")
         return resumer.resume(state, continuation, response, checkForMore)
+    }
+
+    /**
+     * Try to auto-resume the top continuation on the stack.
+     *
+     * Peeks at the stack top, finds a matching auto-resumer, checks [AutoResumer.canAutoResume],
+     * pops the frame, and dispatches. Returns null if no matching auto-resumer or if
+     * [canAutoResume] returns false.
+     *
+     * @param state The current game state (continuation still on stack)
+     * @param events Accumulated events from prior processing
+     * @param checkForMore Callback to recursively check for more continuations
+     * @return The execution result, or null if no auto-resumer matched
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun tryAutoResume(
+        state: GameState,
+        events: List<GameEvent>,
+        checkForMore: CheckForMore
+    ): ExecutionResult? {
+        val top = state.peekContinuation() ?: return null
+        val resumer = autoResumers[top::class] as? AutoResumer<ContinuationFrame> ?: return null
+        if (!resumer.canAutoResume(top)) return null
+
+        val (_, stateAfterPop) = state.popContinuation()
+        return resumer.autoResume(stateAfterPop, top, events, checkForMore)
     }
 
     /**
