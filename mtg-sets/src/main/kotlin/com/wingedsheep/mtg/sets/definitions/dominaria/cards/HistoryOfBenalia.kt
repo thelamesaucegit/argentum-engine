@@ -35,7 +35,8 @@ val HistoryOfBenalia = card("History of Benalia") {
             toughness = 2,
             colors = setOf(Color.WHITE),
             creatureTypes = setOf("Knight"),
-            keywords = setOf(Keyword.VIGILANCE)
+            keywords = setOf(Keyword.VIGILANCE),
+            imageUri = "https://cards.scryfall.io/normal/front/c/c/cc7d137c-f6c0-44e5-af9f-a8bbd52d3b2a.jpg?1562702338"
         )
     }
 
@@ -45,7 +46,8 @@ val HistoryOfBenalia = card("History of Benalia") {
             toughness = 2,
             colors = setOf(Color.WHITE),
             creatureTypes = setOf("Knight"),
-            keywords = setOf(Keyword.VIGILANCE)
+            keywords = setOf(Keyword.VIGILANCE),
+            imageUri = "https://cards.scryfall.io/normal/front/c/c/cc7d137c-f6c0-44e5-af9f-a8bbd52d3b2a.jpg?1562702338"
         )
     }
 
