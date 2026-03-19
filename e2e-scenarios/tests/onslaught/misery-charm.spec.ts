@@ -34,6 +34,7 @@ test.describe('Misery Charm', () => {
 
     // Target selection — click opponent's life display
     await p1.selectPlayer(player2.playerId)
+    await p1.confirmTargets()
 
     // Opponent resolves the spell
     await p2.resolveStack('Misery Charm')

@@ -64,6 +64,9 @@ test.describe('Combat — instant-speed actions after declare attackers', () => 
     await p2.declareBlocker('Spitfire Handler', 'Hill Giant')
     await p2.confirmBlockers()
 
+    // Both players pass priority through combat damage step
+    await p2.pass()
+
     // Combat damage: Hill Giant (3/3) kills Spitfire Handler (3/1),
     // Spitfire Handler (3/1) kills Hill Giant (3/3)
     await p1.expectNotOnBattlefield('Hill Giant')

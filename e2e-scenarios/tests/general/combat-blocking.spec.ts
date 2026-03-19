@@ -34,6 +34,9 @@ test.describe('Combat blocking', () => {
     // Attack with Grizzly Bears (2/2) — only creature, use attackAll
     await p1.attackAll()
 
+    // Pass priority in declare attackers step to advance to declare blockers
+    await p2.pass()
+
     // Defender blocks with Glory Seeker (2/2) — creatures will trade
     await p2.declareBlocker('Glory Seeker', 'Grizzly Bears')
     await p2.confirmBlockers()
