@@ -42,7 +42,9 @@ val JosuVessLichKnight = card("Josu Vess, Lich Knight") {
                 toughness = 2,
                 colors = setOf(Color.BLACK),
                 creatureTypes = setOf("Zombie", "Knight"),
-                keywords = setOf(Keyword.MENACE)
+                keywords = setOf(Keyword.MENACE),
+                imageUri = "https://cards.scryfall.io/large/front/0/b/0b527bcd-0d37-495a-8457-8123388056b9.jpg?1562701899"
+
             )
         )
     }
