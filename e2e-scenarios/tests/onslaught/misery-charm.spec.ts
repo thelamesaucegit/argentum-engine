@@ -28,18 +28,15 @@ test.describe('Misery Charm', () => {
     const p1 = player1.gamePage
     const p2 = player2.gamePage
 
-    // Cast Misery Charm
+    // Cast Misery Charm — modal spells show modes as action buttons directly
     await p1.clickCard('Misery Charm')
-    await p1.selectAction('Cast Misery Charm')
-
-    // Opponent resolves the spell
-    await p2.resolveStack('Misery Charm')
-
-    // Mode selection overlay appears — choose "Target player loses 2 life"
-    await p1.selectOption('Target player loses 2 life')
+    await p1.selectAction('Target player loses 2 life')
 
     // Target selection — click opponent's life display
     await p1.selectPlayer(player2.playerId)
+
+    // Opponent resolves the spell
+    await p2.resolveStack('Misery Charm')
 
     // Opponent loses 2 life
     await p1.expectLifeTotal(player2.playerId, 18)
@@ -66,19 +63,16 @@ test.describe('Misery Charm', () => {
     const p1 = player1.gamePage
     const p2 = player2.gamePage
 
-    // Cast Misery Charm
+    // Cast Misery Charm — modal spells show modes as action buttons directly
     await p1.clickCard('Misery Charm')
-    await p1.selectAction('Cast Misery Charm')
-
-    // Opponent resolves (has a permanent on battlefield)
-    await p2.resolveStack('Misery Charm')
-
-    // Mode selection overlay appears — choose "Destroy target Cleric"
-    await p1.selectOption('Destroy target Cleric')
+    await p1.selectAction('Destroy target Cleric')
 
     // Select the single valid Cleric target
     await p1.selectTarget('Nova Cleric')
     await p1.confirmTargets()
+
+    // Opponent resolves the spell
+    await p2.resolveStack('Misery Charm')
 
     await p1.expectNotOnBattlefield('Nova Cleric')
 
