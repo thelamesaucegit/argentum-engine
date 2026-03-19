@@ -39,7 +39,8 @@ val MemorialToGlory = card("Memorial to Glory") {
             toughness = 1,
             colors = setOf(Color.WHITE),
             creatureTypes = setOf("Soldier"),
-            keywords = emptySet()
+            keywords = emptySet(),
+            imageUri = "https://cards.scryfall.io/normal/front/8/c/8c4b0257-2ca5-4015-9d63-d7cf6e87ab9d.jpg?1675456186"
         )
     }
 

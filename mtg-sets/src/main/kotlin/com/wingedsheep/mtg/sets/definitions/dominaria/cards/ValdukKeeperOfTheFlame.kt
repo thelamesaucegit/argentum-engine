@@ -34,7 +34,8 @@ val ValdukKeeperOfTheFlame = card("Valduk, Keeper of the Flame") {
             colors = setOf(Color.RED),
             creatureTypes = setOf("Elemental"),
             keywords = setOf(Keyword.TRAMPLE, Keyword.HASTE),
-            exileAtStep = Step.END
+            exileAtStep = Step.END,
+            imageUri = "https://cards.scryfall.io/normal/front/9/b/9b9cc37a-b9c3-40c2-a3e4-abfec86e199b.jpg?1562702213"
         )
     }
 
