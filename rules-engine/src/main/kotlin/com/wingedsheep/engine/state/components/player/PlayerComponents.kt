@@ -2,6 +2,7 @@ package com.wingedsheep.engine.state.components.player
 
 import com.wingedsheep.engine.state.Component
 import com.wingedsheep.sdk.core.Color
+import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.events.SourceFilter
 import kotlinx.serialization.Serializable
 
@@ -272,6 +273,21 @@ enum class PlayerEffectRemoval {
  */
 @Serializable
 data class CantCastSpellsComponent(
+    val removeOn: PlayerEffectRemoval = PlayerEffectRemoval.EndOfTurn
+) : Component
+
+/**
+ * Grants permission to cast creature spells from graveyard by paying the forage
+ * additional cost (exile 3 cards from graveyard or sacrifice a Food).
+ * Creatures cast this way enter with a finality counter.
+ *
+ * Applied by Osteomancer Adept's activated ability. Removed at end of turn.
+ *
+ * @param sourceId The permanent that granted this permission (for tracking)
+ */
+@Serializable
+data class MayCastCreaturesFromGraveyardWithForageComponent(
+    val sourceId: EntityId? = null,
     val removeOn: PlayerEffectRemoval = PlayerEffectRemoval.EndOfTurn
 ) : Component
 

@@ -332,6 +332,15 @@ object ZoneMovementUtils {
             return ZoneChangeRedirectResult(Zone.EXILE)
         }
 
+        // Check for finality counter — if a permanent with a finality counter
+        // would die (go from battlefield to graveyard), exile it instead.
+        if (fromZone == Zone.BATTLEFIELD && toZone == Zone.GRAVEYARD) {
+            val counters = container.get<CountersComponent>()
+            if (counters != null && counters.getCount(CounterType.FINALITY) > 0) {
+                return ZoneChangeRedirectResult(Zone.EXILE)
+            }
+        }
+
         for (permanentId in state.getBattlefield()) {
             val permContainer = state.getEntity(permanentId) ?: continue
             val replacementComponent = permContainer.get<ReplacementEffectSourceComponent>() ?: continue

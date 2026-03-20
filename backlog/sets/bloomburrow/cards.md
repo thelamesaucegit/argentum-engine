@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 16 / 266
+**Implemented:** 17 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -165,7 +165,7 @@
 - [ ] Nightwhorl Hermit
 - [ ] Nocturnal Hunger
 - [ ] Oakhollow Village
-- [ ] Osteomancer Adept
+- [x] Osteomancer Adept
 - [ ] Otterball Antics
 - [ ] Overprotect
 - [ ] Parting Gust

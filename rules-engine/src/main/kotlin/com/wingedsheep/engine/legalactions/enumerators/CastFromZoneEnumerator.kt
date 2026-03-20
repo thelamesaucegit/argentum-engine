@@ -10,8 +10,10 @@ import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
+import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.handlers.PredicateContext
+import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GrantMayCastFromLinkedExile
@@ -39,6 +41,7 @@ class CastFromZoneEnumerator : ActionEnumerator {
         enumerateLinkedExile(context, result, linkedExileCardIds)
         enumerateIntrinsicZoneCast(context, result, linkedExileCardIds)
         enumerateGraveyardPermanents(context, result)
+        enumerateGraveyardCreaturesWithForage(context, result)
 
         return result
     }
@@ -655,6 +658,130 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         )
                     )
                 }
+            }
+        }
+    }
+
+    // =========================================================================
+    // Graveyard creatures with forage (Osteomancer Adept-style)
+    // =========================================================================
+
+    private fun enumerateGraveyardCreaturesWithForage(
+        context: EnumerationContext,
+        result: MutableList<LegalAction>
+    ) {
+        val state = context.state
+        val playerId = context.playerId
+
+        // Check if player has the forage-graveyard permission
+        val playerEntity = state.getEntity(playerId) ?: return
+        if (!playerEntity.has<MayCastCreaturesFromGraveyardWithForageComponent>()) return
+
+        // Only the active player can cast creature spells (sorcery timing)
+        if (state.activePlayerId != playerId) return
+
+        val graveyardCards = state.getZone(ZoneKey(playerId, Zone.GRAVEYARD))
+        for (cardId in graveyardCards) {
+            val container = state.getEntity(cardId) ?: continue
+            val cardComponent = container.get<CardComponent>() ?: continue
+
+            // Only creature spells
+            if (!cardComponent.typeLine.isCreature) continue
+
+            val cardDef = context.cardRegistry.getCard(cardComponent.name) ?: continue
+
+            if (context.cantCastSpells) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastSpell",
+                        description = "Cast ${cardComponent.name} (forage)",
+                        action = CastSpell(playerId, cardId),
+                        affordable = false,
+                        manaCostString = cardComponent.manaCost.toString(),
+                        sourceZone = "GRAVEYARD",
+                        requiresForage = true
+                    )
+                )
+                continue
+            }
+
+            if (!context.canPlaySorcerySpeed) continue
+
+            val castRestrictions = cardDef.script.castRestrictions
+            val meetsRestrictions = context.castPermissionUtils.checkCastRestrictions(state, playerId, castRestrictions)
+            if (!meetsRestrictions) continue
+
+            val effectiveCost = context.costCalculator.calculateEffectiveCost(state, cardDef, playerId)
+            val costString = effectiveCost.toString()
+            val canAffordMana = context.manaSolver.canPay(state, playerId, effectiveCost)
+
+            // Check forage affordability: 3+ cards in graveyard (excluding the card being cast)
+            // or a Food artifact on the battlefield
+            val otherGraveyardCards = graveyardCards.filter { it != cardId }
+            val canForageByExile = otherGraveyardCards.size >= 3
+            val canForageBySacrifice = state.getBattlefield().any { permId ->
+                val permContainer = state.getEntity(permId) ?: return@any false
+                val permCard = permContainer.get<CardComponent>() ?: return@any false
+                val permController = permContainer.get<ControllerComponent>()?.playerId
+                permController == playerId && permCard.typeLine.hasSubtype(Subtype.FOOD)
+            }
+            val canAffordForage = canForageByExile || canForageBySacrifice
+
+            val affordable = canAffordMana && canAffordForage
+
+            if (affordable) {
+                val targetReqs = buildList {
+                    addAll(cardDef.script.targetRequirements)
+                    cardDef.script.auraTarget?.let { add(it) }
+                }
+
+                if (targetReqs.isNotEmpty()) {
+                    val targetInfos = context.targetUtils.buildTargetInfos(state, playerId, targetReqs)
+                    val allSatisfied = context.targetUtils.allRequirementsSatisfied(targetInfos)
+                    if (allSatisfied) {
+                        val firstReq = targetReqs.first()
+                        val firstInfo = targetInfos.first()
+                        result.add(
+                            LegalAction(
+                                actionType = "CastSpell",
+                                description = "Cast ${cardComponent.name} (forage)",
+                                action = CastSpell(playerId, cardId),
+                                validTargets = firstInfo.validTargets,
+                                requiresTargets = true,
+                                targetCount = firstReq.count,
+                                minTargets = firstReq.effectiveMinCount,
+                                targetDescription = firstReq.description,
+                                targetRequirements = if (targetInfos.size > 1) targetInfos else null,
+                                manaCostString = costString,
+                                sourceZone = "GRAVEYARD",
+                                requiresForage = true
+                            )
+                        )
+                    }
+                } else {
+                    result.add(
+                        LegalAction(
+                            actionType = "CastSpell",
+                            description = "Cast ${cardComponent.name} (forage)",
+                            action = CastSpell(playerId, cardId),
+                            manaCostString = costString,
+                            sourceZone = "GRAVEYARD",
+                            requiresForage = true
+                        )
+                    )
+                }
+            } else {
+                result.add(
+                    LegalAction(
+                        actionType = "CastSpell",
+                        description = "Cast ${cardComponent.name} (forage)",
+                        action = CastSpell(playerId, cardId),
+                        affordable = false,
+                        manaCostString = costString,
+                        sourceZone = "GRAVEYARD",
+                        requiresForage = true
+                    )
+                )
             }
         }
     }

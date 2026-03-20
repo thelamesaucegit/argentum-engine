@@ -30,6 +30,7 @@ object BloomburrowSet {
         JackdawSavior,
         JunkbladeBruiser,
         HuntersTalent,
+        OsteomancerAdept,
         PlayfulShove,
         QuaketuskBoar,
         SeasonedWarrenguard,

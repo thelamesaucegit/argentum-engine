@@ -18,6 +18,7 @@ import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.sdk.core.CounterType
+import com.wingedsheep.sdk.core.Subtype
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -549,6 +550,17 @@ class CostHandler(
             is AdditionalCost.SacrificeCreaturesForCostReduction -> {
                 // Always payable - sacrificing 0 creatures is valid
                 true
+            }
+            is AdditionalCost.Forage -> {
+                // Can forage if: 3+ cards in graveyard OR a Food artifact on battlefield
+                val graveyardSize = state.getZone(ZoneKey(controllerId, Zone.GRAVEYARD)).size
+                val hasFood = state.getBattlefield().any { permId ->
+                    val permContainer = state.getEntity(permId) ?: return@any false
+                    val permCard = permContainer.get<CardComponent>() ?: return@any false
+                    val permController = permContainer.get<ControllerComponent>()?.playerId
+                    permController == controllerId && permCard.typeLine.hasSubtype(Subtype.FOOD)
+                }
+                graveyardSize >= 3 || hasFood
             }
         }
     }

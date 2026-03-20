@@ -21,5 +21,6 @@ enum class CounterType {
     EGG,
     LORE,
     AIM,
-    STUN
+    STUN,
+    FINALITY
 }

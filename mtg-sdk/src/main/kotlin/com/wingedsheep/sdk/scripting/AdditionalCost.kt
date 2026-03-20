@@ -182,6 +182,17 @@ sealed interface AdditionalCost : TextReplaceable<AdditionalCost> {
         }
     }
 
+    /**
+     * Forage: exile three cards from your graveyard or sacrifice a Food.
+     * Used by Bloomburrow cards as an additional cost.
+     */
+    @SerialName("Forage")
+    @Serializable
+    data object Forage : AdditionalCost {
+        override val description: String = "Forage (Exile three cards from your graveyard or sacrifice a Food)"
+        override fun applyTextReplacement(replacer: TextReplacer): AdditionalCost = this
+    }
+
     @SerialName("TapPermanents")
     @Serializable
     data class TapPermanents(

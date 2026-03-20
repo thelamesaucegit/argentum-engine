@@ -261,6 +261,24 @@ data class GrantHexproofEffect(
 }
 
 /**
+ * Grant permission to cast creature spells from your graveyard by paying the forage
+ * additional cost. Creatures cast this way enter with a finality counter.
+ *
+ * Used for Osteomancer Adept's activated ability.
+ *
+ * @param duration How long the permission lasts
+ */
+@SerialName("GrantCastCreaturesFromGraveyardWithForage")
+@Serializable
+data class GrantCastCreaturesFromGraveyardWithForageEffect(
+    val duration: Duration = Duration.EndOfTurn
+) : Effect {
+    override val description: String = "Until end of turn, you may cast creature spells from your graveyard by foraging in addition to paying their other costs. If you cast a spell this way, that creature enters with a finality counter on it"
+
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}
+
+/**
  * Grant a flat damage bonus to a player's sources for the specified duration.
  * When a source matching the filter that the player controls would deal damage,
  * it deals that much damage plus the bonus amount instead.

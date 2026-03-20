@@ -22,6 +22,7 @@ import com.wingedsheep.engine.state.components.player.LifeLostThisTurnComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.NonTokenCreaturesDiedThisTurnComponent
 import com.wingedsheep.engine.state.components.player.PlayerEffectRemoval
+import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.state.components.player.PlayerHexproofComponent
 import com.wingedsheep.engine.state.components.player.PlayerShroudComponent
 import com.wingedsheep.sdk.core.Zone
@@ -271,6 +272,10 @@ class CleanupPhaseManager(
                 val cantCast = result.get<CantCastSpellsComponent>()
                 if (cantCast?.removeOn == PlayerEffectRemoval.EndOfTurn) {
                     result = result.without<CantCastSpellsComponent>()
+                }
+                val graveyardForage = result.get<MayCastCreaturesFromGraveyardWithForageComponent>()
+                if (graveyardForage?.removeOn == PlayerEffectRemoval.EndOfTurn) {
+                    result = result.without<MayCastCreaturesFromGraveyardWithForageComponent>()
                 }
                 val damageBonus = result.get<DamageBonusComponent>()
                 if (damageBonus?.removeOn == PlayerEffectRemoval.EndOfTurn) {

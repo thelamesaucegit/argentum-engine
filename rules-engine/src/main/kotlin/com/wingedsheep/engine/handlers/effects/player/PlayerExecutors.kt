@@ -15,6 +15,7 @@ class PlayerExecutors(
         CantCastSpellsExecutor(),
         CreateGlobalTriggeredAbilityUntilEndOfTurnExecutor(),
         CreatePermanentGlobalTriggeredAbilityExecutor(),
+        GrantCastCreaturesFromGraveyardWithForageExecutor(),
         GrantDamageBonusExecutor(),
         GrantHexproofExecutor(),
         GrantShroudExecutor(),

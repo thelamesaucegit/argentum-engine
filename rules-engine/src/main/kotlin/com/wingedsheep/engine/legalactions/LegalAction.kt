@@ -67,7 +67,10 @@ data class LegalAction(
     val crewCreatures: List<CrewCreatureData>? = null,
 
     // Repetition
-    val maxRepeatableActivations: Int? = null
+    val maxRepeatableActivations: Int? = null,
+
+    // Forage (graveyard casting with forage cost, applies finality counter)
+    val requiresForage: Boolean = false
 )
 
 /**
