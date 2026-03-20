@@ -13,7 +13,7 @@ import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.sdk.model.EntityId
 
 class ColorChoiceContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(

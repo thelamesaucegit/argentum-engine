@@ -1,11 +1,5 @@
 package com.wingedsheep.engine.core
 
-import com.wingedsheep.engine.event.TriggerDetector
-import com.wingedsheep.engine.event.TriggerProcessor
-import com.wingedsheep.engine.handlers.ConditionEvaluator
-import com.wingedsheep.engine.handlers.ContinuationHandler
-import com.wingedsheep.engine.handlers.CostHandler
-import com.wingedsheep.engine.handlers.MulliganHandler
 import com.wingedsheep.engine.handlers.actions.ActionContext
 import com.wingedsheep.engine.handlers.actions.ActionHandlerRegistry
 import com.wingedsheep.engine.handlers.actions.ability.AbilityModule
@@ -17,14 +11,6 @@ import com.wingedsheep.engine.handlers.actions.mulligan.MulliganModule
 import com.wingedsheep.engine.handlers.actions.priority.PriorityModule
 import com.wingedsheep.engine.handlers.actions.special.SpecialActionsModule
 import com.wingedsheep.engine.handlers.actions.spell.SpellModule
-import com.wingedsheep.engine.handlers.effects.EffectExecutorRegistry
-import com.wingedsheep.engine.mechanics.StateBasedActionChecker
-import com.wingedsheep.engine.mechanics.combat.CombatManager
-import com.wingedsheep.engine.mechanics.mana.AlternativePaymentHandler
-import com.wingedsheep.engine.mechanics.mana.CostCalculator
-import com.wingedsheep.engine.mechanics.mana.ManaSolver
-import com.wingedsheep.engine.mechanics.stack.StackResolver
-import com.wingedsheep.engine.mechanics.targeting.TargetValidator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 
@@ -43,43 +29,33 @@ import com.wingedsheep.engine.state.GameState
  * 2. Delegates to the appropriate handler via the registry
  */
 class ActionProcessor(
-    cardRegistry: CardRegistry? = null,
-    combatManager: CombatManager = CombatManager(cardRegistry),
-    effectExecutorRegistry: EffectExecutorRegistry = EffectExecutorRegistry(cardRegistry = cardRegistry),
-    turnManager: TurnManager = TurnManager(combatManager, cardRegistry = cardRegistry, effectExecutor = effectExecutorRegistry::execute),
-    stackResolver: StackResolver = StackResolver(effectHandler = com.wingedsheep.engine.handlers.EffectHandler(cardRegistry = cardRegistry), cardRegistry = cardRegistry),
-    manaSolver: ManaSolver = ManaSolver(cardRegistry),
-    costCalculator: CostCalculator = CostCalculator(cardRegistry),
-    alternativePaymentHandler: AlternativePaymentHandler = AlternativePaymentHandler(),
-    costHandler: CostHandler = CostHandler(),
-    mulliganHandler: MulliganHandler = MulliganHandler(),
-    sbaChecker: StateBasedActionChecker = StateBasedActionChecker(cardRegistry = cardRegistry),
-    triggerDetector: TriggerDetector = TriggerDetector(cardRegistry),
-    triggerProcessor: TriggerProcessor = TriggerProcessor(),
-    continuationHandler: ContinuationHandler = ContinuationHandler(effectExecutorRegistry, stackResolver = stackResolver, triggerProcessor = triggerProcessor, triggerDetector = triggerDetector, combatManager = combatManager),
-    conditionEvaluator: ConditionEvaluator = ConditionEvaluator(),
-    targetValidator: TargetValidator = TargetValidator()
+    private val services: EngineServices
 ) {
+    /**
+     * Backward-compatible constructor: wraps a CardRegistry in EngineServices.
+     */
+    constructor(cardRegistry: CardRegistry) : this(EngineServices(cardRegistry))
+
     /**
      * Context containing all dependencies needed by action handlers.
      */
     private val context = ActionContext(
-        cardRegistry = cardRegistry,
-        combatManager = combatManager,
-        turnManager = turnManager,
-        stackResolver = stackResolver,
-        manaSolver = manaSolver,
-        costCalculator = costCalculator,
-        alternativePaymentHandler = alternativePaymentHandler,
-        costHandler = costHandler,
-        mulliganHandler = mulliganHandler,
-        effectExecutorRegistry = effectExecutorRegistry,
-        continuationHandler = continuationHandler,
-        sbaChecker = sbaChecker,
-        triggerDetector = triggerDetector,
-        triggerProcessor = triggerProcessor,
-        conditionEvaluator = conditionEvaluator,
-        targetValidator = targetValidator
+        cardRegistry = services.cardRegistry,
+        combatManager = services.combatManager,
+        turnManager = services.turnManager,
+        stackResolver = services.stackResolver,
+        manaSolver = services.manaSolver,
+        costCalculator = services.costCalculator,
+        alternativePaymentHandler = services.alternativePaymentHandler,
+        costHandler = services.costHandler,
+        mulliganHandler = services.mulliganHandler,
+        effectExecutorRegistry = services.effectExecutorRegistry,
+        continuationHandler = services.continuationHandler,
+        sbaChecker = services.sbaChecker,
+        triggerDetector = services.triggerDetector,
+        triggerProcessor = services.triggerProcessor,
+        conditionEvaluator = services.conditionEvaluator,
+        targetValidator = services.targetValidator
     )
 
     /**

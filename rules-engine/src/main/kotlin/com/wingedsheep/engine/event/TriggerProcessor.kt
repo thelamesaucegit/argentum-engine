@@ -11,6 +11,7 @@ import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.MayEffect
 import com.wingedsheep.sdk.scripting.effects.MayPayManaEffect
+import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.sdk.scripting.targets.TargetRequirement
 
 /**
@@ -25,7 +26,8 @@ import com.wingedsheep.sdk.scripting.targets.TargetRequirement
  * - Targeted abilities: Pause for target selection, then put on stack via continuation
  */
 class TriggerProcessor(
-    private val stackResolver: StackResolver = StackResolver(),
+    private val cardRegistry: CardRegistry,
+    private val stackResolver: StackResolver,
     private val targetFinder: TargetFinder = TargetFinder(),
     private val decisionHandler: DecisionHandler = DecisionHandler()
 ) {
@@ -219,7 +221,7 @@ class TriggerProcessor(
         val manaCost = mayPayEffect.cost
 
         // Check if the player can pay the mana cost
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         if (!manaSolver.canPay(state, trigger.controllerId, manaCost)) {
             // Can't pay - skip silently
             return ExecutionResult.success(state)
@@ -440,7 +442,7 @@ class TriggerProcessor(
     fun detectAndProcess(
         state: GameState,
         events: List<GameEvent>,
-        triggerDetector: TriggerDetector = TriggerDetector()
+        triggerDetector: TriggerDetector
     ): ExecutionResult {
         val triggers = triggerDetector.detectTriggers(state, events)
         return processTriggers(state, triggers)

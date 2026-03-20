@@ -21,7 +21,7 @@ class DrawingExecutors(
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
     private val decisionHandler: DecisionHandler = DecisionHandler(),
     private val targetFinder: TargetFinder = TargetFinder(),
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry? = null
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
 ) : ExecutorModule {
     private var effectExecutor: ((GameState, Effect, EffectContext) -> ExecutionResult)? = null
 
@@ -47,6 +47,6 @@ class DrawingExecutors(
         eachPlayerReturnsPermanentToHandExecutor,
         EachPlayerDiscardsOrLoseLifeExecutor(decisionHandler),
         ReplaceNextDrawWithExecutor(),
-        ReadTheRunesExecutor(amountEvaluator, decisionHandler)
+        ReadTheRunesExecutor(amountEvaluator, decisionHandler, cardRegistry)
     )
 }

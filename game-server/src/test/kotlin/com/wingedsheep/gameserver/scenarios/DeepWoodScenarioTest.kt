@@ -87,7 +87,7 @@ class DeepWoodScenarioTest : ScenarioTestBase() {
                 game.advanceToPhase(Phase.COMBAT, Step.COMBAT_DAMAGE)
 
                 // Apply combat damage
-                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager()
+                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val damageResult = combatManager.applyCombatDamage(game.state)
                 game.state = damageResult.state
 
@@ -132,7 +132,7 @@ class DeepWoodScenarioTest : ScenarioTestBase() {
                 game.advanceToPhase(Phase.COMBAT, Step.COMBAT_DAMAGE)
 
                 // Apply combat damage
-                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager()
+                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val damageResult = combatManager.applyCombatDamage(game.state)
                 game.state = damageResult.state
 
@@ -177,7 +177,7 @@ class DeepWoodScenarioTest : ScenarioTestBase() {
                 game.advanceToPhase(Phase.COMBAT, Step.COMBAT_DAMAGE)
 
                 // Apply combat damage
-                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager()
+                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val damageResult = combatManager.applyCombatDamage(game.state)
                 game.state = damageResult.state
 
@@ -228,7 +228,7 @@ class DeepWoodScenarioTest : ScenarioTestBase() {
                 game.advanceToPhase(Phase.COMBAT, Step.COMBAT_DAMAGE)
 
                 // Apply combat damage
-                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager()
+                val combatManager = com.wingedsheep.engine.mechanics.combat.CombatManager(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val damageResult = combatManager.applyCombatDamage(game.state)
                 game.state = damageResult.state
 

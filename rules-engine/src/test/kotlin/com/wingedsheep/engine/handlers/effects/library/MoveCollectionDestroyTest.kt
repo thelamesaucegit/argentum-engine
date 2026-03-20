@@ -31,7 +31,8 @@ import io.kotest.matchers.shouldBe
 
 class MoveCollectionDestroyTest : FunSpec({
 
-    val executor = MoveCollectionExecutor()
+    val cardRegistry = com.wingedsheep.engine.registry.CardRegistry()
+    val executor = MoveCollectionExecutor(cardRegistry)
 
     val playerId = EntityId.generate()
     val opponentId = EntityId.generate()

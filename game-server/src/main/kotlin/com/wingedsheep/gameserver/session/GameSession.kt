@@ -13,12 +13,7 @@ import com.wingedsheep.gameserver.priority.AutoPassManager
 import com.wingedsheep.gameserver.replay.SpectatorReplayDelta
 import com.wingedsheep.gameserver.replay.SpectatorReplayDiffCalculator
 import com.wingedsheep.engine.core.*
-import com.wingedsheep.engine.handlers.ConditionEvaluator
-import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.legalactions.LegalActionEnumerator
-import com.wingedsheep.engine.mechanics.combat.CombatManager
-import com.wingedsheep.engine.mechanics.mana.CostCalculator
-import com.wingedsheep.engine.mechanics.mana.ManaSolver
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.combat.AttackersDeclaredThisCombatComponent
@@ -47,10 +42,19 @@ private val logger = LoggerFactory.getLogger(GameSession::class.java)
  */
 class GameSession(
     val sessionId: String = UUID.randomUUID().toString(),
-    private val cardRegistry: CardRegistry,
-    private val stateTransformer: ClientStateTransformer = ClientStateTransformer(cardRegistry),
+    private val services: EngineServices,
+    private val stateTransformer: ClientStateTransformer = ClientStateTransformer(services.cardRegistry),
     private val useHandSmoother: Boolean = false
 ) {
+    /** Backward-compatible constructor: wraps a CardRegistry in EngineServices. */
+    constructor(
+        sessionId: String = UUID.randomUUID().toString(),
+        cardRegistry: CardRegistry,
+        stateTransformer: ClientStateTransformer = ClientStateTransformer(cardRegistry),
+        useHandSmoother: Boolean = false
+    ) : this(sessionId, EngineServices(cardRegistry), stateTransformer, useHandSmoother)
+
+    private val cardRegistry: CardRegistry get() = services.cardRegistry
     // Lock for synchronizing state modifications to prevent lost updates
     private val stateLock = Any()
 
@@ -77,21 +81,16 @@ class GameSession(
 
     data class PlayerPersistenceInfo(val playerName: String, val token: String)
 
-    private val actionProcessor = ActionProcessor(cardRegistry)
+    private val actionProcessor = ActionProcessor(services)
     private val gameInitializer = GameInitializer(cardRegistry)
-    private val manaSolver = ManaSolver(cardRegistry)
-    private val costCalculator = CostCalculator(cardRegistry)
-    private val conditionEvaluator = ConditionEvaluator()
-    private val predicateEvaluator = PredicateEvaluator()
-    private val turnManager = TurnManager(combatManager = CombatManager(cardRegistry))
     private val autoPassManager = AutoPassManager()
     private val spectatorStateBuilder = SpectatorStateBuilder(cardRegistry, stateTransformer)
     private val decisionEnricher = DecisionEnricher(cardRegistry)
     private val legalActionEnumerator = LegalActionEnumerator(
-        cardRegistry, manaSolver, costCalculator,
-        predicateEvaluator, conditionEvaluator, turnManager
+        cardRegistry, services.manaSolver, services.costCalculator,
+        services.predicateEvaluator, services.conditionEvaluator, services.turnManager
     )
-    private val legalActionEnricher = LegalActionEnricher(manaSolver, cardRegistry)
+    private val legalActionEnricher = LegalActionEnricher(services.manaSolver, cardRegistry)
 
     /** Tracks the last processed messageId per player for idempotency */
     private val lastProcessedMessageId = java.util.concurrent.ConcurrentHashMap<EntityId, String>()

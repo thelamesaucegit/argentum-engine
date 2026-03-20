@@ -22,6 +22,7 @@ import kotlin.reflect.KClass
  * then uses StormCopyTargetContinuation for remaining copies.
  */
 class StormCopyEffectExecutor(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val targetFinder: TargetFinder = TargetFinder()
 ) : EffectExecutor<StormCopyEffect> {
 
@@ -36,7 +37,7 @@ class StormCopyEffectExecutor(
             return ExecutionResult.success(state)
         }
 
-        val stackResolver = StackResolver()
+        val stackResolver = StackResolver(cardRegistry = cardRegistry)
 
         // If spell has no targets, create all copies immediately
         if (effect.spellTargetRequirements.isEmpty()) {

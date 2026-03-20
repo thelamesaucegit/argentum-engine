@@ -26,7 +26,7 @@ import com.wingedsheep.sdk.scripting.RevealFirstDrawEachTurn
  * draw replacement effects, reveal-on-draw, and prompt-on-draw abilities.
  */
 class DrawPhaseManager(
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry?,
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val decisionHandler: DecisionHandler,
     private val effectExecutor: ((GameState, Effect, EffectContext) -> ExecutionResult)?
 ) {
@@ -68,7 +68,7 @@ class DrawPhaseManager(
     /**
      * Draw cards for a player.
      */
-    fun drawCards(state: GameState, playerId: EntityId, count: Int): ExecutionResult {
+    fun drawCards(state: GameState, playerId: EntityId, count: Int, skipPrompts: Boolean = false): ExecutionResult {
         var newState = state
         val events = mutableListOf<GameEvent>()
         val drawnCards = mutableListOf<EntityId>()
@@ -113,23 +113,25 @@ class DrawPhaseManager(
                 }
             }
 
-            // Check for static draw replacement effects (e.g., Parallel Thoughts)
-            val staticResult = checkStaticDrawReplacement(newState, playerId, count - i, drawnCards.toList())
-            if (staticResult != null) {
-                if (drawnCards.isNotEmpty()) {
-                    val cardNames = drawnCards.map { newState.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
-                    val allEvents = mutableListOf<GameEvent>(
-                        CardsDrawnEvent(playerId, drawnCards.size, drawnCards.toList(), cardNames)
-                    )
-                    allEvents.addAll(events)
-                    allEvents.addAll(staticResult.events)
-                    return ExecutionResult.paused(
-                        staticResult.state,
-                        staticResult.pendingDecision!!,
-                        allEvents
-                    )
+            if (!skipPrompts) {
+                // Check for static draw replacement effects (e.g., Parallel Thoughts)
+                val staticResult = checkStaticDrawReplacement(newState, playerId, count - i, drawnCards.toList())
+                if (staticResult != null) {
+                    if (drawnCards.isNotEmpty()) {
+                        val cardNames = drawnCards.map { newState.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
+                        val allEvents = mutableListOf<GameEvent>(
+                            CardsDrawnEvent(playerId, drawnCards.size, drawnCards.toList(), cardNames)
+                        )
+                        allEvents.addAll(events)
+                        allEvents.addAll(staticResult.events)
+                        return ExecutionResult.paused(
+                            staticResult.state,
+                            staticResult.pendingDecision!!,
+                            allEvents
+                        )
+                    }
+                    return staticResult
                 }
-                return staticResult
             }
 
             val library = newState.getZone(libraryKey)
@@ -178,8 +180,6 @@ class DrawPhaseManager(
         playerId: EntityId,
         drawnCardId: EntityId
     ): CardRevealedFromDrawEvent? {
-        if (cardRegistry == null) return null
-
         // Check if any permanent controlled by this player has RevealFirstDrawEachTurn
         val projected = state.projectedState
         val hasRevealAbility = projected.getBattlefieldControlledBy(playerId).any { permanentId ->
@@ -209,8 +209,6 @@ class DrawPhaseManager(
         drawCount: Int,
         drawnCardsSoFar: List<EntityId> = emptyList()
     ): ExecutionResult? {
-        if (cardRegistry == null) return null
-
         val projected = state.projectedState
         val controlledPermanents = projected.getBattlefieldControlledBy(playerId)
 
@@ -285,8 +283,6 @@ class DrawPhaseManager(
         isDrawStep: Boolean,
         declinedSourceIds: List<EntityId> = emptyList()
     ): ExecutionResult? {
-        if (cardRegistry == null) return null
-
         // Scan the player's battlefield for permanents with promptOnDraw activated abilities
         val projected = state.projectedState
         val controlledPermanents = projected.getBattlefieldControlledBy(playerId)

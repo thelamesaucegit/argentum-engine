@@ -11,7 +11,7 @@ import com.wingedsheep.sdk.scripting.effects.SearchDestination
 import com.wingedsheep.sdk.scripting.effects.ZonePlacement
 
 class LibraryAndZoneContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -235,8 +235,8 @@ class LibraryAndZoneContinuationResumer(
 
         // Use MoveCollectionExecutor's helper to move aura to battlefield with attachment
         val executor = com.wingedsheep.engine.handlers.effects.library.MoveCollectionExecutor(
-            cardRegistry = ctx.stackResolver.cardRegistry,
-            targetFinder = ctx.targetFinder
+            cardRegistry = services.cardRegistry,
+            targetFinder = services.targetFinder
         )
         val (newState, moveEvents) = executor.moveAuraToBattlefield(state, auraId, targetId, destPlayerId)
 
@@ -247,7 +247,7 @@ class LibraryAndZoneContinuationResumer(
             val nextRemaining = remainingAuras.drop(1)
 
             val nextCardComponent = newState.getEntity(nextAuraId)?.get<CardComponent>()
-            val nextCardDef = nextCardComponent?.let { ctx.stackResolver.cardRegistry?.getCard(it.cardDefinitionId) }
+            val nextCardDef = nextCardComponent?.let { services.cardRegistry?.getCard(it.cardDefinitionId) }
             val nextAuraTarget = nextCardDef?.script?.auraTarget
 
             if (nextAuraTarget == null) {
@@ -264,7 +264,7 @@ class LibraryAndZoneContinuationResumer(
                 )
             }
 
-            val legalTargets = ctx.targetFinder.findLegalTargets(
+            val legalTargets = services.targetFinder.findLegalTargets(
                 state = newState,
                 requirement = nextAuraTarget,
                 controllerId = continuation.controllerId,

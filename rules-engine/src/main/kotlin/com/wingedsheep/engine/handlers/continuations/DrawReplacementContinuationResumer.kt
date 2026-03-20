@@ -13,7 +13,7 @@ import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.sdk.model.EntityId
 
 class DrawReplacementContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -70,7 +70,7 @@ class DrawReplacementContinuationResumer(
             if (!remainingCost.isEmpty()) {
                 if (response.autoPay) {
                     // Auto-tap: use ManaSolver
-                    val manaSolver = ManaSolver()
+                    val manaSolver = ManaSolver(services.cardRegistry)
                     val solution = manaSolver.solve(newState, playerId, remainingCost)
                         ?: return ExecutionResult.error(newState, "Cannot pay mana cost for draw replacement activation")
 
@@ -127,7 +127,7 @@ class DrawReplacementContinuationResumer(
             if (continuation.targetRequirements.isNotEmpty()) {
                 val legalTargetsMap = mutableMapOf<Int, List<EntityId>>()
                 val requirementInfos = continuation.targetRequirements.mapIndexed { index, req ->
-                    val legalTargets = ctx.targetFinder.findLegalTargets(
+                    val legalTargets = services.targetFinder.findLegalTargets(
                         state = newState,
                         requirement = req,
                         controllerId = playerId,
@@ -193,7 +193,7 @@ class DrawReplacementContinuationResumer(
                 opponentId = opponents.firstOrNull(),
                 targets = emptyList()
             )
-            val effectResult = ctx.effectExecutorRegistry.execute(
+            val effectResult = services.effectExecutorRegistry.execute(
                 newState, continuation.abilityEffect, effectContext
             )
             if (effectResult.isSuccess) {
@@ -207,7 +207,7 @@ class DrawReplacementContinuationResumer(
             val newDeclinedSourceIds = continuation.declinedSourceIds + continuation.sourceId
 
             if (continuation.isDrawStep) {
-                val turnManager = TurnManager(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+                val turnManager = TurnManager(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
                 val otherPrompt = turnManager.checkPromptOnDraw(
                     newState, playerId, continuation.drawCount, isDrawStep = true,
                     declinedSourceIds = newDeclinedSourceIds
@@ -220,7 +220,7 @@ class DrawReplacementContinuationResumer(
                     )
                 }
             } else {
-                val drawExecutor = DrawCardsExecutor(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+                val drawExecutor = DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
                 val otherPrompt = drawExecutor.checkPromptOnDraw(
                     newState, playerId, continuation.drawCount, continuation.drawnCardsSoFar,
                     declinedSourceIds = newDeclinedSourceIds
@@ -237,8 +237,8 @@ class DrawReplacementContinuationResumer(
 
         // Now perform the draws
         if (continuation.isDrawStep) {
-            val turnManager = TurnManager(effectExecutor = ctx.effectExecutorRegistry::execute)
-            val drawResult = turnManager.drawCards(newState, playerId, continuation.drawCount)
+            val turnManager = TurnManager(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
+            val drawResult = turnManager.drawCards(newState, playerId, continuation.drawCount, skipPrompts = true)
             if (drawResult.isPaused) {
                 return ExecutionResult.paused(
                     drawResult.state,
@@ -253,7 +253,7 @@ class DrawReplacementContinuationResumer(
         } else if (activated) {
             // Player activated - use DrawCardsExecutor with cardRegistry so it can prompt
             // again for subsequent draws (e.g., Arcanis draws 3, player can activate 3 times)
-            val drawExecutor = DrawCardsExecutor(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+            val drawExecutor = DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
             val drawResult = drawExecutor.executeDraws(newState, playerId, continuation.drawCount)
             if (drawResult.isPaused) {
                 return ExecutionResult.paused(
@@ -267,8 +267,8 @@ class DrawReplacementContinuationResumer(
         } else {
             // Player declined all abilities - draw 1 card normally,
             // then continue remaining draws with prompting enabled
-            val singleDrawExecutor = DrawCardsExecutor(effectExecutor = ctx.effectExecutorRegistry::execute)
-            val singleDrawResult = singleDrawExecutor.executeDraws(newState, playerId, 1)
+            val singleDrawExecutor = DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
+            val singleDrawResult = singleDrawExecutor.executeDraws(newState, playerId, 1, skipPrompts = true)
             if (singleDrawResult.isPaused) {
                 return ExecutionResult.paused(
                     singleDrawResult.state,
@@ -282,7 +282,7 @@ class DrawReplacementContinuationResumer(
             // Continue remaining draws with prompting (reset declined list for next draw)
             val remainingDraws = continuation.drawCount - 1
             if (remainingDraws > 0) {
-                val drawExecutor = DrawCardsExecutor(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+                val drawExecutor = DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
                 val drawResult = drawExecutor.executeDraws(newState, playerId, remainingDraws)
                 if (drawResult.isPaused) {
                     return ExecutionResult.paused(
@@ -334,7 +334,7 @@ class DrawReplacementContinuationResumer(
             targets = chosenTargets,
             namedTargets = EffectContext.buildNamedTargets(continuation.targetRequirements, chosenTargets)
         )
-        val effectResult = ctx.effectExecutorRegistry.execute(
+        val effectResult = services.effectExecutorRegistry.execute(
             newState, continuation.abilityEffect, effectContext
         )
         if (effectResult.isSuccess) {
@@ -344,8 +344,8 @@ class DrawReplacementContinuationResumer(
 
         // Now perform the draws (same logic as resumeDrawReplacementActivation)
         if (continuation.isDrawStep) {
-            val turnManager = TurnManager(effectExecutor = ctx.effectExecutorRegistry::execute)
-            val drawResult = turnManager.drawCards(newState, playerId, continuation.drawCount)
+            val turnManager = TurnManager(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
+            val drawResult = turnManager.drawCards(newState, playerId, continuation.drawCount, skipPrompts = true)
             if (drawResult.isPaused) {
                 return ExecutionResult.paused(
                     drawResult.state,
@@ -358,7 +358,7 @@ class DrawReplacementContinuationResumer(
             newState = newState.withPriority(playerId)
         } else {
             // Spell/ability draws - use DrawCardsExecutor with cardRegistry for subsequent prompts
-            val drawExecutor = DrawCardsExecutor(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+            val drawExecutor = DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
             val drawResult = drawExecutor.executeDraws(newState, playerId, continuation.drawCount)
             if (drawResult.isPaused) {
                 return ExecutionResult.paused(
@@ -404,7 +404,7 @@ class DrawReplacementContinuationResumer(
                 opponentId = opponents.firstOrNull(),
                 targets = emptyList()
             )
-            val effectResult = ctx.effectExecutorRegistry.execute(
+            val effectResult = services.effectExecutorRegistry.execute(
                 newState, continuation.replacementEffect, effectContext
             )
             if (effectResult.isSuccess) {
@@ -412,9 +412,9 @@ class DrawReplacementContinuationResumer(
                 events.addAll(effectResult.events)
             }
         } else {
-            // Player declined - draw 1 card normally
-            val singleDrawExecutor = DrawCardsExecutor(effectExecutor = ctx.effectExecutorRegistry::execute)
-            val singleDrawResult = singleDrawExecutor.executeDraws(newState, playerId, 1)
+            // Player declined - draw 1 card normally (skip prompts since we already handled them)
+            val singleDrawExecutor = DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
+            val singleDrawResult = singleDrawExecutor.executeDraws(newState, playerId, 1, skipPrompts = true)
             if (singleDrawResult.isPaused) {
                 return ExecutionResult.paused(
                     singleDrawResult.state,
@@ -430,13 +430,13 @@ class DrawReplacementContinuationResumer(
         val remainingDraws = continuation.drawCount - 1
         if (remainingDraws > 0) {
             val drawExecutor = DrawCardsExecutor(
-                cardRegistry = ctx.stackResolver.cardRegistry,
-                effectExecutor = ctx.effectExecutorRegistry::execute
+                cardRegistry = services.cardRegistry,
+                effectExecutor = services.effectExecutorRegistry::execute
             )
             val drawResult = if (continuation.isDrawStep) {
                 val turnManager = com.wingedsheep.engine.core.TurnManager(
-                    cardRegistry = ctx.stackResolver.cardRegistry,
-                    effectExecutor = ctx.effectExecutorRegistry::execute
+                    cardRegistry = services.cardRegistry,
+                    effectExecutor = services.effectExecutorRegistry::execute
                 )
                 turnManager.drawCards(newState, playerId, remainingDraws)
             } else {

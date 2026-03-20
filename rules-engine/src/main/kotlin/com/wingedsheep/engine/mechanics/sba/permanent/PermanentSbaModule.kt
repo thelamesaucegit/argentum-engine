@@ -7,7 +7,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 
 class PermanentSbaModule(
     private val decisionHandler: DecisionHandler,
-    private val cardRegistry: CardRegistry?
+    private val cardRegistry: CardRegistry
 ) : StateBasedActionModule {
     override fun checks(): List<StateBasedActionCheck> = listOf(
         PlaneswalkerLoyaltyCheck(),

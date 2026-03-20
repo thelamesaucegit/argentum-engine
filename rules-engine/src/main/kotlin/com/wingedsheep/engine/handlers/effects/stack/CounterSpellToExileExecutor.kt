@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  *  You may cast that card without paying its mana cost for as long as it remains exiled."
  */
 class CounterSpellToExileExecutor(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<CounterSpellToExileEffect> {
 
     override val effectType: KClass<CounterSpellToExileEffect> = CounterSpellToExileEffect::class

@@ -14,7 +14,7 @@ data class BlockCheckContext(
     val attackerId: EntityId,
     val blockerId: EntityId,
     val blockingPlayer: EntityId,
-    val cardRegistry: CardRegistry?
+    val cardRegistry: CardRegistry
 )
 
 /**

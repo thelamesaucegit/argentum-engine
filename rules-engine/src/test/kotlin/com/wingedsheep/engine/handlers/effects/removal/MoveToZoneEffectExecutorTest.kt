@@ -27,7 +27,8 @@ import io.kotest.matchers.shouldBe
 
 class MoveToZoneEffectExecutorTest : FunSpec({
 
-    val executor = MoveToZoneEffectExecutor()
+    val cardRegistry = com.wingedsheep.engine.registry.CardRegistry()
+    val executor = MoveToZoneEffectExecutor(cardRegistry)
 
     val playerId = EntityId.generate()
     val cardId = EntityId.generate()

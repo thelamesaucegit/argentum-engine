@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * using context.triggeringEntityId rather than a chosen target.
  */
 class CounterTriggeringSpellExecutor(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<CounterTriggeringSpellEffect> {
 
     override val effectType: KClass<CounterTriggeringSpellEffect> = CounterTriggeringSpellEffect::class

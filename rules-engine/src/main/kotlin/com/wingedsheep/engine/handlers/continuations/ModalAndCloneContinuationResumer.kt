@@ -11,7 +11,7 @@ import com.wingedsheep.sdk.scripting.targets.TargetOpponent
 import com.wingedsheep.sdk.scripting.targets.TargetPlayer
 
 class ModalAndCloneContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -50,7 +50,7 @@ class ModalAndCloneContinuationResumer(
             // Find valid targets for each requirement
             val legalTargetsMap = mutableMapOf<Int, List<EntityId>>()
             val requirementInfos = chosenMode.targetRequirements.mapIndexed { index, req ->
-                val legalTargets = ctx.targetFinder.findLegalTargets(
+                val legalTargets = services.targetFinder.findLegalTargets(
                     state = state,
                     requirement = req,
                     controllerId = continuation.controllerId,
@@ -92,7 +92,7 @@ class ModalAndCloneContinuationResumer(
                         targets = chosenTargets,
                         namedTargets = EffectContext.buildNamedTargets(chosenMode.targetRequirements, chosenTargets)
                     )
-                    val result = ctx.effectExecutorRegistry.execute(state, chosenMode.effect, context)
+                    val result = services.effectExecutorRegistry.execute(state, chosenMode.effect, context)
                     if (result.isPaused) return result
                     return checkForMore(result.state, result.events.toList())
                 }
@@ -153,7 +153,7 @@ class ModalAndCloneContinuationResumer(
             triggeringEntityId = continuation.triggeringEntityId
         )
 
-        val result = ctx.effectExecutorRegistry.execute(state, chosenMode.effect, context)
+        val result = services.effectExecutorRegistry.execute(state, chosenMode.effect, context)
         if (result.isPaused) return result
         return checkForMore(result.state, result.events.toList())
     }
@@ -196,7 +196,7 @@ class ModalAndCloneContinuationResumer(
             namedTargets = EffectContext.buildNamedTargets(continuation.targetRequirements, chosenTargets)
         )
 
-        val result = ctx.effectExecutorRegistry.execute(state, continuation.effect, context)
+        val result = services.effectExecutorRegistry.execute(state, continuation.effect, context)
         if (result.isPaused) return result
         return checkForMore(result.state, result.events.toList())
     }
@@ -254,14 +254,14 @@ class ModalAndCloneContinuationResumer(
                 }
 
                 // Look up the card definition for the copied creature
-                copiedCardDef = ctx.stackResolver.cardRegistry?.getCard(targetCardComponent.cardDefinitionId)
+                copiedCardDef = services.cardRegistry?.getCard(targetCardComponent.cardDefinitionId)
             } else {
                 // Target creature no longer exists - enter as itself
-                copiedCardDef = ctx.stackResolver.cardRegistry?.getCard(originalCardComponent.cardDefinitionId)
+                copiedCardDef = services.cardRegistry?.getCard(originalCardComponent.cardDefinitionId)
             }
         } else {
             // Player declined to copy - enter as itself (0/0 Clone)
-            copiedCardDef = ctx.stackResolver.cardRegistry?.getCard(originalCardComponent.cardDefinitionId)
+            copiedCardDef = services.cardRegistry?.getCard(originalCardComponent.cardDefinitionId)
         }
 
         // Get the (possibly updated) card component for event names
@@ -273,7 +273,7 @@ class ModalAndCloneContinuationResumer(
         } else null
 
         // Complete the permanent entry using the shared helper
-        newState = ctx.stackResolver.enterPermanentOnBattlefield(
+        newState = services.stackResolver.enterPermanentOnBattlefield(
             newState, spellId, spellComponent, finalCardComponent, copiedCardDef
         )
 
@@ -323,7 +323,7 @@ class ModalAndCloneContinuationResumer(
             ?: return ExecutionResult.error(state, "Spell has no CardComponent")
 
         // Check if the card also needs a creature type choice
-        val cardDef = ctx.stackResolver.cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = services.cardRegistry?.getCard(cardComponent.cardDefinitionId)
         val entersWithCreatureTypeChoice = cardDef?.script?.replacementEffects
             ?.filterIsInstance<com.wingedsheep.sdk.scripting.EntersWithCreatureTypeChoice>()?.firstOrNull()
 
@@ -367,7 +367,7 @@ class ModalAndCloneContinuationResumer(
         val spellComponent = spellContainer.get<SpellOnStackComponent>()
             ?: return ExecutionResult.error(state, "Spell has no SpellOnStackComponent")
 
-        newState = ctx.stackResolver.enterPermanentOnBattlefield(
+        newState = services.stackResolver.enterPermanentOnBattlefield(
             newState, spellId, spellComponent, cardComponent, cardDef
         )
 
@@ -422,8 +422,8 @@ class ModalAndCloneContinuationResumer(
         }
 
         // Complete the permanent entry
-        val cardDef = ctx.stackResolver.cardRegistry?.getCard(cardComponent.cardDefinitionId)
-        newState = ctx.stackResolver.enterPermanentOnBattlefield(
+        val cardDef = services.cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        newState = services.stackResolver.enterPermanentOnBattlefield(
             newState, spellId, spellComponent, cardComponent, cardDef
         )
 
@@ -477,8 +477,8 @@ class ModalAndCloneContinuationResumer(
         }
 
         // Complete the permanent entry
-        val cardDef = ctx.stackResolver.cardRegistry?.getCard(cardComponent.cardDefinitionId)
-        newState = ctx.stackResolver.enterPermanentOnBattlefield(
+        val cardDef = services.cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        newState = services.stackResolver.enterPermanentOnBattlefield(
             newState, spellId, spellComponent, cardComponent, cardDef
         )
 
@@ -516,7 +516,7 @@ class ModalAndCloneContinuationResumer(
             ?: return ExecutionResult.error(state, "Invalid creature type index: ${response.optionIndex}")
 
         // Complete casting: put spell on stack with the chosen creature type
-        val castResult = ctx.stackResolver.castSpell(
+        val castResult = services.stackResolver.castSpell(
             state,
             continuation.cardId,
             continuation.casterId,
@@ -534,25 +534,23 @@ class ModalAndCloneContinuationResumer(
         var allEvents = castResult.events
 
         // Detect and process triggers from casting (same as CastSpellHandler does)
-        if (ctx.triggerDetector != null && ctx.triggerProcessor != null) {
-            val triggers = ctx.triggerDetector.detectTriggers(castResult.newState, allEvents)
-            if (triggers.isNotEmpty()) {
-                val triggerResult = ctx.triggerProcessor.processTriggers(castResult.newState, triggers)
+        val triggers = services.triggerDetector.detectTriggers(castResult.newState, allEvents)
+        if (triggers.isNotEmpty()) {
+            val triggerResult = services.triggerProcessor.processTriggers(castResult.newState, triggers)
 
-                if (triggerResult.isPaused) {
-                    return ExecutionResult.paused(
-                        triggerResult.state.withPriority(continuation.casterId),
-                        triggerResult.pendingDecision!!,
-                        allEvents + triggerResult.events
-                    )
-                }
-
-                allEvents = allEvents + triggerResult.events
-                return ExecutionResult.success(
-                    triggerResult.newState.withPriority(continuation.casterId),
-                    allEvents
+            if (triggerResult.isPaused) {
+                return ExecutionResult.paused(
+                    triggerResult.state.withPriority(continuation.casterId),
+                    triggerResult.pendingDecision!!,
+                    allEvents + triggerResult.events
                 )
             }
+
+            allEvents = allEvents + triggerResult.events
+            return ExecutionResult.success(
+                triggerResult.newState.withPriority(continuation.casterId),
+                allEvents
+            )
         }
 
         return ExecutionResult.success(
@@ -627,8 +625,8 @@ class ModalAndCloneContinuationResumer(
         val spellComponent = spellContainer.get<SpellOnStackComponent>()
             ?: return ExecutionResult.error(state, "Spell has no SpellOnStackComponent")
 
-        val cardDef = ctx.stackResolver.cardRegistry?.getCard(cardComponent.cardDefinitionId)
-        newState = ctx.stackResolver.enterPermanentOnBattlefield(
+        val cardDef = services.cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        newState = services.stackResolver.enterPermanentOnBattlefield(
             newState, spellId, spellComponent, cardComponent, cardDef
         )
 

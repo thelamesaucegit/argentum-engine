@@ -14,7 +14,7 @@ import com.wingedsheep.sdk.scripting.effects.MayEffect
  * - MayTriggerContinuation (yes/no for may triggers with targets)
  */
 class EffectAndTriggerContinuationResumer(
-    private val ctx: ContinuationContext,
+    private val services: com.wingedsheep.engine.core.EngineServices,
     private val effectRunner: EffectContinuationRunner
 ) : ContinuationResumerModule {
 
@@ -66,7 +66,7 @@ class EffectAndTriggerContinuationResumer(
                     triggeringPlayerId = continuation.triggeringPlayerId,
                     triggerCounterCount = continuation.triggerCounterCount
                 )
-                val stackResult = ctx.stackResolver.putTriggeredAbility(state, elseComponent, emptyList())
+                val stackResult = services.stackResolver.putTriggeredAbility(state, elseComponent, emptyList())
                 if (!stackResult.isSuccess) return stackResult
                 return checkForMore(stackResult.newState, stackResult.events.toList())
             }
@@ -85,7 +85,7 @@ class EffectAndTriggerContinuationResumer(
             triggerCounterCount = continuation.triggerCounterCount
         )
 
-        val stackResult = ctx.stackResolver.putTriggeredAbility(
+        val stackResult = services.stackResolver.putTriggeredAbility(
             state, abilityComponent, selectedTargets, continuation.targetRequirements
         )
 
@@ -117,10 +117,7 @@ class EffectAndTriggerContinuationResumer(
         val unwrappedAbility = trigger.ability.copy(effect = innerEffect)
         val unwrappedTrigger = trigger.copy(ability = unwrappedAbility)
 
-        val processor = ctx.triggerProcessor
-            ?: return ExecutionResult.error(state, "TriggerProcessor not available for may trigger continuation")
-
-        val result = processor.processTargetedTrigger(state, unwrappedTrigger, continuation.targetRequirement)
+        val result = services.triggerProcessor.processTargetedTrigger(state, unwrappedTrigger, continuation.targetRequirement)
 
         if (result.isPaused) {
             return result
@@ -154,7 +151,7 @@ class EffectAndTriggerContinuationResumer(
             return checkForMore(state, emptyList())
         }
 
-        val result = ctx.effectExecutorRegistry.execute(state, effectToExecute, context)
+        val result = services.effectExecutorRegistry.execute(state, effectToExecute, context)
 
         if (result.isPaused) {
             return result

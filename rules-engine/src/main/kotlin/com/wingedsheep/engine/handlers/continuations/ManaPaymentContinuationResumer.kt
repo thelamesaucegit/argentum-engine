@@ -11,7 +11,7 @@ import com.wingedsheep.engine.state.components.stack.TargetsComponent
 import com.wingedsheep.sdk.scripting.effects.MayPayManaEffect
 
 class ManaPaymentContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -60,7 +60,7 @@ class ManaPaymentContinuationResumer(
 
             if (!remainingCost.isEmpty()) {
                 // Need to tap sources for the remaining cost
-                val manaSolver = ManaSolver()
+                val manaSolver = ManaSolver(services.cardRegistry)
                 val solution = manaSolver.solve(currentState, playerId, remainingCost)
                     ?: return ExecutionResult.error(state, "Cannot pay mana cost")
 
@@ -103,13 +103,13 @@ class ManaPaymentContinuationResumer(
         } else {
             // Player chose not to pay — counter the spell
             val counterResult = if (continuation.exileOnCounter) {
-                ctx.stackResolver.counterSpellToExile(
+                services.stackResolver.counterSpellToExile(
                     state, continuation.spellEntityId,
                     grantFreeCast = false,
                     controllerId = continuation.controllerId ?: continuation.payingPlayerId
                 )
             } else {
-                ctx.stackResolver.counterSpell(state, continuation.spellEntityId)
+                services.stackResolver.counterSpell(state, continuation.spellEntityId)
             }
             return checkForMore(counterResult.newState, counterResult.events)
         }
@@ -198,7 +198,7 @@ class ManaPaymentContinuationResumer(
 
         if (!remainingCost.isEmpty()) {
             // Need to tap sources for the remaining cost
-            val manaSolver = ManaSolver()
+            val manaSolver = ManaSolver(services.cardRegistry)
             val solution = manaSolver.solve(currentState, playerId, remainingCost)
                 ?: return ExecutionResult.error(state, "Cannot pay mana cost")
 
@@ -238,7 +238,7 @@ class ManaPaymentContinuationResumer(
 
         // Execute the inner effect
         val context = continuation.effectContext
-        val effectResult = ctx.effectExecutorRegistry.execute(currentState, continuation.effect, context)
+        val effectResult = services.effectExecutorRegistry.execute(currentState, continuation.effect, context)
 
         if (effectResult.error != null) {
             return effectResult
@@ -271,7 +271,7 @@ class ManaPaymentContinuationResumer(
 
         // Player chose to pay — show mana source selection
         val playerId = continuation.trigger.controllerId
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(services.cardRegistry)
 
         // Find available sources for the UI
         val sources = manaSolver.findAvailableManaSources(state, playerId)
@@ -380,7 +380,7 @@ class ManaPaymentContinuationResumer(
         val events = mutableListOf<GameEvent>()
 
         if (!remainingCost.isEmpty()) {
-            val manaSolver = ManaSolver()
+            val manaSolver = ManaSolver(services.cardRegistry)
             val solution = manaSolver.solve(currentState, playerId, remainingCost)
                 ?: return ExecutionResult.error(state, "Cannot pay mana cost")
 
@@ -419,7 +419,7 @@ class ManaPaymentContinuationResumer(
 
         // Execute the inner effect with the chosen X value
         val context = continuation.effectContext.copy(xValue = chosenX)
-        val effectResult = ctx.effectExecutorRegistry.execute(currentState, continuation.effect, context)
+        val effectResult = services.effectExecutorRegistry.execute(currentState, continuation.effect, context)
 
         if (effectResult.error != null) {
             return effectResult
@@ -472,7 +472,7 @@ class ManaPaymentContinuationResumer(
         if (!remainingCost.isEmpty()) {
             if (response.autoPay) {
                 // Auto-tap: use ManaSolver
-                val manaSolver = ManaSolver()
+                val manaSolver = ManaSolver(services.cardRegistry)
                 val solution = manaSolver.solve(currentState, playerId, remainingCost)
                     ?: return ExecutionResult.error(state, "Cannot pay mana cost with auto-pay")
 
@@ -542,10 +542,7 @@ class ManaPaymentContinuationResumer(
         val unwrappedTrigger = trigger.copy(ability = unwrappedAbility)
 
         // Proceed to target selection
-        val processor = ctx.triggerProcessor
-            ?: return ExecutionResult.error(state, "TriggerProcessor not available for mana source selection continuation")
-
-        val result = processor.processTargetedTrigger(currentState, unwrappedTrigger, continuation.targetRequirement)
+        val result = services.triggerProcessor.processTargetedTrigger(currentState, unwrappedTrigger, continuation.targetRequirement)
 
         if (result.isPaused) {
             // Target selection is needed - return paused with accumulated events

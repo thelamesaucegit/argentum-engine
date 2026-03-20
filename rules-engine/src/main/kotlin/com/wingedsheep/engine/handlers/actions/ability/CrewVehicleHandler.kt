@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
  * creature until end of turn) goes on the stack.
  */
 class CrewVehicleHandler(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val stackResolver: StackResolver,
     private val triggerDetector: TriggerDetector,
     private val triggerProcessor: TriggerProcessor
@@ -59,7 +59,7 @@ class CrewVehicleHandler(
         }
 
         // Vehicle must have Crew keyword ability
-        val cardDef = cardRegistry?.getCard(vehicleCard.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(vehicleCard.cardDefinitionId)
             ?: return "Card definition not found"
 
         val crewAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Crew>()
@@ -119,7 +119,7 @@ class CrewVehicleHandler(
         val vehicleCard = vehicleContainer.get<CardComponent>()
             ?: return ExecutionResult.error(state, "Not a card")
 
-        val cardDef = cardRegistry?.getCard(vehicleCard.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(vehicleCard.cardDefinitionId)
             ?: return ExecutionResult.error(state, "Card definition not found")
 
         var currentState = state

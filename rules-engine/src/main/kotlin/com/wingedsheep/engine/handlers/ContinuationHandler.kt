@@ -2,9 +2,6 @@ package com.wingedsheep.engine.handlers
 
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.continuations.*
-import com.wingedsheep.engine.handlers.effects.EffectExecutorRegistry
-import com.wingedsheep.engine.mechanics.combat.CombatManager
-import com.wingedsheep.engine.mechanics.stack.StackResolver
 import com.wingedsheep.engine.state.GameState
 
 /**
@@ -17,46 +14,32 @@ import com.wingedsheep.engine.state.GameState
  * Delegates to specialized resumer modules via the ContinuationResumerRegistry.
  */
 class ContinuationHandler(
-    private val effectExecutorRegistry: EffectExecutorRegistry,
-    private val stackResolver: StackResolver = StackResolver(),
-    private val triggerProcessor: com.wingedsheep.engine.event.TriggerProcessor? = null,
-    private val triggerDetector: com.wingedsheep.engine.event.TriggerDetector? = null,
-    private val combatManager: CombatManager? = null,
-    private val targetFinder: TargetFinder = TargetFinder()
+    private val services: EngineServices
 ) {
 
-    private val effectRunner = EffectContinuationRunner(effectExecutorRegistry)
-
-    private val ctx = ContinuationContext(
-        effectExecutorRegistry = effectExecutorRegistry,
-        stackResolver = stackResolver,
-        triggerProcessor = triggerProcessor,
-        triggerDetector = triggerDetector,
-        combatManager = combatManager,
-        targetFinder = targetFinder
-    )
+    private val effectRunner = EffectContinuationRunner(services.effectExecutorRegistry)
 
     private val registry = ContinuationResumerRegistry().apply {
         // Core engine resumers
-        registerModule(EffectAndTriggerContinuationResumer(ctx, effectRunner))
-        registerModule(MiscContinuationResumer(ctx, effectRunner))
+        registerModule(EffectAndTriggerContinuationResumer(services, effectRunner))
+        registerModule(MiscContinuationResumer(services, effectRunner))
 
         // Core engine auto-resumers
-        registerAutoResumerModule(CoreAutoResumerModule(ctx, effectRunner))
+        registerAutoResumerModule(CoreAutoResumerModule(services, effectRunner))
 
         // Specialized resumer modules
-        registerModule(CombatContinuationResumer(ctx))
-        registerModule(ColorChoiceContinuationResumer(ctx))
-        registerModule(ChainSpellContinuationResumer(ctx))
-        registerModule(CreatureTypeChoiceContinuationResumer(ctx))
-        registerModule(DrawReplacementContinuationResumer(ctx))
-        registerModule(CardSpecificContinuationResumer(ctx))
-        registerModule(DiscardAndDrawContinuationResumer(ctx))
-        registerModule(StateBasedContinuationResumer(ctx))
-        registerModule(SacrificeAndPayContinuationResumer(ctx))
-        registerModule(ManaPaymentContinuationResumer(ctx))
-        registerModule(LibraryAndZoneContinuationResumer(ctx))
-        registerModule(ModalAndCloneContinuationResumer(ctx))
+        registerModule(CombatContinuationResumer(services))
+        registerModule(ColorChoiceContinuationResumer(services))
+        registerModule(ChainSpellContinuationResumer(services))
+        registerModule(CreatureTypeChoiceContinuationResumer(services))
+        registerModule(DrawReplacementContinuationResumer(services))
+        registerModule(CardSpecificContinuationResumer(services))
+        registerModule(DiscardAndDrawContinuationResumer(services))
+        registerModule(StateBasedContinuationResumer(services))
+        registerModule(SacrificeAndPayContinuationResumer(services))
+        registerModule(ManaPaymentContinuationResumer(services))
+        registerModule(LibraryAndZoneContinuationResumer(services))
+        registerModule(ModalAndCloneContinuationResumer(services))
     }
 
     /**

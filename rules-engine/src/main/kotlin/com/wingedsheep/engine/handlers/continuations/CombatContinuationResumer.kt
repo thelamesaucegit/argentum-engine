@@ -12,7 +12,7 @@ import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.sdk.model.EntityId
 
 class CombatContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -49,8 +49,7 @@ class CombatContinuationResumer(
             )
         }
 
-        return ctx.combatManager?.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
-            ?: ExecutionResult.success(newState)
+        return services.combatManager.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
     }
 
     fun resumeAssignAsUnblocked(
@@ -83,8 +82,7 @@ class CombatContinuationResumer(
             }
         }
 
-        return ctx.combatManager?.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
-            ?: ExecutionResult.success(newState)
+        return services.combatManager.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
     }
 
     fun resumeDamagePrevention(
@@ -123,8 +121,7 @@ class CombatContinuationResumer(
 
         val newState = state.copy(floatingEffects = updatedEffects)
 
-        return ctx.combatManager?.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
-            ?: ExecutionResult.success(newState)
+        return services.combatManager.applyCombatDamage(newState, firstStrike = continuation.firstStrike)
     }
 
     fun resumeBlockerOrder(
@@ -225,7 +222,7 @@ class CombatContinuationResumer(
                 newState.getEntity(blockerId)?.get<com.wingedsheep.engine.state.components.combat.AttackerOrderComponent>() == null
             }
         if (blockersNeedingOrder.isNotEmpty()) {
-            return ctx.combatManager!!.createAttackerOrderDecision(
+            return services.combatManager.createAttackerOrderDecision(
                 newState,
                 attackingPlayer = continuation.attackingPlayerId,
                 firstBlocker = blockersNeedingOrder.first(),

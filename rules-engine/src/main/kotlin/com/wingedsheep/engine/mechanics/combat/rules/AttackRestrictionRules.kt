@@ -128,7 +128,7 @@ class CantAttackUnlessDefenderRule : AttackDefenderRule {
         val container = ctx.state.getEntity(ctx.attackerId) ?: return null
         if (container.has<FaceDownComponent>()) return null
         val cardComponent = container.get<CardComponent>() ?: return null
-        val cardDef = ctx.cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: return null
+        val cardDef = ctx.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return null
 
         val restriction = cardDef.staticAbilities
             .filterIsInstance<CantAttackUnless>()
@@ -156,7 +156,7 @@ class CantBeAttackedWithoutDefenderRule : AttackDefenderRule {
         for (permId in defenderPermanents) {
             val container = ctx.state.getEntity(permId) ?: continue
             val cardComponent = container.get<CardComponent>() ?: continue
-            val cardDef = ctx.cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: continue
+            val cardDef = ctx.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
             for (ability in cardDef.staticAbilities) {
                 if (ability is CantBeAttackedWithout) {
                     if (!ctx.projected.hasKeyword(ctx.attackerId, ability.requiredKeyword)) {

@@ -41,7 +41,7 @@ import com.wingedsheep.sdk.scripting.references.Player
  * - [AttachmentTriggerDetector] — aura/equipment triggers
  */
 class TriggerDetector(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val abilityRegistry: AbilityRegistry = AbilityRegistry(),
     private val conditionEvaluator: ConditionEvaluator = ConditionEvaluator(),
     private val predicateEvaluator: PredicateEvaluator = PredicateEvaluator()

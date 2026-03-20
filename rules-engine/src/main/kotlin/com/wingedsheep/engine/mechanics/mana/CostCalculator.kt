@@ -37,7 +37,7 @@ import com.wingedsheep.sdk.scripting.predicates.CardPredicate
  * A spell's cost can never be reduced below its colored mana requirements.
  */
 class CostCalculator(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) {
 
     /**
@@ -169,7 +169,7 @@ class CostCalculator(
         val projectedState = state.projectedState
         return state.getBattlefield(playerId).any { entityId ->
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: return@any false
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: return@any false
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: return@any false
             filter.cardPredicates.all { predicate ->
                 matchesBattlefieldPredicate(entityId, cardDef, predicate, projectedState)
             }
@@ -241,7 +241,7 @@ class CostCalculator(
         var reduction = 0
         for (entityId in state.getBattlefield(casterId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val permanentDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             for (ability in permanentDef.script.staticAbilities) {
                 if (ability is ReduceSpellCostBySubtype &&
@@ -274,7 +274,7 @@ class CostCalculator(
         var reduction = 0
         for (entityId in state.getBattlefield(casterId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val permanentDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             for (ability in permanentDef.script.staticAbilities) {
                 if (ability is ReduceSpellCostByFilter &&
@@ -306,7 +306,7 @@ class CostCalculator(
 
         for (entityId in state.getBattlefield(casterId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val permanentDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             for (ability in permanentDef.script.staticAbilities) {
                 if (ability is ReduceSpellColoredCostBySubtype &&
@@ -472,7 +472,7 @@ class CostCalculator(
         for (playerId in state.turnOrder) {
             for (entityId in state.getBattlefield(playerId)) {
                 val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-                val permanentDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+                val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
                 for (ability in permanentDef.script.staticAbilities) {
                     if (ability is IncreaseSpellCostByFilter &&
@@ -506,7 +506,7 @@ class CostCalculator(
         // Scan battlefield permanents controlled by the caster for FaceDownSpellCostReduction
         for (entityId in state.getBattlefield(casterId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             for (ability in cardDef.script.staticAbilities) {
                 if (ability is FaceDownSpellCostReduction) {
@@ -532,7 +532,7 @@ class CostCalculator(
         for (playerId in state.turnOrder) {
             for (entityId in state.getBattlefield(playerId)) {
                 val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-                val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+                val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
                 for (ability in cardDef.script.staticAbilities) {
                     if (ability is IncreaseMorphCost) {
@@ -575,7 +575,7 @@ class CostCalculator(
         val costs = mutableListOf<ManaCost>()
         for (entityId in state.getBattlefield(casterId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val permanentDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val permanentDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             for (ability in permanentDef.script.staticAbilities) {
                 if (ability is GrantAlternativeCastingCost) {

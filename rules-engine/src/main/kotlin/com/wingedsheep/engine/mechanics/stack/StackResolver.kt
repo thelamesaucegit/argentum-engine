@@ -58,8 +58,8 @@ import com.wingedsheep.sdk.scripting.targets.*
  * - Countering spells
  */
 class StackResolver(
-    private val effectHandler: EffectHandler = EffectHandler(),
-    internal val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
+    private val effectHandler: EffectHandler = EffectHandler(cardRegistry = cardRegistry),
     private val staticAbilityHandler: StaticAbilityHandler = StaticAbilityHandler(cardRegistry),
     private val predicateEvaluator: PredicateEvaluator = PredicateEvaluator()
 ) {
@@ -124,7 +124,7 @@ class StackResolver(
             }
             // Add morph data for creatures with morph (needed for face-down casting and
             // for effects like Backslide that target "creature with a morph ability")
-            val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+            val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             val morphAbility = cardDef?.keywordAbilities?.filterIsInstance<KeywordAbility.Morph>()?.firstOrNull()
             if (morphAbility != null) {
                 updated = updated.with(MorphDataComponent(
@@ -389,7 +389,7 @@ class StackResolver(
         val ownerId = cardComponent?.ownerId ?: controllerId
 
         // Check for EntersAsCopy replacement effect before entering the battlefield
-        val cardDef = cardComponent?.cardDefinitionId?.let { cardRegistry?.getCard(it) }
+        val cardDef = cardComponent?.cardDefinitionId?.let { cardRegistry.getCard(it) }
         if (cardDef != null && !spellComponent.castFaceDown) {
             val entersAsCopy = cardDef.script.replacementEffects.filterIsInstance<EntersAsCopy>().firstOrNull()
             if (entersAsCopy != null) {
@@ -766,7 +766,7 @@ class StackResolver(
         // was modified by a text-changing effect (e.g., Artificial Evolution)
         // Use kickerSpellEffect when the spell was kicked and an alternate effect is defined
         val baseSpellEffect = if (spellComponent.wasKicked && cardComponent != null) {
-            val cardDef = cardRegistry?.getCard(cardComponent.name)
+            val cardDef = cardRegistry.getCard(cardComponent.name)
             cardDef?.script?.kickerSpellEffect ?: cardComponent.spellEffect
         } else {
             cardComponent?.spellEffect
@@ -802,7 +802,7 @@ class StackResolver(
             // determines how the effect completes.
             if (effectResult.isPaused) {
                 val ownerId = cardComponent?.ownerId ?: spellComponent.casterId
-                val pausedCardDef = cardComponent?.let { cardRegistry?.getCard(it.name) }
+                val pausedCardDef = cardComponent?.let { cardRegistry.getCard(it.name) }
                 val pausedSelfExile = pausedCardDef?.script?.selfExileOnResolve == true
                 val pausedDestZone = if (pausedSelfExile) Zone.EXILE else Zone.GRAVEYARD
                 val pausedDestZoneKey = ZoneKey(ownerId, pausedDestZone)
@@ -839,7 +839,7 @@ class StackResolver(
 
         // Move to graveyard (or exile if selfExileOnResolve)
         val ownerId = cardComponent?.ownerId ?: spellComponent.casterId
-        val cardDef = cardComponent?.let { cardRegistry?.getCard(it.name) }
+        val cardDef = cardComponent?.let { cardRegistry.getCard(it.name) }
         val selfExile = cardDef?.script?.selfExileOnResolve == true
         val destinationZone = if (selfExile) Zone.EXILE else Zone.GRAVEYARD
         val destZoneKey = ZoneKey(ownerId, destinationZone)
@@ -1481,7 +1481,7 @@ class StackResolver(
         for (playerId in state.turnOrder) {
             for (entityId in state.getBattlefield(playerId)) {
                 val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-                val def = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+                val def = cardRegistry.getCard(card.cardDefinitionId) ?: continue
                 for (ability in def.staticAbilities) {
                     if (ability is GrantCantBeCountered) {
                         if (predicateEvaluator.matches(state, spellId, ability.filter, context)) {

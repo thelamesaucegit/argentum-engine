@@ -78,7 +78,7 @@ import kotlin.reflect.KClass
  * - Trigger detection
  */
 class CastSpellHandler(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val turnManager: TurnManager,
     private val manaSolver: ManaSolver,
     private val costCalculator: CostCalculator,
@@ -117,7 +117,7 @@ class CastSpellHandler(
             return "Card is not in your hand"
         }
 
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
 
         // Handle face-down casting (morph)
         if (action.castFaceDown) {
@@ -568,7 +568,7 @@ class CastSpellHandler(
             ?: return ExecutionResult.error(state, "Card not found")
 
         val xValue = action.xValue ?: 0
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
 
         // Calculate effective cost (free if PlayWithoutPayingCostComponent is present)
         val playForFreeInExecute = hasPlayWithoutPayingCost(currentState, action.playerId, action.cardId)
@@ -1337,7 +1337,7 @@ class CastSpellHandler(
         val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             for (ability in cardDef.script.staticAbilities) {
                 if (ability is CastSpellTypesFromTopOfLibrary) {
                     if (matchesCardFilter(cardComponent, ability.filter)) return true
@@ -1422,7 +1422,7 @@ class CastSpellHandler(
 
             // Check if this permanent has a GrantMayCastFromLinkedExile static ability
             val entityCardComponent = container.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(entityCardComponent.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(entityCardComponent.cardDefinitionId) ?: continue
             val grantAbility = cardDef.script.staticAbilities
                 .filterIsInstance<GrantMayCastFromLinkedExile>()
                 .firstOrNull() ?: continue
@@ -1445,7 +1445,7 @@ class CastSpellHandler(
         cardId: EntityId
     ): Boolean {
         val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: return false
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return false
         val mayCastAbility = cardDef.script.staticAbilities
             .filterIsInstance<MayCastSelfFromZones>()
             .firstOrNull() ?: return false
@@ -1474,7 +1474,7 @@ class CastSpellHandler(
     private fun hasPlayFromTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is PlayFromTopOfLibrary }) {
                 return true
             }
@@ -1493,7 +1493,7 @@ class CastSpellHandler(
 
         // Check the card's own conditionalFlash (e.g., Ferocious)
         val spellCard = state.getEntity(spellCardId)?.get<CardComponent>()
-        val spellDef = spellCard?.let { cardRegistry?.getCard(it.cardDefinitionId) }
+        val spellDef = spellCard?.let { cardRegistry.getCard(it.cardDefinitionId) }
         val conditionalFlash = spellDef?.script?.conditionalFlash
         if (conditionalFlash != null) {
             val opponentId = state.turnOrder.firstOrNull { it != spellOwner }
@@ -1512,7 +1512,7 @@ class CastSpellHandler(
         for (playerId in state.turnOrder) {
             for (entityId in state.getBattlefield(playerId)) {
                 val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-                val def = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+                val def = cardRegistry.getCard(card.cardDefinitionId) ?: continue
                 for (ability in def.script.staticAbilities) {
                     if (ability is GrantFlashToSpellType) {
                         // If controllerOnly, only the permanent's controller benefits
@@ -1586,7 +1586,7 @@ class CastSpellHandler(
     ): EntityId? {
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is MayPlayPermanentsFromGraveyard }) {
                 val tracker = state.getEntity(entityId)?.get<GraveyardPlayPermissionUsedComponent>()
                 if (tracker == null || !tracker.hasUsedType(typeName)) {

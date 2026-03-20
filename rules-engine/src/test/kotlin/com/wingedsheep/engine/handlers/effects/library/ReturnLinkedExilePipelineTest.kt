@@ -60,8 +60,9 @@ class ReturnLinkedExilePipelineTest : FunSpec({
     )
 
     fun createRegistry(): EffectExecutorRegistry {
-        val registry = EffectExecutorRegistry()
-        registry.registerModule(LibraryExecutors())
+        val cardRegistry = com.wingedsheep.engine.registry.CardRegistry()
+        val registry = EffectExecutorRegistry(cardRegistry = cardRegistry)
+        registry.registerModule(LibraryExecutors(cardRegistry))
         return registry
     }
 

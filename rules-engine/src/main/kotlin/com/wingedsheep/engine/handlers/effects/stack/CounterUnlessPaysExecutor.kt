@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
  * 5. If they can pay → present a YesNo decision, push CounterUnlessPaysContinuation
  */
 class CounterUnlessPaysExecutor(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<CounterUnlessPaysEffect> {
 
     override val effectType: KClass<CounterUnlessPaysEffect> = CounterUnlessPaysEffect::class
@@ -53,7 +53,7 @@ class CounterUnlessPaysExecutor(
 
         // Check if the paying player has enough mana to pay
         // Uses ManaSolver to consider both floating mana pool AND untapped mana sources (lands, etc.)
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         if (!manaSolver.canPay(state, payingPlayerId, effect.cost)) {
             // Can't pay → auto-counter
             return StackResolver(cardRegistry = cardRegistry).counterSpell(state, targetSpell.spellEntityId)

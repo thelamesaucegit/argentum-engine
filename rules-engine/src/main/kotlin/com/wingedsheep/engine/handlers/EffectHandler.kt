@@ -16,7 +16,7 @@ import com.wingedsheep.sdk.scripting.effects.Effect
  */
 class EffectHandler(
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry? = null
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
 ) {
     private val registry = EffectExecutorRegistry(amountEvaluator, cardRegistry = cardRegistry)
 

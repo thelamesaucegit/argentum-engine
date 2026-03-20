@@ -12,7 +12,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 class PermanentExecutors(
     private val decisionHandler: DecisionHandler = DecisionHandler(),
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : ExecutorModule {
     override fun executors(): List<EffectExecutor<*>> = listOf(
         TapUntapExecutor(),

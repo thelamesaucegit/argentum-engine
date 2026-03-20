@@ -18,6 +18,7 @@ import kotlin.reflect.KClass
  * with the chosen X value.
  */
 class MayPayXForEffectExecutor(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val effectExecutor: (GameState, Effect, EffectContext) -> ExecutionResult
 ) : EffectExecutor<MayPayXForEffect> {
 
@@ -31,7 +32,7 @@ class MayPayXForEffectExecutor(
         val playerId = context.controllerId
 
         // Calculate max affordable X
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         val maxAffordable = manaSolver.getAvailableManaCount(state, playerId)
 
         if (maxAffordable <= 0) {

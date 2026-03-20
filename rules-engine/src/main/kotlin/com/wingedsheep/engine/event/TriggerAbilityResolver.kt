@@ -17,7 +17,7 @@ import com.wingedsheep.sdk.scripting.predicates.ControllerPredicate
  * CardRegistry, granted abilities, and static-granted abilities.
  */
 class TriggerAbilityResolver(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val abilityRegistry: AbilityRegistry
 ) {
 
@@ -35,7 +35,7 @@ class TriggerAbilityResolver(
             registryAbilities
         } else {
             // Fall back to looking up from CardRegistry, including class-level-gated abilities
-            val cardDef = cardRegistry?.getCard(cardDefinitionId)
+            val cardDef = cardRegistry.getCard(cardDefinitionId)
             val classLevel = state.getEntity(entityId)?.get<ClassLevelComponent>()?.currentLevel
             cardDef?.script?.effectiveTriggeredAbilities(classLevel) ?: emptyList()
         }
@@ -140,7 +140,7 @@ class TriggerAbilityResolver(
             if (registryAbilities.isNotEmpty()) {
                 registryAbilities
             } else {
-                val cardDef = cardRegistry?.getCard(cardDefinitionId)
+                val cardDef = cardRegistry.getCard(cardDefinitionId)
                 val classLevel = state.getEntity(entityId)?.get<ClassLevelComponent>()?.currentLevel
                 cardDef?.script?.effectiveTriggeredAbilities(classLevel) ?: emptyList()
             }

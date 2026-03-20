@@ -33,7 +33,7 @@ import kotlin.reflect.KClass
  * It moves the land from hand to battlefield and uses up a land drop.
  */
 class PlayLandHandler(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val triggerDetector: TriggerDetector,
     private val triggerProcessor: TriggerProcessor
 ) : ActionHandler<PlayLand> {
@@ -129,7 +129,7 @@ class PlayLandHandler(
         }
 
         // Check for "enters the battlefield tapped" replacement effect
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
         if (cardDef != null) {
             val entersTapped = cardDef.script.replacementEffects.filterIsInstance<EntersTapped>().firstOrNull()
             if (entersTapped != null) {
@@ -217,7 +217,7 @@ class PlayLandHandler(
     private fun hasPlayFromTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is PlayFromTopOfLibrary }) {
                 return true
             }
@@ -250,7 +250,7 @@ class PlayLandHandler(
     ): EntityId? {
         for (entityId in state.getBattlefield(playerId)) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is MayPlayPermanentsFromGraveyard }) {
                 val tracker = state.getEntity(entityId)?.get<GraveyardPlayPermissionUsedComponent>()
                 if (tracker == null || !tracker.hasUsedType(typeName)) {

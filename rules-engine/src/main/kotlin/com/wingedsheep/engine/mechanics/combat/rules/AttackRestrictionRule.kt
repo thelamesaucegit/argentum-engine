@@ -13,7 +13,7 @@ data class AttackCheckContext(
     val projected: ProjectedState,
     val attackerId: EntityId,
     val attackingPlayer: EntityId,
-    val cardRegistry: CardRegistry?
+    val cardRegistry: CardRegistry
 )
 
 /**

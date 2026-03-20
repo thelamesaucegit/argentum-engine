@@ -36,7 +36,7 @@ import kotlin.reflect.KClass
  * currently contains each card) and placed in the destination.
  */
 class MoveCollectionExecutor(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val targetFinder: TargetFinder? = null
 ) : EffectExecutor<MoveCollectionEffect> {
 
@@ -324,7 +324,7 @@ class MoveCollectionExecutor(
         sourceName: String?
     ): ExecutionResult {
         val cardComponent = state.getEntity(auraId)?.get<CardComponent>()
-        val cardDef = cardComponent?.let { cardRegistry?.getCard(it.cardDefinitionId) }
+        val cardDef = cardComponent?.let { cardRegistry.getCard(it.cardDefinitionId) }
         val auraTarget = cardDef?.script?.auraTarget
 
         if (auraTarget == null) {

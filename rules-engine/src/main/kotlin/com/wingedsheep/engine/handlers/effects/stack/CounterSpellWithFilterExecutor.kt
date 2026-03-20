@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * "Counter target [filter] spell"
  */
 class CounterSpellWithFilterExecutor(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<CounterSpellWithFilterEffect> {
 
     override val effectType: KClass<CounterSpellWithFilterEffect> = CounterSpellWithFilterEffect::class

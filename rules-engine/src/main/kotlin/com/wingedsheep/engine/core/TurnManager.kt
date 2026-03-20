@@ -45,8 +45,8 @@ import com.wingedsheep.sdk.scripting.effects.Effect
  * - [CleanupPhaseManager] — cleanup step, end-of-turn expiration
  */
 class TurnManager(
-    private val combatManager: CombatManager = CombatManager(),
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry? = null,
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
+    private val combatManager: CombatManager = CombatManager(cardRegistry),
     private val sbaChecker: StateBasedActionChecker = StateBasedActionChecker(cardRegistry = cardRegistry),
     private val decisionHandler: DecisionHandler = DecisionHandler(),
     private val effectExecutor: ((GameState, Effect, EffectContext) -> ExecutionResult)? = null
@@ -59,8 +59,8 @@ class TurnManager(
     // ── Delegate methods for external callers ──
 
     /** Draw cards for a player. Delegates to [DrawPhaseManager]. */
-    fun drawCards(state: GameState, playerId: EntityId, count: Int): ExecutionResult =
-        drawPhaseManager.drawCards(state, playerId, count)
+    fun drawCards(state: GameState, playerId: EntityId, count: Int, skipPrompts: Boolean = false): ExecutionResult =
+        drawPhaseManager.drawCards(state, playerId, count, skipPrompts)
 
     /** Check for prompt-on-draw abilities. Delegates to [DrawPhaseManager]. */
     internal fun checkPromptOnDraw(

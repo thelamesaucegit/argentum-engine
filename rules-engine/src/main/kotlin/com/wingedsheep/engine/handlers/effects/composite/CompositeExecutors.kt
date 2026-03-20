@@ -14,7 +14,9 @@ import com.wingedsheep.sdk.scripting.effects.Effect
  * to handle recursive effect execution. The module uses deferred initialization
  * to break the circular dependency.
  */
-class CompositeExecutors : ExecutorModule {
+class CompositeExecutors(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
+) : ExecutorModule {
     private lateinit var effectExecutor: (GameState, Effect, EffectContext) -> ExecutionResult
 
     private val compositeEffectExecutor by lazy { CompositeEffectExecutor(effectExecutor) }
@@ -23,8 +25,8 @@ class CompositeExecutors : ExecutorModule {
     private val forEachTargetExecutor by lazy { ForEachTargetExecutor(effectExecutor) }
     private val forEachPlayerExecutor by lazy { ForEachPlayerExecutor(effectExecutor) }
     private val mayEffectExecutor by lazy { MayEffectExecutor(effectExecutor) }
-    private val mayPayManaExecutor by lazy { MayPayManaExecutor(effectExecutor) }
-    private val mayPayXForEffectExecutor by lazy { MayPayXForEffectExecutor(effectExecutor) }
+    private val mayPayManaExecutor by lazy { MayPayManaExecutor(cardRegistry, effectExecutor) }
+    private val mayPayXForEffectExecutor by lazy { MayPayXForEffectExecutor(cardRegistry, effectExecutor) }
     private val modalEffectExecutor by lazy { ModalEffectExecutor(effectExecutor) }
     private val optionalCostEffectExecutor by lazy { OptionalCostEffectExecutor(effectExecutor) }
     private val reflexiveTriggerEffectExecutor by lazy { ReflexiveTriggerEffectExecutor(effectExecutor) }

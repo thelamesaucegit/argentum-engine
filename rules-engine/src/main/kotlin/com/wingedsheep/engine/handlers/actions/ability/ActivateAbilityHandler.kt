@@ -69,7 +69,7 @@ import kotlin.reflect.KClass
  * - Planeswalker loyalty abilities
  */
 class ActivateAbilityHandler(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val turnManager: TurnManager,
     private val costHandler: CostHandler,
     private val manaSolver: ManaSolver,
@@ -94,7 +94,7 @@ class ActivateAbilityHandler(
         val cardComponent = container.get<CardComponent>()
             ?: return "Source is not a card"
 
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             ?: return "Card definition not found"
 
         // Look up ability from card definition (including class-level abilities), granted abilities, or static grants
@@ -297,7 +297,7 @@ class ActivateAbilityHandler(
         val cardComponent = container.get<CardComponent>()
             ?: return ExecutionResult.error(state, "Source is not a card")
 
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             ?: return ExecutionResult.error(state, "Card definition not found")
 
         // Look up ability from card definition (including class-level abilities), granted abilities, or static grants
@@ -1007,7 +1007,6 @@ class ActivateAbilityHandler(
      * Check if any permanent on the battlefield has DampLandManaProduction static ability.
      */
     private fun hasDampLandManaProduction(state: GameState): Boolean {
-        if (cardRegistry == null) return false
         for (playerId in state.turnOrder) {
             for (entityId in state.getBattlefield(playerId)) {
                 val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
@@ -1036,7 +1035,7 @@ class ActivateAbilityHandler(
             if (attachedTo?.targetId != sourceId) continue
 
             val card = container.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             // Check each static ability for AdditionalManaOnTap
             for (staticAbility in cardDef.script.staticAbilities) {
@@ -1087,13 +1086,12 @@ class ActivateAbilityHandler(
      * Multiple copies do NOT stack beyond 2.
      */
     private fun getMaxLoyaltyActivations(state: GameState, playerId: EntityId): Int {
-        val registry = cardRegistry ?: return 1
         for (permanentId in state.getBattlefield()) {
             val container = state.getEntity(permanentId) ?: continue
             val controller = container.get<ControllerComponent>()?.playerId ?: continue
             if (controller != playerId) continue
             val card = container.get<CardComponent>() ?: continue
-            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is ExtraLoyaltyActivation }) {
                 return 2
             }
@@ -1134,7 +1132,6 @@ class ActivateAbilityHandler(
         entityId: EntityId,
         state: GameState
     ): List<ActivatedAbility> {
-        val registry = cardRegistry ?: return emptyList()
         val targetContainer = state.getEntity(entityId) ?: return emptyList()
         val targetCard = targetContainer.get<CardComponent>() ?: return emptyList()
 
@@ -1145,7 +1142,7 @@ class ActivateAbilityHandler(
             val card = container.get<CardComponent>() ?: continue
             if (container.has<FaceDownComponent>()) continue
 
-            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             for (ability in cardDef.staticAbilities) {
                 when (ability) {
                     is GrantActivatedAbilityToCreatureGroup -> {

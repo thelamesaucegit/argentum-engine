@@ -14,11 +14,11 @@ import com.wingedsheep.sdk.scripting.effects.Effect
  * into PayOrSufferExecutor, which needs it for executing arbitrary suffer effects.
  */
 class RemovalExecutors(
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry? = null
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
 ) : ExecutorModule {
     private lateinit var effectExecutor: (GameState, Effect, EffectContext) -> ExecutionResult
 
-    private val payOrSufferExecutor by lazy { PayOrSufferExecutor(executeEffect = effectExecutor) }
+    private val payOrSufferExecutor by lazy { PayOrSufferExecutor(cardRegistry = cardRegistry, executeEffect = effectExecutor) }
 
     /**
      * Initialize the module with the parent registry's execute function.

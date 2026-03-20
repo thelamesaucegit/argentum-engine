@@ -30,7 +30,8 @@ import kotlin.reflect.KClass
  */
 class ReadTheRunesExecutor(
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
-    private val decisionHandler: DecisionHandler = DecisionHandler()
+    private val decisionHandler: DecisionHandler = DecisionHandler(),
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
 ) : EffectExecutor<ReadTheRunesEffect> {
 
     override val effectType: KClass<ReadTheRunesEffect> = ReadTheRunesEffect::class
@@ -48,7 +49,7 @@ class ReadTheRunesExecutor(
         }
 
         // Draw X cards
-        val drawResult = DrawCardsExecutor().executeDraws(state, playerId, xValue)
+        val drawResult = DrawCardsExecutor(cardRegistry = cardRegistry).executeDraws(state, playerId, xValue)
         if (drawResult.error != null) {
             return drawResult
         }

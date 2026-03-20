@@ -32,7 +32,7 @@ import kotlin.reflect.KClass
  * 5. Set up continuous effects from static abilities
  */
 class ReturnSelfToBattlefieldAttachedExecutor(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<ReturnSelfToBattlefieldAttachedEffect> {
 
     override val effectType: KClass<ReturnSelfToBattlefieldAttachedEffect> =

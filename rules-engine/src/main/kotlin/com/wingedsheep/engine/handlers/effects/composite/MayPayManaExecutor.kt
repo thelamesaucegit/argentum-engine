@@ -19,6 +19,7 @@ import kotlin.reflect.KClass
  * @param effectExecutor Function to execute a sub-effect (provided by registry)
  */
 class MayPayManaExecutor(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val effectExecutor: (GameState, Effect, EffectContext) -> ExecutionResult
 ) : EffectExecutor<MayPayManaEffect> {
 
@@ -32,7 +33,7 @@ class MayPayManaExecutor(
         val playerId = context.controllerId
 
         // Check if the player can pay the mana cost
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         if (!manaSolver.canPay(state, playerId, effect.cost)) {
             // Can't pay — skip silently
             return ExecutionResult.success(state)

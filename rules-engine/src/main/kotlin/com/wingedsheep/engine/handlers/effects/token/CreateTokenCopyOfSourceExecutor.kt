@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
  * and uses the same cardDefinitionId so the engine picks up triggered/static abilities automatically.
  */
 class CreateTokenCopyOfSourceExecutor(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val staticAbilityHandler: StaticAbilityHandler? = null
 ) : EffectExecutor<CreateTokenCopyOfSourceEffect> {
 

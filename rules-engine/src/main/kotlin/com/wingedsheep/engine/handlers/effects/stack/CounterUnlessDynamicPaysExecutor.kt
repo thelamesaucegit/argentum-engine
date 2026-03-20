@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
  */
 class CounterUnlessDynamicPaysExecutor(
     private val amountEvaluator: DynamicAmountEvaluator,
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<CounterUnlessDynamicPaysEffect> {
 
     override val effectType: KClass<CounterUnlessDynamicPaysEffect> = CounterUnlessDynamicPaysEffect::class
@@ -62,7 +62,7 @@ class CounterUnlessDynamicPaysExecutor(
         val manaCost = ManaCost(listOf(ManaSymbol.Generic(totalGenericCost)))
 
         // Check if the paying player has enough mana to pay
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         if (!manaSolver.canPay(state, payingPlayerId, manaCost)) {
             // Can't pay → auto-counter
             val resolver = StackResolver(cardRegistry = cardRegistry)

@@ -34,7 +34,7 @@ import com.wingedsheep.sdk.scripting.AttackTax
  * - Applying attacker components and tapping
  */
 internal class AttackPhaseManager(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val attackRestrictionRules: List<AttackRestrictionRule>,
     private val attackDefenderRules: List<AttackDefenderRule>,
 ) {
@@ -319,7 +319,7 @@ internal class AttackPhaseManager(
                 for (entityId in defenderPermanents) {
                     val container = state.getEntity(entityId) ?: continue
                     val cardComponent = container.get<CardComponent>() ?: continue
-                    val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId) ?: continue
+                    val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
                     for (ability in cardDef.staticAbilities) {
                         if (ability is AttackTax) {
                             val taxPerAttacker = ManaCost.parse(ability.manaCostPerAttacker)
@@ -335,7 +335,7 @@ internal class AttackPhaseManager(
 
         if (totalGenericTax <= 0) return ExecutionResult.success(state)
 
-        return payManaTax(state, attackingPlayer, totalGenericTax, "attack")
+        return payManaTax(state, attackingPlayer, totalGenericTax, "attack", cardRegistry)
     }
 
     /**

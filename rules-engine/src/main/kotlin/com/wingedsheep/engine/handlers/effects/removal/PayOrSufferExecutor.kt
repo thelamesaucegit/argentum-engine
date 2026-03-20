@@ -38,6 +38,7 @@ import kotlin.reflect.KClass
  * If they select 0 (or don't have enough), the suffer effect is executed.
  */
 class PayOrSufferExecutor(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val decisionHandler: DecisionHandler = DecisionHandler(),
     private val executeEffect: ((GameState, Effect, EffectContext) -> ExecutionResult)? = null
 ) : EffectExecutor<PayOrSufferEffect> {
@@ -406,7 +407,7 @@ class PayOrSufferExecutor(
         controllerId: EntityId
     ): ExecutionResult {
         // Check if the player can pay the mana cost
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         if (!manaSolver.canPay(state, controllerId, cost.cost)) {
             return executeSufferEffect(state, effect.suffer, context)
         }

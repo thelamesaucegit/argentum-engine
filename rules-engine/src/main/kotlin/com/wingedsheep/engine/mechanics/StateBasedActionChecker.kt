@@ -34,7 +34,7 @@ class StateBasedActionChecker(
      */
     constructor(
         decisionHandler: DecisionHandler = DecisionHandler(),
-        cardRegistry: com.wingedsheep.engine.registry.CardRegistry? = null
+        cardRegistry: com.wingedsheep.engine.registry.CardRegistry
     ) : this(buildDefaultRegistry(decisionHandler, cardRegistry))
 
     /**
@@ -96,7 +96,7 @@ class StateBasedActionChecker(
     companion object {
         fun buildDefaultRegistry(
             decisionHandler: DecisionHandler = DecisionHandler(),
-            cardRegistry: com.wingedsheep.engine.registry.CardRegistry? = null
+            cardRegistry: com.wingedsheep.engine.registry.CardRegistry
         ): StateBasedActionRegistry {
             val registry = StateBasedActionRegistry()
             registry.registerModule(PlayerSbaModule())

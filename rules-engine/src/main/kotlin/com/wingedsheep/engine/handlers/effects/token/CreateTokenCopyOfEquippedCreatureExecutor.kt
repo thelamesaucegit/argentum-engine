@@ -31,7 +31,7 @@ import kotlin.reflect.KClass
  * - Grants haste if [CreateTokenCopyOfEquippedCreatureEffect.grantHaste] is true
  */
 class CreateTokenCopyOfEquippedCreatureExecutor(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val staticAbilityHandler: StaticAbilityHandler? = null
 ) : EffectExecutor<CreateTokenCopyOfEquippedCreatureEffect> {
 

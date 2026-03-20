@@ -28,7 +28,7 @@ import com.wingedsheep.sdk.scripting.predicates.StatePredicate
  * Handles beginning phase logic: untap step, upkeep step, and saga lore counters.
  */
 class BeginningPhaseManager(
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry?,
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val decisionHandler: DecisionHandler,
     private val cleanupPhaseManager: CleanupPhaseManager
 ) {
@@ -236,7 +236,7 @@ class BeginningPhaseManager(
             val newLoreCount = counters.getCount(CounterType.LORE) + 1
 
             // Determine which chapters this lore counter triggers
-            val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+            val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             var updatedSaga = sagaComponent
             if (cardDef != null) {
                 for (chapter in cardDef.sagaChapters) {

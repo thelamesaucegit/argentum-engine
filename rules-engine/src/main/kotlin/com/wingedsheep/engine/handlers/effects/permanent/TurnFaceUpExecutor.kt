@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
  * payment of the morph cost — the spell effect simply flips the creature.
  */
 class TurnFaceUpExecutor(
-    cardRegistry: CardRegistry? = null
+    cardRegistry: CardRegistry
 ) : EffectExecutor<TurnFaceUpEffect> {
 
     private val staticAbilityHandler = StaticAbilityHandler(cardRegistry)

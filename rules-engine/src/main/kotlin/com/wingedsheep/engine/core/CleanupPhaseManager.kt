@@ -34,7 +34,7 @@ import com.wingedsheep.sdk.scripting.PreventManaPoolEmptying
  * expiration of temporary effects, and per-turn tracker resets.
  */
 class CleanupPhaseManager(
-    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry?,
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val decisionHandler: DecisionHandler
 ) {
 

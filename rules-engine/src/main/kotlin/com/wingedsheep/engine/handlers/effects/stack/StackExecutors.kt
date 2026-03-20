@@ -10,10 +10,10 @@ import com.wingedsheep.engine.registry.CardRegistry
  */
 class StackExecutors(
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : ExecutorModule {
     override fun executors(): List<EffectExecutor<*>> = listOf(
-        CounterAbilityExecutor(),
+        CounterAbilityExecutor(cardRegistry),
         CounterSpellExecutor(cardRegistry),
         CounterSpellToExileExecutor(cardRegistry),
         CounterTriggeringSpellExecutor(cardRegistry),
@@ -22,8 +22,8 @@ class StackExecutors(
         CounterUnlessDynamicPaysExecutor(amountEvaluator, cardRegistry),
         ChangeSpellTargetExecutor(),
         ChangeTargetExecutor(),
-        StormCopyEffectExecutor(),
-        CopyTargetSpellExecutor(),
+        StormCopyEffectExecutor(cardRegistry),
+        CopyTargetSpellExecutor(cardRegistry),
         CopyNextSpellCastExecutor(),
         CopyEachSpellCastExecutor(),
         ReselectTargetRandomlyExecutor()

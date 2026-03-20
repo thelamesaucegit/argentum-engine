@@ -28,7 +28,7 @@ import com.wingedsheep.engine.mechanics.combat.rules.defaultBlockEvasionRules
  * 5. End of combat step
  */
 class CombatManager(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val damageCalculator: DamageCalculator = DamageCalculator(),
     private val blockEvasionRules: List<BlockEvasionRule> = defaultBlockEvasionRules(),
     private val attackRestrictionRules: List<AttackRestrictionRule> = defaultAttackRestrictionRules(),

@@ -23,6 +23,7 @@ import kotlin.reflect.KClass
  * (reusing StormCopyTargetContinuation with remainingCopies=1).
  */
 class CopyTargetSpellExecutor(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry,
     private val targetFinder: TargetFinder = TargetFinder()
 ) : EffectExecutor<CopyTargetSpellEffect> {
 
@@ -47,7 +48,7 @@ class CopyTargetSpellExecutor(
         val targetsComponent = container.get<TargetsComponent>()
         val targetRequirements = targetsComponent?.targetRequirements ?: emptyList()
 
-        val stackResolver = StackResolver()
+        val stackResolver = StackResolver(cardRegistry = cardRegistry)
 
         // If the original spell has no targets, create the copy immediately
         if (targetRequirements.isEmpty()) {

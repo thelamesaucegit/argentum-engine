@@ -15,19 +15,19 @@ import com.wingedsheep.engine.handlers.EffectContext
  * - RepeatWhileContinuation (ask condition after body)
  */
 class CoreAutoResumerModule(
-    private val ctx: ContinuationContext,
+    private val services: com.wingedsheep.engine.core.EngineServices,
     private val effectRunner: EffectContinuationRunner
 ) : AutoResumerModule {
 
     override fun autoResumers(): List<AutoResumer<*>> = listOf(
-        autoResumer(PendingTriggersContinuation::class, canResume = { ctx.triggerProcessor != null }) { state, continuation, events, _ ->
-            val result = ctx.triggerProcessor!!.processTriggers(state, continuation.remainingTriggers)
+        autoResumer(PendingTriggersContinuation::class) { state, continuation, events, _ ->
+            val result = services.triggerProcessor.processTriggers(state, continuation.remainingTriggers)
             mergeAndContinue(result, events)
         },
 
         autoResumer(ForEachTargetContinuation::class, canResume = { it.remainingTargets.isNotEmpty() }) { state, continuation, events, checkForMore ->
             val forEachTargetExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachTargetExecutor { s, e, c ->
-                ctx.effectExecutorRegistry.execute(s, e, c)
+                services.effectExecutorRegistry.execute(s, e, c)
             }
             val outerContext = continuation.effectContext.copy(
                 targets = continuation.remainingTargets
@@ -43,7 +43,7 @@ class CoreAutoResumerModule(
 
         autoResumer(ForEachPlayerContinuation::class, canResume = { it.remainingPlayers.isNotEmpty() }) { state, continuation, events, checkForMore ->
             val forEachPlayerExecutor = com.wingedsheep.engine.handlers.effects.composite.ForEachPlayerExecutor { s, e, c ->
-                ctx.effectExecutorRegistry.execute(s, e, c)
+                services.effectExecutorRegistry.execute(s, e, c)
             }
             val result = forEachPlayerExecutor.processPlayers(
                 state,
@@ -57,11 +57,11 @@ class CoreAutoResumerModule(
         autoResumer(DrawReplacementRemainingDrawsContinuation::class) { state, continuation, events, checkForMore ->
             if (continuation.remainingDraws > 0) {
                 if (continuation.isDrawStep) {
-                    val turnManager = com.wingedsheep.engine.core.TurnManager(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+                    val turnManager = com.wingedsheep.engine.core.TurnManager(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
                     val drawResult = turnManager.drawCards(state, continuation.drawingPlayerId, continuation.remainingDraws)
                     mergeAndContinue(drawResult, events, checkForMore)
                 } else {
-                    val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+                    val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
                     val drawResult = drawExecutor.executeDraws(state, continuation.drawingPlayerId, continuation.remainingDraws)
                     mergeAndContinue(drawResult, events, checkForMore)
                 }
@@ -71,7 +71,7 @@ class CoreAutoResumerModule(
         },
 
         autoResumer(CycleDrawContinuation::class) { state, continuation, events, checkForMore ->
-            val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = ctx.stackResolver.cardRegistry, effectExecutor = ctx.effectExecutorRegistry::execute)
+            val drawExecutor = com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor(cardRegistry = services.cardRegistry, effectExecutor = services.effectExecutorRegistry::execute)
             val drawResult = drawExecutor.executeDraws(state, continuation.playerId, 1)
             mergeAndContinue(drawResult, events, checkForMore)
         },
@@ -88,7 +88,7 @@ class CoreAutoResumerModule(
                 controllerId = continuation.playerId,
                 opponentId = state.getOpponent(continuation.playerId)
             )
-            val searchResult = ctx.effectExecutorRegistry.execute(state, searchEffect, effectContext)
+            val searchResult = services.effectExecutorRegistry.execute(state, searchEffect, effectContext)
             mergeAndContinue(searchResult, events, checkForMore)
         },
 
@@ -105,7 +105,7 @@ class CoreAutoResumerModule(
                 resolvedDeciderId = continuation.resolvedDeciderId,
                 context = continuation.effectContext,
                 sourceName = continuation.sourceName,
-                effectExecutor = ctx.effectExecutorRegistry::execute,
+                effectExecutor = services.effectExecutorRegistry::execute,
                 priorEvents = events
             )
             mergeAndContinue(result, events = emptyList(), checkForMore)

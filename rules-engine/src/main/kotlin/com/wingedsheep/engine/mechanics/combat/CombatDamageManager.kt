@@ -39,7 +39,7 @@ import java.util.UUID
  * - Damage prevention choice (CR 615.7)
  */
 internal class CombatDamageManager(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val damageCalculator: DamageCalculator,
 ) {
 
@@ -82,7 +82,7 @@ internal class CombatDamageManager(
             // Already has a manual assignment (decision already made)
             if (attackerContainer.get<DamageAssignmentComponent>() != null) continue
 
-            val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(attackerCard.cardDefinitionId) ?: continue
             val hasAssignAsUnblocked = cardDef.staticAbilities.any { it is AssignCombatDamageAsUnblocked }
             if (!hasAssignAsUnblocked) continue
 
@@ -126,7 +126,7 @@ internal class CombatDamageManager(
         for ((attackerId, attackingComponent) in attackers) {
             val attackerContainer = state.getEntity(attackerId) ?: continue
             val attackerCard = attackerContainer.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(attackerCard.cardDefinitionId) ?: continue
             val hasDivideDamageFreely = cardDef.staticAbilities.any { it is DivideCombatDamageFreely }
             if (!hasDivideDamageFreely) continue
 
@@ -210,7 +210,7 @@ internal class CombatDamageManager(
             val attackerContainer = state.getEntity(attackerId) ?: continue
             val attackerCard = attackerContainer.get<CardComponent>() ?: continue
 
-            val cardDef = cardRegistry?.getCard(attackerCard.cardDefinitionId)
+            val cardDef = cardRegistry.getCard(attackerCard.cardDefinitionId)
             val hasDivideDamageFreely = cardDef?.staticAbilities?.any { it is DivideCombatDamageFreely } == true
             if (hasDivideDamageFreely) continue
 

@@ -48,7 +48,7 @@ import kotlin.reflect.KClass
  * - Requires paying the morph cost
  */
 class TurnFaceUpHandler(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val manaSolver: ManaSolver,
     private val costHandler: CostHandler,
     private val costCalculator: CostCalculator,
@@ -219,7 +219,7 @@ class TurnFaceUpHandler(
             ?: return ExecutionResult.error(state, "No morph data found")
 
         val cardComponent = container.get<CardComponent>()
-        val cardDef = cardRegistry?.getCard(morphData.originalCardDefinitionId)
+        val cardDef = cardRegistry.getCard(morphData.originalCardDefinitionId)
         val cardName = cardDef?.name ?: cardComponent?.name ?: "Unknown"
 
         // Pay the morph cost (including any morph cost increases)

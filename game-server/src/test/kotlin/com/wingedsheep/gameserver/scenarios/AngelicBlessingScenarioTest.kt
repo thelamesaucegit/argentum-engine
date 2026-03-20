@@ -55,7 +55,7 @@ class AngelicBlessingScenarioTest : ScenarioTestBase() {
                 }
 
                 // Run state-based action check — this is where the bug manifested
-                val sbaChecker = StateBasedActionChecker()
+                val sbaChecker = StateBasedActionChecker(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val sbaResult = sbaChecker.checkAndApply(game.state)
                 game.state = sbaResult.newState
 
@@ -89,7 +89,7 @@ class AngelicBlessingScenarioTest : ScenarioTestBase() {
                     container.with(DamageComponent(5))
                 }
 
-                val sbaChecker = StateBasedActionChecker()
+                val sbaChecker = StateBasedActionChecker(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val sbaResult = sbaChecker.checkAndApply(game.state)
                 game.state = sbaResult.newState
 
@@ -113,7 +113,7 @@ class AngelicBlessingScenarioTest : ScenarioTestBase() {
                     container.with(DamageComponent(2))
                 }
 
-                val sbaChecker = StateBasedActionChecker()
+                val sbaChecker = StateBasedActionChecker(cardRegistry = com.wingedsheep.engine.registry.CardRegistry())
                 val sbaResult = sbaChecker.checkAndApply(game.state)
                 game.state = sbaResult.newState
 

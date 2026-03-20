@@ -29,7 +29,7 @@ import kotlin.reflect.KClass
  * Delegates all zone movement to [ZoneTransitionService] for consistent cleanup.
  */
 class MoveToZoneEffectExecutor(
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : EffectExecutor<MoveToZoneEffect> {
 
     override val effectType: KClass<MoveToZoneEffect> = MoveToZoneEffect::class
@@ -116,7 +116,7 @@ class MoveToZoneEffectExecutor(
 
         // Look up morph data for face-down entry
         val morphData = if (effect.faceDown && effect.destination == Zone.BATTLEFIELD) {
-            val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+            val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             val morphAbility = cardDef?.keywordAbilities?.filterIsInstance<KeywordAbility.Morph>()?.firstOrNull()
             if (morphAbility != null) {
                 MorphDataComponent(morphAbility.morphCost, cardComponent.cardDefinitionId, morphAbility.faceUpEffect)

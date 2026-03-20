@@ -9,7 +9,7 @@ import com.wingedsheep.engine.registry.CardRegistry
  * Module providing all library-related effect executors.
  */
 class LibraryExecutors(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val targetFinder: TargetFinder? = null
 ) : ExecutorModule {
     override fun executors(): List<EffectExecutor<*>> = listOf(

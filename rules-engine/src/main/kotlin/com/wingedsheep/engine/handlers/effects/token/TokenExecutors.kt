@@ -12,7 +12,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 class TokenExecutors(
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
     private val staticAbilityHandler: StaticAbilityHandler? = null,
-    private val cardRegistry: CardRegistry? = null
+    private val cardRegistry: CardRegistry
 ) : ExecutorModule {
     override fun executors(): List<EffectExecutor<*>> = listOf(
         CreateTokenExecutor(amountEvaluator, staticAbilityHandler),

@@ -37,7 +37,7 @@ import kotlin.reflect.KClass
  */
 class DrawCardsExecutor(
     private val amountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator(),
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val effectExecutor: ((GameState, Effect, EffectContext) -> ExecutionResult)? = null
 ) : EffectExecutor<DrawCardsEffect> {
 
@@ -77,7 +77,8 @@ class DrawCardsExecutor(
     fun executeDraws(
         state: GameState,
         playerId: EntityId,
-        count: Int
+        count: Int,
+        skipPrompts: Boolean = false
     ): ExecutionResult {
         var newState = state
         val drawnCards = mutableListOf<EntityId>()
@@ -126,47 +127,49 @@ class DrawCardsExecutor(
                 }
             }
 
-            // Check for static draw replacement effects (e.g., Parallel Thoughts)
-            val staticResult = checkStaticDrawReplacement(
-                newState, playerId, count - i, isDrawStep = false, drawnCards.toList()
-            )
-            if (staticResult != null) {
-                if (drawnCards.isNotEmpty()) {
-                    val cardNames = drawnCards.map { newState.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
-                    val allEvents = mutableListOf<GameEvent>(
-                        CardsDrawnEvent(playerId, drawnCards.size, drawnCards.toList(), cardNames)
-                    )
-                    allEvents.addAll(events)
-                    allEvents.addAll(staticResult.events)
-                    return ExecutionResult.paused(
-                        staticResult.state,
-                        staticResult.pendingDecision!!,
-                        allEvents
-                    )
+            if (!skipPrompts) {
+                // Check for static draw replacement effects (e.g., Parallel Thoughts)
+                val staticResult = checkStaticDrawReplacement(
+                    newState, playerId, count - i, isDrawStep = false, drawnCards.toList()
+                )
+                if (staticResult != null) {
+                    if (drawnCards.isNotEmpty()) {
+                        val cardNames = drawnCards.map { newState.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
+                        val allEvents = mutableListOf<GameEvent>(
+                            CardsDrawnEvent(playerId, drawnCards.size, drawnCards.toList(), cardNames)
+                        )
+                        allEvents.addAll(events)
+                        allEvents.addAll(staticResult.events)
+                        return ExecutionResult.paused(
+                            staticResult.state,
+                            staticResult.pendingDecision!!,
+                            allEvents
+                        )
+                    }
+                    return staticResult
                 }
-                return staticResult
-            }
 
-            // No shield exists - check if player wants to activate a promptOnDraw ability
-            val promptResult = checkPromptOnDraw(
-                newState, playerId, count - i, drawnCards.toList()
-            )
-            if (promptResult != null) {
-                // Emit CardsDrawnEvent for cards drawn before this prompt
-                if (drawnCards.isNotEmpty()) {
-                    val cardNames = drawnCards.map { newState.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
-                    val allEvents = mutableListOf<GameEvent>(
-                        CardsDrawnEvent(playerId, drawnCards.size, drawnCards.toList(), cardNames)
-                    )
-                    allEvents.addAll(events)
-                    allEvents.addAll(promptResult.events)
-                    return ExecutionResult.paused(
-                        promptResult.state,
-                        promptResult.pendingDecision!!,
-                        allEvents
-                    )
+                // No shield exists - check if player wants to activate a promptOnDraw ability
+                val promptResult = checkPromptOnDraw(
+                    newState, playerId, count - i, drawnCards.toList()
+                )
+                if (promptResult != null) {
+                    // Emit CardsDrawnEvent for cards drawn before this prompt
+                    if (drawnCards.isNotEmpty()) {
+                        val cardNames = drawnCards.map { newState.getEntity(it)?.get<CardComponent>()?.name ?: "Card" }
+                        val allEvents = mutableListOf<GameEvent>(
+                            CardsDrawnEvent(playerId, drawnCards.size, drawnCards.toList(), cardNames)
+                        )
+                        allEvents.addAll(events)
+                        allEvents.addAll(promptResult.events)
+                        return ExecutionResult.paused(
+                            promptResult.state,
+                            promptResult.pendingDecision!!,
+                            allEvents
+                        )
+                    }
+                    return promptResult
                 }
-                return promptResult
             }
 
             val library = newState.getZone(libraryZone)
@@ -228,8 +231,6 @@ class DrawCardsExecutor(
         playerId: EntityId,
         drawnCardId: EntityId
     ): CardRevealedFromDrawEvent? {
-        if (cardRegistry == null) return null
-
         val projected = state.projectedState
         val hasRevealAbility = projected.getBattlefieldControlledBy(playerId).any { permanentId ->
             val card = state.getEntity(permanentId)?.get<CardComponent>() ?: return@any false
@@ -262,8 +263,6 @@ class DrawCardsExecutor(
         drawnCardsSoFar: List<EntityId>,
         declinedSourceIds: List<EntityId> = emptyList()
     ): ExecutionResult? {
-        if (cardRegistry == null) return null
-
         val projected = state.projectedState
         val controlledPermanents = projected.getBattlefieldControlledBy(playerId)
 
@@ -365,8 +364,6 @@ class DrawCardsExecutor(
         isDrawStep: Boolean,
         drawnCardsSoFar: List<EntityId> = emptyList()
     ): ExecutionResult? {
-        if (cardRegistry == null) return null
-
         val projected = state.projectedState
         val controlledPermanents = projected.getBattlefieldControlledBy(playerId)
 

@@ -20,7 +20,7 @@ import com.wingedsheep.sdk.scripting.Duration
 import com.wingedsheep.sdk.scripting.costs.PayCost
 
 class SacrificeAndPayContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -401,7 +401,7 @@ class SacrificeAndPayContinuationResumer(
         val events = mutableListOf<GameEvent>()
 
         if (!remainingCost.isEmpty()) {
-            val manaSolver = ManaSolver()
+            val manaSolver = ManaSolver(services.cardRegistry)
             val solution = manaSolver.solve(currentState, playerId, remainingCost)
                 ?: return executePayOrSufferConsequence(state, continuation, checkForMore)
 
@@ -460,7 +460,7 @@ class SacrificeAndPayContinuationResumer(
         )
 
         // Execute the suffer effect using the registry
-        val result = ctx.effectExecutorRegistry.execute(state, sufferEffect, context)
+        val result = services.effectExecutorRegistry.execute(state, sufferEffect, context)
 
         return if (result.isPaused) {
             result
@@ -515,7 +515,7 @@ class SacrificeAndPayContinuationResumer(
                 controllerId = continuation.controllerId,
                 opponentId = null
             )
-            val consequenceResult = ctx.effectExecutorRegistry.execute(newState, continuation.consequence, context)
+            val consequenceResult = services.effectExecutorRegistry.execute(newState, continuation.consequence, context)
             val allEvents = events + consequenceResult.events
 
             return if (consequenceResult.isPaused) {

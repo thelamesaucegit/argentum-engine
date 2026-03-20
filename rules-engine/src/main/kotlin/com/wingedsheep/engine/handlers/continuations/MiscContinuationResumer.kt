@@ -17,7 +17,7 @@ import com.wingedsheep.sdk.model.EntityId
  * - AddDynamicManaContinuation
  */
 class MiscContinuationResumer(
-    private val ctx: ContinuationContext,
+    private val services: com.wingedsheep.engine.core.EngineServices,
     private val effectRunner: EffectContinuationRunner
 ) : ContinuationResumerModule {
 
@@ -65,7 +65,7 @@ class MiscContinuationResumer(
             controllerId = continuation.playerId,
             opponentId = null
         )
-        val result = ctx.effectExecutorRegistry.execute(currentState, drawEffect, drawContext)
+        val result = services.effectExecutorRegistry.execute(currentState, drawEffect, drawContext)
 
         if (result.isPaused) {
             return result
@@ -104,7 +104,7 @@ class MiscContinuationResumer(
                     resolvedDeciderId = continuation.resolvedDeciderId,
                     context = context,
                     sourceName = continuation.sourceName,
-                    effectExecutor = ctx.effectExecutorRegistry::execute,
+                    effectExecutor = services.effectExecutorRegistry::execute,
                     priorEvents = emptyList()
                 )
 
@@ -142,7 +142,7 @@ class MiscContinuationResumer(
             effect = continuation.spellEffect,
             description = "Storm copy of ${continuation.spellName}"
         )
-        val stackResult = ctx.stackResolver.putTriggeredAbility(
+        val stackResult = services.stackResolver.putTriggeredAbility(
             currentState, copyAbility, selectedTargets, continuation.spellTargetRequirements
         )
         if (!stackResult.isSuccess) return stackResult
@@ -158,7 +158,7 @@ class MiscContinuationResumer(
         val decisionId = "storm-copy-target-${System.nanoTime()}"
         val legalTargetsMap = mutableMapOf<Int, List<EntityId>>()
         for ((index, requirement) in continuation.spellTargetRequirements.withIndex()) {
-            val legalTargets = ctx.targetFinder.findLegalTargets(
+            val legalTargets = services.targetFinder.findLegalTargets(
                 currentState, requirement, continuation.controllerId, continuation.sourceId
             )
             legalTargetsMap[index] = legalTargets

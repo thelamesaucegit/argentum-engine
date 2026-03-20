@@ -21,7 +21,8 @@ internal fun payManaTax(
     state: GameState,
     playerId: EntityId,
     totalGenericTax: Int,
-    taxType: String
+    taxType: String,
+    cardRegistry: com.wingedsheep.engine.registry.CardRegistry
 ): ExecutionResult {
     val totalCost = ManaCost(List(totalGenericTax) { ManaSymbol.generic(1) })
 
@@ -46,7 +47,7 @@ internal fun payManaTax(
     val events = mutableListOf<com.wingedsheep.engine.core.GameEvent>()
 
     if (!remainingCost.isEmpty()) {
-        val manaSolver = ManaSolver()
+        val manaSolver = ManaSolver(cardRegistry)
         val solution = manaSolver.solve(currentState, playerId, remainingCost)
             ?: return ExecutionResult.error(
                 currentState,

@@ -39,7 +39,7 @@ import kotlin.reflect.KClass
  * then shuffle. Typecycling triggers cycling abilities per MTG rules.
  */
 class TypecycleCardHandler(
-    private val cardRegistry: CardRegistry?,
+    private val cardRegistry: CardRegistry,
     private val manaSolver: ManaSolver,
     private val triggerDetector: TriggerDetector,
     private val triggerProcessor: TriggerProcessor,
@@ -68,7 +68,7 @@ class TypecycleCardHandler(
             return "Card is not in your hand"
         }
 
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             ?: return "Card definition not found"
 
         val typecyclingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Typecycling>()
@@ -97,7 +97,7 @@ class TypecycleCardHandler(
         val cardComponent = container.get<CardComponent>()
             ?: return ExecutionResult.error(state, "Not a card")
 
-        val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
             ?: return ExecutionResult.error(state, "Card definition not found")
 
         val typecyclingAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Typecycling>()
@@ -273,10 +273,9 @@ class TypecycleCardHandler(
     }
 
     private fun isCyclingPrevented(state: GameState): Boolean {
-        val registry = cardRegistry ?: return false
         for (entityId in state.getBattlefield()) {
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
             if (cardDef.script.staticAbilities.any { it is PreventCycling }) {
                 return true
             }

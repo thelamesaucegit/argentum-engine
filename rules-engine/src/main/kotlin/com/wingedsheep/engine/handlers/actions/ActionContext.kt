@@ -24,7 +24,7 @@ import com.wingedsheep.engine.registry.CardRegistry
  * providing access to the game mechanics components they need.
  */
 data class ActionContext(
-    val cardRegistry: CardRegistry?,
+    val cardRegistry: CardRegistry,
     val combatManager: CombatManager,
     val turnManager: TurnManager,
     val stackResolver: StackResolver,
@@ -40,35 +40,4 @@ data class ActionContext(
     val triggerProcessor: TriggerProcessor,
     val conditionEvaluator: ConditionEvaluator,
     val targetValidator: TargetValidator
-) {
-    companion object {
-        /**
-         * Create an ActionContext with default values.
-         * All dependencies are wired with the provided cardRegistry.
-         */
-        fun create(cardRegistry: CardRegistry? = null): ActionContext {
-            val combatManager = CombatManager(cardRegistry)
-            val effectExecutorRegistry = EffectExecutorRegistry(cardRegistry = cardRegistry)
-            val triggerProcessor = TriggerProcessor()
-            val triggerDetector = TriggerDetector(cardRegistry)
-            return ActionContext(
-                cardRegistry = cardRegistry,
-                combatManager = combatManager,
-                turnManager = TurnManager(combatManager, sbaChecker = StateBasedActionChecker(cardRegistry = cardRegistry), cardRegistry = cardRegistry, effectExecutor = effectExecutorRegistry::execute),
-                stackResolver = StackResolver(effectHandler = com.wingedsheep.engine.handlers.EffectHandler(cardRegistry = cardRegistry), cardRegistry = cardRegistry),
-                manaSolver = ManaSolver(cardRegistry),
-                costCalculator = CostCalculator(cardRegistry),
-                alternativePaymentHandler = AlternativePaymentHandler(),
-                costHandler = CostHandler(),
-                mulliganHandler = MulliganHandler(),
-                effectExecutorRegistry = effectExecutorRegistry,
-                continuationHandler = ContinuationHandler(effectExecutorRegistry, triggerProcessor = triggerProcessor, triggerDetector = triggerDetector, combatManager = combatManager),
-                sbaChecker = StateBasedActionChecker(cardRegistry = cardRegistry),
-                triggerDetector = triggerDetector,
-                triggerProcessor = triggerProcessor,
-                conditionEvaluator = ConditionEvaluator(),
-                targetValidator = TargetValidator()
-            )
-        }
-    }
-}
+)

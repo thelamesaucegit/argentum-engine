@@ -16,7 +16,9 @@ import kotlin.reflect.KClass
  * Removes the ability from the stack without it resolving.
  * Unlike spells, countered abilities don't go to any zone.
  */
-class CounterAbilityExecutor : EffectExecutor<CounterAbilityEffect> {
+class CounterAbilityExecutor(
+    private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
+) : EffectExecutor<CounterAbilityEffect> {
 
     override val effectType: KClass<CounterAbilityEffect> = CounterAbilityEffect::class
 
@@ -30,6 +32,6 @@ class CounterAbilityExecutor : EffectExecutor<CounterAbilityEffect> {
             return ExecutionResult.error(state, "No valid ability target")
         }
 
-        return StackResolver().counterAbility(state, target.spellEntityId)
+        return StackResolver(cardRegistry = cardRegistry).counterAbility(state, target.spellEntityId)
     }
 }

@@ -21,7 +21,7 @@ import com.wingedsheep.sdk.scripting.targets.TargetObject
 import com.wingedsheep.sdk.scripting.targets.TargetPlayer
 
 class ChainSpellContinuationResumer(
-    private val ctx: ContinuationContext
+    private val services: com.wingedsheep.engine.core.EngineServices
 ) : ContinuationResumerModule {
 
     override fun resumers(): List<ContinuationResumer<*>> = listOf(
@@ -233,7 +233,7 @@ class ChainSpellContinuationResumer(
         val targets = listOf(chosenTarget)
         val targetRequirements = listOf(copyTargetReq)
 
-        val putResult = ctx.stackResolver.putTriggeredAbility(state, ability, targets, targetRequirements)
+        val putResult = services.stackResolver.putTriggeredAbility(state, ability, targets, targetRequirements)
 
         if (!putResult.isSuccess) {
             return putResult
@@ -255,7 +255,7 @@ class ChainSpellContinuationResumer(
         checkForMore: CheckForMore
     ): ExecutionResult {
         // Check if there are valid targets for a potential copy
-        val legalTargets = ctx.targetFinder.findLegalTargets(
+        val legalTargets = services.targetFinder.findLegalTargets(
             state, effect.copyTargetRequirement, recipientPlayerId, sourceId
         )
         if (legalTargets.isEmpty()) {
@@ -356,7 +356,7 @@ class ChainSpellContinuationResumer(
         sourceId: EntityId?,
         checkForMore: CheckForMore
     ): ExecutionResult {
-        val legalTargets = ctx.targetFinder.findLegalTargets(
+        val legalTargets = services.targetFinder.findLegalTargets(
             state, effect.copyTargetRequirement, controllerId, sourceId
         )
 

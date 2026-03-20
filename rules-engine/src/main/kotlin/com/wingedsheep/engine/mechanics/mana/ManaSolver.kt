@@ -96,7 +96,7 @@ data class ManaProduction(
  *                     When provided, non-land permanents with mana abilities can be used as sources.
  */
 class ManaSolver(
-    private val cardRegistry: CardRegistry? = null,
+    private val cardRegistry: CardRegistry,
     private val dynamicAmountEvaluator: DynamicAmountEvaluator = DynamicAmountEvaluator()
 ) {
 
@@ -371,7 +371,7 @@ class ManaSolver(
         for (entityId in handCards) {
             val container = state.getEntity(entityId) ?: continue
             val card = container.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
 
             // Get mana cost
             val manaCost = cardDef.manaCost ?: continue
@@ -429,7 +429,7 @@ class ManaSolver(
             val card = container.get<CardComponent>() ?: return@mapNotNull null
 
             // Check for explicit mana abilities via CardRegistry
-            val cardDef = cardRegistry?.getCard(card.cardDefinitionId)
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId)
             val allAbilities = cardDef?.script?.activatedAbilities ?: emptyList()
             val manaAbilities = allAbilities.filter { it.isManaAbility }
 
@@ -616,8 +616,6 @@ class ManaSolver(
         source: ManaSource,
         playerId: EntityId
     ): ManaSource {
-        if (cardRegistry == null) return source
-
         var totalBonus = 0
         var bonusColor: Color? = null
 
@@ -663,7 +661,6 @@ class ManaSolver(
      * Check if any permanent on the battlefield has DampLandManaProduction.
      */
     private fun hasDampLandManaProduction(state: GameState): Boolean {
-        if (cardRegistry == null) return false
         for (playerId in state.turnOrder) {
             for (entityId in state.getBattlefield(playerId)) {
                 val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
@@ -829,8 +826,6 @@ class ManaSolver(
         state: GameState,
         playerId: EntityId
     ): TapPermanentsBonusMana {
-        if (cardRegistry == null) return TapPermanentsBonusMana()
-
         val projected = state.projectedState
         val battlefieldCards = projected.getBattlefieldControlledBy(playerId)
         val regularSourceIds = findAvailableManaSources(state, playerId).map { it.entityId }.toSet()

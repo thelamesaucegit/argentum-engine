@@ -17,7 +17,7 @@ import com.wingedsheep.sdk.core.CounterType
  * triggered but not yet left the stack, the Saga's controller sacrifices it.
  */
 class SagaSacrificeCheck(
-    private val cardRegistry: CardRegistry?
+    private val cardRegistry: CardRegistry
 ) : StateBasedActionCheck {
     override val name = "714.4 Saga Sacrifice"
     override val order = SbaOrder.SAGA_SACRIFICE
@@ -32,8 +32,7 @@ class SagaSacrificeCheck(
             container.get<SagaComponent>() ?: continue
             val counters = container.get<CountersComponent>() ?: continue
 
-            val registry = cardRegistry ?: continue
-            val cardDef = registry.getCard(cardComponent.cardDefinitionId) ?: continue
+            val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
             val finalChapter = cardDef.finalChapter ?: continue
 
             val loreCount = counters.getCount(CounterType.LORE)
