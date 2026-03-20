@@ -9,7 +9,6 @@ import com.wingedsheep.engine.legalactions.LegalAction
 import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.DamageComponent
-import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.LifeTotalComponent
@@ -19,9 +18,9 @@ import com.wingedsheep.sdk.model.EntityId
 /**
  * Specialized advisor for attack and block decisions.
  *
- * Combat in MTG is combinatorially explosive (5 attackers × 5 blockers = huge space).
- * Rather than brute-force searching all combinations, the CombatAdvisor uses
- * MTG-specific heuristics: profitable trades, evasion, lethal math, and chump blocking.
+ * Uses pure heuristic analysis (NOT simulation) because the simulator can't
+ * resolve through combat phases — it would see "creatures tapped, no damage
+ * dealt" and always prefer not attacking.
  */
 class CombatAdvisor(
     private val simulator: GameSimulator,
@@ -43,39 +42,20 @@ class CombatAdvisor(
             return DeclareAttackers(playerId, emptyMap())
         }
 
-        // Default defending target is the opponent player (first non-planeswalker target)
         val opponentId = state.getOpponent(playerId) ?: defendingPlayers.first()
-
         val opponentLife = state.getEntity(opponentId)?.get<LifeTotalComponent>()?.life ?: 20
-        val analyses = validAttackers.map { analyzeAttacker(state, projected, it, playerId) }
-
-        // Check if we have lethal on board
-        val totalPower = analyses.sumOf { it.power }
-        if (totalPower >= opponentLife) {
-            // Alpha strike — send everything for lethal
-            val attackers = validAttackers.associateWith { opponentId }
-            return DeclareAttackers(playerId, attackers)
-        }
-
-        // Evaluate each creature for profitable attacks
-        val attackerMap = mutableMapOf<EntityId, EntityId>()
         val opponentCreatures = getOpponentUntappedCreatures(state, projected, playerId)
 
-        for (analysis in analyses) {
-            val shouldAttack = shouldAttack(analysis, opponentCreatures, projected, state, opponentLife)
-            if (shouldAttack) {
-                attackerMap[analysis.entityId] = opponentId
-            }
+        // Check if we have lethal — alpha strike
+        val totalPower = validAttackers.sumOf { (projected.getPower(it) ?: 0).coerceAtLeast(0) }
+        if (totalPower >= opponentLife) {
+            return DeclareAttackers(playerId, validAttackers.associateWith { opponentId })
         }
 
-        // If simulation is better, use it for close calls
-        if (attackerMap.size in 1..6) {
-            val attackAction = DeclareAttackers(playerId, attackerMap)
-            val noAttackAction = DeclareAttackers(playerId, emptyMap())
-            val attackScore = evaluateAction(state, attackAction, playerId)
-            val noAttackScore = evaluateAction(state, noAttackAction, playerId)
-            if (noAttackScore > attackScore) {
-                return noAttackAction
+        val attackerMap = mutableMapOf<EntityId, EntityId>()
+        for (entityId in validAttackers) {
+            if (shouldAttack(state, projected, entityId, opponentCreatures, opponentLife)) {
+                attackerMap[entityId] = opponentId
             }
         }
 
@@ -98,164 +78,124 @@ class CombatAdvisor(
             return DeclareBlockers(playerId, emptyMap())
         }
 
-        // Find all attacking creatures
-        val attackers = getAttackingCreatures(state, projected)
+        val attackers = getAttackingCreatures(state)
         if (attackers.isEmpty()) {
             return DeclareBlockers(playerId, emptyMap())
         }
 
         val myLife = state.getEntity(playerId)?.get<LifeTotalComponent>()?.life ?: 20
-        val incomingDamage = attackers.sumOf { projected.getPower(it) ?: 0 }
+        val incomingDamage = attackers.sumOf { (projected.getPower(it) ?: 0).coerceAtLeast(0) }
         val isLethal = incomingDamage >= myLife
 
         val blockerMap = mutableMapOf<EntityId, List<EntityId>>()
 
         // Handle mandatory blockers first
+        val assignedBlockers = mutableSetOf<EntityId>()
+        val blockedAttackers = mutableSetOf<EntityId>()
         for ((blockerId, mustBlockAttackers) in mandatory) {
             if (mustBlockAttackers.isNotEmpty()) {
                 blockerMap[blockerId] = listOf(mustBlockAttackers.first())
+                assignedBlockers.add(blockerId)
+                blockedAttackers.add(mustBlockAttackers.first())
             }
         }
 
-        val assignedBlockers = blockerMap.keys.toMutableSet()
-        val blockedAttackers = blockerMap.values.flatten().toMutableSet()
-
         if (isLethal) {
-            // Must block to survive — greedily assign blockers to reduce damage
-            assignBlocksForSurvival(
-                state, projected, validBlockers, attackers,
-                assignedBlockers, blockedAttackers, blockerMap, myLife
-            )
+            assignBlocksForSurvival(state, projected, validBlockers, attackers, assignedBlockers, blockedAttackers, blockerMap)
         } else {
-            // Block for profitable trades
-            assignBlocksForProfit(
-                state, projected, validBlockers, attackers,
-                assignedBlockers, blockedAttackers, blockerMap
-            )
+            assignBlocksForProfit(state, projected, validBlockers, attackers, assignedBlockers, blockedAttackers, blockerMap)
         }
 
         return DeclareBlockers(playerId, blockerMap)
     }
 
-    // ── Attack analysis ──────────────────────────────────────────────────
+    // ── Attack decision ──────────────────────────────────────────────────
 
-    private data class AttackAnalysis(
-        val entityId: EntityId,
-        val power: Int,
-        val toughness: Int,
-        val hasFlying: Boolean,
-        val hasTrample: Boolean,
-        val hasMenace: Boolean,
-        val hasVigilance: Boolean,
-        val hasDeathtouch: Boolean,
-        val hasFirstStrike: Boolean,
-        val hasLifelink: Boolean,
-        val hasIndestructible: Boolean,
-        val value: Double // how much we'd lose if this creature dies
-    )
-
-    private fun analyzeAttacker(
+    private fun shouldAttack(
         state: GameState,
         projected: ProjectedState,
         entityId: EntityId,
-        playerId: EntityId
-    ): AttackAnalysis {
+        opponentCreatures: List<EntityId>,
+        opponentLife: Int
+    ): Boolean {
         val power = projected.getPower(entityId) ?: 0
         val toughness = projected.getToughness(entityId) ?: 0
         val keywords = projected.getKeywords(entityId)
         val card = state.getEntity(entityId)?.get<CardComponent>()
+        val myValue = card?.let { BoardPresence.permanentValue(state, projected, entityId, it) } ?: 0.0
 
-        return AttackAnalysis(
-            entityId = entityId,
-            power = power,
-            toughness = toughness,
-            hasFlying = Keyword.FLYING.name in keywords,
-            hasTrample = Keyword.TRAMPLE.name in keywords,
-            hasMenace = Keyword.MENACE.name in keywords,
-            hasVigilance = Keyword.VIGILANCE.name in keywords,
-            hasDeathtouch = Keyword.DEATHTOUCH.name in keywords,
-            hasFirstStrike = Keyword.FIRST_STRIKE.name in keywords || Keyword.DOUBLE_STRIKE.name in keywords,
-            hasLifelink = Keyword.LIFELINK.name in keywords,
-            hasIndestructible = Keyword.INDESTRUCTIBLE.name in keywords,
-            value = card?.let { BoardPresence.permanentValue(state, projected, entityId, it) } ?: 0.0
-        )
-    }
+        if (power <= 0) return false
 
-    private fun shouldAttack(
-        analysis: AttackAnalysis,
-        opponentCreatures: List<EntityId>,
-        projected: ProjectedState,
-        state: GameState,
-        opponentLife: Int
-    ): Boolean {
-        // Always attack with 0-power creatures? No.
-        if (analysis.power <= 0) return false
+        // ── Always attack: no downside ──
+        if (Keyword.VIGILANCE.name in keywords) return true
+        if (Keyword.INDESTRUCTIBLE.name in keywords) return true
 
-        // Always attack with vigilance (no downside from tapping)
-        if (analysis.hasVigilance) return true
+        // ── No blockers: always attack ──
+        if (opponentCreatures.isEmpty()) return true
 
-        // Always attack with indestructible (can't die in combat)
-        if (analysis.hasIndestructible) return true
-
-        // Evasion creatures are almost always good attacks
-        if (analysis.hasFlying) {
-            // Check if opponent has flyers/reach that could block profitably
-            val canBeBlocked = opponentCreatures.any { blocker ->
-                val bKeywords = projected.getKeywords(blocker)
-                (Keyword.FLYING.name in bKeywords || Keyword.REACH.name in bKeywords) &&
-                    wouldDieInCombat(analysis, projected, blocker, state)
+        // ── Evasion: attack unless they have relevant blockers ──
+        if (Keyword.FLYING.name in keywords) {
+            val hasRelevantBlocker = opponentCreatures.any { blocker ->
+                val bk = projected.getKeywords(blocker)
+                Keyword.FLYING.name in bk || Keyword.REACH.name in bk
             }
-            if (!canBeBlocked) return true
+            if (!hasRelevantBlocker) return true
         }
 
-        // Menace is harder to block
-        if (analysis.hasMenace && opponentCreatures.size <= 1) return true
+        // ── Menace: need 2+ blockers ──
+        if (Keyword.MENACE.name in keywords && opponentCreatures.size <= 1) return true
 
-        // Check if any opponent creature can profitably block us
-        val wouldTradeDown = opponentCreatures.any { blocker ->
-            val blockerPower = projected.getPower(blocker) ?: 0
-            val blockerToughness = projected.getToughness(blocker) ?: 0
-            // They can kill us and their creature is less valuable
-            blockerPower >= analysis.toughness && blockerToughness > analysis.power &&
-                creatureValue(state, projected, blocker) < analysis.value
+        // ── Deathtouch: always trades up, so almost always attack ──
+        if (Keyword.DEATHTOUCH.name in keywords) return true
+
+        // ── First strike advantage ──
+        if (Keyword.FIRST_STRIKE.name in keywords || Keyword.DOUBLE_STRIKE.name in keywords) return true
+
+        // ── Low life opponent: be aggressive ──
+        if (opponentLife <= 8) return true
+
+        // ── Core heuristic: attack if the expected value is positive ──
+        // The opponent will block with their best blocker for this creature.
+        // We want to attack if: (damage dealt or good trade) outweighs (risk of losing creature).
+        val bestBlocker = opponentCreatures.minByOrNull { blocker ->
+            // Find the opponent's "cheapest effective blocker" — can kill us for minimum cost
+            val bPower = projected.getPower(blocker) ?: 0
+            val bToughness = projected.getToughness(blocker) ?: 0
+            val bKeywords = projected.getKeywords(blocker)
+            val canKillUs = bPower >= toughness || Keyword.DEATHTOUCH.name in bKeywords
+            val blockerValue = creatureValue(state, projected, blocker)
+
+            if (canKillUs) blockerValue  // they'd trade this creature to kill us
+            else Double.MAX_VALUE         // can't kill us — not a relevant blocker
         }
 
-        // If no one can profitably block us, attack
-        if (!wouldTradeDown && opponentCreatures.none { blocker ->
-            val blockerToughness = projected.getToughness(blocker) ?: 0
-            blockerToughness > analysis.power // they survive blocking
-        }) return true
+        if (bestBlocker != null) {
+            val bPower = projected.getPower(bestBlocker) ?: 0
+            val bToughness = projected.getToughness(bestBlocker) ?: 0
+            val bKeywords = projected.getKeywords(bestBlocker)
+            val canKillUs = bPower >= toughness || Keyword.DEATHTOUCH.name in bKeywords
+            val weKillThem = power >= bToughness || Keyword.DEATHTOUCH.name in keywords
+            val blockerValue = creatureValue(state, projected, bestBlocker)
 
-        // Deathtouch creatures trade up
-        if (analysis.hasDeathtouch) return true
+            if (!canKillUs) {
+                // They can't kill us by blocking → always attack (we deal damage or force a bad block)
+                return true
+            }
 
-        // First strike creatures have an advantage
-        if (analysis.hasFirstStrike) return true
+            if (weKillThem && blockerValue >= myValue * 0.8) {
+                // We trade and their creature is about as valuable → good trade
+                return true
+            }
 
-        // If opponent is at low life, be more aggressive
-        if (opponentLife <= analysis.power * 3) return true
+            // They can kill us and trading down → don't attack (unless we need pressure)
+            // But still attack if we have enough backup
+            val myCreatureCount = projected.getBattlefieldControlledBy(state.turnOrder.find { it != state.getOpponent(state.turnOrder[0]) } ?: return false)
+                .count { projected.isCreature(it) }
+            if (myCreatureCount >= 3) return true // we have board presence, trade is fine
+        }
 
-        // Default: attack if we're bigger than most of their creatures
-        val avgOpponentToughness = if (opponentCreatures.isNotEmpty()) {
-            opponentCreatures.mapNotNull { projected.getToughness(it) }.average()
-        } else 0.0
-
-        return analysis.power >= avgOpponentToughness
-    }
-
-    private fun wouldDieInCombat(
-        analysis: AttackAnalysis,
-        projected: ProjectedState,
-        blockerId: EntityId,
-        state: GameState
-    ): Boolean {
-        val blockerPower = projected.getPower(blockerId) ?: 0
-        val blockerKeywords = projected.getKeywords(blockerId)
-        val hasBlockerDeathtouch = Keyword.DEATHTOUCH.name in blockerKeywords
-
-        if (analysis.hasIndestructible) return false
-        if (hasBlockerDeathtouch && blockerPower > 0) return true
-        return blockerPower >= analysis.toughness
+        // Default: attack. In MTG, being passive usually loses.
+        return true
     }
 
     // ── Blocking strategies ──────────────────────────────────────────────
@@ -267,30 +207,24 @@ class CombatAdvisor(
         attackers: List<EntityId>,
         assignedBlockers: MutableSet<EntityId>,
         blockedAttackers: MutableSet<EntityId>,
-        blockerMap: MutableMap<EntityId, List<EntityId>>,
-        myLife: Int
+        blockerMap: MutableMap<EntityId, List<EntityId>>
     ) {
         val available = validBlockers.filter { it !in assignedBlockers }
         val unblocked = attackers.filter { it !in blockedAttackers }
 
-        // Sort attackers by power descending (block biggest threats first)
+        // Block biggest threats first (highest power)
         val sortedAttackers = unblocked.sortedByDescending { projected.getPower(it) ?: 0 }
 
         for (attacker in sortedAttackers) {
-            val attackerPower = projected.getPower(attacker) ?: 0
-            if (attackerPower <= 0) continue
+            if ((projected.getPower(attacker) ?: 0) <= 0) continue
 
-            // Find a blocker that can at least chump
-            val bestBlocker = available
+            val blocker = available
                 .filter { it !in assignedBlockers }
-                .minByOrNull { blocker ->
-                    // Prefer blocking with creatures of lower value
-                    creatureValue(state, projected, blocker)
-                }
+                .minByOrNull { creatureValue(state, projected, it) }
 
-            if (bestBlocker != null) {
-                blockerMap[bestBlocker] = listOf(attacker)
-                assignedBlockers.add(bestBlocker)
+            if (blocker != null) {
+                blockerMap[blocker] = listOf(attacker)
+                assignedBlockers.add(blocker)
                 blockedAttackers.add(attacker)
             }
         }
@@ -305,38 +239,35 @@ class CombatAdvisor(
         blockedAttackers: MutableSet<EntityId>,
         blockerMap: MutableMap<EntityId, List<EntityId>>
     ) {
-        val available = validBlockers.filter { it !in assignedBlockers }
         val unblocked = attackers.filter { it !in blockedAttackers }
 
         for (attacker in unblocked) {
-            val attackerPower = projected.getPower(attacker) ?: 0
-            val attackerToughness = projected.getToughness(attacker) ?: 0
+            val aPower = projected.getPower(attacker) ?: 0
+            val aToughness = projected.getToughness(attacker) ?: 0
+            val aKeywords = projected.getKeywords(attacker)
+            val aHasDeathtouch = Keyword.DEATHTOUCH.name in aKeywords
             val attackerValue = creatureValue(state, projected, attacker)
-            val attackerKeywords = projected.getKeywords(attacker)
-            val attackerHasDeathtouch = Keyword.DEATHTOUCH.name in attackerKeywords
 
-            // Find a blocker that trades profitably
-            val profitableBlocker = available
+            val blocker = validBlockers
                 .filter { it !in assignedBlockers }
-                .filter { blocker ->
-                    val blockerPower = projected.getPower(blocker) ?: 0
-                    val blockerToughness = projected.getToughness(blocker) ?: 0
-                    val blockerValue = creatureValue(state, projected, blocker)
-                    val blockerKeywords = projected.getKeywords(blocker)
-                    val blockerHasDeathtouch = Keyword.DEATHTOUCH.name in blockerKeywords
+                .filter { blockerId ->
+                    val bPower = projected.getPower(blockerId) ?: 0
+                    val bToughness = projected.getToughness(blockerId) ?: 0
+                    val bKeywords = projected.getKeywords(blockerId)
+                    val bHasDeathtouch = Keyword.DEATHTOUCH.name in bKeywords
+                    val blockerValue = creatureValue(state, projected, blockerId)
 
-                    // Can we kill the attacker?
-                    val weKillThem = blockerPower >= attackerToughness || blockerHasDeathtouch
-                    // Do we survive?
-                    val weSurvive = blockerToughness > attackerPower && !attackerHasDeathtouch
-                    // Is it a favorable trade? (we kill them and survive, or we kill them and their value > ours)
-                    (weKillThem && weSurvive) || (weKillThem && attackerValue > blockerValue * 1.2)
+                    val weKillThem = bPower >= aToughness || bHasDeathtouch
+                    val weSurvive = bToughness > aPower && !aHasDeathtouch
+
+                    // Block if: we kill them and survive, or we kill them and they're more valuable
+                    (weKillThem && weSurvive) || (weKillThem && attackerValue > blockerValue)
                 }
-                .minByOrNull { creatureValue(state, projected, it) } // use cheapest profitable blocker
+                .minByOrNull { creatureValue(state, projected, it) }
 
-            if (profitableBlocker != null) {
-                blockerMap[profitableBlocker] = listOf(attacker)
-                assignedBlockers.add(profitableBlocker)
+            if (blocker != null) {
+                blockerMap[blocker] = listOf(attacker)
+                assignedBlockers.add(blocker)
                 blockedAttackers.add(attacker)
             }
         }
@@ -356,8 +287,7 @@ class CombatAdvisor(
         }
     }
 
-    private fun getAttackingCreatures(state: GameState, projected: ProjectedState): List<EntityId> {
-        // Attacking creatures have the AttackingComponent
+    private fun getAttackingCreatures(state: GameState): List<EntityId> {
         return state.getBattlefield().filter { entityId ->
             state.getEntity(entityId)?.has<com.wingedsheep.engine.state.components.combat.AttackingComponent>() == true
         }
@@ -366,10 +296,5 @@ class CombatAdvisor(
     private fun creatureValue(state: GameState, projected: ProjectedState, entityId: EntityId): Double {
         val card = state.getEntity(entityId)?.get<CardComponent>() ?: return 0.0
         return BoardPresence.permanentValue(state, projected, entityId, card)
-    }
-
-    private fun evaluateAction(state: GameState, action: GameAction, playerId: EntityId): Double {
-        val result = simulator.simulate(state, action)
-        return evaluator.evaluate(result.state, result.state.projectedState, playerId)
     }
 }

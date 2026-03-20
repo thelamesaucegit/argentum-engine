@@ -1140,6 +1140,9 @@ class GameSession(
      */
     fun getStateSnapshot(): GameState? = gameState
 
+    /** Get deck list for a specific player. Used by engine AI to know the opponent's deck. */
+    fun getDeckList(playerId: EntityId): List<String>? = deckLists[playerId]
+
     // =========================================================================
     // Persistence Support (for Redis caching)
     // =========================================================================

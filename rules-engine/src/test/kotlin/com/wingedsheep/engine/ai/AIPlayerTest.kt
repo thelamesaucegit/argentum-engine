@@ -13,6 +13,7 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 
 class AIPlayerTest : FunSpec({
 
@@ -197,6 +198,133 @@ class AIPlayerTest : FunSpec({
         for (action in actions.take(3)) {
             val score = searcher.searchAction(state, action, playerId, depth = 3)
             score.isFinite().shouldBeTrue()
+        }
+    }
+
+    test("simulating CastSpell resolves the spell onto the battlefield") {
+        val registry = createCardRegistry()
+        val deck = Deck.of("Mountain" to 17, "Raging Goblin" to 3)
+        val (initialState, processor) = initGame(registry, deck)
+
+        val p1 = initialState.turnOrder[0]
+        val ai1 = AIPlayer.create(registry, p1)
+        val ai2 = AIPlayer.create(registry, initialState.turnOrder[1])
+
+        // Advance to main phase
+        var state: GameState = initialState
+        var safety = 0
+        while (state.phase != Phase.PRECOMBAT_MAIN && safety < 50 && !state.gameOver) {
+            val nextState: GameState? = when (state.priorityPlayerId) {
+                p1 -> ai1.playPriorityWindow(state, processor)
+                else -> ai2.playPriorityWindow(state, processor)
+            }
+            if (nextState == null) break
+            state = nextState
+            safety++
+        }
+
+        // Now in main phase — play a land first
+        if (state.phase == Phase.PRECOMBAT_MAIN && state.priorityPlayerId == p1) {
+            val simulator = GameSimulator(registry)
+            val evaluator = AIPlayer.defaultEvaluator()
+            val actions = simulator.getLegalActions(state, p1)
+
+            // Play a land
+            val landAction = actions.find { it.actionType == "PlayLand" }
+            if (landAction != null) {
+                val result = processor.process(state, landAction.action)
+                state = result.state
+            }
+
+            // Re-enumerate after land play
+            val actionsAfterLand = simulator.getLegalActions(state, p1)
+            val castCreature = actionsAfterLand.find {
+                it.actionType == "CastSpell" && it.description.contains("Raging Goblin", ignoreCase = true)
+            }
+            val pass = actionsAfterLand.find { it.actionType == "PassPriority" }
+
+            if (castCreature != null && pass != null) {
+                // Simulate both and compare
+                val castResult = simulator.simulate(state, castCreature.action)
+                val passResult = simulator.simulate(state, pass.action)
+
+                // After casting, the creature should be on the battlefield (stack resolved)
+                val creaturesAfterCast = castResult.state.getBattlefield(p1).count { entityId ->
+                    castResult.state.projectedState.isCreature(entityId)
+                }
+                creaturesAfterCast shouldBeGreaterThan 0
+
+                // The stack should be empty (spell resolved)
+                castResult.state.stack.size shouldBe 0
+
+                // Cast score should be strictly better than pass score
+                val castScore = evaluator.evaluate(castResult.state, castResult.state.projectedState, p1)
+                val passScore = evaluator.evaluate(passResult.state, passResult.state.projectedState, p1)
+                castScore shouldBeGreaterThan passScore
+            }
+        }
+    }
+
+    test("AI chooses to cast creature over passing in main phase") {
+        val registry = createCardRegistry()
+        val deck = Deck.of("Mountain" to 17, "Raging Goblin" to 3)
+        val (initialState, processor) = initGame(registry, deck)
+
+        val p1 = initialState.turnOrder[0]
+        val ai1 = AIPlayer.create(registry, p1)
+        val ai2 = AIPlayer.create(registry, initialState.turnOrder[1])
+
+        // Advance to main phase and play a land
+        var state: GameState = initialState
+        var safety = 0
+        while ((state.phase != Phase.PRECOMBAT_MAIN || state.priorityPlayerId != p1) && safety < 50 && !state.gameOver) {
+            val next: GameState? = when (state.priorityPlayerId) {
+                p1 -> ai1.playPriorityWindow(state, processor)
+                else -> ai2.playPriorityWindow(state, processor)
+            }
+            if (next == null) break
+            state = next
+            safety++
+        }
+
+        if (state.phase == Phase.PRECOMBAT_MAIN && state.priorityPlayerId == p1) {
+            // Play a land first
+            val simulator = GameSimulator(registry)
+            val landAction = simulator.getLegalActions(state, p1).find { it.actionType == "PlayLand" }
+            if (landAction != null) {
+                state = processor.process(state, landAction.action).state
+            }
+
+            // Now the AI should choose to cast Grizzly Bears (not pass)
+            if (state.priorityPlayerId == p1) {
+                val simulator = GameSimulator(registry)
+                val evaluator = AIPlayer.defaultEvaluator()
+                val actions = simulator.getLegalActions(state, p1)
+
+                // Debug: print all actions and their scores
+                val pass = actions.find { it.actionType == "PassPriority" }
+                val passResult = if (pass != null) simulator.simulate(state, pass.action) else null
+                val passScore = if (passResult != null) {
+                    evaluator.evaluate(passResult.state, passResult.state.projectedState, p1)
+                } else 0.0
+
+                println("=== AI ACTION SCORES ===")
+                println("Pass score: $passScore")
+                for (a in actions.filter { it.affordable && it.actionType != "PassPriority" && !it.isManaAbility }) {
+                    val result = simulator.simulate(state, a.action)
+                    val score = evaluator.evaluate(result.state, result.state.projectedState, p1)
+                    val resultType = when (result) {
+                        is SimulationResult.Terminal -> "Terminal(stack=${result.state.stack.size})"
+                        is SimulationResult.NeedsDecision -> "NeedsDecision(${result.decision::class.simpleName})"
+                        is SimulationResult.Illegal -> "Illegal(${result.reason})"
+                    }
+                    println("  ${a.actionType}(${a.description}): score=$score, result=$resultType")
+                }
+
+                val action = ai1.chooseAction(state)
+                println("AI CHOSE: ${action::class.simpleName}")
+                (action is CastSpell).shouldBeTrue()
+            }
         }
     }
 
