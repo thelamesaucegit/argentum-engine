@@ -77,13 +77,21 @@ object BoardPresence : BoardFeature {
 
         // Non-creature permanents
         if (card.isLand) {
-            // Untapped lands are worth more (they represent available mana)
             return if (container.has<TappedComponent>()) 0.3 else 0.6
         }
         if (card.isPlaneswalker) return 4.0
-        if (card.isAura) return 1.0
-        // Enchantments and artifacts — typically doing something useful
-        return 2.0
+
+        // Auras/equipment attached to something are valuable
+        if (container.has<com.wingedsheep.engine.state.components.battlefield.AttachedToComponent>()) return 1.5
+
+        // Enchantments/artifacts exiling something (O-Ring effects) are valuable
+        if (container.has<com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent>()) return 2.5
+
+        // General non-creature permanents: low baseline value.
+        // Their real impact is through abilities (triggers, static effects) which the
+        // evaluator can't introspect. A low value avoids casting useless enchantments
+        // just to have a permanent on the board.
+        return 0.5
     }
 
     private fun creatureValue(
