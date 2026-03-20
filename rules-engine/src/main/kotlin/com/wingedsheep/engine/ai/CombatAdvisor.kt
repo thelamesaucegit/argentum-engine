@@ -248,29 +248,91 @@ class CombatAdvisor(
             val aHasDeathtouch = Keyword.DEATHTOUCH.name in aKeywords
             val attackerValue = creatureValue(state, projected, attacker)
 
-            val blocker = validBlockers
+            // ── Try single blocker first ──
+            val singleBlocker = validBlockers
                 .filter { it !in assignedBlockers }
                 .filter { blockerId ->
                     val bPower = projected.getPower(blockerId) ?: 0
                     val bToughness = projected.getToughness(blockerId) ?: 0
-                    val bKeywords = projected.getKeywords(blockerId)
-                    val bHasDeathtouch = Keyword.DEATHTOUCH.name in bKeywords
+                    val bHasDeathtouch = Keyword.DEATHTOUCH.name in projected.getKeywords(blockerId)
                     val blockerValue = creatureValue(state, projected, blockerId)
 
                     val weKillThem = bPower >= aToughness || bHasDeathtouch
                     val weSurvive = bToughness > aPower && !aHasDeathtouch
 
-                    // Block if: we kill them and survive, or we kill them and they're more valuable
                     (weKillThem && weSurvive) || (weKillThem && attackerValue > blockerValue)
                 }
                 .minByOrNull { creatureValue(state, projected, it) }
 
-            if (blocker != null) {
-                blockerMap[blocker] = listOf(attacker)
-                assignedBlockers.add(blocker)
+            if (singleBlocker != null) {
+                blockerMap[singleBlocker] = listOf(attacker)
+                assignedBlockers.add(singleBlocker)
+                blockedAttackers.add(attacker)
+                continue
+            }
+
+            // ── Try double-block: two creatures that together kill the attacker ──
+            // Only worth it if both blockers survive (no deathtouch on attacker)
+            // and the attacker is valuable enough to justify tying up two blockers.
+            if (aHasDeathtouch) continue // double-blocking into deathtouch loses both creatures
+
+            val available = validBlockers.filter { it !in assignedBlockers }
+            if (available.size < 2) continue
+
+            val gangBlock = findProfitableGangBlock(state, projected, attacker, aPower, aToughness, attackerValue, available)
+            if (gangBlock != null) {
+                // Map each blocker to this attacker
+                for (blocker in gangBlock) {
+                    blockerMap[blocker] = listOf(attacker)
+                    assignedBlockers.add(blocker)
+                }
                 blockedAttackers.add(attacker)
             }
         }
+    }
+
+    /**
+     * Find two creatures that can gang-block an attacker profitably:
+     * combined power >= attacker toughness, and both survive.
+     */
+    private fun findProfitableGangBlock(
+        state: GameState,
+        projected: ProjectedState,
+        attacker: EntityId,
+        aPower: Int,
+        aToughness: Int,
+        attackerValue: Double,
+        available: List<EntityId>
+    ): List<EntityId>? {
+        // Sort by value ascending — prefer using cheaper creatures
+        val sorted = available.sortedBy { creatureValue(state, projected, it) }
+
+        for (i in sorted.indices) {
+            for (j in i + 1 until sorted.size) {
+                val b1 = sorted[i]
+                val b2 = sorted[j]
+                val p1 = projected.getPower(b1) ?: 0
+                val p2 = projected.getPower(b2) ?: 0
+                val t1 = projected.getToughness(b1) ?: 0
+                val t2 = projected.getToughness(b2) ?: 0
+
+                val combinedPower = p1 + p2
+                if (combinedPower < aToughness) continue // can't kill the attacker
+
+                // Both blockers must survive: attacker deals damage to one of them
+                // (attacker assigns all combat damage to one blocker in most cases)
+                val bothSurvive = t1 > aPower && t2 > aPower
+                if (!bothSurvive) continue
+
+                // Gang-block value: we kill the attacker, lose nothing
+                // Only do it if the attacker is worth tying up two blockers
+                val totalBlockerValue = creatureValue(state, projected, b1) + creatureValue(state, projected, b2)
+                if (attackerValue >= totalBlockerValue * 0.4) {
+                    return listOf(b1, b2)
+                }
+            }
+        }
+        return null
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
