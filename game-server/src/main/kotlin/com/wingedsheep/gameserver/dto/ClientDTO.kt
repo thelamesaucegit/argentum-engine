@@ -215,7 +215,13 @@ data class ClientCard(
     val damageDistribution: Map<EntityId, Int>? = null,
 
     /** For Sagas: the total number of chapters (e.g., 3). Null for non-Sagas. */
-    val sagaTotalChapters: Int? = null
+    val sagaTotalChapters: Int? = null,
+
+    /** For Class enchantments: the current class level (1, 2, or 3). Null for non-Classes. */
+    val classLevel: Int? = null,
+
+    /** For Class enchantments: the maximum class level (e.g., 3). Null for non-Classes. */
+    val classMaxLevel: Int? = null
 )
 
 /**

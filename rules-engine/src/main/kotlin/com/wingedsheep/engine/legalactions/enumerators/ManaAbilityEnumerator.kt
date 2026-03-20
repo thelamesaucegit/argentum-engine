@@ -56,8 +56,9 @@ class ManaAbilityEnumerator : ActionEnumerator {
                 .filter { it.isManaAbility }
 
             // If entity lost all abilities, only granted/static abilities remain (own abilities suppressed)
+            val classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel
             val ownManaAbilities = if (entityLostAllAbilities) emptyList()
-            else cardDef.script.activatedAbilities.filter { it.isManaAbility }
+            else cardDef.script.effectiveActivatedAbilities(classLevel).filter { it.isManaAbility }
             val manaAbilities = ownManaAbilities + grantedManaAbilities + staticManaAbilities
 
             // Apply text-changing effects to mana ability costs

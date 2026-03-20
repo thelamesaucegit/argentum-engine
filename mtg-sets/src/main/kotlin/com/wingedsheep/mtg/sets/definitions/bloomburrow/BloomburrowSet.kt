@@ -24,6 +24,7 @@ object BloomburrowSet {
     val allCards = listOf(
         HeirloomEpic,
         HiredClaw,
+        HuntersTalent,
         QuaketuskBoar,
         SeasonedWarrenguard,
         ShorelineLooter,

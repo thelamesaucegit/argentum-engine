@@ -195,6 +195,12 @@ export interface ClientCard {
 
   /** For Sagas: the total number of chapters (e.g., 3). Null for non-Sagas. */
   readonly sagaTotalChapters?: number | null
+
+  /** For Class enchantments: the current class level (1, 2, or 3). Null for non-Classes. */
+  readonly classLevel?: number | null
+
+  /** For Class enchantments: the maximum class level (e.g., 3). Null for non-Classes. */
+  readonly classMaxLevel?: number | null
 }
 
 /**

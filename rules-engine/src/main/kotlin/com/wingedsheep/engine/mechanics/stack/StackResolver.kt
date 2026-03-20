@@ -9,6 +9,7 @@ import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.SagaComponent
 import com.wingedsheep.engine.state.components.battlefield.CastFromHandComponent
 import com.wingedsheep.engine.state.components.battlefield.WasKickedComponent
@@ -718,6 +719,14 @@ class StackResolver(
             val current = newState.getEntity(spellId)?.get<CountersComponent>() ?: CountersComponent()
             newState = newState.updateEntity(spellId) { c ->
                 c.with(current.withAdded(CounterType.LOYALTY, modifiedCount))
+            }
+        }
+
+        // Handle Class entering the battlefield (Rule 716)
+        // Add ClassLevelComponent starting at level 1
+        if (cardDef != null && !spellComponent.castFaceDown && cardDef.isClass) {
+            newState = newState.updateEntity(spellId) { c ->
+                c.with(ClassLevelComponent(currentLevel = 1))
             }
         }
 

@@ -52,6 +52,7 @@ class PermanentExecutors(
         DistributeCountersAmongTargetsExecutor(),
         AttachEquipmentExecutor(),
         GrantExileOnLeaveExecutor(),
-        RemoveAllAbilitiesExecutor()
+        RemoveAllAbilitiesExecutor(),
+        LevelUpClassExecutor()
     )
 }

@@ -4,6 +4,7 @@ import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.identity.TextReplacementComponent
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.GameObjectFilter
@@ -33,8 +34,10 @@ class TriggerAbilityResolver(
         val base = if (registryAbilities.isNotEmpty()) {
             registryAbilities
         } else {
-            // Fall back to looking up from CardRegistry
-            cardRegistry?.getCard(cardDefinitionId)?.triggeredAbilities ?: emptyList()
+            // Fall back to looking up from CardRegistry, including class-level-gated abilities
+            val cardDef = cardRegistry?.getCard(cardDefinitionId)
+            val classLevel = state.getEntity(entityId)?.get<ClassLevelComponent>()?.currentLevel
+            cardDef?.script?.effectiveTriggeredAbilities(classLevel) ?: emptyList()
         }
 
         // Merge in any temporarily granted triggered abilities (e.g., from Commando Raid)
@@ -137,7 +140,9 @@ class TriggerAbilityResolver(
             if (registryAbilities.isNotEmpty()) {
                 registryAbilities
             } else {
-                cardRegistry?.getCard(cardDefinitionId)?.triggeredAbilities ?: emptyList()
+                val cardDef = cardRegistry?.getCard(cardDefinitionId)
+                val classLevel = state.getEntity(entityId)?.get<ClassLevelComponent>()?.currentLevel
+                cardDef?.script?.effectiveTriggeredAbilities(classLevel) ?: emptyList()
             }
         }
 

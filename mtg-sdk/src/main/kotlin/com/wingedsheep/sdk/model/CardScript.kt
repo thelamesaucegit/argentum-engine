@@ -1,5 +1,6 @@
 package com.wingedsheep.sdk.model
 
+import com.wingedsheep.sdk.scripting.ClassLevelAbility
 import com.wingedsheep.sdk.scripting.SagaChapterAbility
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.conditions.Condition
@@ -182,6 +183,15 @@ data class CardScript(
     val kickerSpellEffect: Effect? = null,
 
     /**
+     * Class level abilities (for Class enchantments).
+     * Level 1 abilities use the base CardScript fields (triggeredAbilities, staticAbilities, etc.).
+     * Levels 2+ are stored here with their level-up costs.
+     * Players pay the cost as a sorcery-speed activated ability to advance to the next level.
+     * Abilities are cumulative — gaining a higher level doesn't remove lower-level abilities.
+     */
+    val classLevels: List<ClassLevelAbility> = emptyList(),
+
+    /**
      * Saga chapter abilities.
      * Each chapter triggers when lore counters reach or exceed the chapter number.
      * Sagas add a lore counter on ETB and at the beginning of each precombat main phase.
@@ -219,6 +229,7 @@ data class CardScript(
                 additionalCosts.isNotEmpty() ||
                 auraTarget != null ||
                 castRestrictions.isNotEmpty() ||
+                classLevels.isNotEmpty() ||
                 sagaChapters.isNotEmpty()
 
     /**
@@ -256,6 +267,51 @@ data class CardScript(
      */
     val hasReplacementEffects: Boolean
         get() = replacementEffects.isNotEmpty()
+
+    /**
+     * The maximum class level for Class enchantments, or null if not a Class.
+     */
+    val maxClassLevel: Int?
+        get() = classLevels.maxOfOrNull { it.level }
+
+    /**
+     * Get all triggered abilities active at the given class level.
+     * Includes base triggered abilities (always active) plus class-level-gated ones.
+     * When [currentClassLevel] is null, returns only base abilities (for non-Class cards).
+     */
+    fun effectiveTriggeredAbilities(currentClassLevel: Int? = null): List<TriggeredAbility> {
+        if (currentClassLevel == null || classLevels.isEmpty()) return triggeredAbilities
+        val classAbilities = classLevels
+            .filter { it.level <= currentClassLevel }
+            .flatMap { it.triggeredAbilities }
+        return triggeredAbilities + classAbilities
+    }
+
+    /**
+     * Get all static abilities active at the given class level.
+     * Includes base static abilities (always active) plus class-level-gated ones.
+     * When [currentClassLevel] is null, returns only base abilities (for non-Class cards).
+     */
+    fun effectiveStaticAbilities(currentClassLevel: Int? = null): List<StaticAbility> {
+        if (currentClassLevel == null || classLevels.isEmpty()) return staticAbilities
+        val classAbilities = classLevels
+            .filter { it.level <= currentClassLevel }
+            .flatMap { it.staticAbilities }
+        return staticAbilities + classAbilities
+    }
+
+    /**
+     * Get all activated abilities active at the given class level.
+     * Includes base activated abilities (always active) plus class-level-gated ones.
+     * When [currentClassLevel] is null, returns only base abilities (for non-Class cards).
+     */
+    fun effectiveActivatedAbilities(currentClassLevel: Int? = null): List<ActivatedAbility> {
+        if (currentClassLevel == null || classLevels.isEmpty()) return activatedAbilities
+        val classAbilities = classLevels
+            .filter { it.level <= currentClassLevel }
+            .flatMap { it.activatedAbilities }
+        return activatedAbilities + classAbilities
+    }
 
     companion object {
         /**

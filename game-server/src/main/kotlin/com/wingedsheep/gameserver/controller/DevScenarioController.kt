@@ -7,6 +7,7 @@ import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
 import com.wingedsheep.engine.state.components.battlefield.AttachmentsComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.SagaComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -648,6 +649,11 @@ class DevScenarioController(
                 val staticHandler = StaticAbilityHandler(cardRegistry)
                 container = staticHandler.addContinuousEffectComponent(container, cardDef)
                 container = staticHandler.addReplacementEffectComponent(container, cardDef)
+
+                // Add ClassLevelComponent for Class enchantments (starts at level 1)
+                if (cardDef.isClass) {
+                    container = container.with(ClassLevelComponent(currentLevel = 1))
+                }
 
                 // Add SagaComponent for sagas, marking chapters as triggered based on lore counters
                 if (cardDef.finalChapter != null) {

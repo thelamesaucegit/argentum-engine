@@ -9,6 +9,7 @@ import com.wingedsheep.engine.legalactions.LegalAction
 import com.wingedsheep.engine.legalactions.TargetInfo
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -23,9 +24,12 @@ import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivatedAbility
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.GameObjectFilter
+import com.wingedsheep.sdk.scripting.TimingRule
+import com.wingedsheep.sdk.scripting.effects.LevelUpClassEffect
 import com.wingedsheep.engine.legalactions.ConvokeCreatureData
 
 /**
@@ -66,10 +70,21 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 .map { it.ability }
             val staticAbilities = context.castPermissionUtils.getStaticGrantedActivatedAbilities(entityId, state)
             val allAbilities = grantedAbilities + staticAbilities
+
+            // Get class level for Class enchantments (null for non-Class cards)
+            val classLevelComponent = container.get<ClassLevelComponent>()
+            val classLevel = classLevelComponent?.currentLevel
+
             // If entity lost all abilities, suppress its own non-mana abilities
             val ownNonManaAbilities = if (projected.hasLostAllAbilities(entityId)) emptyList()
-            else cardDef.script.activatedAbilities.filter { !it.isManaAbility }
-            val nonManaAbilities = ownNonManaAbilities + allAbilities.filter { !it.isManaAbility }
+            else cardDef.script.effectiveActivatedAbilities(classLevel).filter { !it.isManaAbility }
+
+            // Generate level-up abilities for Class enchantments
+            val levelUpAbilities = if (classLevelComponent != null && !projected.hasLostAllAbilities(entityId)) {
+                generateClassLevelUpAbilities(cardDef, classLevelComponent)
+            } else emptyList()
+
+            val nonManaAbilities = ownNonManaAbilities + levelUpAbilities + allAbilities.filter { !it.isManaAbility }
 
             // Apply text-changing effects to ability costs and targets
             val textReplacement = container.get<TextReplacementComponent>()
@@ -385,9 +400,10 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 } else null
 
                 // Compute maxRepeatableActivations for eligible self-targeting abilities
-                // Eligible: pure mana cost, no X, no once-per-turn restriction
+                // Eligible: pure mana cost, no X, no once-per-turn restriction, not a class level-up
                 val isRepeatEligible = ability.cost is AbilityCost.Mana
                     && !abilityHasXCost
+                    && ability.effect !is LevelUpClassEffect
                     && !ability.restrictions.any {
                     it is ActivationRestriction.OncePerTurn ||
                         (it is ActivationRestriction.All && it.restrictions.any { r -> r is ActivationRestriction.OncePerTurn })
@@ -574,6 +590,27 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                 }
             }
         }
+    }
+
+    /**
+     * Generate sorcery-speed level-up activated abilities for Class enchantments.
+     * Only generates the ability for the next level (current + 1) if it exists.
+     */
+    private fun generateClassLevelUpAbilities(
+        cardDef: com.wingedsheep.sdk.model.CardDefinition,
+        classLevelComponent: ClassLevelComponent
+    ): List<ActivatedAbility> {
+        val nextLevel = classLevelComponent.currentLevel + 1
+        val nextLevelAbility = cardDef.classLevels.find { it.level == nextLevel } ?: return emptyList()
+        return listOf(
+            ActivatedAbility(
+                id = AbilityId.classLevelUp(nextLevel),
+                cost = AbilityCost.Mana(nextLevelAbility.cost),
+                effect = LevelUpClassEffect(nextLevel),
+                timing = TimingRule.SorcerySpeed,
+                descriptionOverride = "Level up to level $nextLevel"
+            )
+        )
     }
 
     /**

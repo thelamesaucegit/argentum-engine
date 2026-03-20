@@ -3,6 +3,7 @@ package com.wingedsheep.sdk.dsl
 import com.wingedsheep.sdk.core.AbilityFlag
 import com.wingedsheep.sdk.core.*
 import com.wingedsheep.sdk.model.*
+import com.wingedsheep.sdk.scripting.ClassLevelAbility
 import com.wingedsheep.sdk.scripting.SagaChapterAbility
 import com.wingedsheep.sdk.scripting.*
 import com.wingedsheep.sdk.scripting.conditions.Condition
@@ -249,6 +250,7 @@ class CardBuilder(private val name: String) {
     private val staticAbilities: MutableList<StaticAbility> = mutableListOf()
     private val additionalCosts: MutableList<AdditionalCost> = mutableListOf()
     private val replacementEffects: MutableList<ReplacementEffect> = mutableListOf()
+    private val classLevelsList: MutableList<ClassLevelAbility> = mutableListOf()
     private val sagaChaptersList: MutableList<SagaChapterAbility> = mutableListOf()
     private var equipCost: ManaCost? = null
     private var metadataBuilder: MetadataBuilder? = null
@@ -421,6 +423,24 @@ class CardBuilder(private val name: String) {
     }
 
     // =========================================================================
+    // Class Levels
+    // =========================================================================
+
+    /**
+     * Add a class level upgrade ability.
+     * Level 1 abilities use the normal CardBuilder methods (triggeredAbility, staticAbility, etc.).
+     * Use this for levels 2 and 3 to define the cost and abilities gained at that level.
+     *
+     * @param level The class level (2 or 3)
+     * @param cost The mana cost to level up (e.g., "{1}{G}")
+     */
+    fun classLevel(level: Int, cost: String, init: ClassLevelBuilder.() -> Unit) {
+        val builder = ClassLevelBuilder(level, cost)
+        builder.init()
+        classLevelsList.add(builder.build())
+    }
+
+    // =========================================================================
     // Saga Chapters
     // =========================================================================
 
@@ -491,6 +511,7 @@ class CardBuilder(private val name: String) {
             conditionalFlash = conditionalFlash,
             kickerTargetRequirements = spellBuilder?.kickerTargetRequirements ?: emptyList(),
             kickerSpellEffect = spellBuilder?.kickerEffect,
+            classLevels = classLevelsList.toList(),
             sagaChapters = sagaChaptersList.toList(),
             selfExileOnResolve = spellBuilder?.exilesOnResolve ?: false,
             selfAlternativeCost = selfAlternativeCost
@@ -978,6 +999,58 @@ class LoyaltyAbilityBuilder(private val loyaltyChange: Int) {
             isPlaneswalkerAbility = true,
             timing = TimingRule.SorcerySpeed,
             descriptionOverride = description
+        )
+    }
+}
+
+// =============================================================================
+// Class Level Builder
+// =============================================================================
+
+/**
+ * Builder for a Class enchantment level (2 or 3).
+ * Supports adding triggered, static, and activated abilities gained at this level.
+ */
+@CardDsl
+class ClassLevelBuilder(private val level: Int, private val costString: String) {
+    private val triggeredAbilities: MutableList<TriggeredAbility> = mutableListOf()
+    private val staticAbilities: MutableList<StaticAbility> = mutableListOf()
+    private val activatedAbilities: MutableList<ActivatedAbility> = mutableListOf()
+
+    /**
+     * Add a triggered ability gained at this class level.
+     */
+    fun triggeredAbility(init: TriggeredAbilityBuilder.() -> Unit) {
+        val builder = TriggeredAbilityBuilder()
+        builder.init()
+        triggeredAbilities.add(builder.build())
+    }
+
+    /**
+     * Add a static ability gained at this class level.
+     */
+    fun staticAbility(init: StaticAbilityBuilder.() -> Unit) {
+        val builder = StaticAbilityBuilder()
+        builder.init()
+        staticAbilities.add(builder.build())
+    }
+
+    /**
+     * Add an activated ability gained at this class level.
+     */
+    fun activatedAbility(init: ActivatedAbilityBuilder.() -> Unit) {
+        val builder = ActivatedAbilityBuilder()
+        builder.init()
+        activatedAbilities.add(builder.build())
+    }
+
+    fun build(): ClassLevelAbility {
+        return ClassLevelAbility(
+            level = level,
+            cost = ManaCost.parse(costString),
+            triggeredAbilities = triggeredAbilities.toList(),
+            staticAbilities = staticAbilities.toList(),
+            activatedAbilities = activatedAbilities.toList()
         )
     }
 }

@@ -25,6 +25,7 @@ import com.wingedsheep.engine.mechanics.targeting.TargetValidator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
@@ -39,6 +40,7 @@ import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.Keyword
 import com.wingedsheep.sdk.core.ManaCost
 import com.wingedsheep.sdk.scripting.AbilityCost
+import com.wingedsheep.sdk.scripting.AbilityId
 import com.wingedsheep.sdk.scripting.ActivatedAbility
 import com.wingedsheep.sdk.scripting.ActivationRestriction
 import com.wingedsheep.sdk.scripting.DampLandManaProduction
@@ -46,6 +48,7 @@ import com.wingedsheep.sdk.scripting.ExtraLoyaltyActivation
 import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToAttachedCreature
 import com.wingedsheep.sdk.scripting.GrantActivatedAbilityToCreatureGroup
 import com.wingedsheep.sdk.scripting.TimingRule
+import com.wingedsheep.sdk.scripting.effects.LevelUpClassEffect
 import com.wingedsheep.sdk.scripting.effects.AddAnyColorManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddColorlessManaEffect
 import com.wingedsheep.sdk.scripting.effects.AddManaEffect
@@ -94,8 +97,10 @@ class ActivateAbilityHandler(
         val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
             ?: return "Card definition not found"
 
-        // Look up ability from card definition, granted activated abilities, or static grants
-        val ability = cardDef.script.activatedAbilities.find { it.id == action.abilityId }
+        // Look up ability from card definition (including class-level abilities), granted abilities, or static grants
+        val classLevel = container.get<ClassLevelComponent>()?.currentLevel
+        val ability = cardDef.script.effectiveActivatedAbilities(classLevel).find { it.id == action.abilityId }
+            ?: findClassLevelUpAbility(cardDef, container, action.abilityId)
             ?: state.grantedActivatedAbilities
                 .filter { it.entityId == action.sourceId }
                 .map { it.ability }
@@ -132,7 +137,8 @@ class ActivateAbilityHandler(
             // Creatures that have lost all abilities cannot activate them (e.g., Deep Freeze)
             if (state.projectedState.hasLostAllAbilities(action.sourceId)) {
                 // Only block the creature's own abilities, not granted ones
-                val isOwnAbility = cardDef.script.activatedAbilities.any { it.id == action.abilityId }
+                val isOwnAbility = cardDef.script.effectiveActivatedAbilities(classLevel).any { it.id == action.abilityId }
+                    || action.abilityId.value.startsWith("class_level_up_")
                 if (isOwnAbility) {
                     return "This permanent has lost all abilities"
                 }
@@ -294,8 +300,10 @@ class ActivateAbilityHandler(
         val cardDef = cardRegistry?.getCard(cardComponent.cardDefinitionId)
             ?: return ExecutionResult.error(state, "Card definition not found")
 
-        // Look up ability from card definition, granted activated abilities, or static grants
-        val ability = cardDef.script.activatedAbilities.find { it.id == action.abilityId }
+        // Look up ability from card definition (including class-level abilities), granted abilities, or static grants
+        val classLevel = container.get<ClassLevelComponent>()?.currentLevel
+        val ability = cardDef.script.effectiveActivatedAbilities(classLevel).find { it.id == action.abilityId }
+            ?: findClassLevelUpAbility(cardDef, container, action.abilityId)
             ?: state.grantedActivatedAbilities
                 .filter { it.entityId == action.sourceId }
                 .map { it.ability }
@@ -1091,6 +1099,30 @@ class ActivateAbilityHandler(
             }
         }
         return 1
+    }
+
+    /**
+     * Find a class level-up ability by its deterministic ID.
+     * Returns the generated ActivatedAbility if the ID matches a valid level-up,
+     * or null if this isn't a class level-up ability.
+     */
+    private fun findClassLevelUpAbility(
+        cardDef: com.wingedsheep.sdk.model.CardDefinition,
+        container: com.wingedsheep.engine.state.ComponentContainer,
+        abilityId: com.wingedsheep.sdk.scripting.AbilityId
+    ): ActivatedAbility? {
+        if (!abilityId.value.startsWith("class_level_up_")) return null
+        val classLevelComponent = container.get<ClassLevelComponent>() ?: return null
+        val targetLevel = abilityId.value.removePrefix("class_level_up_").toIntOrNull() ?: return null
+        if (targetLevel != classLevelComponent.currentLevel + 1) return null
+        val levelAbility = cardDef.classLevels.find { it.level == targetLevel } ?: return null
+        return ActivatedAbility(
+            id = AbilityId.classLevelUp(targetLevel),
+            cost = AbilityCost.Mana(levelAbility.cost),
+            effect = LevelUpClassEffect(targetLevel),
+            timing = TimingRule.SorcerySpeed,
+            descriptionOverride = "Level up to level $targetLevel"
+        )
     }
 
     /**

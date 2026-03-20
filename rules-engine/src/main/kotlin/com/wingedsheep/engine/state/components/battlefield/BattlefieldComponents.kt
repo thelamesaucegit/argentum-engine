@@ -44,6 +44,18 @@ data object WasKickedComponent : Component
 data object ExileOnLeaveBattlefieldComponent : Component
 
 /**
+ * Tracks the current level of a Class enchantment (Rule 716).
+ * Added when a Class enters the battlefield (starts at level 1).
+ * Level advances when the player pays the level-up cost.
+ */
+@Serializable
+data class ClassLevelComponent(
+    val currentLevel: Int = 1
+) : Component {
+    fun withLevelUp(): ClassLevelComponent = copy(currentLevel = currentLevel + 1)
+}
+
+/**
  * Tracks Saga state: which chapters have already triggered.
  * Added when a Saga enters the battlefield.
  */

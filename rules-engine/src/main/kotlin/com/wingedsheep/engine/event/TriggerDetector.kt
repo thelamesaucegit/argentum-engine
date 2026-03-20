@@ -13,6 +13,7 @@ import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.battlefield.AttachedToComponent
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.CountersComponent
 import com.wingedsheep.engine.state.components.battlefield.SagaComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -77,7 +78,8 @@ class TriggerDetector(
                 if (container.has<FaceDownComponent>()) continue
                 val sourceControllerId = projected.getController(permanentId) ?: continue
                 val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
-                for (ability in cardDef.staticAbilities) {
+                val classLevel = container.get<ClassLevelComponent>()?.currentLevel
+                for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
                     if (ability is GrantTriggeredAbilityToCreatureGroup) {
                         grantProviders.add(TriggerIndex.GrantProviderEntry(ability, sourceControllerId))
                     }
@@ -831,7 +833,8 @@ class TriggerDetector(
             val controllerId = projected.getController(permanentId) ?: continue
             val cardDef = registry.getCard(card.cardDefinitionId) ?: continue
 
-            for (ability in cardDef.staticAbilities) {
+            val classLevel = container.get<ClassLevelComponent>()?.currentLevel
+            for (ability in cardDef.script.effectiveStaticAbilities(classLevel)) {
                 if (ability is AdditionalETBTriggers) {
                     doublers.add(ETBDoubler(controllerId, ability.creatureFilter, permanentId))
                 }

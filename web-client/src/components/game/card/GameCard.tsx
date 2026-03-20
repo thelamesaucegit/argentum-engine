@@ -1077,6 +1077,48 @@ export function GameCard({
         )
       })()}
 
+      {/* Class enchantment level badge and progress track */}
+      {battlefield && card.classLevel != null && card.classMaxLevel != null && (() => {
+        const currentLevel = card.classLevel
+        const maxLevel = card.classMaxLevel
+        return (
+          <>
+            {/* Level progress track along left edge */}
+            <div style={{
+              ...styles.classLevelTrack,
+            }}>
+              {Array.from({ length: maxLevel }, (_, i) => {
+                const level = i + 1
+                const isActive = currentLevel === level
+                const isCompleted = currentLevel > level
+                return (
+                  <div key={level} style={{
+                    ...styles.classLevelMarker,
+                    ...(isActive ? styles.classLevelActive : {}),
+                    ...(isCompleted ? styles.classLevelCompleted : {}),
+                    width: responsive.isMobile ? 14 : 18,
+                    height: responsive.isMobile ? 14 : 18,
+                    fontSize: responsive.isMobile ? 7 : 9,
+                  }}>
+                    {level}
+                  </div>
+                )
+              })}
+            </div>
+            {/* Level badge in P/T position */}
+            <div style={{
+              ...styles.classLevelBadge,
+              fontSize: responsive.isMobile ? 10 : 12,
+              padding: responsive.isMobile ? '1px 4px' : '2px 6px',
+            }}>
+              <span style={{ fontWeight: 700 }}>
+                Lv.{currentLevel}
+              </span>
+            </div>
+          </>
+        )
+      })()}
+
       {/* Keyword ability icons (shown for face-up cards, and for face-down cards with granted keywords) */}
       {battlefield && (card.keywords.length > 0 || (card.abilityFlags && card.abilityFlags.length > 0) || (card.protections && card.protections.length > 0)) && (
         <KeywordIcons keywords={card.keywords} abilityFlags={card.abilityFlags ?? []} protections={card.protections ?? []} size={responsive.isMobile ? 14 : 18} />

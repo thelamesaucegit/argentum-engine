@@ -1,0 +1,38 @@
+package com.wingedsheep.engine.handlers.effects.permanent
+
+import com.wingedsheep.engine.core.ExecutionResult
+import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
+import com.wingedsheep.sdk.scripting.effects.LevelUpClassEffect
+import kotlin.reflect.KClass
+
+/**
+ * Executor for the LevelUpClassEffect.
+ * Advances a Class enchantment to the specified target level.
+ */
+class LevelUpClassExecutor : EffectExecutor<LevelUpClassEffect> {
+    override val effectType: KClass<LevelUpClassEffect> = LevelUpClassEffect::class
+
+    override fun execute(
+        state: GameState,
+        effect: LevelUpClassEffect,
+        context: EffectContext
+    ): ExecutionResult {
+        val sourceId = context.sourceId ?: return ExecutionResult.success(state)
+        val container = state.getEntity(sourceId) ?: return ExecutionResult.success(state)
+        val classComponent = container.get<ClassLevelComponent>() ?: return ExecutionResult.success(state)
+
+        // Only level up if the target level is exactly one above current
+        if (effect.targetLevel != classComponent.currentLevel + 1) {
+            return ExecutionResult.success(state)
+        }
+
+        val newState = state.updateEntity(sourceId) { c ->
+            c.with(classComponent.withLevelUp())
+        }
+
+        return ExecutionResult.success(newState)
+    }
+}

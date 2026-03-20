@@ -13,6 +13,7 @@ import com.wingedsheep.mtg.sets.definitions.scourge.ScourgeSet
 import com.wingedsheep.engine.state.ComponentContainer
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
+import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CantBeCounteredComponent
@@ -170,6 +171,11 @@ abstract class ScenarioTestBase : FunSpec() {
                 val staticHandler = StaticAbilityHandler(cardRegistry)
                 container = staticHandler.addContinuousEffectComponent(container, cardDef)
                 container = staticHandler.addReplacementEffectComponent(container, cardDef)
+
+                // Add ClassLevelComponent for Class enchantments (starts at level 1)
+                if (cardDef.isClass) {
+                    container = container.with(ClassLevelComponent(currentLevel = 1))
+                }
             }
 
             state = state.withEntity(cardId, container)

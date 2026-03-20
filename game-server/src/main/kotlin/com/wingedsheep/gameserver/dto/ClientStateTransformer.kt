@@ -776,6 +776,8 @@ class ClientStateTransformer(
             },
             damageDistribution = spellOnStack?.damageDistribution?.takeIf { it.isNotEmpty() },
             sagaTotalChapters = cardDef?.finalChapter,
+            classLevel = container.get<com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent>()?.currentLevel,
+            classMaxLevel = cardDef?.maxClassLevel,
             stackText = if (zoneKey.zoneType == Zone.STACK && spellOnStack != null && cardDef != null) {
                 when {
                     spellOnStack.castFaceDown -> "Cast as a face-down 2/2 creature"

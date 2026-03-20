@@ -178,6 +178,7 @@ value class Subtype(val value: String) {
 
         // Enchantment subtypes
         val AURA = Subtype("Aura")
+        val CLASS = Subtype("Class")
         val SAGA = Subtype("Saga")
 
         // Artifact subtypes

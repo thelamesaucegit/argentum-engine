@@ -110,6 +110,7 @@ data class CardDefinition(
     val isPermanent: Boolean get() = typeLine.isPermanent
     val isDoubleFaced: Boolean get() = backFace != null
     val isPlaneswalker: Boolean get() = CardType.PLANESWALKER in typeLine.cardTypes
+    val isClass: Boolean get() = typeLine.isClass
     val isSaga: Boolean get() = typeLine.isSaga
 
     fun hasKeyword(keyword: Keyword): Boolean = keyword in keywords
@@ -135,6 +136,12 @@ data class CardDefinition(
 
     /** Target requirements when casting this spell */
     val targetRequirements get() = script.targetRequirements
+
+    /** Class level abilities */
+    val classLevels get() = script.classLevels
+
+    /** The maximum class level, or null if not a Class */
+    val maxClassLevel: Int? get() = script.maxClassLevel
 
     /** Saga chapter abilities */
     val sagaChapters get() = script.sagaChapters
