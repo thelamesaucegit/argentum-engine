@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 11 / 266
+**Implemented:** 12 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 3    |
-| Blue       | 41    | 1    |
+| Blue       | 41    | 2    |
 | Black      | 40    | 2    |
 | Red        | 41    | 2    |
 | Green      | 41    | 1    |
@@ -220,7 +220,7 @@
 - [ ] Skyskipper Duo
 - [ ] Sonar Strike
 - [ ] Spellgyre
-- [ ] Splash Lasher
+- [x] Splash Lasher
 - [ ] Splash Portal
 - [ ] Star Charter
 - [ ] Starfall Invocation

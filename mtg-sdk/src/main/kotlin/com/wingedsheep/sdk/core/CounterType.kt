@@ -20,5 +20,6 @@ enum class CounterType {
     DEPLETION,
     EGG,
     LORE,
-    AIM
+    AIM,
+    STUN
 }
