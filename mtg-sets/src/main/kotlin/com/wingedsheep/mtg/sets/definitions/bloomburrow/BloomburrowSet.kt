@@ -34,6 +34,7 @@ object BloomburrowSet {
         JackdawSavior,
         JunkbladeBruiser,
         HuntersTalent,
+        MindSpiral,
         MouseTrapper,
         NightwhorlHermit,
         OsteomancerAdept,
