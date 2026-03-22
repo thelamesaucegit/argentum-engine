@@ -25,7 +25,7 @@ class AddCountersToCollectionExecutor : EffectExecutor<AddCountersToCollectionEf
         effect: AddCountersToCollectionEffect,
         context: EffectContext
     ): ExecutionResult {
-        val entityIds = context.storedCollections[effect.collectionName]
+        val entityIds = context.pipeline.storedCollections[effect.collectionName]
             ?: return ExecutionResult.success(state)
 
         if (entityIds.isEmpty()) return ExecutionResult.success(state)

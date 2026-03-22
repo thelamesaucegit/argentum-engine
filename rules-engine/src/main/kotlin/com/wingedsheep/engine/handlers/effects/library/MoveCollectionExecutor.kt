@@ -47,7 +47,7 @@ class MoveCollectionExecutor(
         effect: MoveCollectionEffect,
         context: EffectContext
     ): ExecutionResult {
-        val cards = context.storedCollections[effect.from]
+        val cards = context.pipeline.storedCollections[effect.from]
             ?: return ExecutionResult.error(state, "No collection named '${effect.from}' in storedCollections")
 
         val destination = effect.destination

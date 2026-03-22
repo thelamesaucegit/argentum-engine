@@ -83,7 +83,7 @@ class GatherCardsExecutor : EffectExecutor<GatherCardsEffect> {
             }
 
             is CardSource.FromVariable -> {
-                context.storedCollections[source.variableName] ?: emptyList()
+                context.pipeline.storedCollections[source.variableName] ?: emptyList()
             }
 
             is CardSource.ControlledPermanents -> {

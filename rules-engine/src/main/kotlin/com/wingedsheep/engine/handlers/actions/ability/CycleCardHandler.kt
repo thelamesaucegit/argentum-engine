@@ -11,7 +11,7 @@ import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.event.TriggerDetector
 import com.wingedsheep.engine.event.TriggerProcessor
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor
 import com.wingedsheep.engine.mechanics.mana.ManaPool
@@ -265,12 +265,12 @@ class CycleCardHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): CycleCardHandler {
+        fun create(services: EngineServices): CycleCardHandler {
             return CycleCardHandler(
-                context.cardRegistry,
-                context.manaSolver,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.cardRegistry,
+                services.manaSolver,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

@@ -9,7 +9,7 @@ import com.wingedsheep.engine.core.TurnManager
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.event.TriggerDetector
 import com.wingedsheep.engine.event.TriggerProcessor
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.StateBasedActionChecker
 import com.wingedsheep.engine.mechanics.stack.StackResolver
@@ -236,13 +236,13 @@ class PassPriorityHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): PassPriorityHandler {
+        fun create(services: EngineServices): PassPriorityHandler {
             return PassPriorityHandler(
-                context.turnManager,
-                context.stackResolver,
-                context.sbaChecker,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.turnManager,
+                services.stackResolver,
+                services.sbaChecker,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

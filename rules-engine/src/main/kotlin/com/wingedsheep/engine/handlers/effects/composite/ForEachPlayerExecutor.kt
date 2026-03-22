@@ -59,7 +59,7 @@ class ForEachPlayerExecutor(
             // and fresh storedCollections
             val perPlayerContext = outerContext.copy(
                 controllerId = playerId,
-                storedCollections = emptyMap()
+                pipeline = outerContext.pipeline.copy(storedCollections = emptyMap())
             )
 
             // Pre-push a ForEachPlayerContinuation for remaining players
@@ -159,7 +159,7 @@ class ForEachPlayerExecutor(
 
             if (result.updatedCollections.isNotEmpty()) {
                 currentContext = currentContext.copy(
-                    storedCollections = currentContext.storedCollections + result.updatedCollections
+                    pipeline = currentContext.pipeline.copy(storedCollections = currentContext.pipeline.storedCollections + result.updatedCollections)
                 )
             }
         }

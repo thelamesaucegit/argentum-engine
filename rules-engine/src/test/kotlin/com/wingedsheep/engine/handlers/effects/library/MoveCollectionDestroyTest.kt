@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers.effects.library
 
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
 import com.wingedsheep.engine.mechanics.layers.Layer
@@ -75,7 +76,7 @@ class MoveCollectionDestroyTest : FunSpec({
         sourceId = null,
         controllerId = controllerId,
         opponentId = opponentId,
-        storedCollections = mapOf(collectionName to cards)
+        pipeline = PipelineState(storedCollections = mapOf(collectionName to cards))
     )
 
     fun destroyEffect(collectionName: String = "targets") = MoveCollectionEffect(

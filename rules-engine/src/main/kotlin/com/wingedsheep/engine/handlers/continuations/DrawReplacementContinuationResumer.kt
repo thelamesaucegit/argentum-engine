@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers.continuations
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.CostHandler
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.handlers.effects.drawing.DrawCardsExecutor
 import com.wingedsheep.engine.mechanics.mana.ManaPool
 import com.wingedsheep.engine.mechanics.mana.ManaSolver
@@ -332,7 +333,7 @@ class DrawReplacementContinuationResumer(
             sourceId = continuation.sourceId,
             opponentId = opponents.firstOrNull(),
             targets = chosenTargets,
-            namedTargets = EffectContext.buildNamedTargets(continuation.targetRequirements, chosenTargets)
+            pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(continuation.targetRequirements, chosenTargets))
         )
         val effectResult = services.effectExecutorRegistry.execute(
             newState, continuation.abilityEffect, effectContext

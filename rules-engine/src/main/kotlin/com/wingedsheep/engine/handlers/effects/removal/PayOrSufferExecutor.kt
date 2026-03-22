@@ -127,7 +127,7 @@ class PayOrSufferExecutor(
             filter = cost.filter,
             random = false,
             targets = context.targets,
-            namedTargets = context.namedTargets
+            namedTargets = context.pipeline.namedTargets
         )
 
         val stateWithContinuation = decisionResult.state.pushContinuation(continuation)
@@ -187,7 +187,7 @@ class PayOrSufferExecutor(
             filter = cost.filter,
             random = true,
             targets = context.targets,
-            namedTargets = context.namedTargets
+            namedTargets = context.pipeline.namedTargets
         )
 
         val stateWithDecision = state.withPendingDecision(decision)
@@ -256,7 +256,7 @@ class PayOrSufferExecutor(
             filter = cost.filter,
             random = false,
             targets = context.targets,
-            namedTargets = context.namedTargets
+            namedTargets = context.pipeline.namedTargets
         )
 
         val stateWithContinuation = decisionResult.state.pushContinuation(continuation)
@@ -317,7 +317,7 @@ class PayOrSufferExecutor(
             filter = GameObjectFilter.Any, // Not used for life payment
             random = false,
             targets = context.targets,
-            namedTargets = context.namedTargets
+            namedTargets = context.pipeline.namedTargets
         )
 
         val stateWithDecision = state.withPendingDecision(decision)
@@ -381,7 +381,7 @@ class PayOrSufferExecutor(
             filter = cost.filter,
             random = false,
             targets = context.targets,
-            namedTargets = context.namedTargets,
+            namedTargets = context.pipeline.namedTargets,
             zone = cost.zone
         )
 
@@ -441,7 +441,7 @@ class PayOrSufferExecutor(
             filter = GameObjectFilter.Any,
             random = false,
             targets = context.targets,
-            namedTargets = context.namedTargets,
+            namedTargets = context.pipeline.namedTargets,
             manaCost = cost.cost
         )
 

@@ -290,7 +290,7 @@ class ConditionEvaluator {
         condition: YouControlMostOfChosenType,
         context: EffectContext
     ): Boolean {
-        val chosenType = context.chosenValues[condition.chosenValueKey] ?: return false
+        val chosenType = context.pipeline.chosenValues[condition.chosenValueKey] ?: return false
         val projected = state.projectedState
         val controllerId = context.controllerId
 

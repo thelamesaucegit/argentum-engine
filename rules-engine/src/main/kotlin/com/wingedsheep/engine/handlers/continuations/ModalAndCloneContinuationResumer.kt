@@ -2,6 +2,7 @@ package com.wingedsheep.engine.handlers.continuations
 
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.stack.SpellOnStackComponent
@@ -90,7 +91,7 @@ class ModalAndCloneContinuationResumer(
                         opponentId = continuation.opponentId,
                         xValue = continuation.xValue,
                         targets = chosenTargets,
-                        namedTargets = EffectContext.buildNamedTargets(chosenMode.targetRequirements, chosenTargets)
+                        pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(chosenMode.targetRequirements, chosenTargets))
                     )
                     val result = services.effectExecutorRegistry.execute(state, chosenMode.effect, context)
                     if (result.isPaused) return result
@@ -193,7 +194,7 @@ class ModalAndCloneContinuationResumer(
             opponentId = continuation.opponentId,
             xValue = continuation.xValue,
             targets = chosenTargets,
-            namedTargets = EffectContext.buildNamedTargets(continuation.targetRequirements, chosenTargets)
+            pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(continuation.targetRequirements, chosenTargets))
         )
 
         val result = services.effectExecutorRegistry.execute(state, continuation.effect, context)

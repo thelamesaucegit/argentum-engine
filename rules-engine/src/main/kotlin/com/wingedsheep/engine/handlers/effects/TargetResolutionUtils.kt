@@ -24,14 +24,14 @@ object TargetResolutionUtils {
      */
     fun resolveTarget(effectTarget: EffectTarget, context: EffectContext): EntityId? {
         return when (effectTarget) {
-            is EffectTarget.Self -> context.iterationTarget ?: context.sourceId
+            is EffectTarget.Self -> context.pipeline.iterationTarget ?: context.sourceId
             is EffectTarget.Controller -> context.controllerId
             is EffectTarget.ContextTarget -> context.targets.getOrNull(effectTarget.index)?.toEntityId()
-            is EffectTarget.BoundVariable -> context.namedTargets[effectTarget.name]?.toEntityId()
+            is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()
             is EffectTarget.SpecificEntity -> effectTarget.entityId
             is EffectTarget.TriggeringEntity -> context.triggeringEntityId
             is EffectTarget.PipelineTarget ->
-                context.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
+                context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
             else -> null
         }
     }
@@ -56,7 +56,7 @@ object TargetResolutionUtils {
                 ?: entity.get<CardComponent>()?.ownerId
         }
         if (effectTarget is EffectTarget.PipelineTarget) {
-            return context.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
+            return context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
         }
         return resolveTarget(effectTarget, context)
     }
@@ -68,9 +68,9 @@ object TargetResolutionUtils {
         return when (effectTarget) {
             is EffectTarget.Controller -> context.controllerId
             is EffectTarget.ContextTarget -> context.targets.getOrNull(effectTarget.index)?.toEntityId()
-            is EffectTarget.BoundVariable -> context.namedTargets[effectTarget.name]?.toEntityId()
+            is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()
             is EffectTarget.PipelineTarget ->
-                context.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
+                context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
             is EffectTarget.PlayerRef -> when (effectTarget.player) {
                 Player.You -> context.controllerId
                 Player.Opponent, Player.TargetOpponent -> context.opponentId
@@ -120,9 +120,9 @@ object TargetResolutionUtils {
     fun resolvePlayerTargets(effectTarget: EffectTarget, state: GameState, context: EffectContext): List<EntityId> {
         return when (effectTarget) {
             is EffectTarget.Controller -> listOf(context.controllerId)
-            is EffectTarget.BoundVariable -> context.namedTargets[effectTarget.name]?.toEntityId()?.let { listOf(it) } ?: emptyList()
+            is EffectTarget.BoundVariable -> context.pipeline.namedTargets[effectTarget.name]?.toEntityId()?.let { listOf(it) } ?: emptyList()
             is EffectTarget.PipelineTarget -> {
-                context.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
+                context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
                     ?.let { listOf(it) } ?: emptyList()
             }
             is EffectTarget.PlayerRef -> when (effectTarget.player) {

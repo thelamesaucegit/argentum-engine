@@ -1,5 +1,6 @@
 package com.wingedsheep.engine.handlers.actions
 
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.event.TriggerDetector
@@ -166,11 +167,11 @@ class PostActionProcessor(
     }
 
     companion object {
-        fun create(context: ActionContext): PostActionProcessor {
+        fun create(services: EngineServices): PostActionProcessor {
             return PostActionProcessor(
-                context.triggerDetector,
-                context.triggerProcessor,
-                context.sbaChecker
+                services.triggerDetector,
+                services.triggerProcessor,
+                services.sbaChecker
             )
         }
     }

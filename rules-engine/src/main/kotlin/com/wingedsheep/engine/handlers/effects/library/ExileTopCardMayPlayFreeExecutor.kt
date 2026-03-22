@@ -26,7 +26,7 @@ class GrantMayPlayFromExileExecutor : EffectExecutor<GrantMayPlayFromExileEffect
         context: EffectContext
     ): ExecutionResult {
         val controllerId = context.controllerId
-        val collection = context.storedCollections[effect.from] ?: emptyList()
+        val collection = context.pipeline.storedCollections[effect.from] ?: emptyList()
 
         var newState = state
         for (cardId in collection) {
@@ -55,7 +55,7 @@ class GrantPlayWithoutPayingCostExecutor : EffectExecutor<GrantPlayWithoutPaying
         context: EffectContext
     ): ExecutionResult {
         val controllerId = context.controllerId
-        val collection = context.storedCollections[effect.from] ?: emptyList()
+        val collection = context.pipeline.storedCollections[effect.from] ?: emptyList()
 
         var newState = state
         for (cardId in collection) {

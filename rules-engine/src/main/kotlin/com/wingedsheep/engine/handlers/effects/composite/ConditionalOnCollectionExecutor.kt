@@ -25,7 +25,7 @@ class ConditionalOnCollectionExecutor(
         effect: ConditionalOnCollectionEffect,
         context: EffectContext
     ): ExecutionResult {
-        val collection = context.storedCollections[effect.collection] ?: emptyList()
+        val collection = context.pipeline.storedCollections[effect.collection] ?: emptyList()
 
         val elseEffect = effect.ifEmpty
         return if (collection.isNotEmpty()) {

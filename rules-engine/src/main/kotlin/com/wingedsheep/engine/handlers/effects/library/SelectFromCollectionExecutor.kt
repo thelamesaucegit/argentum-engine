@@ -41,7 +41,7 @@ class SelectFromCollectionExecutor : EffectExecutor<SelectFromCollectionEffect> 
         effect: SelectFromCollectionEffect,
         context: EffectContext
     ): ExecutionResult {
-        val cards = context.storedCollections[effect.from]
+        val cards = context.pipeline.storedCollections[effect.from]
             ?: return ExecutionResult.error(state, "No collection named '${effect.from}' in storedCollections")
 
         val remainderName = effect.storeRemainder
@@ -230,7 +230,7 @@ class SelectFromCollectionExecutor : EffectExecutor<SelectFromCollectionEffect> 
             allCards = allCards,
             storeSelected = effect.storeSelected,
             storeRemainder = effect.storeRemainder,
-            storedCollections = context.storedCollections
+            storedCollections = context.pipeline.storedCollections
         )
 
         val stateWithDecision = state.withPendingDecision(decision)

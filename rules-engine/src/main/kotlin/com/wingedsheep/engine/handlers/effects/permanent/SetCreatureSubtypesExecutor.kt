@@ -41,7 +41,7 @@ class SetCreatureSubtypesExecutor : EffectExecutor<SetCreatureSubtypesEffect> {
 
         // Resolve subtypes: from chosen value in context, or from hardcoded field
         val subtypes = if (effect.fromChosenValueKey != null) {
-            val chosen = context.chosenValues[effect.fromChosenValueKey]
+            val chosen = context.pipeline.chosenValues[effect.fromChosenValueKey]
                 ?: return ExecutionResult.success(state)
             setOf(chosen)
         } else {

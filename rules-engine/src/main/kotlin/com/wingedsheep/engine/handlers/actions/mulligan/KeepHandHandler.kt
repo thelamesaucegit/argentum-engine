@@ -6,7 +6,7 @@ import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.core.KeepHand
 import com.wingedsheep.engine.core.TurnManager
 import com.wingedsheep.engine.handlers.MulliganHandler
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.player.MulliganStateComponent
@@ -61,8 +61,8 @@ class KeepHandHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): KeepHandHandler {
-            return KeepHandHandler(context.mulliganHandler, context.turnManager)
+        fun create(services: EngineServices): KeepHandHandler {
+            return KeepHandHandler(services.mulliganHandler, services.turnManager)
         }
     }
 }

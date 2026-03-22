@@ -4,7 +4,7 @@ import com.wingedsheep.engine.core.DeclareAttackers
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.event.TriggerDetector
 import com.wingedsheep.engine.event.TriggerProcessor
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.combat.CombatManager
 import com.wingedsheep.engine.state.GameState
@@ -65,11 +65,11 @@ class DeclareAttackersHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): DeclareAttackersHandler {
+        fun create(services: EngineServices): DeclareAttackersHandler {
             return DeclareAttackersHandler(
-                context.combatManager,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.combatManager,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

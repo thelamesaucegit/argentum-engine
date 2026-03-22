@@ -2,6 +2,7 @@ package com.wingedsheep.engine.mechanics.stack
 
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.handlers.EffectHandler
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
 import com.wingedsheep.engine.registry.CardRegistry
@@ -801,7 +802,7 @@ class StackResolver(
                 damageDistribution = spellComponent.damageDistribution,
                 chosenCreatureType = spellComponent.chosenCreatureType,
                 exiledCardCount = spellComponent.exiledCardCount,
-                namedTargets = EffectContext.buildNamedTargets(targetRequirements, targets)
+                pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(targetRequirements, targets))
             )
 
             val effectResult = effectHandler.execute(newState, spellEffect, context)
@@ -954,7 +955,7 @@ class StackResolver(
             triggeringEntityId = abilityComponent.triggeringEntityId,
             triggeringPlayerId = abilityComponent.triggeringPlayerId,
             xValue = abilityComponent.xValue,
-            namedTargets = EffectContext.buildNamedTargets(targetReqs, resolvedTargets2)
+            pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(targetReqs, resolvedTargets2))
         )
 
         val effectResult = effectHandler.execute(state, abilityComponent.effect, context)
@@ -1032,7 +1033,7 @@ class StackResolver(
             sacrificedPermanentSubtypes = abilityComponent.sacrificedPermanentSubtypes,
             xValue = abilityComponent.xValue,
             tappedPermanents = abilityComponent.tappedPermanents,
-            namedTargets = EffectContext.buildNamedTargets(activatedReqs, activatedTargets)
+            pipeline = PipelineState(namedTargets = EffectContext.buildNamedTargets(activatedReqs, activatedTargets))
         )
 
         val effectResult = effectHandler.execute(state, abilityComponent.effect, context)

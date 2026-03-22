@@ -16,7 +16,7 @@ import com.wingedsheep.engine.event.TriggerProcessor
 import com.wingedsheep.engine.handlers.CostHandler
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.handlers.effects.ZoneMovementUtils
 import com.wingedsheep.engine.mechanics.layers.StaticAbilityHandler
@@ -626,15 +626,15 @@ class TurnFaceUpHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): TurnFaceUpHandler {
+        fun create(services: EngineServices): TurnFaceUpHandler {
             return TurnFaceUpHandler(
-                context.cardRegistry,
-                context.manaSolver,
-                context.costHandler,
-                context.costCalculator,
-                context.triggerDetector,
-                context.triggerProcessor,
-                context.effectExecutorRegistry
+                services.cardRegistry,
+                services.manaSolver,
+                services.costHandler,
+                services.costCalculator,
+                services.triggerDetector,
+                services.triggerProcessor,
+                services.effectExecutorRegistry
             )
         }
     }

@@ -97,7 +97,7 @@ class DrawUpToExecutor(
                 val (_, stateAfterPop) = state.popContinuation()
                 stateAfterPop.pushContinuation(
                     nextFrame.copy(effectContext = nextFrame.effectContext.copy(
-                        storedNumbers = nextFrame.effectContext.storedNumbers + (name to value)
+                        pipeline = nextFrame.effectContext.pipeline.copy(storedNumbers = nextFrame.effectContext.pipeline.storedNumbers + (name to value))
                     ))
                 )
             } else {

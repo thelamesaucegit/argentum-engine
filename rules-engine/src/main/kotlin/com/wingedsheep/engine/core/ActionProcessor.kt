@@ -1,6 +1,5 @@
 package com.wingedsheep.engine.core
 
-import com.wingedsheep.engine.handlers.actions.ActionContext
 import com.wingedsheep.engine.handlers.actions.ActionHandlerRegistry
 import com.wingedsheep.engine.handlers.actions.ability.AbilityModule
 import com.wingedsheep.engine.handlers.actions.combat.CombatModule
@@ -37,40 +36,18 @@ class ActionProcessor(
     constructor(cardRegistry: CardRegistry) : this(EngineServices(cardRegistry))
 
     /**
-     * Context containing all dependencies needed by action handlers.
-     */
-    private val context = ActionContext(
-        cardRegistry = services.cardRegistry,
-        combatManager = services.combatManager,
-        turnManager = services.turnManager,
-        stackResolver = services.stackResolver,
-        manaSolver = services.manaSolver,
-        costCalculator = services.costCalculator,
-        alternativePaymentHandler = services.alternativePaymentHandler,
-        costHandler = services.costHandler,
-        mulliganHandler = services.mulliganHandler,
-        effectExecutorRegistry = services.effectExecutorRegistry,
-        continuationHandler = services.continuationHandler,
-        sbaChecker = services.sbaChecker,
-        triggerDetector = services.triggerDetector,
-        triggerProcessor = services.triggerProcessor,
-        conditionEvaluator = services.conditionEvaluator,
-        targetValidator = services.targetValidator
-    )
-
-    /**
      * Registry that maps action types to their handlers.
      */
     private val registry = ActionHandlerRegistry().apply {
         registerModule(SpecialActionsModule())
-        registerModule(PriorityModule(context))
-        registerModule(LandModule(context))
-        registerModule(MulliganModule(context))
-        registerModule(CombatModule(context))
-        registerModule(AbilityModule(context))
-        registerModule(MorphModule(context))
-        registerModule(SpellModule(context))
-        registerModule(DecisionModule(context))
+        registerModule(PriorityModule(services))
+        registerModule(LandModule(services))
+        registerModule(MulliganModule(services))
+        registerModule(CombatModule(services))
+        registerModule(AbilityModule(services))
+        registerModule(MorphModule(services))
+        registerModule(SpellModule(services))
+        registerModule(DecisionModule(services))
     }
 
     /**

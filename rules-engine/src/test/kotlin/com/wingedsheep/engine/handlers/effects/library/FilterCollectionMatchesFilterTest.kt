@@ -1,6 +1,7 @@
 package com.wingedsheep.engine.handlers.effects.library
 
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.mechanics.layers.ActiveFloatingEffect
 import com.wingedsheep.engine.mechanics.layers.FloatingEffectData
 import com.wingedsheep.engine.mechanics.layers.Layer
@@ -75,7 +76,7 @@ class FilterCollectionMatchesFilterTest : FunSpec({
         sourceId = null,
         controllerId = controllerId,
         opponentId = opponentId,
-        storedCollections = collection
+        pipeline = PipelineState(storedCollections = collection)
     )
 
     fun filterEffect(

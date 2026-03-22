@@ -5,7 +5,7 @@ import com.wingedsheep.engine.core.PlayLand
 import com.wingedsheep.engine.core.ZoneChangeEvent
 import com.wingedsheep.engine.event.TriggerDetector
 import com.wingedsheep.engine.event.TriggerProcessor
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
@@ -277,8 +277,8 @@ class PlayLandHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): PlayLandHandler {
-            return PlayLandHandler(context.cardRegistry, context.triggerDetector, context.triggerProcessor)
+        fun create(services: EngineServices): PlayLandHandler {
+            return PlayLandHandler(services.cardRegistry, services.triggerDetector, services.triggerProcessor)
         }
     }
 }

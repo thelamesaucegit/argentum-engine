@@ -95,7 +95,7 @@ class SelectTargetPipelineExecutor(
             sourceId = context.sourceId,
             sourceName = sourceName,
             storeAs = effect.storeAs,
-            storedCollections = context.storedCollections
+            storedCollections = context.pipeline.storedCollections
         )
 
         val stateWithDecision = state.withPendingDecision(decision)

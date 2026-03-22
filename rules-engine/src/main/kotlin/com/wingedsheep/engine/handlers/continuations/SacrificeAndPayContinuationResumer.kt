@@ -5,6 +5,7 @@ import com.wingedsheep.engine.handlers.effects.removal.ForceExileMultiZoneExecut
 import com.wingedsheep.engine.handlers.effects.removal.ForceSacrificeExecutor
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
 import com.wingedsheep.engine.mechanics.mana.ManaPool
@@ -456,7 +457,7 @@ class SacrificeAndPayContinuationResumer(
             controllerId = playerId,
             opponentId = null,
             targets = continuation.targets,
-            namedTargets = continuation.namedTargets
+            pipeline = PipelineState(namedTargets = continuation.namedTargets)
         )
 
         // Execute the suffer effect using the registry

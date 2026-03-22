@@ -8,20 +8,32 @@ import kotlinx.serialization.Serializable
 
 /**
  * Context for effect execution.
+ *
+ * Core fields (sourceId, controllerId, targets, etc.) are always relevant.
+ * Pipeline-specific state (collections, named values, iteration targets) lives
+ * in [pipeline] to keep the two concerns separate and make pipeline extensions
+ * self-contained.
  */
 @Serializable
 data class EffectContext(
+    // --- Core ---
     val sourceId: EntityId?,
     val controllerId: EntityId,
     val opponentId: EntityId?,
     val targets: List<ChosenTarget> = emptyList(),
     val xValue: Int? = null,
     val wasKicked: Boolean = false,
+    // --- Cast-time state ---
     val sacrificedPermanents: List<EntityId> = emptyList(),
     /** Projected subtypes of sacrificed permanents at time of sacrifice (before zone change) */
     val sacrificedPermanentSubtypes: Map<EntityId, Set<String>> = emptyMap(),
     /** Pre-chosen damage distribution for DividedDamageEffect spells (target ID -> damage amount) */
     val damageDistribution: Map<EntityId, Int>? = null,
+    /** Number of cards exiled as an additional cost (for ExileVariableCards) */
+    val exiledCardCount: Int = 0,
+    /** Permanents tapped as part of an activated ability's cost (e.g., Cryptic Gateway) */
+    val tappedPermanents: List<EntityId> = emptyList(),
+    // --- Trigger state ---
     /** Amount of damage from a trigger context (e.g., "Whenever ~ is dealt damage") */
     val triggerDamageAmount: Int? = null,
     /** Last known +1/+1 counter count from a death trigger context (e.g., Hooded Hydra) */
@@ -30,26 +42,13 @@ data class EffectContext(
     val triggeringEntityId: EntityId? = null,
     /** The player associated with the trigger event (e.g., the player who cast a spell for SpellCastEvent) */
     val triggeringPlayerId: EntityId? = null,
+    // --- Choice state ---
     /** Color chosen for "add one mana of any color" abilities */
     val manaColorChoice: Color? = null,
     /** Creature type chosen during casting (e.g., Aphetto Dredging) */
     val chosenCreatureType: String? = null,
-    /** Permanents tapped as part of an activated ability's cost (e.g., Cryptic Gateway) */
-    val tappedPermanents: List<EntityId> = emptyList(),
-    /** Named card collections for pipeline effects (GatherCards → SelectFromCollection → MoveCollection) */
-    val storedCollections: Map<String, List<EntityId>> = emptyMap(),
-    /** When inside a ForEachInGroupEffect, the current iteration entity. EffectTarget.Self resolves to this. */
-    val iterationTarget: EntityId? = null,
-    /** Named targets map for BoundVariable resolution (target name -> chosen target) */
-    val namedTargets: Map<String, ChosenTarget> = emptyMap(),
-    /** Named values chosen by the player during pipeline execution (e.g., creature type, color). */
-    val chosenValues: Map<String, String> = emptyMap(),
-    /** Number of cards exiled as an additional cost (for ExileVariableCards) */
-    val exiledCardCount: Int = 0,
-    /** Named numeric values stored by pipeline effects (e.g., cards not drawn). */
-    val storedNumbers: Map<String, Int> = emptyMap(),
-    /** Named string lists stored by pipeline effects (e.g., chosen creature types). */
-    val storedStringLists: Map<String, List<String>> = emptyMap()
+    // --- Pipeline state ---
+    val pipeline: PipelineState = PipelineState.EMPTY
 ) {
     companion object {
         /**

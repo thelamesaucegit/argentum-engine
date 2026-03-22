@@ -14,7 +14,7 @@ import com.wingedsheep.engine.handlers.ConditionEvaluator
 import com.wingedsheep.engine.handlers.CostHandler
 import com.wingedsheep.engine.handlers.DynamicAmountEvaluator
 import com.wingedsheep.engine.handlers.EffectContext
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.handlers.effects.EffectExecutorRegistry
 import com.wingedsheep.engine.mechanics.mana.AlternativePaymentHandler
@@ -1175,19 +1175,19 @@ class ActivateAbilityHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): ActivateAbilityHandler {
+        fun create(services: EngineServices): ActivateAbilityHandler {
             return ActivateAbilityHandler(
-                context.cardRegistry,
-                context.turnManager,
-                context.costHandler,
-                context.manaSolver,
-                context.alternativePaymentHandler,
-                context.effectExecutorRegistry,
-                context.stackResolver,
-                context.targetValidator,
-                context.conditionEvaluator,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.cardRegistry,
+                services.turnManager,
+                services.costHandler,
+                services.manaSolver,
+                services.alternativePaymentHandler,
+                services.effectExecutorRegistry,
+                services.stackResolver,
+                services.targetValidator,
+                services.conditionEvaluator,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

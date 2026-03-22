@@ -1,6 +1,6 @@
 package com.wingedsheep.engine.handlers.actions.mulligan
 
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.handlers.actions.ActionHandlerModule
 
@@ -12,10 +12,10 @@ import com.wingedsheep.engine.handlers.actions.ActionHandlerModule
  * - KeepHand: Keep current hand
  * - BottomCards: Put cards on bottom after keeping (London mulligan)
  */
-class MulliganModule(private val context: ActionContext) : ActionHandlerModule {
+class MulliganModule(private val services: EngineServices) : ActionHandlerModule {
     override fun handlers(): List<ActionHandler<*>> = listOf(
-        TakeMulliganHandler.create(context),
-        KeepHandHandler.create(context),
-        BottomCardsHandler.create(context)
+        TakeMulliganHandler.create(services),
+        KeepHandHandler.create(services),
+        BottomCardsHandler.create(services)
     )
 }

@@ -57,7 +57,7 @@ class ForEachInGroupExecutor(
 
         // 3. Execute inner effect for each matched entity
         for (entityId in matchedEntities) {
-            val innerContext = context.copy(iterationTarget = entityId)
+            val innerContext = context.copy(pipeline = context.pipeline.copy(iterationTarget = entityId))
             val result = effectExecutor(currentState, effect.effect, innerContext)
 
             if (result.isPaused) {
@@ -88,7 +88,7 @@ class ForEachInGroupExecutor(
 
         // If the filter references a chosen subtype, resolve it from context
         val chosenSubtype = filter.chosenSubtypeKey?.let { key ->
-            context.chosenValues[key]
+            context.pipeline.chosenValues[key]
         }
         // If a chosen subtype key is specified but no value was chosen, return empty
         if (filter.chosenSubtypeKey != null && chosenSubtype == null) {

@@ -4,7 +4,7 @@ import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.event.TriggerDetector
 import com.wingedsheep.engine.event.TriggerProcessor
 import com.wingedsheep.engine.handlers.ContinuationHandler
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.StateBasedActionChecker
 import com.wingedsheep.engine.state.GameState
@@ -276,13 +276,13 @@ class SubmitDecisionHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): SubmitDecisionHandler {
+        fun create(services: EngineServices): SubmitDecisionHandler {
             return SubmitDecisionHandler(
-                context.continuationHandler,
-                context.turnManager,
-                context.sbaChecker,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.continuationHandler,
+                services.turnManager,
+                services.sbaChecker,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

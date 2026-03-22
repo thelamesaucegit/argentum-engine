@@ -4,6 +4,7 @@ import com.wingedsheep.engine.core.DrawReplacementRemainingDrawsContinuation
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.handlers.EffectContext
+import com.wingedsheep.engine.handlers.PipelineState
 import com.wingedsheep.engine.mechanics.layers.SerializableModification
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.sdk.model.EntityId
@@ -79,7 +80,7 @@ class DrawReplacementShieldConsumer(
             sourceId = mod.sourceId,
             opponentId = newState.turnOrder.firstOrNull { it != playerId },
             targets = mod.targets,
-            namedTargets = mod.namedTargets
+            pipeline = PipelineState(namedTargets = mod.namedTargets)
         )
 
         // Execute the stored replacement effect via the pipeline

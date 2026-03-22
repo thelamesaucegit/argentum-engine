@@ -59,7 +59,7 @@ class ForEachTargetExecutor(
             // Create a per-target context with only this one target and fresh collections
             val perTargetContext = outerContext.copy(
                 targets = listOf(target),
-                storedCollections = emptyMap()
+                pipeline = outerContext.pipeline.copy(storedCollections = emptyMap())
             )
 
             // Pre-push a ForEachTargetContinuation for remaining targets
@@ -159,7 +159,7 @@ class ForEachTargetExecutor(
 
             if (result.updatedCollections.isNotEmpty()) {
                 currentContext = currentContext.copy(
-                    storedCollections = currentContext.storedCollections + result.updatedCollections
+                    pipeline = currentContext.pipeline.copy(storedCollections = currentContext.pipeline.storedCollections + result.updatedCollections)
                 )
             }
         }

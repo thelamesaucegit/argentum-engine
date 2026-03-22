@@ -94,7 +94,7 @@ class CompositeEffectExecutor(
             // Merge any updated collections from the sub-effect into the context
             if (result.updatedCollections.isNotEmpty()) {
                 currentContext = currentContext.copy(
-                    storedCollections = currentContext.storedCollections + result.updatedCollections
+                    pipeline = currentContext.pipeline.copy(storedCollections = currentContext.pipeline.storedCollections + result.updatedCollections)
                 )
             }
         }

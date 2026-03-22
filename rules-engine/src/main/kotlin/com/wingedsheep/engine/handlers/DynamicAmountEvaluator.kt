@@ -72,14 +72,14 @@ class DynamicAmountEvaluator(
                 val name = amount.variableName
                 if (name.endsWith("_count")) {
                     val collectionName = name.removeSuffix("_count")
-                    context.storedCollections[collectionName]?.size ?: 0
+                    context.pipeline.storedCollections[collectionName]?.size ?: 0
                 } else {
-                    context.storedNumbers[name] ?: 0
+                    context.pipeline.storedNumbers[name] ?: 0
                 }
             }
 
             is DynamicAmount.StoredCardManaValue -> {
-                val cards = context.storedCollections[amount.collectionName] ?: return 0
+                val cards = context.pipeline.storedCollections[amount.collectionName] ?: return 0
                 val cardId = cards.firstOrNull() ?: return 0
                 state.getEntity(cardId)?.get<CardComponent>()?.manaValue ?: 0
             }

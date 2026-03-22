@@ -32,14 +32,14 @@ class FilterCollectionExecutor : EffectExecutor<FilterCollectionEffect> {
         effect: FilterCollectionEffect,
         context: EffectContext
     ): ExecutionResult {
-        val cards = context.storedCollections[effect.from]
+        val cards = context.pipeline.storedCollections[effect.from]
             ?: return ExecutionResult.error(state, "No collection named '${effect.from}' in storedCollections")
 
         val filter = effect.filter
         val projected = state.projectedState
         val (matching, nonMatching) = when (filter) {
             is CollectionFilter.ExcludeSubtypesFromStored -> {
-                val excludedSubtypes = context.storedStringLists[filter.storedKey]
+                val excludedSubtypes = context.pipeline.storedStringLists[filter.storedKey]
                     ?.map { Subtype(it) }?.toSet() ?: emptySet()
 
                 cards.partition { cardId ->

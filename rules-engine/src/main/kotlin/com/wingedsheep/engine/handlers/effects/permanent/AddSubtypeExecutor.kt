@@ -36,7 +36,7 @@ class AddSubtypeExecutor : EffectExecutor<AddSubtypeEffect> {
         }
 
         val subtype = if (effect.fromChosenValueKey != null) {
-            context.chosenValues[effect.fromChosenValueKey]
+            context.pipeline.chosenValues[effect.fromChosenValueKey]
                 ?: return ExecutionResult.success(state)
         } else {
             effect.subtype

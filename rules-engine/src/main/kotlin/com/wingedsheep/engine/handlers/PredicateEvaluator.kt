@@ -735,8 +735,8 @@ data class PredicateContext(
                 targetPlayerId = context.opponentId,
                 sourceId = context.sourceId,
                 triggeringEntityId = context.triggeringEntityId,
-                chosenValues = context.chosenValues,
-                storedStringLists = context.storedStringLists
+                chosenValues = context.pipeline.chosenValues,
+                storedStringLists = context.pipeline.storedStringLists
             )
         }
     }

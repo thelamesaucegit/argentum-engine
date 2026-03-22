@@ -1,6 +1,6 @@
 package com.wingedsheep.engine.handlers.actions.combat
 
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.handlers.actions.ActionHandlerModule
 
@@ -12,10 +12,10 @@ import com.wingedsheep.engine.handlers.actions.ActionHandlerModule
  * - DeclareBlockers: Declare which creatures are blocking
  * - OrderBlockers: Order blockers for damage assignment
  */
-class CombatModule(private val context: ActionContext) : ActionHandlerModule {
+class CombatModule(private val services: EngineServices) : ActionHandlerModule {
     override fun handlers(): List<ActionHandler<*>> = listOf(
-        DeclareAttackersHandler.create(context),
-        DeclareBlockersHandler.create(context),
+        DeclareAttackersHandler.create(services),
+        DeclareBlockersHandler.create(services),
         OrderBlockersHandler()
     )
 }

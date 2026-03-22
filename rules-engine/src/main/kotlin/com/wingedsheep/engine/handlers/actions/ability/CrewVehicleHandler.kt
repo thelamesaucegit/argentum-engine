@@ -6,7 +6,7 @@ import com.wingedsheep.engine.core.GameEvent
 import com.wingedsheep.engine.core.TappedEvent
 import com.wingedsheep.engine.event.TriggerDetector
 import com.wingedsheep.engine.event.TriggerProcessor
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.stack.StackResolver
 import com.wingedsheep.engine.registry.CardRegistry
@@ -188,12 +188,12 @@ class CrewVehicleHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): CrewVehicleHandler {
+        fun create(services: EngineServices): CrewVehicleHandler {
             return CrewVehicleHandler(
-                context.cardRegistry,
-                context.stackResolver,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.cardRegistry,
+                services.stackResolver,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

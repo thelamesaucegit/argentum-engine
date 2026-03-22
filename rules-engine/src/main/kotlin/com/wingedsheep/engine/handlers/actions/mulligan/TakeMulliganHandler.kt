@@ -5,7 +5,7 @@ import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.TakeMulligan
 import com.wingedsheep.engine.core.TurnManager
 import com.wingedsheep.engine.handlers.MulliganHandler
-import com.wingedsheep.engine.handlers.actions.ActionContext
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.components.player.MulliganStateComponent
@@ -65,8 +65,8 @@ class TakeMulliganHandler(
     }
 
     companion object {
-        fun create(context: ActionContext): TakeMulliganHandler {
-            return TakeMulliganHandler(context.mulliganHandler, context.turnManager)
+        fun create(services: EngineServices): TakeMulliganHandler {
+            return TakeMulliganHandler(services.mulliganHandler, services.turnManager)
         }
     }
 }

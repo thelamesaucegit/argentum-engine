@@ -23,8 +23,8 @@ import com.wingedsheep.engine.registry.CardRegistry
  * Composition root for the rules engine.
  *
  * Constructs and wires all engine services from a single [CardRegistry].
- * This eliminates duplicated wiring across ActionProcessor, ActionContext.create(),
- * and GameSession, and ensures all consumers share the same service instances.
+ * This eliminates duplicated wiring across ActionProcessor and GameSession,
+ * and ensures all consumers share the same service instances.
  */
 class EngineServices(
     val cardRegistry: CardRegistry

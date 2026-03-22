@@ -6,6 +6,7 @@ import com.wingedsheep.engine.core.ChooseOptionDecision
 import com.wingedsheep.engine.core.DecisionContext
 import com.wingedsheep.engine.core.DecisionPhase
 import com.wingedsheep.engine.core.DecisionRequestedEvent
+import com.wingedsheep.engine.core.EngineServices
 import com.wingedsheep.engine.core.ExecutionResult
 import com.wingedsheep.engine.core.CardsDiscardedEvent
 import com.wingedsheep.engine.core.GameEvent
@@ -22,7 +23,6 @@ import com.wingedsheep.engine.handlers.CostHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.PredicateEvaluator
-import com.wingedsheep.engine.handlers.actions.ActionContext
 import com.wingedsheep.engine.handlers.actions.ActionHandler
 import com.wingedsheep.engine.mechanics.mana.AlternativePaymentHandler
 import com.wingedsheep.engine.mechanics.mana.CostCalculator
@@ -33,13 +33,11 @@ import com.wingedsheep.engine.mechanics.targeting.TargetValidator
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
-import com.wingedsheep.engine.state.components.battlefield.GraveyardPlayPermissionUsedComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
-import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
+import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
-import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.engine.state.components.player.ManaSpentOnSpellsThisTurnComponent
 import com.wingedsheep.sdk.core.CardType
@@ -68,15 +66,12 @@ import kotlin.reflect.KClass
 /**
  * Handler for the CastSpell action.
  *
- * This is the most complex handler, handling:
- * - Timing validation
- * - Cast restrictions
- * - Additional costs (sacrifice, etc.)
- * - Alternative payments (Delve, Convoke)
- * - Three payment strategies (AutoPay, FromPool, Explicit)
- * - Target validation
- * - Morph/face-down casting
- * - Trigger detection
+ * Orchestrates spell casting by delegating to focused components:
+ * - [CastZoneResolver]: Determines where a card can be cast from
+ * - [CastPaymentProcessor]: Handles mana payment via three strategies
+ *
+ * This handler owns the top-level validate/execute flow, cast restrictions,
+ * additional cost processing, and trigger detection.
  */
 class CastSpellHandler(
     private val cardRegistry: CardRegistry,
@@ -94,6 +89,8 @@ class CastSpellHandler(
     override val actionType: KClass<CastSpell> = CastSpell::class
 
     private val predicateEvaluator = PredicateEvaluator()
+    private val zoneResolver = CastZoneResolver(cardRegistry, conditionEvaluator)
+    private val paymentProcessor = CastPaymentProcessor(manaSolver, costHandler)
 
     override fun validate(state: GameState, action: CastSpell): String? {
         if (state.priorityPlayerId != action.playerId) {
@@ -108,12 +105,12 @@ class CastSpellHandler(
 
         val handZone = ZoneKey(action.playerId, Zone.HAND)
         val inHand = action.cardId in state.getZone(handZone)
-        val onTopOfLibrary = !inHand && isOnTopOfLibraryWithPermission(state, action.playerId, action.cardId)
-        val mayPlayFromExile = !inHand && !onTopOfLibrary && isInExileWithPlayPermission(state, action.playerId, action.cardId)
+        val onTopOfLibrary = !inHand && zoneResolver.isOnTopOfLibraryWithPermission(state, action.playerId, action.cardId)
+        val mayPlayFromExile = !inHand && !onTopOfLibrary && zoneResolver.isInExileWithPlayPermission(state, action.playerId, action.cardId)
         val mayCastFromZone = !inHand && !onTopOfLibrary && !mayPlayFromExile &&
-            hasMayCastSelfFromZonePermission(state, action.playerId, action.cardId)
+            zoneResolver.hasMayCastSelfFromZonePermission(state, action.playerId, action.cardId)
         val mayCastFromGraveyard = !inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone &&
-            hasMayPlayPermanentFromGraveyardPermission(state, action.playerId, action.cardId, cardComponent)
+            zoneResolver.hasMayPlayPermanentFromGraveyardPermission(state, action.playerId, action.cardId, cardComponent)
         if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard) {
             return "Card is not in your hand"
         }
@@ -136,7 +133,7 @@ class CastSpellHandler(
         // Check timing
         if (!cardComponent.typeLine.isInstant) {
             val hasFlash = cardDef?.keywords?.contains(Keyword.FLASH) == true
-            val grantedFlash = hasFlash || hasGrantedFlash(state, action.cardId)
+            val grantedFlash = hasFlash || zoneResolver.hasGrantedFlash(state, action.cardId)
             if (!grantedFlash && !turnManager.canPlaySorcerySpeed(state, action.playerId)) {
                 return "You can only cast sorcery-speed spells during your main phase with an empty stack"
             }
@@ -183,7 +180,7 @@ class CastSpellHandler(
         }
 
         // Calculate effective cost (free if PlayWithoutPayingCostComponent is present)
-        val playForFree = hasPlayWithoutPayingCost(state, action.playerId, action.cardId)
+        val playForFree = zoneResolver.hasPlayWithoutPayingCost(state, action.playerId, action.cardId)
         var effectiveCost = if (playForFree) {
             ManaCost.ZERO
         } else if (action.useAlternativeCost && cardDef != null) {
@@ -572,7 +569,7 @@ class CastSpellHandler(
         val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
 
         // Calculate effective cost (free if PlayWithoutPayingCostComponent is present)
-        val playForFreeInExecute = hasPlayWithoutPayingCost(currentState, action.playerId, action.cardId)
+        val playForFreeInExecute = zoneResolver.hasPlayWithoutPayingCost(currentState, action.playerId, action.cardId)
         var effectiveCost = if (playForFreeInExecute) {
             ManaCost.ZERO
         } else if (action.useAlternativeCost && cardDef != null) {
@@ -783,8 +780,8 @@ class CastSpellHandler(
             events.addAll(altPaymentResult.events)
         }
 
-        // Handle mana payment based on strategy
-        val paymentResult = processPayment(currentState, action, effectiveCost, cardComponent.name, xValue)
+        // Handle mana payment via dedicated processor
+        val paymentResult = paymentProcessor.processPayment(currentState, action, effectiveCost, cardComponent.name, xValue)
         if (paymentResult.error != null) {
             return ExecutionResult.error(currentState, paymentResult.error)
         }
@@ -864,7 +861,7 @@ class CastSpellHandler(
 
         // Check if casting from graveyard via MayPlayPermanentsFromGraveyard (Muldrotha)
         val castingFromGraveyardViaMuldrotha = action.cardId in currentState.getZone(ZoneKey(action.playerId, Zone.GRAVEYARD)) &&
-            hasMayPlayPermanentFromGraveyardPermission(currentState, action.playerId, action.cardId, cardComponent)
+            zoneResolver.hasMayPlayPermanentFromGraveyardPermission(currentState, action.playerId, action.cardId, cardComponent)
 
         // Cast the spell
         val castResult = stackResolver.castSpell(
@@ -893,9 +890,9 @@ class CastSpellHandler(
 
         // Record Muldrotha graveyard cast permission usage
         if (castingFromGraveyardViaMuldrotha) {
-            val typeName = choosePermanentTypeForGraveyardPermission(currentCastState, action.playerId, cardComponent)
+            val typeName = zoneResolver.choosePermanentTypeForGraveyardPermission(currentCastState, action.playerId, cardComponent)
             if (typeName != null) {
-                currentCastState = recordGraveyardPlayPermissionUsage(currentCastState, action.playerId, typeName)
+                currentCastState = zoneResolver.recordGraveyardPlayPermissionUsage(currentCastState, action.playerId, typeName)
             }
         }
 
@@ -984,259 +981,6 @@ class CastSpellHandler(
         )
     }
 
-    private data class PaymentResult(
-        val state: GameState,
-        val events: List<GameEvent>,
-        val error: String?
-    )
-
-    private fun processPayment(
-        state: GameState,
-        action: CastSpell,
-        effectiveCost: ManaCost,
-        cardName: String,
-        xValue: Int
-    ): PaymentResult {
-        return when (action.paymentStrategy) {
-            is PaymentStrategy.FromPool -> payFromPool(state, action.playerId, effectiveCost, cardName, xValue)
-            is PaymentStrategy.AutoPay -> autoPay(state, action.playerId, effectiveCost, cardName, xValue)
-            is PaymentStrategy.Explicit -> explicitPay(state, action.paymentStrategy, cardName)
-        }
-    }
-
-    private fun payFromPool(
-        state: GameState,
-        playerId: EntityId,
-        cost: ManaCost,
-        cardName: String,
-        xValue: Int
-    ): PaymentResult {
-        val poolComponent = state.getEntity(playerId)?.get<ManaPoolComponent>()
-            ?: ManaPoolComponent()
-        val pool = ManaPool(
-            white = poolComponent.white,
-            blue = poolComponent.blue,
-            black = poolComponent.black,
-            red = poolComponent.red,
-            green = poolComponent.green,
-            colorless = poolComponent.colorless
-        )
-
-        // Pay base cost first
-        var poolAfterPayment = costHandler.payManaCost(pool, cost)
-            ?: return PaymentResult(state, emptyList(), "Insufficient mana in pool")
-
-        // Track mana spent for the event
-        var whiteSpent = poolComponent.white - poolAfterPayment.white
-        var blueSpent = poolComponent.blue - poolAfterPayment.blue
-        var blackSpent = poolComponent.black - poolAfterPayment.black
-        var redSpent = poolComponent.red - poolAfterPayment.red
-        var greenSpent = poolComponent.green - poolAfterPayment.green
-        var colorlessSpent = poolComponent.colorless - poolAfterPayment.colorless
-
-        // Pay for X from remaining pool (multiply by X symbol count for XX costs)
-        val xSymbolCount = cost.xCount.coerceAtLeast(1)
-        var xRemainingToPay = xValue * xSymbolCount
-
-        // Spend colorless first for X
-        while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-            poolAfterPayment = poolAfterPayment.spendColorless()!!
-            colorlessSpent++
-            xRemainingToPay--
-        }
-
-        // Spend colored mana for remaining X
-        for (color in Color.entries) {
-            while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
-                poolAfterPayment = poolAfterPayment.spend(color)!!
-                when (color) {
-                    Color.WHITE -> whiteSpent++
-                    Color.BLUE -> blueSpent++
-                    Color.BLACK -> blackSpent++
-                    Color.RED -> redSpent++
-                    Color.GREEN -> greenSpent++
-                }
-                xRemainingToPay--
-            }
-        }
-
-        // Check if we could pay for all of X
-        if (xRemainingToPay > 0) {
-            return PaymentResult(state, emptyList(), "Insufficient mana in pool for X cost")
-        }
-
-        val newState = state.updateEntity(playerId) { container ->
-            container.with(
-                ManaPoolComponent(
-                    white = poolAfterPayment.white,
-                    blue = poolAfterPayment.blue,
-                    black = poolAfterPayment.black,
-                    red = poolAfterPayment.red,
-                    green = poolAfterPayment.green,
-                    colorless = poolAfterPayment.colorless
-                )
-            )
-        }
-
-        val event = ManaSpentEvent(
-            playerId = playerId,
-            reason = "Cast $cardName",
-            white = whiteSpent,
-            blue = blueSpent,
-            black = blackSpent,
-            red = redSpent,
-            green = greenSpent,
-            colorless = colorlessSpent
-        )
-
-        return PaymentResult(newState, listOf(event), null)
-    }
-
-    private fun autoPay(
-        state: GameState,
-        playerId: EntityId,
-        cost: ManaCost,
-        cardName: String,
-        xValue: Int
-    ): PaymentResult {
-        var currentState = state
-        val events = mutableListOf<GameEvent>()
-
-        // Use floating mana first
-        val poolComponent = state.getEntity(playerId)?.get<ManaPoolComponent>()
-            ?: ManaPoolComponent()
-        val pool = ManaPool(
-            white = poolComponent.white,
-            blue = poolComponent.blue,
-            black = poolComponent.black,
-            red = poolComponent.red,
-            green = poolComponent.green,
-            colorless = poolComponent.colorless
-        )
-
-        val partialResult = pool.payPartial(cost)
-        var poolAfterPayment = partialResult.newPool
-        val remainingCost = partialResult.remainingCost
-        val manaSpentFromPool = partialResult.manaSpent
-
-        var whiteSpent = manaSpentFromPool.white
-        var blueSpent = manaSpentFromPool.blue
-        var blackSpent = manaSpentFromPool.black
-        var redSpent = manaSpentFromPool.red
-        var greenSpent = manaSpentFromPool.green
-        var colorlessSpent = manaSpentFromPool.colorless
-
-        // Use remaining floating mana for X cost (multiply by X symbol count for XX costs)
-        val xSymbolCount = cost.xCount.coerceAtLeast(1)
-        var xRemainingToPay = xValue * xSymbolCount
-
-        // Spend colorless first for X
-        while (xRemainingToPay > 0 && poolAfterPayment.colorless > 0) {
-            poolAfterPayment = poolAfterPayment.spendColorless()!!
-            colorlessSpent++
-            xRemainingToPay--
-        }
-
-        // Spend colored mana for remaining X
-        for (color in Color.entries) {
-            while (xRemainingToPay > 0 && poolAfterPayment.get(color) > 0) {
-                poolAfterPayment = poolAfterPayment.spend(color)!!
-                when (color) {
-                    Color.WHITE -> whiteSpent++
-                    Color.BLUE -> blueSpent++
-                    Color.BLACK -> blackSpent++
-                    Color.RED -> redSpent++
-                    Color.GREEN -> greenSpent++
-                }
-                xRemainingToPay--
-            }
-        }
-
-        currentState = currentState.updateEntity(playerId) { container ->
-            container.with(
-                ManaPoolComponent(
-                    white = poolAfterPayment.white,
-                    blue = poolAfterPayment.blue,
-                    black = poolAfterPayment.black,
-                    red = poolAfterPayment.red,
-                    green = poolAfterPayment.green,
-                    colorless = poolAfterPayment.colorless
-                )
-            )
-        }
-
-        // Tap lands for remaining cost (using xRemainingToPay instead of full xValue)
-        if (!remainingCost.isEmpty() || xRemainingToPay > 0) {
-            val solution = manaSolver.solve(currentState, playerId, remainingCost, xRemainingToPay)
-                ?: return PaymentResult(currentState, events, "Not enough mana to auto-pay")
-
-            for (source in solution.sources) {
-                currentState = currentState.updateEntity(source.entityId) { container ->
-                    container.with(TappedComponent)
-                }
-                events.add(TappedEvent(source.entityId, source.name))
-            }
-
-            for ((_, production) in solution.manaProduced) {
-                when (production.color) {
-                    Color.WHITE -> whiteSpent += production.amount
-                    Color.BLUE -> blueSpent += production.amount
-                    Color.BLACK -> blackSpent += production.amount
-                    Color.RED -> redSpent += production.amount
-                    Color.GREEN -> greenSpent += production.amount
-                    null -> colorlessSpent += production.colorless
-                }
-            }
-
-            // Add only the bonus mana that wasn't consumed by the solver to the floating pool
-            if (solution.remainingBonusMana.isNotEmpty()) {
-                currentState = currentState.updateEntity(playerId) { container ->
-                    var pool = container.get<ManaPoolComponent>() ?: ManaPoolComponent()
-                    for ((color, amount) in solution.remainingBonusMana) {
-                        pool = pool.add(color, amount)
-                    }
-                    container.with(pool)
-                }
-            }
-        }
-
-        events.add(
-            ManaSpentEvent(
-                playerId = playerId,
-                reason = "Cast $cardName",
-                white = whiteSpent,
-                blue = blueSpent,
-                black = blackSpent,
-                red = redSpent,
-                green = greenSpent,
-                colorless = colorlessSpent
-            )
-        )
-
-        return PaymentResult(currentState, events, null)
-    }
-
-    private fun explicitPay(
-        state: GameState,
-        strategy: PaymentStrategy.Explicit,
-        cardName: String
-    ): PaymentResult {
-        var currentState = state
-        val events = mutableListOf<GameEvent>()
-
-        for (sourceId in strategy.manaAbilitiesToActivate) {
-            val sourceName = currentState.getEntity(sourceId)
-                ?.get<CardComponent>()?.name ?: "Unknown"
-
-            currentState = currentState.updateEntity(sourceId) { container ->
-                container.with(TappedComponent)
-            }
-            events.add(TappedEvent(sourceId, sourceName))
-        }
-
-        return PaymentResult(currentState, events, null)
-    }
-
     /**
      * Check if the spell needs a creature type choice during casting (e.g., Aphetto Dredging).
      * If so, scan the appropriate zone for creature types and pause for the choice.
@@ -1323,323 +1067,20 @@ class CastSpellHandler(
         )
     }
 
-    /**
-     * Check if a card is on top of the player's library and the player controls
-     * a permanent with PlayFromTopOfLibrary (e.g., Future Sight) or
-     * CastSpellTypesFromTopOfLibrary (e.g., Precognition Field).
-     */
-    private fun isOnTopOfLibraryWithPermission(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId
-    ): Boolean {
-        val library = state.getLibrary(playerId)
-        if (library.isEmpty() || library.first() != cardId) return false
-        if (hasPlayFromTopOfLibrary(state, playerId)) return true
-        return hasCastFromTopOfLibraryPermission(state, playerId, cardId)
-    }
-
-    /**
-     * Check if a card on top of library can be cast via CastSpellTypesFromTopOfLibrary.
-     * Validates the card matches the ability's filter.
-     */
-    private fun hasCastFromTopOfLibraryPermission(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId
-    ): Boolean {
-        val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            for (ability in cardDef.script.staticAbilities) {
-                if (ability is CastSpellTypesFromTopOfLibrary) {
-                    if (matchesCardFilter(cardComponent, ability.filter)) return true
-                }
-            }
-        }
-        return false
-    }
-
-    /**
-     * Simple card type check against a GameObjectFilter for non-battlefield cards.
-     */
-    private fun matchesCardFilter(card: CardComponent, filter: GameObjectFilter): Boolean {
-        // Check card predicates from the filter
-        for (predicate in filter.cardPredicates) {
-            if (!matchesCardPredicate(card, predicate)) return false
-        }
-        return true
-    }
-
-    private fun matchesCardPredicate(card: CardComponent, predicate: CardPredicate): Boolean {
-        return when (predicate) {
-            is CardPredicate.IsInstant -> card.typeLine.isInstant
-            is CardPredicate.IsSorcery -> card.typeLine.isSorcery
-            is CardPredicate.IsCreature -> card.typeLine.isCreature
-            is CardPredicate.IsEnchantment -> card.typeLine.isEnchantment
-            is CardPredicate.IsArtifact -> card.typeLine.isArtifact
-            is CardPredicate.IsLand -> card.typeLine.isLand
-            is CardPredicate.Or -> predicate.predicates.any { matchesCardPredicate(card, it) }
-            is CardPredicate.And -> predicate.predicates.all { matchesCardPredicate(card, it) }
-            is CardPredicate.Not -> !matchesCardPredicate(card, predicate.predicate)
-            else -> true // Conservative: allow unknown predicates
-        }
-    }
-
-    /**
-     * Check if a card is in exile and has MayPlayFromExileComponent granting
-     * the player permission to play it from exile. Checks all players' exile zones
-     * because cards like Villainous Wealth exile from an opponent's library (cards
-     * remain in their owner's exile zone but are castable by the spell's controller).
-     *
-     * Also checks for permanents with GrantMayCastFromLinkedExile static ability
-     * (e.g., Rona, Disciple of Gix) that link exiled cards via LinkedExileComponent.
-     */
-    private fun isInExileWithPlayPermission(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId
-    ): Boolean {
-        val inAnyExile = state.turnOrder.any { pid ->
-            cardId in state.getZone(ZoneKey(pid, Zone.EXILE))
-        }
-        if (!inAnyExile) return false
-
-        // Check direct MayPlayFromExileComponent grant
-        val component = state.getEntity(cardId)?.get<MayPlayFromExileComponent>()
-        if (component?.controllerId == playerId) return true
-
-        // Check for GrantMayCastFromLinkedExile static abilities on battlefield permanents
-        return hasLinkedExileCastPermission(state, playerId, cardId)
-    }
-
-    /**
-     * Check if any permanent controlled by the player has a GrantMayCastFromLinkedExile
-     * static ability and the card is in that permanent's LinkedExileComponent.
-     */
-    private fun hasLinkedExileCastPermission(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId
-    ): Boolean {
-        val cardContainer = state.getEntity(cardId) ?: return false
-        val cardComponent = cardContainer.get<CardComponent>() ?: return false
-
-        for (entityId in state.getBattlefield()) {
-            val container = state.getEntity(entityId) ?: continue
-            val controller = container.get<ControllerComponent>()?.playerId ?: continue
-            if (controller != playerId) continue
-
-            val linked = container.get<LinkedExileComponent>() ?: continue
-            if (cardId !in linked.exiledIds) continue
-
-            // Check if this permanent has a GrantMayCastFromLinkedExile static ability
-            val entityCardComponent = container.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(entityCardComponent.cardDefinitionId) ?: continue
-            val grantAbility = cardDef.script.staticAbilities
-                .filterIsInstance<GrantMayCastFromLinkedExile>()
-                .firstOrNull() ?: continue
-
-            // Check if the exiled card passes the filter (e.g., nonland)
-            if (matchesCardFilter(cardComponent, grantAbility.filter)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    /**
-     * Check if a card has an intrinsic MayCastSelfFromZones static ability
-     * that permits casting from its current zone (e.g., Squee, the Immortal).
-     */
-    private fun hasMayCastSelfFromZonePermission(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId
-    ): Boolean {
-        val cardComponent = state.getEntity(cardId)?.get<CardComponent>() ?: return false
-        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return false
-        val mayCastAbility = cardDef.script.staticAbilities
-            .filterIsInstance<MayCastSelfFromZones>()
-            .firstOrNull() ?: return false
-
-        // Find what zone the card is in for this player
-        for (zone in mayCastAbility.zones) {
-            val zoneKey = ZoneKey(playerId, zone)
-            if (cardId in state.getZone(zoneKey)) return true
-        }
-        return false
-    }
-
-    /**
-     * Check if a card has PlayWithoutPayingCostComponent granting
-     * the player permission to play it without paying its mana cost.
-     */
-    private fun hasPlayWithoutPayingCost(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId
-    ): Boolean {
-        val component = state.getEntity(cardId)?.get<PlayWithoutPayingCostComponent>()
-        return component?.controllerId == playerId
-    }
-
-    private fun hasPlayFromTopOfLibrary(state: GameState, playerId: EntityId): Boolean {
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is PlayFromTopOfLibrary }) {
-                return true
-            }
-        }
-        return false
-    }
-
-    /**
-     * Check if a card has been granted flash by a GrantFlashToSpellType static ability
-     * on any permanent on the battlefield (any player's battlefield), or by its own
-     * conditionalFlash condition.
-     */
-    private fun hasGrantedFlash(state: GameState, spellCardId: EntityId): Boolean {
-        val spellOwner = state.getEntity(spellCardId)?.get<ControllerComponent>()?.playerId
-            ?: return false
-
-        // Check the card's own conditionalFlash (e.g., Ferocious)
-        val spellCard = state.getEntity(spellCardId)?.get<CardComponent>()
-        val spellDef = spellCard?.let { cardRegistry.getCard(it.cardDefinitionId) }
-        val conditionalFlash = spellDef?.script?.conditionalFlash
-        if (conditionalFlash != null) {
-            val opponentId = state.turnOrder.firstOrNull { it != spellOwner }
-            val effectContext = EffectContext(
-                sourceId = spellCardId,
-                controllerId = spellOwner,
-                opponentId = opponentId
-            )
-            if (conditionEvaluator.evaluate(state, conditionalFlash, effectContext)) {
-                return true
-            }
-        }
-
-        // Check GrantFlashToSpellType static abilities on battlefield permanents
-        val context = PredicateContext(controllerId = spellOwner)
-        for (playerId in state.turnOrder) {
-            for (entityId in state.getBattlefield(playerId)) {
-                val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-                val def = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-                for (ability in def.script.staticAbilities) {
-                    if (ability is GrantFlashToSpellType) {
-                        // If controllerOnly, only the permanent's controller benefits
-                        if (ability.controllerOnly && playerId != spellOwner) continue
-                        if (predicateEvaluator.matches(state, spellCardId, ability.filter, context)) {
-                            return true
-                        }
-                    }
-                }
-            }
-        }
-        return false
-    }
-
-    /**
-     * Check if a permanent spell can be cast from the graveyard via a MayPlayPermanentsFromGraveyard
-     * static ability (e.g., Muldrotha, the Gravetide).
-     */
-    private fun hasMayPlayPermanentFromGraveyardPermission(
-        state: GameState,
-        playerId: EntityId,
-        cardId: EntityId,
-        cardComponent: CardComponent
-    ): Boolean {
-        // Card must be in the player's graveyard
-        val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
-        if (cardId !in state.getZone(graveyardZone)) return false
-
-        // Card must be a permanent type (not instant/sorcery)
-        if (!cardComponent.typeLine.isPermanent) return false
-
-        // Only works on controller's turn
-        if (state.activePlayerId != playerId) return false
-
-        // Find a Muldrotha-like permanent with available permission for any of this card's types
-        val permanentTypes = cardComponent.typeLine.cardTypes.filter { it.isPermanent }
-        for (typeName in permanentTypes.map { it.name }) {
-            if (findGraveyardPlayPermissionSource(state, playerId, typeName) != null) {
-                return true
-            }
-        }
-        return false
-    }
-
-    /**
-     * Choose which permanent type to consume for graveyard casting.
-     * If a card has multiple permanent types, pick the first type with available permission.
-     */
-    private fun choosePermanentTypeForGraveyardPermission(
-        state: GameState,
-        playerId: EntityId,
-        cardComponent: CardComponent
-    ): String? {
-        val permanentTypes = cardComponent.typeLine.cardTypes.filter { it.isPermanent }
-        for (type in permanentTypes) {
-            if (findGraveyardPlayPermissionSource(state, playerId, type.name) != null) {
-                return type.name
-            }
-        }
-        return null
-    }
-
-    /**
-     * Find a battlefield permanent controlled by the player that has MayPlayPermanentsFromGraveyard
-     * and hasn't used its permission for the given type this turn.
-     */
-    private fun findGraveyardPlayPermissionSource(
-        state: GameState,
-        playerId: EntityId,
-        typeName: String
-    ): EntityId? {
-        for (entityId in state.getBattlefield(playerId)) {
-            val card = state.getEntity(entityId)?.get<CardComponent>() ?: continue
-            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: continue
-            if (cardDef.script.staticAbilities.any { it is MayPlayPermanentsFromGraveyard }) {
-                val tracker = state.getEntity(entityId)?.get<GraveyardPlayPermissionUsedComponent>()
-                if (tracker == null || !tracker.hasUsedType(typeName)) {
-                    return entityId
-                }
-            }
-        }
-        return null
-    }
-
-    /**
-     * Record that a Muldrotha-like permanent's graveyard play permission was used for a type.
-     */
-    private fun recordGraveyardPlayPermissionUsage(
-        state: GameState,
-        playerId: EntityId,
-        typeName: String
-    ): GameState {
-        val sourceId = findGraveyardPlayPermissionSource(state, playerId, typeName) ?: return state
-        return state.updateEntity(sourceId) { c ->
-            val tracker = c.get<GraveyardPlayPermissionUsedComponent>() ?: GraveyardPlayPermissionUsedComponent()
-            c.with(tracker.withUsedType(typeName))
-        }
-    }
-
     companion object {
-        fun create(context: ActionContext): CastSpellHandler {
+        fun create(services: EngineServices): CastSpellHandler {
             return CastSpellHandler(
-                context.cardRegistry,
-                context.turnManager,
-                context.manaSolver,
-                context.costCalculator,
-                context.alternativePaymentHandler,
-                context.costHandler,
-                context.stackResolver,
-                context.targetValidator,
-                context.conditionEvaluator,
-                context.triggerDetector,
-                context.triggerProcessor
+                services.cardRegistry,
+                services.turnManager,
+                services.manaSolver,
+                services.costCalculator,
+                services.alternativePaymentHandler,
+                services.costHandler,
+                services.stackResolver,
+                services.targetValidator,
+                services.conditionEvaluator,
+                services.triggerDetector,
+                services.triggerProcessor
             )
         }
     }

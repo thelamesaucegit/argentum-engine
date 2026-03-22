@@ -172,11 +172,11 @@ class CreatureTypeChoiceContinuationResumer(
                 // and also into chosenValues so pipeline effects (e.g., GroupFilter.chosenSubtypeKey) can read it
                 nextFrame.copy(effectContext = nextFrame.effectContext.copy(
                     chosenCreatureType = chosenValue,
-                    chosenValues = nextFrame.effectContext.chosenValues + (continuation.storeAs to chosenValue)
+                    pipeline = nextFrame.effectContext.pipeline.copy(chosenValues = nextFrame.effectContext.pipeline.chosenValues + (continuation.storeAs to chosenValue))
                 ))
             } else {
                 nextFrame.copy(effectContext = nextFrame.effectContext.copy(
-                    chosenValues = nextFrame.effectContext.chosenValues + (continuation.storeAs to chosenValue)
+                    pipeline = nextFrame.effectContext.pipeline.copy(chosenValues = nextFrame.effectContext.pipeline.chosenValues + (continuation.storeAs to chosenValue))
                 ))
             }
             stateAfterPop.pushContinuation(updatedFrame)
@@ -319,7 +319,7 @@ class CreatureTypeChoiceContinuationResumer(
             val (_, stateAfterPop) = state.popContinuation()
             stateAfterPop.pushContinuation(
                 nextFrame.copy(effectContext = nextFrame.effectContext.copy(
-                    storedStringLists = nextFrame.effectContext.storedStringLists + (continuation.storeAs to updatedChosenTypes)
+                    pipeline = nextFrame.effectContext.pipeline.copy(storedStringLists = nextFrame.effectContext.pipeline.storedStringLists + (continuation.storeAs to updatedChosenTypes))
                 ))
             )
         } else {
