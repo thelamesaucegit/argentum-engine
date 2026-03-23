@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers.effects.removal
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
+import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
@@ -38,20 +39,14 @@ class SacrificeSelfExecutor : EffectExecutor<SacrificeSelfEffect> {
 
         val sourceName = state.getEntity(sourceId)?.get<CardComponent>()?.name ?: "Unknown"
 
-        var newState = state.removeFromZone(battlefieldZone, sourceId)
-        newState = newState.addToZone(graveyardZone, sourceId)
-
-        val events = listOf(
-            PermanentsSacrificedEvent(controllerId, listOf(sourceId), listOf(sourceName)),
-            ZoneChangeEvent(
-                entityId = sourceId,
-                entityName = sourceName,
-                fromZone = Zone.BATTLEFIELD,
-                toZone = Zone.GRAVEYARD,
-                ownerId = controllerId
-            )
+        val transitionResult = ZoneTransitionService.moveToZone(
+            state, sourceId, Zone.GRAVEYARD, fromZoneKey = battlefieldZone
         )
 
-        return ExecutionResult.success(newState, events)
+        val events = mutableListOf<GameEvent>()
+        events.add(PermanentsSacrificedEvent(controllerId, listOf(sourceId), listOf(sourceName)))
+        events.addAll(transitionResult.events)
+
+        return ExecutionResult.success(transitionResult.state, events)
     }
 }

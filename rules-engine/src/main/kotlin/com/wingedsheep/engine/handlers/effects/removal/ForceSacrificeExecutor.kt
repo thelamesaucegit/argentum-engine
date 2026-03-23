@@ -7,8 +7,8 @@ import com.wingedsheep.engine.handlers.PredicateContext
 import com.wingedsheep.engine.handlers.effects.EffectExecutor
 import com.wingedsheep.engine.handlers.effects.BattlefieldFilterUtils
 import com.wingedsheep.engine.handlers.effects.TargetResolutionUtils.resolvePlayerTargets
+import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.state.GameState
-import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.model.EntityId
@@ -163,35 +163,22 @@ class ForceSacrificeExecutor(
         playerId: EntityId,
         permanentIds: List<EntityId>
     ): ExecutionResult {
-        val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
-        val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
-
         var newState = state
         val events = mutableListOf<GameEvent>()
 
-        for (permanentId in permanentIds) {
-            if (permanentId !in newState.getZone(battlefieldZone)) continue
-
-            val permanentName = newState.getEntity(permanentId)?.get<CardComponent>()?.name ?: "Unknown"
-            newState = newState.removeFromZone(battlefieldZone, permanentId)
-            newState = newState.addToZone(graveyardZone, permanentId)
-
-            events.add(
-                ZoneChangeEvent(
-                    entityId = permanentId,
-                    entityName = permanentName,
-                    fromZone = Zone.BATTLEFIELD,
-                    toZone = Zone.GRAVEYARD,
-                    ownerId = playerId
-                )
-            )
-        }
-
         if (permanentIds.isNotEmpty()) {
             val permanentNames = permanentIds.map { id ->
-                state.getEntity(id)?.get<CardComponent>()?.name ?: "Unknown"
+                newState.getEntity(id)?.get<CardComponent>()?.name ?: "Unknown"
             }
-            events.add(0, PermanentsSacrificedEvent(playerId, permanentIds, permanentNames))
+            events.add(PermanentsSacrificedEvent(playerId, permanentIds, permanentNames))
+        }
+
+        for (permanentId in permanentIds) {
+            val transitionResult = ZoneTransitionService.moveToZone(
+                newState, permanentId, Zone.GRAVEYARD
+            )
+            newState = transitionResult.state
+            events.addAll(transitionResult.events)
         }
 
         return ExecutionResult.success(newState, events)

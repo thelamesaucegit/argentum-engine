@@ -3,6 +3,7 @@ package com.wingedsheep.engine.handlers.continuations
 import com.wingedsheep.engine.core.*
 import com.wingedsheep.engine.handlers.effects.removal.ForceExileMultiZoneExecutor
 import com.wingedsheep.engine.handlers.effects.removal.ForceSacrificeExecutor
+import com.wingedsheep.engine.handlers.effects.ZoneTransitionService
 import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.handlers.EffectContext
 import com.wingedsheep.engine.handlers.PipelineState
@@ -14,7 +15,6 @@ import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
-import com.wingedsheep.engine.state.components.identity.OwnerComponent
 import com.wingedsheep.engine.state.components.player.ManaPoolComponent
 import com.wingedsheep.sdk.core.Zone
 import com.wingedsheep.sdk.scripting.Duration
@@ -57,31 +57,11 @@ class SacrificeAndPayContinuationResumer(
         }
 
         for (permanentId in selectedPermanents) {
-            val container = newState.getEntity(permanentId) ?: continue
-            val cardComponent = container.get<CardComponent>() ?: continue
-
-            // Find the actual zone (may differ from controller's zone for stolen creatures)
-            val currentZone = newState.zones.entries.find { (_, cards) -> permanentId in cards }?.key
-                ?: continue
-
-            // Sacrificed cards go to their owner's graveyard
-            val ownerId = container.get<OwnerComponent>()?.playerId
-                ?: cardComponent.ownerId
-                ?: playerId
-            val graveyardZone = ZoneKey(ownerId, Zone.GRAVEYARD)
-
-            newState = newState.removeFromZone(currentZone, permanentId)
-            newState = newState.addToZone(graveyardZone, permanentId)
-
-            events.add(
-                ZoneChangeEvent(
-                    entityId = permanentId,
-                    entityName = cardComponent.name,
-                    fromZone = Zone.BATTLEFIELD,
-                    toZone = Zone.GRAVEYARD,
-                    ownerId = ownerId
-                )
+            val transitionResult = ZoneTransitionService.moveToZone(
+                newState, permanentId, Zone.GRAVEYARD
             )
+            newState = transitionResult.state
+            events.addAll(transitionResult.events)
         }
 
         // If there are remaining players (from "each opponent" effects), process them
@@ -243,30 +223,22 @@ class SacrificeAndPayContinuationResumer(
         }
 
         // Player paid the cost - sacrifice the selected permanents
-        val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
-        val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
         var newState = state
         val events = mutableListOf<GameEvent>()
 
+        val permanentNames = selectedPermanents.map { id ->
+            newState.getEntity(id)?.get<CardComponent>()?.name ?: "Unknown"
+        }
+        events.add(PermanentsSacrificedEvent(playerId, selectedPermanents, permanentNames))
+
         for (permanentId in selectedPermanents) {
-            val permanentName = newState.getEntity(permanentId)?.get<CardComponent>()?.name ?: "Unknown"
-            newState = newState.removeFromZone(battlefieldZone, permanentId)
-            newState = newState.addToZone(graveyardZone, permanentId)
-            events.add(
-                ZoneChangeEvent(
-                    entityId = permanentId,
-                    entityName = permanentName,
-                    fromZone = Zone.BATTLEFIELD,
-                    toZone = Zone.GRAVEYARD,
-                    ownerId = playerId
-                )
+            val transitionResult = ZoneTransitionService.moveToZone(
+                newState, permanentId, Zone.GRAVEYARD
             )
+            newState = transitionResult.state
+            events.addAll(transitionResult.events)
         }
 
-        val permanentNames = selectedPermanents.map { id ->
-            state.getEntity(id)?.get<CardComponent>()?.name ?: "Unknown"
-        }
-        events.add(0, PermanentsSacrificedEvent(playerId, selectedPermanents, permanentNames))
         return checkForMore(newState, events)
     }
 
@@ -489,26 +461,18 @@ class SacrificeAndPayContinuationResumer(
         // If player selected enough permanents, they paid the cost
         if (selectedPermanents.size >= continuation.requiredCount) {
             // Sacrifice the selected permanents
-            val battlefieldZone = ZoneKey(playerId, Zone.BATTLEFIELD)
-            val graveyardZone = ZoneKey(playerId, Zone.GRAVEYARD)
             var newState = state
             val events = mutableListOf<GameEvent>()
 
+            events.add(PermanentsSacrificedEvent(playerId, selectedPermanents))
+
             for (permanentId in selectedPermanents) {
-                val permanentName = newState.getEntity(permanentId)?.get<CardComponent>()?.name ?: "Unknown"
-                newState = newState.removeFromZone(battlefieldZone, permanentId)
-                newState = newState.addToZone(graveyardZone, permanentId)
-                events.add(
-                    ZoneChangeEvent(
-                        entityId = permanentId,
-                        entityName = permanentName,
-                        fromZone = Zone.BATTLEFIELD,
-                        toZone = Zone.GRAVEYARD,
-                        ownerId = playerId
-                    )
+                val transitionResult = ZoneTransitionService.moveToZone(
+                    newState, permanentId, Zone.GRAVEYARD
                 )
+                newState = transitionResult.state
+                events.addAll(transitionResult.events)
             }
-            events.add(0, PermanentsSacrificedEvent(playerId, selectedPermanents))
 
             // Now execute the consequence (e.g., sacrifice the source)
             val context = EffectContext(
