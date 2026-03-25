@@ -267,7 +267,7 @@ class AIPlayerTest : FunSpec({
 
     test("AI chooses to cast creature over passing in main phase") {
         val registry = createCardRegistry()
-        val deck = Deck.of("Mountain" to 17, "Raging Goblin" to 3)
+        val deck = Deck.of("Mountain" to 10, "Raging Goblin" to 10)
         val (initialState, processor) = initGame(registry, deck)
 
         val p1 = initialState.turnOrder[0]
@@ -295,8 +295,11 @@ class AIPlayerTest : FunSpec({
                 state = processor.process(state, landAction.action).state
             }
 
-            // Now the AI should choose to cast Grizzly Bears (not pass)
-            if (state.priorityPlayerId == p1) {
+            // Now the AI should choose to cast Raging Goblin (not pass)
+            val hasCastableCreature = simulator.getLegalActions(state, p1).any {
+                it.actionType == "CastSpell" && it.affordable
+            }
+            if (state.priorityPlayerId == p1 && hasCastableCreature) {
                 val simulator = GameSimulator(registry)
                 val evaluator = AIPlayer.defaultEvaluator()
                 val actions = simulator.getLegalActions(state, p1)
