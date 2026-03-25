@@ -658,6 +658,13 @@ object Effects {
         AddAnyColorManaEffect(amount)
 
     /**
+     * Add a dynamic amount of mana of any one color.
+     * "Add X mana of any one color, where X is..."
+     */
+    fun AddAnyColorMana(amount: DynamicAmount): Effect =
+        AddAnyColorManaEffect(amount)
+
+    /**
      * Add X mana in any combination of the allowed colors.
      * "Add that much mana in any combination of {R} and/or {G}."
      */

@@ -29,6 +29,7 @@ object BloomburrowSet {
         FecundGreenshell,
         FlamecacheGecko,
         HeirloomEpic,
+        HelgaSkittishSeer,
         HiredClaw,
         HonoredDreyleader,
         IridescentVinelasher,
