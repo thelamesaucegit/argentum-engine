@@ -53,6 +53,7 @@ object BloomburrowSet {
         SplashLasher,
         SunspineLynx,
         TenderWildguide,
+        ThundertrapTrainer,
         ValleyQuestcaller,
         YgraEaterOfAll,
     )
