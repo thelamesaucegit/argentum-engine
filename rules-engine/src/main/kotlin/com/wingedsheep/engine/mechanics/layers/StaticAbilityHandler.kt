@@ -654,7 +654,9 @@ class StaticAbilityHandler(
         }
 
         // Handle "face-down creatures" pattern (e.g., "Face-down creatures get +1/+1")
-        if (hasFaceDownPredicate) {
+        // Only use the simple filter when there's no controller restriction;
+        // with a controller predicate (e.g., "you control"), fall through to Generic.
+        if (hasFaceDownPredicate && controllerPredicate == null) {
             return AffectsFilter.FaceDownCreatures
         }
 
