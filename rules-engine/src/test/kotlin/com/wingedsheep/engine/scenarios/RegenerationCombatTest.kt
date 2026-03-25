@@ -272,6 +272,63 @@ class RegenerationCombatTest : FunSpec({
         driver.findPermanent(opponent, "Centaur Courser") shouldNotBe null
     }
 
+    test("blocked trample attacker whose blocker regenerated deals full damage to player") {
+        // 5/5 trample attacks, 3/3 blocks. 3/3 has regen shield.
+        // Active player bolts the 3/3 blocker during combat → regeneration triggers
+        // 3/3 removed from combat. 5/5 is still "blocked" but has trample.
+        // Per CR 702.19c, trample creature with no remaining blockers assigns all damage to player.
+        val driver = createDriver()
+        driver.initMirrorMatch(
+            deck = Deck.of("Mountain" to 20, "Forest" to 20),
+            startingLife = 20
+        )
+
+        val activePlayer = driver.activePlayer!!
+        val opponent = driver.getOpponent(activePlayer)
+
+        driver.passPriorityUntil(Step.PRECOMBAT_MAIN)
+
+        val attacker = driver.putCreatureOnBattlefield(activePlayer, "Trample Beast") // 5/5 trample
+        val blocker = driver.putCreatureOnBattlefield(opponent, "Centaur Courser") // 3/3
+        driver.removeSummoningSickness(attacker)
+
+        val bolt = driver.putCardInHand(activePlayer, "Lightning Bolt")
+
+        // Give blocker a regeneration shield
+        driver.addRegenerationShield(blocker, opponent)
+
+        driver.passPriorityUntil(Step.DECLARE_ATTACKERS)
+        driver.declareAttackers(activePlayer, listOf(attacker), opponent).isSuccess shouldBe true
+        driver.passPriority(activePlayer)
+        driver.passPriority(opponent)
+        driver.currentStep shouldBe Step.DECLARE_BLOCKERS
+
+        driver.declareBlockers(opponent, mapOf(blocker to listOf(attacker))).isSuccess shouldBe true
+
+        // After blockers declared, non-active player has priority. Pass to active player.
+        driver.passPriority(opponent)
+
+        // Now active player has priority. Cast Lightning Bolt on blocker to trigger regen.
+        driver.giveMana(activePlayer, Color.RED, 1)
+        driver.castSpell(activePlayer, bolt, listOf(blocker)).isSuccess shouldBe true
+
+        // Resolve bolt
+        driver.bothPass()
+
+        // Blocker regenerated (removed from combat)
+        driver.findPermanent(opponent, "Centaur Courser") shouldNotBe null
+
+        // Advance through combat damage
+        driver.passPriorityUntil(Step.POSTCOMBAT_MAIN)
+
+        // Trample creature deals full 5 damage to defending player
+        driver.assertLifeTotal(opponent, 15)
+
+        // Both creatures survive
+        driver.findPermanent(activePlayer, "Trample Beast") shouldNotBe null
+        driver.findPermanent(opponent, "Centaur Courser") shouldNotBe null
+    }
+
     test("other combat pairs still resolve normally when one blocker regenerates") {
         // Attacker A (2/2) and Attacker B (2/1 first strike) both attack.
         // Blocker (3/3 with regen) blocks Attacker B.

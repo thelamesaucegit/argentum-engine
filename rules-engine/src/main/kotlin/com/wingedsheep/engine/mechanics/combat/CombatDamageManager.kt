@@ -369,6 +369,10 @@ internal class CombatDamageManager(
                                         assignments.add(CombatDamageAssignment(attackerId, targetId, damage))
                                     }
                                 }
+                            } else if (projected.hasKeyword(attackerId, Keyword.TRAMPLE)) {
+                                // CR 702.19c: Blocked attacker with trample and no remaining blockers
+                                // assigns all damage to the defending player/planeswalker.
+                                assignments.add(CombatDamageAssignment(attackerId, attackingComponent.defenderId, power))
                             }
                         }
                     }
