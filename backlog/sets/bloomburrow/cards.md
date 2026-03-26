@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 37 / 266
+**Implemented:** 38 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 9    |
+| White      | 40    | 10   |
 | Blue       | 41    | 8    |
 | Black      | 40    | 5    |
 | Red        | 41    | 4    |
@@ -37,7 +37,7 @@
 - [ ] Bonecache Overseer
 - [ ] Brambleguard Captain
 - [ ] Brambleguard Veteran
-- [ ] Brave-Kin Duo
+- [x] Brave-Kin Duo
 - [ ] Brazen Collector
 - [ ] Brightblade Stoat
 - [ ] Builder's Talent
