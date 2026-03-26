@@ -45,6 +45,7 @@ object BloomburrowSet {
         NocturnalHunger,
         NettleGuard,
         NightwhorlHermit,
+        Overprotect,
         OsteomancerAdept,
         PlayfulShove,
         RuthlessNegotiation,

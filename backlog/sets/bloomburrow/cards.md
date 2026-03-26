@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 41 / 266
+**Implemented:** 42 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 8    |
 | Black      | 40    | 6    |
 | Red        | 41    | 5    |
-| Green      | 41    | 4    |
+| Green      | 41    | 5    |
 | Multicolor | 39    | 5    |
 | Colorless  | 9     | 1    |
 | Land       | 15    | 0    |
@@ -167,7 +167,7 @@
 - [ ] Oakhollow Village
 - [x] Osteomancer Adept
 - [ ] Otterball Antics
-- [ ] Overprotect
+- [x] Overprotect
 - [ ] Parting Gust
 - [ ] Patchwork Banner
 - [ ] Pawpatch Formation
