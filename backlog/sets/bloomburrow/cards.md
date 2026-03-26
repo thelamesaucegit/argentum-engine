@@ -2,13 +2,13 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 42 / 266
+**Implemented:** 43 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 10   |
 | Blue       | 41    | 8    |
-| Black      | 40    | 6    |
+| Black      | 40    | 7    |
 | Red        | 41    | 5    |
 | Green      | 41    | 5    |
 | Multicolor | 39    | 5    |
@@ -33,7 +33,7 @@
 - [ ] Beza, the Bounding Spring
 - [ ] Blacksmith's Talent
 - [ ] Blooming Blast
-- [ ] Bonebind Orator
+- [x] Bonebind Orator
 - [ ] Bonecache Overseer
 - [ ] Brambleguard Captain
 - [ ] Brambleguard Veteran
