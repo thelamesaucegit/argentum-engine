@@ -81,6 +81,7 @@ object BloomburrowSet {
         ThornvaultForager,
         ThundertrapTrainer,
         ValleyQuestcaller,
+        ValleyRotcaller,
         WarrenWarleader,
         WildfireHowl,
         WickTheWhorledMind,
