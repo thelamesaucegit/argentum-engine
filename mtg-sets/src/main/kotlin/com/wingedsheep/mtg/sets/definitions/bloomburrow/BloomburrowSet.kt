@@ -68,6 +68,7 @@ object BloomburrowSet {
         TidecallerMentor,
         ThundertrapTrainer,
         ValleyQuestcaller,
+        WickTheWhorledMind,
         YgraEaterOfAll,
     )
 }

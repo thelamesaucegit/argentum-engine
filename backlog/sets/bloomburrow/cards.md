@@ -2,13 +2,13 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 47 / 266
+**Implemented:** 48 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 11   |
 | Blue       | 41    | 8    |
-| Black      | 40    | 7    |
+| Black      | 40    | 8    |
 | Red        | 41    | 8    |
 | Green      | 41    | 5    |
 | Multicolor | 39    | 5    |
@@ -278,7 +278,7 @@
 - [ ] Whiskerquill Scribe
 - [ ] Whiskervale Forerunner
 - [ ] Wick's Patrol
-- [ ] Wick, the Whorled Mind
+- [x] Wick, the Whorled Mind
 - [ ] Wildfire Howl
 - [ ] Wishing Well
 - [x] Ygra, Eater of All
