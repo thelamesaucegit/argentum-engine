@@ -12,6 +12,7 @@ import { ChooseOptionDecisionUI } from './ChooseOptionDecisionUI'
 import { ChooseColorDecisionUI } from './ChooseColorDecisionUI'
 import { CardSelectionDecision } from './CardSelectionDecisionUI'
 import { BattlefieldSelectionUI } from './BattlefieldSelectionUI'
+import { MultiZoneSelectionUI } from './MultiZoneSelectionUI'
 import { BattlefieldTargetingUI } from './BattlefieldTargetingUI'
 import { PlayerTargetingUI } from './PlayerTargetingUI'
 import { GraveyardTargetingUI } from './GraveyardTargetingUI'
@@ -136,8 +137,26 @@ export function DecisionUI() {
 
   // Handle SelectCardsDecision
   if (pendingDecision.type === 'SelectCardsDecision') {
-    // If useTargetingUI is true, use targeting-style UI (click on battlefield)
+    // If useTargetingUI is true, check if options span multiple zones
     if (pendingDecision.useTargetingUI) {
+      const zones = new Set<string>()
+      for (const cardId of pendingDecision.options) {
+        const card = gameState?.cards[cardId]
+        if (card?.zone?.zoneType) {
+          zones.add(card.zone.zoneType)
+        }
+      }
+      // Multi-zone: show dedicated UI with zone grouping (e.g., Lich's Mastery)
+      if (zones.size > 1) {
+        return (
+          <MultiZoneSelectionUI
+            key={pendingDecision.id}
+            decision={pendingDecision}
+            responsive={responsive}
+          />
+        )
+      }
+      // Single-zone: use click-on-board targeting style
       return (
         <BattlefieldSelectionUI
           decision={pendingDecision}
