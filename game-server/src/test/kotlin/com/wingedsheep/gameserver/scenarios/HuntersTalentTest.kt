@@ -14,7 +14,7 @@ import io.kotest.matchers.shouldNotBe
 /**
  * Scenario tests for Hunter's Talent.
  *
- * Hunter's Talent {G}
+ * Hunter's Talent {1}{G}
  * Enchantment — Class
  *
  * Level 1: When this Class enters, target creature you control deals damage
@@ -36,7 +36,7 @@ class HuntersTalentTest : ScenarioTestBase() {
                     .withCardInHand(1, "Hunter's Talent")
                     .withCardOnBattlefield(1, "Quaketusk Boar") // 4/2
                     .withCardOnBattlefield(2, "Hired Claw") // 1/2
-                    .withLandsOnBattlefield(1, "Forest", 1)
+                    .withLandsOnBattlefield(1, "Forest", 2)
                     .withCardInLibrary(1, "Forest")
                     .withCardInLibrary(2, "Forest")
                     .withActivePlayer(1)
