@@ -12,6 +12,7 @@ import com.wingedsheep.engine.handlers.actions.special.SpecialActionsModule
 import com.wingedsheep.engine.handlers.actions.spell.SpellModule
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.engine.state.GameState
+import com.wingedsheep.engine.core.UndoPolicyComputer
 
 /**
  * The central action processor for the game engine.
@@ -70,8 +71,10 @@ class ActionProcessor(
             return ExecutionResult.error(state, validationError)
         }
 
-        // Execute the action
-        return registry.execute(state, action)
+        // Execute the action and compute undo policy
+        val result = registry.execute(state, action)
+        val undoPolicy = UndoPolicyComputer.compute(action, state, result, services.cardRegistry)
+        return result.copy(undoPolicy = undoPolicy)
     }
 
     /**

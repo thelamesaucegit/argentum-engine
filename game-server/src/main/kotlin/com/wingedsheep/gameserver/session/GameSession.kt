@@ -469,66 +469,13 @@ class GameSession(
     }
 
     /**
-     * Check if an event reveals hidden information (draws, reveals, looks).
-     * If such events occur after an undoable action, the checkpoint is invalidated
-     * because undoing after gaining new information would be unfair.
-     */
-    private fun isInformationRevealingEvent(event: GameEvent): Boolean = when (event) {
-        is CardsDrawnEvent, is CardRevealedFromDrawEvent,
-        is CardsRevealedEvent, is LookedAtCardsEvent,
-        is HandLookedAtEvent, is HandRevealedEvent,
-        is CoinFlipEvent -> true
-        else -> false
-    }
-
-    /**
-     * Check if an event indicates a spell or ability resolved from the stack.
-     * Undoing after resolution would reveal whether the opponent chose to respond,
-     * which is hidden information the player shouldn't be able to exploit.
-     */
-    private fun isStackResolutionEvent(event: GameEvent): Boolean = when (event) {
-        is ResolvedEvent, is AbilityResolvedEvent -> true
-        else -> false
-    }
-
-    /**
-     * Check if an action is eligible for undo (non-respondable actions where
-     * the opponent can't respond before the active player passes priority).
-     */
-    private fun isUndoEligibleAction(action: GameAction): Boolean = when (action) {
-        is PlayLand, is DeclareAttackers, is DeclareBlockers, is OrderBlockers, is TurnFaceUp -> true
-        else -> false
-    }
-
-    /**
-     * Check if an action should preserve the existing undo checkpoint (neither set nor clear).
-     * PassPriority and mana abilities are "checkpoint-neutral" — they don't represent meaningful
-     * game decisions that should either create a new checkpoint or invalidate an existing one.
-     */
-    private fun isCheckpointNeutralAction(action: GameAction): Boolean = when {
-        action is PassPriority -> true
-        action is ActivateAbility -> isManaAbilityActivation(action)
-        action is ChooseManaColor -> true
-        else -> false
-    }
-
-    /**
-     * Check if an ActivateAbility action is activating a mana ability.
-     */
-    private fun isManaAbilityActivation(action: ActivateAbility): Boolean {
-        val state = gameState ?: return false
-        val container = state.getEntity(action.sourceId) ?: return false
-        val cardComponent = container.get<CardComponent>() ?: return false
-        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId) ?: return false
-        val ability = cardDef.script.activatedAbilities.find { it.id == action.abilityId }
-        return ability?.isManaAbility == true
-    }
-
-    /**
      * Execute a game action.
      *
      * Routes the action through the engine's ActionProcessor.
      * Synchronized to prevent lost updates when multiple players act simultaneously.
+     *
+     * Undo checkpoint management follows the engine's [UndoCheckpointAction] policy —
+     * the engine decides what to do with checkpoints, the server just executes it.
      */
     fun executeAction(playerId: EntityId, action: GameAction, messageId: String? = null): ActionResult = synchronized(stateLock) {
         val state = gameState ?: return ActionResult.Failure("Game not started")
@@ -545,115 +492,26 @@ class GameSession(
         // The opponent has seen the game state after the undoable action, so allowing undo
         // would revert information the opponent has already processed.
         if (undoCheckpoint != null && undoCheckpointOwner != null && playerId != undoCheckpointOwner) {
-            undoCheckpoint = null
-            undoCheckpointOwner = null
-            preCombatState = null
-        }
-
-        // Track pre-combat state: when the active player passes priority in precombat main,
-        // save this state so that undo from combat goes back to main phase.
-        // Also set undoCheckpoint so undo is available immediately upon arriving at declare attackers
-        // (before the player has actually submitted their attacker declaration).
-        if (action is PassPriority && state.step == Step.PRECOMBAT_MAIN && playerId == state.activePlayerId) {
-            preCombatState = state
-            undoCheckpoint = state
-            undoCheckpointOwner = playerId
-        }
-
-        // Track declare attackers state: when the defending player passes priority during declare attackers
-        // with an empty stack, the step will advance to declare blockers. Save a checkpoint so the
-        // defending player can undo back to declare attackers.
-        if (action is PassPriority && state.step == Step.DECLARE_ATTACKERS && playerId != state.activePlayerId && state.stack.isEmpty()) {
-            undoCheckpoint = state
-            undoCheckpointOwner = playerId
-        }
-
-        // Manage undo checkpoint:
-        // - Undo-eligible actions (land, combat declarations, morph): save checkpoint
-        // - Mana abilities: create checkpoint on first activation (so tapping can be undone),
-        //   preserve existing checkpoint on subsequent activations
-        // - Other checkpoint-neutral actions (pass priority, choose mana color): preserve existing checkpoint
-        // - Everything else (non-mana abilities, decisions): clear checkpoint
-        // - CastSpell: not undo-eligible
-        if (isUndoEligibleAction(action)) {
-            // For DeclareAttackers, use the pre-combat state if available so undo goes back to main phase
-            undoCheckpoint = if (action is DeclareAttackers && preCombatState != null) {
-                preCombatState
-            } else {
-                state
-            }
-            undoCheckpointOwner = playerId
-        } else if (action is ActivateAbility && isManaAbilityActivation(action)) {
-            // First mana ability in a sequence creates a checkpoint; subsequent ones preserve it
-            if (undoCheckpoint == null) {
-                undoCheckpoint = state
-                undoCheckpointOwner = playerId
-            }
-        } else if (!isCheckpointNeutralAction(action) && action !is CastSpell) {
-            undoCheckpoint = null
-            undoCheckpointOwner = null
-            preCombatState = null
+            clearCheckpoint()
         }
 
         val result = actionProcessor.process(state, action)
 
         val error = result.error
+        if (error != null) {
+            return ActionResult.Failure(error)
+        }
+
+        // Apply the engine's undo policy
+        applyUndoPolicy(result.undoPolicy, action, state, playerId)
+
+        gameState = result.state
+        if (messageId != null) lastProcessedMessageId[playerId] = messageId
         val pendingDecision = result.pendingDecision
-        when {
-            error != null -> {
-                // Revert checkpoint on failure
-                if (isUndoEligibleAction(action)) undoCheckpoint = null
-                ActionResult.Failure(error)
-            }
-            pendingDecision != null -> {
-                // Invalidate undo checkpoint if events reveal information
-                if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
-                    undoCheckpoint = null
-                    undoCheckpointOwner = null
-                    preCombatState = null
-                }
-                // Invalidate undo checkpoint when a spell or ability resolves — undoing after
-                // resolution would reveal whether the opponent chose to respond
-                if (undoCheckpoint != null && result.events.any { isStackResolutionEvent(it) }) {
-                    undoCheckpoint = null
-                    undoCheckpointOwner = null
-                    preCombatState = null
-                }
-                if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
-                    undoCheckpoint = null
-                    undoCheckpointOwner = null
-                    preCombatState = null
-                }
-                gameState = result.state
-                if (messageId != null) lastProcessedMessageId[playerId] = messageId
-                ActionResult.PausedForDecision(result.state, pendingDecision, result.events)
-            }
-            else -> {
-                // Invalidate undo checkpoint if the action produced information-revealing events
-                // (draws, reveals, looks) — undoing after gaining new information would be unfair
-                if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
-                    undoCheckpoint = null
-                    undoCheckpointOwner = null
-                    preCombatState = null
-                }
-                // Invalidate undo checkpoint when a spell or ability resolves — undoing after
-                // resolution would reveal whether the opponent chose to respond
-                if (undoCheckpoint != null && result.events.any { isStackResolutionEvent(it) }) {
-                    undoCheckpoint = null
-                    undoCheckpointOwner = null
-                    preCombatState = null
-                }
-                // Invalidate undo checkpoint when the turn changes — undoing across turn boundaries
-                // would revert the opponent's draw step and other beginning-of-turn actions
-                if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
-                    undoCheckpoint = null
-                    undoCheckpointOwner = null
-                    preCombatState = null
-                }
-                gameState = result.state
-                if (messageId != null) lastProcessedMessageId[playerId] = messageId
-                ActionResult.Success(result.state, result.events)
-            }
+        return if (pendingDecision != null) {
+            ActionResult.PausedForDecision(result.state, pendingDecision, result.events)
+        } else {
+            ActionResult.Success(result.state, result.events)
         }
     }
 
@@ -903,11 +761,55 @@ class GameSession(
         }
 
         gameState = checkpoint
+        clearCheckpoint()
+        logger.info("Player $playerId undid their last action")
+        ActionResult.Success(checkpoint, emptyList())
+    }
+
+    /**
+     * Apply the engine's undo checkpoint policy.
+     * The engine decides what to do with the checkpoint based on game rules;
+     * the server just follows the policy mechanically.
+     */
+    private fun applyUndoPolicy(
+        policy: UndoCheckpointAction,
+        action: GameAction,
+        preActionState: GameState,
+        playerId: EntityId
+    ) {
+        when (policy) {
+            UndoCheckpointAction.SET_CHECKPOINT -> {
+                // For DeclareAttackers, use the pre-combat state so undo goes back to main phase
+                undoCheckpoint = if (action is DeclareAttackers && preCombatState != null) {
+                    preCombatState
+                } else {
+                    preActionState
+                }
+                undoCheckpointOwner = playerId
+            }
+            UndoCheckpointAction.SET_PRECOMBAT_CHECKPOINT -> {
+                preCombatState = preActionState
+                undoCheckpoint = preActionState
+                undoCheckpointOwner = playerId
+            }
+            UndoCheckpointAction.SET_IF_NO_EXISTING_CHECKPOINT -> {
+                if (undoCheckpoint == null) {
+                    undoCheckpoint = preActionState
+                    undoCheckpointOwner = playerId
+                }
+            }
+            UndoCheckpointAction.PRESERVE -> { /* no change */ }
+            UndoCheckpointAction.CLEAR -> clearCheckpoint()
+        }
+    }
+
+    /**
+     * Clear all undo checkpoint state.
+     */
+    private fun clearCheckpoint() {
         undoCheckpoint = null
         undoCheckpointOwner = null
         preCombatState = null
-        logger.info("Player $playerId undid their last action")
-        ActionResult.Success(checkpoint, emptyList())
     }
 
     /**
@@ -937,44 +839,25 @@ class GameSession(
         }
         val result = actionProcessor.process(state, action)
 
-        // Auto-pass actions can cause stack resolution or reveal information.
-        // Invalidate undo checkpoint in the same cases as executeAction.
-        if (undoCheckpoint != null && result.error == null) {
-            // Opponent auto-passing invalidates checkpoint (opponent has acted)
-            if (undoCheckpointOwner != null && playerId != undoCheckpointOwner) {
-                undoCheckpoint = null
-                undoCheckpointOwner = null
-                preCombatState = null
-            }
-            if (undoCheckpoint != null && result.events.any { isInformationRevealingEvent(it) }) {
-                undoCheckpoint = null
-                undoCheckpointOwner = null
-                preCombatState = null
-            }
-            if (undoCheckpoint != null && result.events.any { isStackResolutionEvent(it) }) {
-                undoCheckpoint = null
-                undoCheckpointOwner = null
-                preCombatState = null
-            }
-            if (undoCheckpoint != null && result.events.any { it is TurnChangedEvent }) {
-                undoCheckpoint = null
-                undoCheckpointOwner = null
-                preCombatState = null
-            }
+        val error = result.error
+        if (error != null) {
+            return ActionResult.Failure(error)
         }
 
-        val error = result.error
+        // Opponent auto-passing invalidates checkpoint (opponent has acted)
+        if (undoCheckpoint != null && undoCheckpointOwner != null && playerId != undoCheckpointOwner) {
+            clearCheckpoint()
+        }
+
+        // Apply the engine's undo policy
+        applyUndoPolicy(result.undoPolicy, action, state, playerId)
+
+        gameState = result.state
         val pendingDecision = result.pendingDecision
-        when {
-            error != null -> ActionResult.Failure(error)
-            pendingDecision != null -> {
-                gameState = result.state
-                ActionResult.PausedForDecision(result.state, pendingDecision, result.events)
-            }
-            else -> {
-                gameState = result.state
-                ActionResult.Success(result.state, result.events)
-            }
+        return if (pendingDecision != null) {
+            ActionResult.PausedForDecision(result.state, pendingDecision, result.events)
+        } else {
+            ActionResult.Success(result.state, result.events)
         }
     }
 

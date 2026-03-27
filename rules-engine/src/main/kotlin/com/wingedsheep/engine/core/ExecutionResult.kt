@@ -112,7 +112,9 @@ data class ExecutionResult(
     val error: String? = null,
     val pendingDecision: PendingDecision? = null,
     /** Updated card collections from pipeline effects (GatherCards, SelectFromCollection) */
-    val updatedCollections: Map<String, List<EntityId>> = emptyMap()
+    val updatedCollections: Map<String, List<EntityId>> = emptyMap(),
+    /** Tells the server what to do with the undo checkpoint after this action */
+    val undoPolicy: UndoCheckpointAction = UndoCheckpointAction.CLEAR
 ) {
     val isSuccess: Boolean get() = error == null && pendingDecision == null
     val isPaused: Boolean get() = pendingDecision != null
