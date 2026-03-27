@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 49 / 266
+**Implemented:** 50 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 11   |
+| White      | 40    | 12   |
 | Blue       | 41    | 8    |
 | Black      | 40    | 8    |
 | Red        | 41    | 8    |
@@ -271,7 +271,7 @@
 - [ ] Wandertale Mentor
 - [ ] War Squeak
 - [ ] Warren Elder
-- [ ] Warren Warleader
+- [x] Warren Warleader
 - [ ] Waterspout Warden
 - [ ] Wax-Wane Witness
 - [ ] Wear Down
