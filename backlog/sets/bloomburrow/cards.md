@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 67 / 266
+**Implemented:** 68 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 14   |
+| White      | 40    | 15   |
 | Blue       | 41    | 10   |
 | Black      | 40    | 11   |
 | Red        | 41    | 11   |
@@ -81,7 +81,7 @@
 - [x] Emberheart Challenger
 - [ ] Essence Channeler
 - [ ] Fabled Passage
-- [ ] Feather of Flight
+- [x] Feather of Flight
 - [x] Fecund Greenshell
 - [ ] Feed the Cycle
 - [ ] Fell
