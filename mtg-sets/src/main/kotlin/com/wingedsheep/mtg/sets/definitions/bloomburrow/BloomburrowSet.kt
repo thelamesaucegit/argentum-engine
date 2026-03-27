@@ -51,6 +51,7 @@ object BloomburrowSet {
         JunkbladeBruiser,
         HuntersTalent,
         MindSpiral,
+        LifecreedDuo,
         MabelsMettle,
         ManifoldMouse,
         MouseTrapper,
