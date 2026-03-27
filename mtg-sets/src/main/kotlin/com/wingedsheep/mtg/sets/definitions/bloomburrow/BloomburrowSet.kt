@@ -30,6 +30,7 @@ object BloomburrowSet {
         CamelliaTheSeedmiser,
         CrumbAndGetIt,
         DawnsTruce,
+        DireDowndraft,
         DreamdewEntrancer,
         DriftgloomCoyote,
         EarlyWinter,

@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 51 / 266
+**Implemented:** 52 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 12   |
-| Blue       | 41    | 8    |
+| Blue       | 41    | 9    |
 | Black      | 40    | 8    |
 | Red        | 41    | 8    |
 | Green      | 41    | 5    |
@@ -67,7 +67,7 @@
 - [x] Dawn's Truce
 - [ ] Dazzling Denial
 - [ ] Dewdrop Cure
-- [ ] Dire Downdraft
+- [x] Dire Downdraft
 - [ ] Diresight
 - [ ] Dour Port-Mage
 - [ ] Downwind Ambusher

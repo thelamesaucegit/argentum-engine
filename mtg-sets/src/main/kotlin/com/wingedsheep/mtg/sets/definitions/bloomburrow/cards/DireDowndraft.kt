@@ -1,0 +1,38 @@
+package com.wingedsheep.mtg.sets.definitions.bloomburrow.cards
+
+import com.wingedsheep.sdk.dsl.Effects
+import com.wingedsheep.sdk.dsl.Targets
+import com.wingedsheep.sdk.dsl.card
+import com.wingedsheep.sdk.model.Rarity
+
+/**
+ * Dire Downdraft
+ * {3}{U}
+ * Instant
+ *
+ * This spell costs {1} less to cast if it targets an attacking or tapped creature.
+ * Target creature's owner puts it on their choice of the top or bottom of their library.
+ *
+ * Note: The conditional cost reduction (costs {1} less if targeting attacking/tapped creature)
+ * is not yet implemented — target-conditional cost reduction is not supported.
+ * Note: Currently always puts on top of library. Owner's choice of top or bottom
+ * is not yet supported.
+ */
+val DireDowndraft = card("Dire Downdraft") {
+    manaCost = "{3}{U}"
+    typeLine = "Instant"
+    oracleText = "This spell costs {1} less to cast if it targets an attacking or tapped creature.\nTarget creature's owner puts it on their choice of the top or bottom of their library."
+
+    spell {
+        val creature = target("creature", Targets.Creature)
+        effect = Effects.PutOnTopOfLibrary(creature)
+    }
+
+    metadata {
+        rarity = Rarity.COMMON
+        collectorNumber = "46"
+        artist = "Martin Wittfooth"
+        flavorText = "Quickwing's elite flyers were more than capable of navigating ordinary storms, but Dragonhawk's storms were anything but ordinary."
+        imageUri = "https://cards.scryfall.io/normal/front/f/1/f1931f22-974c-43ad-911e-684bf3f9995d.jpg?1721426060"
+    }
+}
