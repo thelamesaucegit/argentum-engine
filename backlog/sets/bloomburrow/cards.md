@@ -2,14 +2,14 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 57 / 266
+**Implemented:** 58 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 12   |
 | Blue       | 41    | 9    |
 | Black      | 40    | 8    |
-| Red        | 41    | 10   |
+| Red        | 41    | 11   |
 | Green      | 41    | 5    |
 | Multicolor | 39    | 8    |
 | Colorless  | 9     | 2    |
@@ -200,7 +200,7 @@
 - [x] Ruthless Negotiation
 - [ ] Salvation Swan
 - [ ] Savor
-- [ ] Sazacap's Brew
+- [x] Sazacap's Brew
 - [ ] Scales of Shale
 - [ ] Scavenger's Talent
 - [ ] Scrapshooter
