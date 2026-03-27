@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 74 / 266
+**Implemented:** 75 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -11,7 +11,7 @@
 | Black      | 40    | 12   |
 | Red        | 41    | 13   |
 | Green      | 41    | 8    |
-| Multicolor | 39    | 10   |
+| Multicolor | 39    | 11   |
 | Colorless  | 9     | 2    |
 | Land       | 15    | 1    |
 
@@ -28,7 +28,7 @@
 - [ ] Banishing Light
 - [ ] Bark-Knuckle Boxer
 - [x] Barkform Harvester
-- [ ] Baylen, the Haymaker
+- [x] Baylen, the Haymaker
 - [x] Bellowing Crier
 - [ ] Beza, the Bounding Spring
 - [ ] Blacksmith's Talent
