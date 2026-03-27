@@ -41,6 +41,18 @@ data class MayPlayFromExileComponent(
 ) : Component
 
 /**
+ * Marks a card in exile as castable via its warp ability.
+ * Applied when a warped permanent is exiled by the warp end-step trigger.
+ * The card can be re-cast for its warp cost from exile, and the warp loop continues.
+ *
+ * @param controllerId The player who may cast this card from exile via warp.
+ */
+@Serializable
+data class WarpExiledComponent(
+    val controllerId: EntityId
+) : Component
+
+/**
  * Marks a card as playable without paying its mana cost.
  * Applied by effects like Mind's Desire, Cascade, Omniscience.
  * This only waives the mana cost — the card must still be in a zone where

@@ -114,7 +114,9 @@ class CastSpellHandler(
             zoneResolver.hasMayPlayPermanentFromGraveyardPermission(state, action.playerId, action.cardId, cardComponent)
         val hasFlashback = !inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard &&
             zoneResolver.hasFlashbackPermission(state, action.playerId, action.cardId)
-        if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback) {
+        val hasWarpFromExile = !inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback &&
+            zoneResolver.hasWarpFromExilePermission(state, action.playerId, action.cardId)
+        if (!inHand && !onTopOfLibrary && !mayPlayFromExile && !mayCastFromZone && !mayCastFromGraveyard && !hasFlashback && !hasWarpFromExile) {
             return "Card is not in your hand"
         }
 
@@ -192,16 +194,23 @@ class CastSpellHandler(
             if (flashbackAbility != null && zoneResolver.hasFlashbackPermission(state, action.playerId, action.cardId)) {
                 costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, flashbackAbility.cost, action.playerId)
             } else {
-                // Check self-alternative cost (e.g., Zahid's {3}{U} + tap artifact)
-                val selfAltCost = cardDef.script.selfAlternativeCost
-                if (selfAltCost != null) {
-                    val altMana = ManaCost.parse(selfAltCost.manaCost)
-                    costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altMana, action.playerId)
+                // Check warp cost (card in hand or exile with warp permission)
+                val warpAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Warp>().firstOrNull()
+                if (warpAbility != null && (zoneResolver.hasWarpPermission(state, action.playerId, action.cardId)
+                            || zoneResolver.hasWarpFromExilePermission(state, action.playerId, action.cardId))) {
+                    costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, warpAbility.cost, action.playerId)
                 } else {
-                    // Fall back to battlefield-granted alternative cost (e.g., Jodah's {W}{U}{B}{R}{G})
-                    val altCosts = costCalculator.findAlternativeCastingCosts(state, action.playerId)
-                    if (altCosts.isEmpty()) return "No alternative casting cost available"
-                    costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCosts.first())
+                    // Check self-alternative cost (e.g., Zahid's {3}{U} + tap artifact)
+                    val selfAltCost = cardDef.script.selfAlternativeCost
+                    if (selfAltCost != null) {
+                        val altMana = ManaCost.parse(selfAltCost.manaCost)
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altMana, action.playerId)
+                    } else {
+                        // Fall back to battlefield-granted alternative cost (e.g., Jodah's {W}{U}{B}{R}{G})
+                        val altCosts = costCalculator.findAlternativeCastingCosts(state, action.playerId)
+                        if (altCosts.isEmpty()) return "No alternative casting cost available"
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(state, cardDef, altCosts.first())
+                    }
                 }
             }
         } else if (cardDef != null) {
@@ -603,16 +612,23 @@ class CastSpellHandler(
             if (flashbackAbility != null && zoneResolver.hasFlashbackPermission(currentState, action.playerId, action.cardId)) {
                 costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, flashbackAbility.cost, action.playerId)
             } else {
-                val selfAltCost = cardDef.script.selfAlternativeCost
-                if (selfAltCost != null) {
-                    val altMana = ManaCost.parse(selfAltCost.manaCost)
-                    costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, altMana, action.playerId)
+                // Check warp cost
+                val warpAbility = cardDef.keywordAbilities.filterIsInstance<KeywordAbility.Warp>().firstOrNull()
+                if (warpAbility != null && (zoneResolver.hasWarpPermission(currentState, action.playerId, action.cardId)
+                            || zoneResolver.hasWarpFromExilePermission(currentState, action.playerId, action.cardId))) {
+                    costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, warpAbility.cost, action.playerId)
                 } else {
-                    val altCosts = costCalculator.findAlternativeCastingCosts(currentState, action.playerId)
-                    if (altCosts.isNotEmpty()) {
-                        costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, altCosts.first())
+                    val selfAltCost = cardDef.script.selfAlternativeCost
+                    if (selfAltCost != null) {
+                        val altMana = ManaCost.parse(selfAltCost.manaCost)
+                        costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, altMana, action.playerId)
                     } else {
-                        cardComponent.manaCost
+                        val altCosts = costCalculator.findAlternativeCastingCosts(currentState, action.playerId)
+                        if (altCosts.isNotEmpty()) {
+                            costCalculator.calculateEffectiveCostWithAlternativeBase(currentState, cardDef, altCosts.first())
+                        } else {
+                            cardComponent.manaCost
+                        }
                     }
                 }
             }
@@ -874,6 +890,10 @@ class CastSpellHandler(
             if (pauseResult != null) return pauseResult
         }
 
+        // Determine if this spell is being cast using warp
+        val wasWarped = action.useAlternativeCost && cardDef != null &&
+            cardDef.keywordAbilities.any { it is KeywordAbility.Warp }
+
         // Capture storm count before incrementing (spells cast before this one)
         val stormCount = currentState.spellsCastThisTurn
 
@@ -882,7 +902,8 @@ class CastSpellHandler(
         currentState = currentState.copy(
             spellsCastThisTurn = stormCount + 1,
             playerSpellsCastThisTurn = currentState.playerSpellsCastThisTurn +
-                (action.playerId to playerCount + 1)
+                (action.playerId to playerCount + 1),
+            spellWarpedThisTurn = currentState.spellWarpedThisTurn || wasWarped
         )
 
         // Track spell types cast this turn (for conditional evasion like Relic Runner)
@@ -920,6 +941,7 @@ class CastSpellHandler(
             spellTargetRequirements,
             exiledCardCount = exiledCardCount,
             wasKicked = action.wasKicked,
+            wasWarped = wasWarped,
             chosenModes = if (action.chosenMode != null) listOf(action.chosenMode) else emptyList(),
             totalManaSpent = manaSpentThisCast
         )

@@ -106,7 +106,8 @@ class TurnManager(
             spellsCastThisTurn = 0,
             playerSpellsCastThisTurn = emptyMap(),
             spellTypesCastThisTurn = emptyMap(),
-            pendingSpellCopies = emptyList()
+            pendingSpellCopies = emptyList(),
+            spellWarpedThisTurn = false
         )
 
         // Reset cards-drawn-this-turn count for ALL players (not just active player)

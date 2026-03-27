@@ -94,7 +94,10 @@ data class GameState(
     val spellTypesCastThisTurn: Map<EntityId, Set<String>> = emptyMap(),
 
     /** Pending spell copies — copy the next instant/sorcery spell cast by a player (e.g., Howl of the Horde) */
-    val pendingSpellCopies: List<PendingSpellCopy> = emptyList()
+    val pendingSpellCopies: List<PendingSpellCopy> = emptyList(),
+
+    /** Whether a spell was warped this turn (for Void condition: "a spell was warped this turn") */
+    val spellWarpedThisTurn: Boolean = false
 ) {
     /**
      * Cached projection of the game state with all continuous effects (Rule 613) applied.

@@ -37,6 +37,15 @@ data object CastFromHandComponent : Component
 data object WasKickedComponent : Component
 
 /**
+ * Marks a permanent as having been cast for its warp cost.
+ * Added when a warped spell resolves from the stack.
+ * At the beginning of the next end step, this permanent is exiled.
+ * The warp loop continues from exile — the card can be re-cast for its warp cost.
+ */
+@Serializable
+data object WarpedComponent : Component
+
+/**
  * Marks a permanent so that if it would leave the battlefield, it is exiled instead.
  * Used by Kheru Lich Lord, Whip of Erebos, Sneak Attack, and similar reanimation effects.
  */

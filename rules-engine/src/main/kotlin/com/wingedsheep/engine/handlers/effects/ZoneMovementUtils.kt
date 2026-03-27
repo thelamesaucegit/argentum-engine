@@ -20,6 +20,7 @@ import com.wingedsheep.engine.state.components.battlefield.ExileOnLeaveBattlefie
 import com.wingedsheep.engine.state.components.battlefield.SagaComponent
 import com.wingedsheep.engine.state.components.battlefield.ReplacementEffectSourceComponent
 import com.wingedsheep.engine.state.components.battlefield.CastFromHandComponent
+import com.wingedsheep.engine.state.components.battlefield.WarpedComponent
 import com.wingedsheep.engine.state.components.battlefield.WasKickedComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -229,6 +230,7 @@ object ZoneMovementUtils {
             .without<SummoningSicknessComponent>()
             .without<CastFromHandComponent>()
             .without<WasKickedComponent>()
+            .without<WarpedComponent>()
             .without<DamageComponent>()
             .without<DamageDealtToCreaturesThisTurnComponent>()
             .without<CountersComponent>()

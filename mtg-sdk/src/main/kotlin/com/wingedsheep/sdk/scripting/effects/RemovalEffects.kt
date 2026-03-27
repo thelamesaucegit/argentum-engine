@@ -413,3 +413,20 @@ data class ForceExileMultiZoneEffect(
         "Exile ${count.description} permanents you control or cards from your hand or graveyard"
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
+
+/**
+ * Exile a warped permanent and mark it as re-castable via warp from exile.
+ * Used by the warp mechanic's delayed trigger: "At the beginning of the next end step,
+ * exile this permanent." The exiled card retains its warp ability and can be cast
+ * from exile for its warp cost on a later turn.
+ *
+ * @property target The permanent to exile (resolved to SpecificEntity by delayed trigger creation)
+ */
+@SerialName("WarpExile")
+@Serializable
+data class WarpExileEffect(
+    val target: EffectTarget
+) : Effect {
+    override val description: String = "Exile ${target.description} (warp)"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}

@@ -10,6 +10,7 @@ import com.wingedsheep.engine.state.components.battlefield.LinkedExileComponent
 import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.MayPlayFromExileComponent
+import com.wingedsheep.engine.state.components.identity.WarpExiledComponent
 import com.wingedsheep.engine.state.components.player.MayCastCreaturesFromGraveyardWithForageComponent
 import com.wingedsheep.engine.state.components.identity.PlayWithoutPayingCostComponent
 import com.wingedsheep.engine.handlers.PredicateContext
@@ -44,6 +45,8 @@ class CastFromZoneEnumerator : ActionEnumerator {
         enumerateGraveyardPermanents(context, result)
         enumerateGraveyardCreaturesWithForage(context, result)
         enumerateFlashback(context, result)
+        enumerateWarpFromHand(context, result)
+        enumerateWarpFromExile(context, result)
 
         return result
     }
@@ -772,6 +775,233 @@ class CastFromZoneEnumerator : ActionEnumerator {
                         manaCostString = costString,
                         autoTapPreview = autoTapPreview,
                         sourceZone = "GRAVEYARD"
+                    )
+                )
+            }
+        }
+    }
+
+    // =========================================================================
+    // Warp from hand
+    // =========================================================================
+
+    private fun enumerateWarpFromHand(
+        context: EnumerationContext,
+        result: MutableList<LegalAction>
+    ) {
+        val state = context.state
+        val playerId = context.playerId
+        val handCards = state.getZone(ZoneKey(playerId, Zone.HAND))
+
+        for (cardId in handCards) {
+            val container = state.getEntity(cardId) ?: continue
+            val cardComponent = container.get<CardComponent>() ?: continue
+
+            // Skip lands — warp is for spells only
+            if (cardComponent.typeLine.isLand) continue
+
+            val cardDef = context.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
+
+            val warpAbility = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.Warp>()
+                .firstOrNull() ?: continue
+
+            // Warp permanents at sorcery speed, instants at instant speed
+            val isInstant = cardComponent.typeLine.isInstant
+            if (!isInstant && !context.canPlaySorcerySpeed) continue
+
+            if (context.cantCastSpells) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithWarp",
+                        description = "Cast ${cardComponent.name} (Warp)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        affordable = false,
+                        manaCostString = warpAbility.cost.toString(),
+                        sourceZone = "HAND"
+                    )
+                )
+                continue
+            }
+
+            // Check cast restrictions
+            val castRestrictions = cardDef.script.castRestrictions
+            if (!context.castPermissionUtils.checkCastRestrictions(state, playerId, castRestrictions)) continue
+
+            val effectiveCost = context.costCalculator.calculateEffectiveCostWithAlternativeBase(
+                state, cardDef, warpAbility.cost, playerId
+            )
+            val costString = effectiveCost.toString()
+            val canAfford = context.manaSolver.canPay(state, playerId, effectiveCost)
+
+            if (!canAfford) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithWarp",
+                        description = "Cast ${cardComponent.name} (Warp)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        affordable = false,
+                        manaCostString = costString,
+                        sourceZone = "HAND"
+                    )
+                )
+                continue
+            }
+
+            val targetReqs = buildList {
+                addAll(cardDef.script.targetRequirements)
+                cardDef.script.auraTarget?.let { add(it) }
+            }
+
+            val autoTapSolution = context.manaSolver.solve(state, playerId, effectiveCost)
+            val autoTapPreview = autoTapSolution?.sources?.map { it.entityId }
+
+            if (targetReqs.isNotEmpty()) {
+                val targetInfos = context.targetUtils.buildTargetInfos(state, playerId, targetReqs)
+                val allSatisfied = context.targetUtils.allRequirementsSatisfied(targetInfos)
+                if (allSatisfied) {
+                    val firstReq = targetReqs.first()
+                    val firstInfo = targetInfos.first()
+                    result.add(
+                        LegalAction(
+                            actionType = "CastWithWarp",
+                            description = "Cast ${cardComponent.name} (Warp)",
+                            action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                            validTargets = firstInfo.validTargets,
+                            requiresTargets = true,
+                            targetCount = firstReq.count,
+                            minTargets = firstReq.effectiveMinCount,
+                            targetDescription = firstReq.description,
+                            targetRequirements = if (targetInfos.size > 1) targetInfos else null,
+                            manaCostString = costString,
+                            autoTapPreview = autoTapPreview,
+                            sourceZone = "HAND"
+                        )
+                    )
+                }
+            } else {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithWarp",
+                        description = "Cast ${cardComponent.name} (Warp)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        manaCostString = costString,
+                        autoTapPreview = autoTapPreview,
+                        sourceZone = "HAND"
+                    )
+                )
+            }
+        }
+    }
+
+    // =========================================================================
+    // Warp from exile
+    // =========================================================================
+
+    private fun enumerateWarpFromExile(
+        context: EnumerationContext,
+        result: MutableList<LegalAction>
+    ) {
+        val state = context.state
+        val playerId = context.playerId
+
+        // Check all players' exile zones for cards with WarpExiledComponent
+        val exileCards = state.turnOrder.flatMap { pid -> state.getExile(pid) }
+
+        for (cardId in exileCards) {
+            val container = state.getEntity(cardId) ?: continue
+            val warpExiled = container.get<WarpExiledComponent>() ?: continue
+            if (warpExiled.controllerId != playerId) continue
+
+            val cardComponent = container.get<CardComponent>() ?: continue
+            val cardDef = context.cardRegistry.getCard(cardComponent.cardDefinitionId) ?: continue
+
+            val warpAbility = cardDef.keywordAbilities
+                .filterIsInstance<KeywordAbility.Warp>()
+                .firstOrNull() ?: continue
+
+            // Warp is creature-speed (sorcery speed) — only permanents at sorcery speed
+            if (!context.canPlaySorcerySpeed) continue
+
+            if (context.cantCastSpells) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithWarp",
+                        description = "Cast ${cardComponent.name} (Warp)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        affordable = false,
+                        manaCostString = warpAbility.cost.toString(),
+                        sourceZone = "EXILE"
+                    )
+                )
+                continue
+            }
+
+            // Check cast restrictions
+            val castRestrictions = cardDef.script.castRestrictions
+            if (!context.castPermissionUtils.checkCastRestrictions(state, playerId, castRestrictions)) continue
+
+            // Calculate effective warp cost (applying cost reductions/increases)
+            val effectiveCost = context.costCalculator.calculateEffectiveCostWithAlternativeBase(
+                state, cardDef, warpAbility.cost, playerId
+            )
+            val costString = effectiveCost.toString()
+            val canAfford = context.manaSolver.canPay(state, playerId, effectiveCost)
+
+            if (!canAfford) {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithWarp",
+                        description = "Cast ${cardComponent.name} (Warp)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        affordable = false,
+                        manaCostString = costString,
+                        sourceZone = "EXILE"
+                    )
+                )
+                continue
+            }
+
+            val targetReqs = buildList {
+                addAll(cardDef.script.targetRequirements)
+                cardDef.script.auraTarget?.let { add(it) }
+            }
+
+            val autoTapSolution = context.manaSolver.solve(state, playerId, effectiveCost)
+            val autoTapPreview = autoTapSolution?.sources?.map { it.entityId }
+
+            if (targetReqs.isNotEmpty()) {
+                val targetInfos = context.targetUtils.buildTargetInfos(state, playerId, targetReqs)
+                val allSatisfied = context.targetUtils.allRequirementsSatisfied(targetInfos)
+                if (allSatisfied) {
+                    val firstReq = targetReqs.first()
+                    val firstInfo = targetInfos.first()
+                    result.add(
+                        LegalAction(
+                            actionType = "CastWithWarp",
+                            description = "Cast ${cardComponent.name} (Warp)",
+                            action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                            validTargets = firstInfo.validTargets,
+                            requiresTargets = true,
+                            targetCount = firstReq.count,
+                            minTargets = firstReq.effectiveMinCount,
+                            targetDescription = firstReq.description,
+                            targetRequirements = if (targetInfos.size > 1) targetInfos else null,
+                            manaCostString = costString,
+                            autoTapPreview = autoTapPreview,
+                            sourceZone = "EXILE"
+                        )
+                    )
+                }
+            } else {
+                result.add(
+                    LegalAction(
+                        actionType = "CastWithWarp",
+                        description = "Cast ${cardComponent.name} (Warp)",
+                        action = CastSpell(playerId, cardId, useAlternativeCost = true),
+                        manaCostString = costString,
+                        autoTapPreview = autoTapPreview,
+                        sourceZone = "EXILE"
                     )
                 )
             }

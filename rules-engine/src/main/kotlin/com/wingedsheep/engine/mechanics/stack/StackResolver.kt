@@ -14,6 +14,7 @@ import com.wingedsheep.engine.state.components.battlefield.TargetedByControllerT
 import com.wingedsheep.engine.state.components.battlefield.ClassLevelComponent
 import com.wingedsheep.engine.state.components.battlefield.SagaComponent
 import com.wingedsheep.engine.state.components.battlefield.CastFromHandComponent
+import com.wingedsheep.engine.state.components.battlefield.WarpedComponent
 import com.wingedsheep.engine.state.components.battlefield.WasKickedComponent
 import com.wingedsheep.engine.state.components.battlefield.SummoningSicknessComponent
 import com.wingedsheep.engine.state.components.battlefield.TappedComponent
@@ -31,7 +32,10 @@ import com.wingedsheep.sdk.scripting.KeywordAbility
 import com.wingedsheep.sdk.core.Color
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.engine.state.components.stack.*
+import com.wingedsheep.engine.event.DelayedTriggeredAbility
+import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.scripting.effects.WarpExileEffect
 import com.wingedsheep.sdk.model.EntityId
 import com.wingedsheep.sdk.scripting.events.CounterTypeFilter
 import com.wingedsheep.sdk.scripting.EntersAsCopy
@@ -92,6 +96,7 @@ class StackResolver(
         chosenCreatureType: String? = null,
         exiledCardCount: Int = 0,
         wasKicked: Boolean = false,
+        wasWarped: Boolean = false,
         chosenModes: List<Int> = emptyList(),
         totalManaSpent: Int = 0
     ): ExecutionResult {
@@ -120,7 +125,8 @@ class StackResolver(
                 damageDistribution = damageDistribution,
                 chosenCreatureType = chosenCreatureType,
                 exiledCardCount = exiledCardCount,
-                castFromZone = castFromZone
+                castFromZone = castFromZone,
+                wasWarped = wasWarped
             ))
             if (targets.isNotEmpty()) {
                 updated = updated.with(TargetsComponent(targets, targetRequirements))
@@ -668,6 +674,11 @@ class StackResolver(
                 updated = updated.with(WasKickedComponent)
             }
 
+            // Track if this permanent was cast for its warp cost
+            if (spellComponent.wasWarped) {
+                updated = updated.with(WarpedComponent)
+            }
+
             // Add continuous effects from static abilities (but not for face-down creatures)
             if (!spellComponent.castFaceDown) {
                 updated = staticAbilityHandler.addContinuousEffectComponent(updated)
@@ -755,6 +766,19 @@ class StackResolver(
         // Add to battlefield
         val battlefieldZone = ZoneKey(controllerId, Zone.BATTLEFIELD)
         newState = newState.addToZone(battlefieldZone, spellId)
+
+        // Warp: create delayed trigger to exile at beginning of next end step
+        if (spellComponent.wasWarped) {
+            val delayedTrigger = DelayedTriggeredAbility(
+                id = java.util.UUID.randomUUID().toString(),
+                effect = WarpExileEffect(EffectTarget.SpecificEntity(spellId)),
+                fireAtStep = Step.END,
+                sourceId = spellId,
+                sourceName = cardComponent?.name ?: "Unknown",
+                controllerId = controllerId
+            )
+            newState = newState.addDelayedTrigger(delayedTrigger)
+        }
 
         return newState
     }

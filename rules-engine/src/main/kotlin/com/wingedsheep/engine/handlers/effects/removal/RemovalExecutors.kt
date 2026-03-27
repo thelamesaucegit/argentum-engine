@@ -48,6 +48,7 @@ class RemovalExecutors(
         SacrificeSelfExecutor(),
         SacrificeTargetExecutor(),
         MoveToZoneEffectExecutor(cardRegistry),
-        ReturnSelfToBattlefieldAttachedExecutor(cardRegistry)
+        ReturnSelfToBattlefieldAttachedExecutor(cardRegistry),
+        WarpExileExecutor()
     )
 }

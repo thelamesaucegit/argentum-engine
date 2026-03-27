@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.effects.CreateDelayedTriggerEffect
 import com.wingedsheep.sdk.scripting.effects.Effect
 import com.wingedsheep.sdk.scripting.effects.DestroyAllEquipmentOnTargetEffect
 import com.wingedsheep.sdk.scripting.effects.SacrificeTargetEffect
+import com.wingedsheep.sdk.scripting.effects.WarpExileEffect
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.effects.MoveToZoneEffect
 import java.util.UUID
@@ -82,6 +83,10 @@ class CreateDelayedTriggerExecutor : EffectExecutor<CreateDelayedTriggerEffect> 
                 if (resolvedId != null) effect.copy(target = EffectTarget.SpecificEntity(resolvedId)) else effect
             }
             is DestroyAllEquipmentOnTargetEffect -> {
+                val resolvedId = resolveTarget(effect.target, context)
+                if (resolvedId != null) effect.copy(target = EffectTarget.SpecificEntity(resolvedId)) else effect
+            }
+            is WarpExileEffect -> {
                 val resolvedId = resolveTarget(effect.target, context)
                 if (resolvedId != null) effect.copy(target = EffectTarget.SpecificEntity(resolvedId)) else effect
             }

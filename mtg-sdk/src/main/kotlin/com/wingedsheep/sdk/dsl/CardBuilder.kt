@@ -215,6 +215,14 @@ class CardBuilder(private val name: String) {
     var morphFaceUpEffect: Effect? = null
 
     /**
+     * Warp cost as a mana cost string (e.g., "{1}{R}").
+     * When set, the card gains the Warp keyword ability.
+     * Warp allows casting for an alternative cost; the permanent is exiled at end of turn
+     * and can be re-cast from exile using the warp cost on future turns.
+     */
+    var warp: String? = null
+
+    /**
      * If set, the caster must choose a creature type during casting.
      * The source determines where to look for available creature types.
      */
@@ -521,10 +529,13 @@ class CardBuilder(private val name: String) {
         val metadata = metadataBuilder?.build() ?: ScryfallMetadata()
 
         // Add morph keyword ability if morph cost is specified
-        val finalKeywordAbilities = when {
-            morph != null -> keywordAbilityList + KeywordAbility.Morph(PayCost.Mana(ManaCost.parse(morph!!)), morphFaceUpEffect)
-            morphCost != null -> keywordAbilityList + KeywordAbility.Morph(morphCost!!, morphFaceUpEffect)
-            else -> keywordAbilityList.toList()
+        val finalKeywordAbilities = buildList {
+            addAll(keywordAbilityList)
+            when {
+                morph != null -> add(KeywordAbility.Morph(PayCost.Mana(ManaCost.parse(morph!!)), morphFaceUpEffect))
+                morphCost != null -> add(KeywordAbility.Morph(morphCost!!, morphFaceUpEffect))
+            }
+            if (warp != null) add(KeywordAbility.Warp(ManaCost.parse(warp!!)))
         }
 
         return CardDefinition(

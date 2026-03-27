@@ -424,6 +424,22 @@ sealed interface KeywordAbility {
     }
 
     // =========================================================================
+    // Warp
+    // =========================================================================
+
+    /**
+     * Warp with a mana cost.
+     * "Warp {2}{R}" - You may cast this card for its warp cost. Exile it at the
+     * beginning of the next end step. You may cast it from exile using its warp
+     * ability on a later turn.
+     */
+    @SerialName("Warp")
+    @Serializable
+    data class Warp(val cost: ManaCost) : KeywordAbility {
+        override val description: String = "Warp $cost"
+    }
+
+    // =========================================================================
     // Offspring
     // =========================================================================
 
@@ -513,5 +529,10 @@ sealed interface KeywordAbility {
          * Create Offspring with mana cost from string.
          */
         fun offspring(cost: String): KeywordAbility = Offspring(ManaCost.parse(cost))
+
+        /**
+         * Create Warp with mana cost from string.
+         */
+        fun warp(cost: String): KeywordAbility = Warp(ManaCost.parse(cost))
     }
 }
