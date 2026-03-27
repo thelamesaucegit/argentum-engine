@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 79 / 266
+**Implemented:** 80 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 16   |
+| White      | 40    | 17   |
 | Blue       | 41    | 10   |
 | Black      | 40    | 12   |
 | Red        | 41    | 15   |
@@ -245,7 +245,7 @@
 - [ ] Tempest Angler
 - [x] Tender Wildguide
 - [ ] The Infamous Cruelclaw
-- [ ] Thistledown Players
+- [x] Thistledown Players
 - [ ] Thornplate Intimidator
 - [x] Thornvault Forager
 - [ ] Thought Shucker

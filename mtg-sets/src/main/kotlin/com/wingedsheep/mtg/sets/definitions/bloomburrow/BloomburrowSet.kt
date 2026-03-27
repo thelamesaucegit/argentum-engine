@@ -91,6 +91,7 @@ object BloomburrowSet {
         StormchasersTalent,
         SunspineLynx,
         TenderWildguide,
+        ThistledownPlayers,
         TidecallerMentor,
         ThornvaultForager,
         ThundertrapTrainer,
