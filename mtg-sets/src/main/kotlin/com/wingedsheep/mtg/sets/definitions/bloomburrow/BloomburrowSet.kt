@@ -41,6 +41,7 @@ object BloomburrowSet {
         HeirloomEpic,
         HelgaSkittishSeer,
         HiredClaw,
+        HopToIt,
         HonoredDreyleader,
         IridescentVinelasher,
         JackdawSavior,

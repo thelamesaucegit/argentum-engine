@@ -62,7 +62,8 @@ val WickTheWhorledMind = card("Wick, the Whorled Mind") {
                 power = 1,
                 toughness = 1,
                 colors = setOf(Color.BLACK),
-                creatureTypes = setOf("Snail")
+                creatureTypes = setOf("Snail"),
+                imageUri = "https://cards.scryfall.io/normal/front/d/9/d9bb0a91-b73e-465b-8c0e-50fc28e66fda.jpg?1721425912"
             ),
             elseEffect = CompositeEffect(
                 listOf(

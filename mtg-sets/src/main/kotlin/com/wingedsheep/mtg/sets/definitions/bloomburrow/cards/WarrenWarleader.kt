@@ -61,7 +61,8 @@ val WarrenWarleader = card("Warren Warleader") {
                     colors = setOf(Color.WHITE),
                     creatureTypes = setOf("Rabbit"),
                     tapped = true,
-                    attacking = true
+                    attacking = true,
+                    imageUri = "https://cards.scryfall.io/normal/front/8/1/81de52ef-7515-4958-abea-fb8ebdcef93c.jpg?1721431122"
                 ),
                 "Create a 1/1 white Rabbit creature token that's tapped and attacking"
             ),

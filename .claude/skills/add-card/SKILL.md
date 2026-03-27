@@ -48,6 +48,13 @@ Implement the card specified in `$ARGUMENTS`. The card name is the main argument
 
 4. **Auras**: Must use `typeLine = "Enchantment — Aura"` (modern Oracle errata) and need `auraTarget` in card script.
 
+5. **Token Image URIs** — When a card creates creature tokens, look up the token's image on Scryfall and pass it via `imageUri`:
+   - Search: `https://api.scryfall.com/cards/search?q=t%3Atoken+name%3A%22<TokenName>%22+set%3At<set-code>` (token sets use `t` prefix, e.g., `tblb` for BLB tokens)
+   - If the token exists in the card's set, use its `image_uris.normal`
+   - If not found in the set, search without the set filter: `https://api.scryfall.com/cards/search?q=t%3Atoken+name%3A%22<TokenName>%22&order=released&dir=desc` and use the most recent printing
+   - Pass to `Effects.CreateToken(..., imageUri = "<url>")` or `CreateTokenEffect(..., imageUri = "<url>")`
+   - If no matching token exists on Scryfall at all, omit `imageUri`
+
 ## Step 4: Implement Missing Effects
 
 If the card needs effects, keywords, triggers, conditions, or static abilities that don't exist yet:

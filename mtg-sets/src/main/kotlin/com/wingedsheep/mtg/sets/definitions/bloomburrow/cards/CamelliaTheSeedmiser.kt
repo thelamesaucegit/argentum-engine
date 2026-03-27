@@ -53,7 +53,8 @@ val CamelliaTheSeedmiser = card("Camellia, the Seedmiser") {
             power = 1,
             toughness = 1,
             colors = setOf(Color.GREEN),
-            creatureTypes = setOf("Squirrel")
+            creatureTypes = setOf("Squirrel"),
+            imageUri = "https://cards.scryfall.io/normal/front/5/a/5a6ec62e-0e9b-4312-bfe8-cc85d76fd9e0.jpg?1721425294"
         )
     }
 

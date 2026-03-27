@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 52 / 266
+**Implemented:** 53 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -117,7 +117,7 @@
 - [ ] Hivespine Wolverine
 - [ ] Hoarder's Overflow
 - [x] Honored Dreyleader
-- [ ] Hop to It
+- [x] Hop to It
 - [ ] Hugs, Grisly Guardian
 - [x] Hunter's Talent
 - [ ] Huskburster Swarm
