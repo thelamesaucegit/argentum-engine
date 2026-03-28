@@ -246,7 +246,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     val dynamicFilter = GameObjectFilter.Creature.withSubtype(chosenType)
                                     sacrificeCost = AbilityCost.Sacrifice(dynamicFilter)
                                     sacrificeTargets = context.costUtils.findAbilitySacrificeTargets(state, playerId, dynamicFilter)
-                                    if (sacrificeTargets!!.isEmpty()) {
+                                    if (sacrificeTargets.isEmpty()) {
                                         costCanBePaid = false
                                         break
                                     }
@@ -280,7 +280,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                     tapCost = subCost
                                     tapTargets = context.costUtils.findAbilityTapTargets(state, playerId, subCost.filter)
                                         .let { targets -> if (subCost.excludeSelf) targets.filter { it != entityId } else targets }
-                                    if (tapTargets!!.size < subCost.count) {
+                                    if (tapTargets.size < subCost.count) {
                                         costCanBePaid = false
                                         break
                                     }
@@ -288,7 +288,7 @@ class ActivatedAbilityEnumerator : ActionEnumerator {
                                 is AbilityCost.ReturnToHand -> {
                                     bounceCost = subCost
                                     bounceTargets = context.costUtils.findAbilityBounceTargets(state, playerId, subCost.filter)
-                                    if (bounceTargets!!.size < subCost.count) {
+                                    if (bounceTargets.size < subCost.count) {
                                         costCanBePaid = false
                                         break
                                     }
