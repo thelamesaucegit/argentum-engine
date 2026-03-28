@@ -2,14 +2,14 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 86 / 266
+**Implemented:** 87 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 19   |
 | Blue       | 41    | 10   |
 | Black      | 40    | 12   |
-| Red        | 41    | 15   |
+| Red        | 41    | 16   |
 | Green      | 41    | 9    |
 | Multicolor | 39    | 13   |
 | Colorless  | 9     | 3    |
@@ -35,7 +35,7 @@
 - [ ] Blooming Blast
 - [x] Bonebind Orator
 - [ ] Bonecache Overseer
-- [ ] Brambleguard Captain
+- [x] Brambleguard Captain
 - [x] Brambleguard Veteran
 - [x] Brave-Kin Duo
 - [ ] Brazen Collector

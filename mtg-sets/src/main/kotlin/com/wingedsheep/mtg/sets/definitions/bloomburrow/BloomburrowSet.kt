@@ -28,6 +28,7 @@ object BloomburrowSet {
         BaylenTheHaymaker,
         BellowingCrier,
         BonebindOrator,
+        BrambleguardCaptain,
         BrambleguardVeteran,
         BraveKinDuo,
         BywayBarterer,
