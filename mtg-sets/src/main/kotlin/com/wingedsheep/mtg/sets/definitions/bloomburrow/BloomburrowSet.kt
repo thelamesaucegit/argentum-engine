@@ -95,6 +95,7 @@ object BloomburrowSet {
         NettleGuard,
         NightwhorlHermit,
         PatchworkBanner,
+        PawpatchFormation,
         PileatedProvisioner,
         Overprotect,
         OsteomancerAdept,
