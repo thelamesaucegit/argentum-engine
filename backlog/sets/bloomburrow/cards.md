@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 94 / 266
+**Implemented:** 95 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 11   |
 | Black      | 40    | 14   |
 | Red        | 41    | 16   |
-| Green      | 41    | 11   |
+| Green      | 41    | 12   |
 | Multicolor | 39    | 13   |
 | Colorless  | 9     | 3    |
 | Land       | 15    | 2    |
@@ -230,7 +230,7 @@
 - [ ] Starscape Cleric
 - [ ] Starseer Mentor
 - [x] Steampath Charger
-- [ ] Stickytongue Sentinel
+- [x] Stickytongue Sentinel
 - [ ] Stocking the Pantry
 - [x] Stormcatch Mentor
 - [x] Stormchaser's Talent

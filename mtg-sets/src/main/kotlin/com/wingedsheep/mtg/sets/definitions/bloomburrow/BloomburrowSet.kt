@@ -97,6 +97,7 @@ object BloomburrowSet {
         SinisterMonolith,
         SonarStrike,
         SplashLasher,
+        StickytongueSentinel,
         SteampathCharger,
         StormcatchMentor,
         StormchasersTalent,
