@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 89 / 266
+**Implemented:** 90 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 20   |
-| Blue       | 41    | 10   |
+| Blue       | 41    | 11   |
 | Black      | 40    | 12   |
 | Red        | 41    | 16   |
 | Green      | 41    | 10   |
@@ -195,7 +195,7 @@
 - [ ] Rockface Village
 - [ ] Rottenmouth Viper
 - [ ] Roughshod Duo
-- [ ] Run Away Together
+- [x] Run Away Together
 - [ ] Rust-Shield Rampager
 - [x] Ruthless Negotiation
 - [x] Salvation Swan

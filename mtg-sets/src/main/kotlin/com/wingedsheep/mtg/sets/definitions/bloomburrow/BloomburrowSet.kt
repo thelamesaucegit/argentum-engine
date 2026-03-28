@@ -87,6 +87,7 @@ object BloomburrowSet {
         RavineRaider,
         RepelCalamity,
         ReptilianRecruiter,
+        RunAwayTogether,
         SazacapsBrew,
         SeasonedWarrenguard,
         ShoreUp,
