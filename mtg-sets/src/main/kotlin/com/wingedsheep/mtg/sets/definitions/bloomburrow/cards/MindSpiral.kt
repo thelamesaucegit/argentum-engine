@@ -5,8 +5,11 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
+import com.wingedsheep.sdk.scripting.effects.CompositeEffect
 import com.wingedsheep.sdk.scripting.effects.CreateTokenEffect
-import com.wingedsheep.sdk.scripting.effects.OptionalCostEffect
+import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
+import com.wingedsheep.sdk.scripting.effects.ModalEffect
+import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
@@ -21,32 +24,46 @@ import com.wingedsheep.sdk.scripting.values.DynamicAmount
  *
  * Target player draws three cards. If the gift was promised, tap target creature
  * an opponent controls and put a stun counter on it.
+ *
+ * Gift is modeled as a modal choice. Mode 1 = no gift (1 target: player),
+ * Mode 2 = gift (2 targets: player + creature opponent controls, both chosen at cast time).
  */
 val MindSpiral = card("Mind Spiral") {
     manaCost = "{4}{U}"
     typeLine = "Sorcery"
     oracleText = "Gift a tapped Fish (You may promise an opponent a gift as you cast this spell. If you do, they create a tapped 1/1 blue Fish creature token before its other effects.)\nTarget player draws three cards. If the gift was promised, tap target creature an opponent controls and put a stun counter on it."
 
-    val drawEffect = Effects.DrawCards(3, EffectTarget.ContextTarget(0))
-
     spell {
-        val player = target("player", Targets.Player)
-        effect = OptionalCostEffect(
-            cost = CreateTokenEffect(
-                count = DynamicAmount.Fixed(1),
-                power = 1,
-                toughness = 1,
-                colors = setOf(Color.BLUE),
-                creatureTypes = setOf("Fish"),
-                controller = EffectTarget.PlayerRef(Player.EachOpponent),
-                tapped = true,
-                imageUri = "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109"
+        effect = ModalEffect.chooseOne(
+            // Mode 1: No gift — target player draws 3
+            Mode.withTarget(
+                DrawCardsEffect(3, EffectTarget.ContextTarget(0)),
+                Targets.Player,
+                "Don't promise a gift — target player draws three cards"
             ),
-            ifPaid = drawEffect
-                .then(Effects.SelectTarget(Targets.CreatureOpponentControls, "stunTarget"))
-                .then(Effects.Tap(EffectTarget.PipelineTarget("stunTarget")))
-                .then(Effects.AddCounters("stun", 1, EffectTarget.PipelineTarget("stunTarget"))),
-            ifNotPaid = drawEffect
+            // Mode 2: Gift a tapped Fish — opponent gets Fish token, target player draws 3,
+            // tap target creature opponent controls and put a stun counter on it
+            Mode(
+                effect = CompositeEffect(
+                    listOf(
+                        CreateTokenEffect(
+                            count = DynamicAmount.Fixed(1),
+                            power = 1,
+                            toughness = 1,
+                            colors = setOf(Color.BLUE),
+                            creatureTypes = setOf("Fish"),
+                            controller = EffectTarget.PlayerRef(Player.EachOpponent),
+                            tapped = true,
+                            imageUri = "https://cards.scryfall.io/normal/front/d/e/de0d6700-49f0-4233-97ba-cef7821c30ed.jpg?1721431109"
+                        ),
+                        DrawCardsEffect(3, EffectTarget.ContextTarget(0)),
+                        Effects.Tap(EffectTarget.ContextTarget(1)),
+                        Effects.AddCounters("stun", 1, EffectTarget.ContextTarget(1))
+                    )
+                ),
+                targetRequirements = listOf(Targets.Player, Targets.CreatureOpponentControls),
+                description = "Promise a gift — opponent creates a tapped 1/1 blue Fish token, target player draws three cards, tap target creature an opponent controls and put a stun counter on it"
+            )
         )
     }
 

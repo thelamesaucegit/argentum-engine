@@ -4,7 +4,8 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.OptionalCostEffect
+import com.wingedsheep.sdk.scripting.effects.ModalEffect
+import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -17,6 +18,9 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  * If you do, they create a Food token before its other effects.)
  *
  * Destroy target creature. If the gift wasn't promised, you lose 2 life.
+ *
+ * Gift is modeled as a modal choice. Mode 1 = no gift (destroy + lose life),
+ * Mode 2 = gift (Food token for opponent + destroy).
  */
 val NocturnalHunger = card("Nocturnal Hunger") {
     manaCost = "{2}{B}"
@@ -26,12 +30,20 @@ val NocturnalHunger = card("Nocturnal Hunger") {
     val destroyEffect = Effects.Destroy(EffectTarget.ContextTarget(0))
 
     spell {
-        val creature = target("creature", Targets.Creature)
-        effect = OptionalCostEffect(
-            cost = Effects.CreateFood(1, EffectTarget.PlayerRef(Player.EachOpponent)),
-            ifPaid = destroyEffect,
-            ifNotPaid = destroyEffect
-                .then(Effects.LoseLife(2, EffectTarget.Controller))
+        effect = ModalEffect.chooseOne(
+            // Mode 1: No gift — destroy target creature, you lose 2 life
+            Mode.withTarget(
+                destroyEffect.then(Effects.LoseLife(2, EffectTarget.Controller)),
+                Targets.Creature,
+                "Don't promise a gift — destroy target creature, you lose 2 life"
+            ),
+            // Mode 2: Gift a Food — opponent creates Food token, then destroy target creature
+            Mode.withTarget(
+                Effects.CreateFood(1, EffectTarget.PlayerRef(Player.EachOpponent))
+                    .then(destroyEffect),
+                Targets.Creature,
+                "Promise a gift — opponent creates a Food token, then destroy target creature"
+            )
         )
     }
 

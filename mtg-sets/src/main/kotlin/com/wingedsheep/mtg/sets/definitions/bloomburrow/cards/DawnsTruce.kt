@@ -7,7 +7,8 @@ import com.wingedsheep.sdk.dsl.Filters
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.effects.DrawCardsEffect
-import com.wingedsheep.sdk.scripting.effects.OptionalCostEffect
+import com.wingedsheep.sdk.scripting.effects.ModalEffect
+import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -23,9 +24,8 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  * If the gift was promised, permanents you control also gain indestructible
  * until end of turn.
  *
- * The Gift mechanic is modeled using OptionalCostEffect where the "cost" is
- * the opponent drawing a card. If the player chooses to gift, the opponent draws
- * and then all effects (hexproof + indestructible) apply. If not, only hexproof applies.
+ * Gift is modeled as a modal choice. Mode 1 = no gift (hexproof),
+ * Mode 2 = gift (opponent draws + hexproof + indestructible).
  */
 val DawnsTruce = card("Dawn's Truce") {
     manaCost = "{1}{W}"
@@ -36,11 +36,19 @@ val DawnsTruce = card("Dawn's Truce") {
         .then(EffectPatterns.grantKeywordToAll(Keyword.HEXPROOF, Filters.Group.permanentsYouControl))
 
     spell {
-        effect = OptionalCostEffect(
-            cost = DrawCardsEffect(1, EffectTarget.PlayerRef(Player.EachOpponent)),
-            ifPaid = hexproofEffects
-                .then(EffectPatterns.grantKeywordToAll(Keyword.INDESTRUCTIBLE, Filters.Group.permanentsYouControl)),
-            ifNotPaid = hexproofEffects
+        effect = ModalEffect.chooseOne(
+            // Mode 1: No gift — hexproof until end of turn
+            Mode.noTarget(
+                hexproofEffects,
+                "Don't promise a gift — you and permanents you control gain hexproof until end of turn"
+            ),
+            // Mode 2: Gift a card — opponent draws, hexproof + indestructible until end of turn
+            Mode.noTarget(
+                DrawCardsEffect(1, EffectTarget.PlayerRef(Player.EachOpponent))
+                    .then(hexproofEffects)
+                    .then(EffectPatterns.grantKeywordToAll(Keyword.INDESTRUCTIBLE, Filters.Group.permanentsYouControl)),
+                "Promise a gift — an opponent draws a card, you and permanents you control gain hexproof until end of turn, permanents you control also gain indestructible until end of turn"
+            )
         )
     }
 

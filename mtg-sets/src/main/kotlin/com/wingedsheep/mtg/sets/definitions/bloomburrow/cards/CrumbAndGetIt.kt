@@ -5,7 +5,8 @@ import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Targets
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
-import com.wingedsheep.sdk.scripting.effects.OptionalCostEffect
+import com.wingedsheep.sdk.scripting.effects.ModalEffect
+import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
 
@@ -20,6 +21,9 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  *
  * Target creature you control gets +2/+2 until end of turn.
  * If the gift was promised, that creature also gains indestructible until end of turn.
+ *
+ * Gift is modeled as a modal choice. Mode 1 = no gift (+2/+2),
+ * Mode 2 = gift (Food for opponent + +2/+2 + indestructible).
  */
 val CrumbAndGetIt = card("Crumb and Get It") {
     manaCost = "{W}"
@@ -29,12 +33,21 @@ val CrumbAndGetIt = card("Crumb and Get It") {
     val baseEffect = Effects.ModifyStats(2, 2, EffectTarget.ContextTarget(0))
 
     spell {
-        val creature = target("creature", Targets.CreatureYouControl)
-        effect = OptionalCostEffect(
-            cost = Effects.CreateFood(1, EffectTarget.PlayerRef(Player.EachOpponent)),
-            ifPaid = baseEffect
-                .then(Effects.GrantKeyword(Keyword.INDESTRUCTIBLE, creature)),
-            ifNotPaid = baseEffect
+        effect = ModalEffect.chooseOne(
+            // Mode 1: No gift — +2/+2 until end of turn
+            Mode.withTarget(
+                baseEffect,
+                Targets.CreatureYouControl,
+                "Don't promise a gift — target creature you control gets +2/+2 until end of turn"
+            ),
+            // Mode 2: Gift a Food — opponent creates Food, +2/+2 and indestructible until end of turn
+            Mode.withTarget(
+                Effects.CreateFood(1, EffectTarget.PlayerRef(Player.EachOpponent))
+                    .then(baseEffect)
+                    .then(Effects.GrantKeyword(Keyword.INDESTRUCTIBLE, EffectTarget.ContextTarget(0))),
+                Targets.CreatureYouControl,
+                "Promise a gift — opponent creates a Food token, target creature you control gets +2/+2 and gains indestructible until end of turn"
+            )
         )
     }
 

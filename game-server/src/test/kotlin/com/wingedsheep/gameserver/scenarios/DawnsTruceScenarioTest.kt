@@ -18,6 +18,10 @@ import io.kotest.matchers.shouldBe
  * You and permanents you control gain hexproof until end of turn.
  * If the gift was promised, permanents you control also gain indestructible
  * until end of turn.
+ *
+ * Gift is modeled as a modal spell:
+ * Mode 0: No gift — hexproof
+ * Mode 1: Gift a card — opponent draws, hexproof + indestructible
  */
 class DawnsTruceScenarioTest : ScenarioTestBase() {
 
@@ -37,12 +41,9 @@ class DawnsTruceScenarioTest : ScenarioTestBase() {
 
             val p2HandBefore = game.handSize(2)
 
-            // Cast Dawn's Truce
-            game.castSpell(1, "Dawn's Truce")
+            // Cast Dawn's Truce mode 0 (no gift)
+            game.castSpellWithMode(1, "Dawn's Truce", 0)
             game.resolveStack()
-
-            // Decline the gift (say no to optional cost)
-            game.answerYesNo(false)
 
             // Player 2 should NOT have drawn a card
             game.handSize(2) shouldBe p2HandBefore
@@ -68,12 +69,9 @@ class DawnsTruceScenarioTest : ScenarioTestBase() {
 
             val p2HandBefore = game.handSize(2)
 
-            // Cast Dawn's Truce
-            game.castSpell(1, "Dawn's Truce")
+            // Cast Dawn's Truce mode 1 (gift)
+            game.castSpellWithMode(1, "Dawn's Truce", 1)
             game.resolveStack()
-
-            // Accept the gift (say yes to optional cost)
-            game.answerYesNo(true)
 
             // Player 2 should have drawn a card from the gift
             game.handSize(2) shouldBe p2HandBefore + 1
@@ -97,10 +95,9 @@ class DawnsTruceScenarioTest : ScenarioTestBase() {
                 .withActivePlayer(1)
                 .build()
 
-            // Cast Dawn's Truce, decline gift
-            game.castSpell(1, "Dawn's Truce")
+            // Cast Dawn's Truce mode 0 (no gift)
+            game.castSpellWithMode(1, "Dawn's Truce", 0)
             game.resolveStack()
-            game.answerYesNo(false)
 
             // Advance to next turn
             game.passUntilPhase(Phase.ENDING, Step.END)

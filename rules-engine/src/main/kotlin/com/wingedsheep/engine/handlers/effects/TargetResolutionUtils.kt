@@ -73,7 +73,7 @@ object TargetResolutionUtils {
                 context.pipeline.storedCollections[effectTarget.collectionName]?.getOrNull(effectTarget.index)
             is EffectTarget.PlayerRef -> when (effectTarget.player) {
                 Player.You -> context.controllerId
-                Player.Opponent, Player.TargetOpponent -> context.opponentId
+                Player.Opponent, Player.TargetOpponent, Player.EachOpponent -> context.opponentId
                 Player.TargetPlayer, Player.Any -> context.targets.firstOrNull()?.toEntityId()
                 Player.TriggeringPlayer -> context.triggeringPlayerId ?: context.triggeringEntityId
                 else -> null

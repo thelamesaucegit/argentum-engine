@@ -20,6 +20,10 @@ import io.kotest.matchers.nulls.shouldNotBeNull
  *
  * Gift a Food — Target creature you control gets +2/+2 until end of turn.
  * If the gift was promised, that creature also gains indestructible until end of turn.
+ *
+ * Gift is modeled as a modal spell:
+ * Mode 0: No gift — +2/+2
+ * Mode 1: Gift a Food — opponent creates Food, +2/+2 and indestructible
  */
 class CrumbAndGetItScenarioTest : ScenarioTestBase() {
 
@@ -50,12 +54,9 @@ class CrumbAndGetItScenarioTest : ScenarioTestBase() {
             val bear = game.findPermanent("Vanilla Bear")
             bear.shouldNotBeNull()
 
-            // Cast Crumb and Get It targeting Vanilla Bear
-            game.castSpell(1, "Crumb and Get It", bear)
+            // Cast Crumb and Get It mode 0 (no gift) targeting Vanilla Bear
+            game.castSpellWithMode(1, "Crumb and Get It", 0, bear)
             game.resolveStack()
-
-            // Decline the gift
-            game.answerYesNo(false)
 
             // Bear should be 4/4 (+2/+2)
             withClue("Bear should have projected power 4 (2+2)") {
@@ -84,12 +85,9 @@ class CrumbAndGetItScenarioTest : ScenarioTestBase() {
             val bear = game.findPermanent("Vanilla Bear")
             bear.shouldNotBeNull()
 
-            // Cast Crumb and Get It targeting Vanilla Bear
-            game.castSpell(1, "Crumb and Get It", bear)
+            // Cast Crumb and Get It mode 1 (gift) targeting Vanilla Bear
+            game.castSpellWithMode(1, "Crumb and Get It", 1, bear)
             game.resolveStack()
-
-            // Accept the gift
-            game.answerYesNo(true)
 
             // Bear should be 4/4 (+2/+2)
             withClue("Bear should have projected power 4 (2+2)") {
