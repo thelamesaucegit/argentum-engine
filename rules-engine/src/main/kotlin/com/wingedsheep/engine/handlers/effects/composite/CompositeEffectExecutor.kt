@@ -56,6 +56,18 @@ class CompositeEffectExecutor(
             val result = effectExecutor(stateForExecution, subEffect, currentContext)
 
             if (!result.isSuccess && !result.isPaused) {
+                if (effect.stopOnError) {
+                    // Cost-then-payoff composite: if the cost fails, abort remaining effects.
+                    // Used by OptionalCostEffect where paying the cost is mandatory for the
+                    // payoff — if you can't pay {W}{B}, you don't get the reanimation.
+                    val cleanState = if (remainingEffects.isNotEmpty()) {
+                        val (_, stateWithoutCont) = result.state.popContinuation()
+                        stateWithoutCont
+                    } else {
+                        result.state
+                    }
+                    return ExecutionResult.success(cleanState, allEvents + result.events)
+                }
                 // Sub-effect failed - skip it and continue with remaining effects.
                 // Per MTG rules, when a spell or ability resolves, you do as much as
                 // possible even if some parts can't be performed (e.g., optional target

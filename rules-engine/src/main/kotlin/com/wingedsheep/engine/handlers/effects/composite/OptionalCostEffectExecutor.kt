@@ -52,8 +52,8 @@ class OptionalCostEffectExecutor(
             noText = "No"
         )
 
-        // If yes: execute cost then ifPaid
-        val effectIfYes = CompositeEffect(listOf(effect.cost, effect.ifPaid))
+        // If yes: execute cost then ifPaid (stopOnError ensures cost failure aborts the payoff)
+        val effectIfYes = CompositeEffect(listOf(effect.cost, effect.ifPaid), stopOnError = true)
 
         val continuation = MayAbilityContinuation(
             decisionId = decisionId,

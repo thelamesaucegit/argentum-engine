@@ -26,7 +26,8 @@ import kotlinx.serialization.Serializable
 @SerialName("Composite")
 @Serializable
 data class CompositeEffect(
-    val effects: List<Effect>
+    val effects: List<Effect>,
+    val stopOnError: Boolean = false
 ) : Effect {
     override val description: String = effects.joinToString(". ") { it.description }
 
@@ -36,7 +37,7 @@ data class CompositeEffect(
     override fun applyTextReplacement(replacer: TextReplacer): Effect {
         var changed = false
         val newEffects = effects.map { val n = it.applyTextReplacement(replacer); if (n !== it) changed = true; n }
-        return if (changed) CompositeEffect(newEffects) else this
+        return if (changed) CompositeEffect(newEffects, stopOnError) else this
     }
 }
 
