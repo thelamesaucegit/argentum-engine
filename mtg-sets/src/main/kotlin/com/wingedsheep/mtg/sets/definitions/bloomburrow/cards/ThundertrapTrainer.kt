@@ -47,7 +47,7 @@ val ThundertrapTrainer = card("Thundertrap Trainer") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         triggerCondition = WasKicked
-        effect = Effects.CreateTokenCopyOfSelf()
+        effect = Effects.CreateTokenCopyOfSelf(overridePower = 1, overrideToughness = 1)
     }
 
     // ETB: look at top 4, may take a noncreature nonland card, rest on bottom

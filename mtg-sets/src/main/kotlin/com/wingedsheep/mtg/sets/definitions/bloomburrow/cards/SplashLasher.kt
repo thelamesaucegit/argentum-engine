@@ -21,12 +21,6 @@ import com.wingedsheep.sdk.scripting.conditions.WasKicked
  * When this creature enters, tap up to one target creature and put a stun
  * counter on it.
  *
- * Offspring is modeled as Kicker with a conditional ETB that creates a token
- * copy of source. Note: the token copy will have the original P/T (3/3)
- * rather than 1/1 — the 1/1 override is not yet supported by the engine.
- *
- * Stun counters are placed as regular counters. The replacement effect
- * (preventing untap, removing counter instead) is not yet implemented.
  */
 val SplashLasher = card("Splash Lasher") {
     manaCost = "{3}{U}"
@@ -42,7 +36,7 @@ val SplashLasher = card("Splash Lasher") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         triggerCondition = WasKicked
-        effect = Effects.CreateTokenCopyOfSelf()
+        effect = Effects.CreateTokenCopyOfSelf(overridePower = 1, overrideToughness = 1)
     }
 
     // ETB: tap up to one target creature and put a stun counter on it

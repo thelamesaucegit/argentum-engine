@@ -130,7 +130,7 @@ constructors.
 
 - `Effects.CreateToken(power, toughness, colors, creatureTypes, keywords, count = 1, legendary = false)`
 - `Effects.CreateDynamicToken(dynamicPower, dynamicToughness, colors, creatureTypes, keywords, count = 1)` — token with P/T evaluated at resolution time
-- `Effects.CreateTokenCopyOfSelf(count = 1)` — create a token that's a copy of the source permanent (copies CardComponent + abilities via cardDefinitionId)
+- `Effects.CreateTokenCopyOfSelf(count = 1, overridePower = null, overrideToughness = null)` — create a token that's a copy of the source permanent (copies CardComponent + abilities via cardDefinitionId). For Offspring, use `overridePower = 1, overrideToughness = 1` to create a 1/1 copy.
 - `Effects.CreateTreasure(count = 1)`
 - `Effects.CreateFood(count = 1, controller: EffectTarget? = null)` — create Food artifact tokens; `controller` overrides who gets the tokens (e.g., `PlayerRef(Player.EachOpponent)` for Gift a Food)
 

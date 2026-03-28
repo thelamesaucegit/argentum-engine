@@ -45,7 +45,7 @@ val WarrenWarleader = card("Warren Warleader") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         triggerCondition = WasKicked
-        effect = Effects.CreateTokenCopyOfSelf()
+        effect = Effects.CreateTokenCopyOfSelf(overridePower = 1, overrideToughness = 1)
     }
 
     // Whenever you attack, choose one

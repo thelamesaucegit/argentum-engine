@@ -726,8 +726,12 @@ object Effects {
      * Create a token that's a copy of the source permanent.
      * "Create a token that's a copy of this creature."
      */
-    fun CreateTokenCopyOfSelf(count: Int = 1): Effect =
-        CreateTokenCopyOfSourceEffect(count)
+    fun CreateTokenCopyOfSelf(
+        count: Int = 1,
+        overridePower: Int? = null,
+        overrideToughness: Int? = null
+    ): Effect =
+        CreateTokenCopyOfSourceEffect(count, overridePower, overrideToughness)
 
     /**
      * Create a token that's a copy of the equipped creature.

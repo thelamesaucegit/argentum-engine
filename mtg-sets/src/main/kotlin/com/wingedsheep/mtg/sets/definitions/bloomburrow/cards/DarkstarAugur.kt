@@ -47,7 +47,7 @@ val DarkstarAugur = card("Darkstar Augur") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         triggerCondition = WasKicked
-        effect = Effects.CreateTokenCopyOfSelf()
+        effect = Effects.CreateTokenCopyOfSelf(overridePower = 1, overrideToughness = 1)
     }
 
     keywords(Keyword.FLYING)

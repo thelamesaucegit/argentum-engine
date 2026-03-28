@@ -20,8 +20,6 @@ import com.wingedsheep.sdk.scripting.targets.EffectTarget
  * {T}: Add one mana of any color.
  * {T}: Put a +1/+1 counter on this creature.
  *
- * Offspring is modeled as Kicker with a conditional ETB token copy.
- * Note: token copy will be 3/3 instead of 1/1 (P/T override not yet supported).
  */
 val TenderWildguide = card("Tender Wildguide") {
     manaCost = "{1}{G}"
@@ -37,7 +35,7 @@ val TenderWildguide = card("Tender Wildguide") {
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
         triggerCondition = WasKicked
-        effect = Effects.CreateTokenCopyOfSelf()
+        effect = Effects.CreateTokenCopyOfSelf(overridePower = 1, overrideToughness = 1)
     }
 
     // {T}: Add one mana of any color
