@@ -74,6 +74,7 @@ object BloomburrowSet {
         KindlesparkDuo,
         Knightfisher,
         HuntersTalent,
+        Mindwhisker,
         MindSpiral,
         LifecreedDuo,
         LilypadVillage,

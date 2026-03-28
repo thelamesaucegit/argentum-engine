@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 109 / 266
+**Implemented:** 110 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 22   |
-| Blue       | 41    | 14   |
+| Blue       | 41    | 15   |
 | Black      | 40    | 16   |
 | Red        | 41    | 18   |
 | Green      | 41    | 14   |
@@ -152,7 +152,7 @@
 - [ ] Might of the Meek
 - [ ] Mind Drill Assailant
 - [x] Mind Spiral
-- [ ] Mindwhisker
+- [x] Mindwhisker
 - [ ] Mistbreath Elder
 - [ ] Mockingbird
 - [x] Moonrise Cleric
