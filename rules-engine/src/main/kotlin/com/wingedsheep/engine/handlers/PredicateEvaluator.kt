@@ -573,9 +573,6 @@ class PredicateEvaluator {
             // Combat state
             StatePredicate.IsAttacking -> container.has<AttackingComponent>()
             StatePredicate.IsBlocking -> container.has<BlockingComponent>()
-            StatePredicate.IsAttackingOrBlocking -> {
-                container.has<AttackingComponent>() || container.has<BlockingComponent>()
-            }
             StatePredicate.IsBlocked -> {
                 // Check if this attacking creature has any blockers assigned
                 val attackingComp = container.get<AttackingComponent>()
@@ -666,6 +663,11 @@ class PredicateEvaluator {
                     ?: return false
                 entityPower >= maxPower
             }
+
+            // Composite / logical combinators
+            is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicate(state, entityId, it) }
+            is StatePredicate.And -> predicate.predicates.all { matchesStatePredicate(state, entityId, it) }
+            is StatePredicate.Not -> !matchesStatePredicate(state, entityId, predicate.predicate)
         }
     }
 

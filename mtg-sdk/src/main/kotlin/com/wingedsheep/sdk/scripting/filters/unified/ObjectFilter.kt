@@ -279,7 +279,16 @@ data class GameObjectFilter(
 
     /** Must be attacking or blocking */
     fun attackingOrBlocking() = copy(
-        statePredicates = statePredicates + StatePredicate.IsAttackingOrBlocking
+        statePredicates = statePredicates + StatePredicate.Or(
+            listOf(StatePredicate.IsAttacking, StatePredicate.IsBlocking)
+        )
+    )
+
+    /** Must be attacking, blocking, or tapped */
+    fun attackingOrBlockingOrTapped() = copy(
+        statePredicates = statePredicates + StatePredicate.Or(
+            listOf(StatePredicate.IsAttacking, StatePredicate.IsBlocking, StatePredicate.IsTapped)
+        )
     )
 
     /** Must have entered the battlefield this turn */

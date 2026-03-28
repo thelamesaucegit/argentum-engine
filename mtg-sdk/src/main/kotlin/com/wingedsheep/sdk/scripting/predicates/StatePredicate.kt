@@ -45,12 +45,6 @@ sealed interface StatePredicate {
         override val description: String = "blocking"
     }
 
-    @SerialName("IsAttackingOrBlocking")
-    @Serializable
-    data object IsAttackingOrBlocking : StatePredicate {
-        override val description: String = "attacking or blocking"
-    }
-
     /** Creature that is being blocked (has at least one blocker) */
     @SerialName("IsBlocked")
     @Serializable
@@ -157,5 +151,27 @@ sealed interface StatePredicate {
     @Serializable
     data object IsEquipped : StatePredicate {
         override val description: String = "equipped"
+    }
+
+    // =============================================================================
+    // Composite / Logical Combinators
+    // =============================================================================
+
+    @SerialName("StateOr")
+    @Serializable
+    data class Or(val predicates: List<StatePredicate>) : StatePredicate {
+        override val description: String = predicates.joinToString(" or ") { it.description }
+    }
+
+    @SerialName("StateAnd")
+    @Serializable
+    data class And(val predicates: List<StatePredicate>) : StatePredicate {
+        override val description: String = predicates.joinToString(" and ") { it.description }
+    }
+
+    @SerialName("StateNot")
+    @Serializable
+    data class Not(val predicate: StatePredicate) : StatePredicate {
+        override val description: String = "not ${predicate.description}"
     }
 }

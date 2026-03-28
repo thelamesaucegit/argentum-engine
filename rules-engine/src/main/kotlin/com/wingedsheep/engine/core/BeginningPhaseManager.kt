@@ -280,24 +280,31 @@ class BeginningPhaseManager(
         }
         // Check state predicates (e.g., HasCounter)
         for (predicate in filter.statePredicates) {
-            val matches = when (predicate) {
-                is StatePredicate.HasCounter -> {
-                    val countersComponent = container.get<CountersComponent>()
-                    if (countersComponent == null) {
-                        false
-                    } else {
-                        val counterType = when (predicate.counterType) {
-                            "+1/+1" -> CounterType.PLUS_ONE_PLUS_ONE
-                            "-1/-1" -> CounterType.MINUS_ONE_MINUS_ONE
-                            else -> null
-                        }
-                        counterType != null && countersComponent.getCount(counterType) > 0
-                    }
-                }
-                else -> true // Other state predicates not relevant for untap filtering
-            }
-            if (!matches) return false
+            if (!matchesStatePredicateForUntap(predicate, container)) return false
         }
         return true
+    }
+
+    private fun matchesStatePredicateForUntap(
+        predicate: StatePredicate,
+        container: ComponentContainer
+    ): Boolean = when (predicate) {
+        is StatePredicate.HasCounter -> {
+            val countersComponent = container.get<CountersComponent>()
+            if (countersComponent == null) {
+                false
+            } else {
+                val counterType = when (predicate.counterType) {
+                    "+1/+1" -> CounterType.PLUS_ONE_PLUS_ONE
+                    "-1/-1" -> CounterType.MINUS_ONE_MINUS_ONE
+                    else -> null
+                }
+                counterType != null && countersComponent.getCount(counterType) > 0
+            }
+        }
+        is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicateForUntap(it, container) }
+        is StatePredicate.And -> predicate.predicates.all { matchesStatePredicateForUntap(it, container) }
+        is StatePredicate.Not -> !matchesStatePredicateForUntap(predicate.predicate, container)
+        else -> true // Other state predicates not relevant for untap filtering
     }
 }

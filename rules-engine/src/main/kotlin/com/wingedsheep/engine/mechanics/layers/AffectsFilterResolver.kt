@@ -255,17 +255,27 @@ internal class AffectsFilterResolver {
 
             // Check state predicates
             for (predicate in baseFilter.statePredicates) {
-                val matches = when (predicate) {
-                    StatePredicate.IsTapped -> container.has<TappedComponent>()
-                    StatePredicate.IsUntapped -> !container.has<TappedComponent>()
-                    StatePredicate.IsFaceDown -> isFaceDown
-                    else -> true
+                if (!matchesStatePredicateForProjection(predicate, container, isFaceDown)) {
+                    return@filter false
                 }
-                if (!matches) return@filter false
             }
 
             true
         }.toSet()
+    }
+
+    private fun matchesStatePredicateForProjection(
+        predicate: StatePredicate,
+        container: ComponentContainer,
+        isFaceDown: Boolean
+    ): Boolean = when (predicate) {
+        StatePredicate.IsTapped -> container.has<TappedComponent>()
+        StatePredicate.IsUntapped -> !container.has<TappedComponent>()
+        StatePredicate.IsFaceDown -> isFaceDown
+        is StatePredicate.Or -> predicate.predicates.any { matchesStatePredicateForProjection(it, container, isFaceDown) }
+        is StatePredicate.And -> predicate.predicates.all { matchesStatePredicateForProjection(it, container, isFaceDown) }
+        is StatePredicate.Not -> !matchesStatePredicateForProjection(predicate.predicate, container, isFaceDown)
+        else -> true
     }
 
     private fun matchesCardPredicateForProjection(

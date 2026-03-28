@@ -286,13 +286,7 @@ class TriggerMatcher(
             }
             // Check state predicates (face-down, tapped, etc.)
             for (predicate in trigger.filter.statePredicates) {
-                when (predicate) {
-                    is com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsFaceDown -> {
-                        val faceDownEntity = state.getEntity(event.entityId) ?: return false
-                        if (!faceDownEntity.has<FaceDownComponent>()) return false
-                    }
-                    else -> {}
-                }
+                if (!matchesStatePredicateForTrigger(predicate, state, event.entityId)) return false
             }
             // Check controller predicate (youControl)
             if (trigger.filter.controllerPredicate != null) {
@@ -632,5 +626,23 @@ class TriggerMatcher(
         return playerOrder.flatMap { playerId ->
             byController[playerId] ?: emptyList()
         }
+    }
+
+    private fun matchesStatePredicateForTrigger(
+        predicate: com.wingedsheep.sdk.scripting.predicates.StatePredicate,
+        state: GameState,
+        entityId: EntityId
+    ): Boolean = when (predicate) {
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.IsFaceDown -> {
+            val entity = state.getEntity(entityId) ?: return false
+            entity.has<FaceDownComponent>()
+        }
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Or ->
+            predicate.predicates.any { matchesStatePredicateForTrigger(it, state, entityId) }
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.And ->
+            predicate.predicates.all { matchesStatePredicateForTrigger(it, state, entityId) }
+        is com.wingedsheep.sdk.scripting.predicates.StatePredicate.Not ->
+            !matchesStatePredicateForTrigger(predicate.predicate, state, entityId)
+        else -> true
     }
 }
