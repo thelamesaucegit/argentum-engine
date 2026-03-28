@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 108 / 266
+**Implemented:** 109 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 14   |
 | Black      | 40    | 16   |
 | Red        | 41    | 18   |
-| Green      | 41    | 13   |
+| Green      | 41    | 14   |
 | Multicolor | 39    | 14   |
 | Colorless  | 9     | 3    |
 | Land       | 15    | 5    |
@@ -252,7 +252,7 @@
 - [ ] Thought-Stalker Warlock
 - [ ] Three Tree City
 - [ ] Three Tree Mascot
-- [ ] Three Tree Rootweaver
+- [x] Three Tree Rootweaver
 - [ ] Three Tree Scribe
 - [x] Thundertrap Trainer
 - [x] Tidecaller Mentor

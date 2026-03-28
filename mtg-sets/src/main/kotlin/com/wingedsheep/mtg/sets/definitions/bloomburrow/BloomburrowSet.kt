@@ -117,6 +117,7 @@ object BloomburrowSet {
         TidecallerMentor,
         ThornplateIntimidator,
         ThornvaultForager,
+        ThreeTreeRootweaver,
         ThundertrapTrainer,
         ValleyMightcaller,
         ValleyQuestcaller,
