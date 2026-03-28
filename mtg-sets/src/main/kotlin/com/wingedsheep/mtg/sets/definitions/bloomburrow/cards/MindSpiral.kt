@@ -12,6 +12,7 @@ import com.wingedsheep.sdk.scripting.effects.ModalEffect
 import com.wingedsheep.sdk.scripting.effects.Mode
 import com.wingedsheep.sdk.scripting.references.Player
 import com.wingedsheep.sdk.scripting.targets.EffectTarget
+import com.wingedsheep.sdk.scripting.targets.TargetPlayer
 import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
@@ -38,7 +39,7 @@ val MindSpiral = card("Mind Spiral") {
             // Mode 1: No gift — target player draws 3
             Mode.withTarget(
                 DrawCardsEffect(3, EffectTarget.ContextTarget(0)),
-                Targets.Player,
+                TargetPlayer(descriptionOverride = "target player to draw three cards"),
                 "Don't promise a gift — target player draws three cards"
             ),
             // Mode 2: Gift a tapped Fish — opponent gets Fish token, target player draws 3,
@@ -61,7 +62,10 @@ val MindSpiral = card("Mind Spiral") {
                         Effects.AddCounters("stun", 1, EffectTarget.ContextTarget(1))
                     )
                 ),
-                targetRequirements = listOf(Targets.Player, Targets.CreatureOpponentControls),
+                targetRequirements = listOf(
+                    TargetPlayer(descriptionOverride = "target player to draw three cards"),
+                    Targets.CreatureOpponentControls
+                ),
                 description = "Promise a gift — opponent creates a tapped 1/1 blue Fish token, target player draws three cards, tap target creature an opponent controls and put a stun counter on it"
             )
         )

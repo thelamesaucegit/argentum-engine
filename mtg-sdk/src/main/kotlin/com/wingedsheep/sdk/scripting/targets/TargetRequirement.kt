@@ -49,9 +49,11 @@ sealed interface TargetRequirement : TextReplaceable<TargetRequirement> {
 data class TargetPlayer(
     override val count: Int = 1,
     override val optional: Boolean = false,
-    override val id: String? = null
+    override val id: String? = null,
+    private val descriptionOverride: String? = null
 ) : TargetRequirement {
-    override val description: String = if (count == 1) "target player" else "target $count players"
+    override val description: String = descriptionOverride
+        ?: if (count == 1) "target player" else "target $count players"
     override fun applyTextReplacement(replacer: TextReplacer): TargetRequirement = this
 }
 
