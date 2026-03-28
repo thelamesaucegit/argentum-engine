@@ -40,6 +40,7 @@ object BloomburrowSet {
         CrumbAndGetIt,
         DaggerfangDuo,
         DarkstarAugur,
+        DazzlingDenial,
         DawnsTruce,
         DireDowndraft,
         DreamdewEntrancer,

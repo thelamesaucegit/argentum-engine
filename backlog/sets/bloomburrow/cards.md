@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 97 / 266
+**Implemented:** 98 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 21   |
-| Blue       | 41    | 11   |
+| Blue       | 41    | 12   |
 | Black      | 40    | 16   |
 | Red        | 41    | 16   |
 | Green      | 41    | 12   |
@@ -65,7 +65,7 @@
 - [ ] Daring Waverider
 - [x] Darkstar Augur
 - [x] Dawn's Truce
-- [ ] Dazzling Denial
+- [x] Dazzling Denial
 - [ ] Dewdrop Cure
 - [x] Dire Downdraft
 - [ ] Diresight
