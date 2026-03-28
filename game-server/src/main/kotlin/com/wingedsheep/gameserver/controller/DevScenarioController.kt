@@ -737,8 +737,9 @@ class DevScenarioController(
 
             val cardId = EntityId.of("card-${entityIdCounter.incrementAndGet()}")
 
+            val definitionId = cardDef.metadata.collectorNumber?.let { "${cardDef.name}#$it" } ?: cardDef.name
             val cardComponent = CardComponent(
-                cardDefinitionId = cardDef.name,
+                cardDefinitionId = definitionId,
                 name = cardDef.name,
                 manaCost = cardDef.manaCost,
                 typeLine = cardDef.typeLine,

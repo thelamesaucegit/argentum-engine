@@ -197,9 +197,14 @@ class GameInitializer(
             .map { it.subtype }
             .toSet()
 
+        // Use Name#CollectorNumber as the definition ID when available, so that
+        // cards with the same name but different art variants (basic lands across sets)
+        // resolve back to the correct CardDefinition via CardRegistry.
+        val definitionId = cardDef.metadata.collectorNumber?.let { "${cardDef.name}#$it" } ?: cardDef.name
+
         var container = ComponentContainer.of(
             CardComponent(
-                cardDefinitionId = cardDef.name,
+                cardDefinitionId = definitionId,
                 name = cardDef.name,
                 manaCost = cardDef.manaCost,
                 typeLine = cardDef.typeLine,
