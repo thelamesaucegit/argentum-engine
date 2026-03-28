@@ -21,7 +21,7 @@ object BloomburrowSet {
     /**
      * All cards implemented from this set.
      */
-    val basicLands = BloomburrowBasicLands
+    val basicLands = BloomburrowBasicLands.map { it.copy(setCode = SET_CODE) }
 
     val allCards = listOf(
         AgateBladeAssassin,

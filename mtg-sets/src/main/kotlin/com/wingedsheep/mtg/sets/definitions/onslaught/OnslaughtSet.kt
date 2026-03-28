@@ -369,5 +369,5 @@ object OnslaughtSet {
         // Basic lands
     ) + OnslaughtBasicLands
 
-    val basicLands = OnslaughtBasicLands
+    val basicLands = OnslaughtBasicLands.map { it.copy(setCode = SET_CODE) }
 }

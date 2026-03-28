@@ -209,7 +209,7 @@ class SpectatorStateBuilder(
             )
         }
 
-        val cardDef = cardRegistry.getCard(cardComponent.name)
+        val cardDef = cardRegistry.getCard(cardComponent.cardDefinitionId)
         val cardTypes = cardComponent.typeLine.cardTypes.map { it.name }
 
         // Get targets for spells/abilities on the stack

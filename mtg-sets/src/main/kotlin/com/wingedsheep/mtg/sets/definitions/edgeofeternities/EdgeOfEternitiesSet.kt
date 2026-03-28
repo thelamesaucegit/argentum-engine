@@ -14,7 +14,7 @@ object EdgeOfEternitiesSet {
     const val SET_CODE = "EOE"
     const val SET_NAME = "Edge of Eternities"
 
-    val basicLands = EdgeOfEternitiesBasicLands
+    val basicLands = EdgeOfEternitiesBasicLands.map { it.copy(setCode = SET_CODE) }
 
     /**
      * All cards implemented from this set.

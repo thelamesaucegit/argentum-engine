@@ -197,10 +197,15 @@ class GameInitializer(
             .map { it.subtype }
             .toSet()
 
-        // Use Name#CollectorNumber as the definition ID when available, so that
+        // Use Name#SetCode-CollectorNumber as the definition ID when available, so that
         // cards with the same name but different art variants (basic lands across sets)
         // resolve back to the correct CardDefinition via CardRegistry.
-        val definitionId = cardDef.metadata.collectorNumber?.let { "${cardDef.name}#$it" } ?: cardDef.name
+        // SetCode is included to avoid collisions between sets that share collector numbers
+        // (e.g., Khans and Dominaria both use 250-269 for basic lands).
+        val definitionId = cardDef.metadata.collectorNumber?.let { cn ->
+            if (cardDef.setCode != null) "${cardDef.name}#${cardDef.setCode}-$cn"
+            else "${cardDef.name}#$cn"
+        } ?: cardDef.name
 
         var container = ComponentContainer.of(
             CardComponent(

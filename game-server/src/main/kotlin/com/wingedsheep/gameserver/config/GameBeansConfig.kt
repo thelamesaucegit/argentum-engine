@@ -29,6 +29,7 @@ class GameBeansConfig(
         register(PortalSet.basicLands)
         if (gameProperties.sets.onslaughtEnabled) {
             register(OnslaughtSet.allCards)
+            register(OnslaughtSet.basicLands)
         }
         if (gameProperties.sets.scourgeEnabled) {
             register(ScourgeSet.allCards)
@@ -43,15 +44,19 @@ class GameBeansConfig(
         }
         if (gameProperties.sets.khansEnabled) {
             register(KhansOfTarkirSet.allCards)
+            register(KhansOfTarkirSet.basicLands)
         }
         if (gameProperties.sets.dominariaEnabled) {
             register(DominariaSet.allCards)
+            register(DominariaSet.basicLands)
         }
         if (gameProperties.sets.bloomburrowEnabled) {
             register(BloomburrowSet.allCards)
+            register(BloomburrowSet.basicLands)
         }
         if (gameProperties.sets.edgeOfEternitiesEnabled) {
             register(EdgeOfEternitiesSet.allCards)
+            register(EdgeOfEternitiesSet.basicLands)
         }
         // Easter egg card — injected into Rick's deck at game start
         register(SekshaasEarlySleeper)

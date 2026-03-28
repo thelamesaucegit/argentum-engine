@@ -263,7 +263,7 @@ object PortalSet {
     /**
      * All basic land variants in this set.
      */
-    val basicLands = PortalBasicLands
+    val basicLands = PortalBasicLands.map { it.copy(setCode = SET_CODE) }
 
     /**
      * Get all basic lands of a specific type.

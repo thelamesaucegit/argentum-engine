@@ -25,10 +25,17 @@ class CardRegistry {
      */
     fun register(card: CardDefinition) {
         cardsByName[card.name] = card
-        // Also register by name#collectorNumber for variants
+        // Also register by name#collectorNumber for variants.
+        // When setCode is present, use "Name#SetCode-CollectorNumber" to avoid collisions
+        // between sets that share collector numbers (e.g., Khans and Dominaria both use 250-269).
         val collectorNumber = card.metadata.collectorNumber
         if (collectorNumber != null) {
-            cardsByNameAndNumber["${card.name}#$collectorNumber"] = card
+            val key = if (card.setCode != null) {
+                "${card.name}#${card.setCode}-$collectorNumber"
+            } else {
+                "${card.name}#$collectorNumber"
+            }
+            cardsByNameAndNumber[key] = card
         }
     }
 

@@ -17,7 +17,7 @@ object DominariaSet {
     const val SET_CODE = "DOM"
     const val SET_NAME = "Dominaria"
 
-    val basicLands = DominariaBasicLands
+    val basicLands = DominariaBasicLands.map { it.copy(setCode = SET_CODE) }
 
     /**
      * All cards implemented from this set.

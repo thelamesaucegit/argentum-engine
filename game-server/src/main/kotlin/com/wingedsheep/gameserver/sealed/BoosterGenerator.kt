@@ -79,7 +79,9 @@ class BoosterGenerator(
                     val variantCopies = basePerVariant + if (i < remainder) 1 else 0
                     if (variantCopies > 0) {
                         val collectorNumber = variant.metadata.collectorNumber
-                        val identifier = if (collectorNumber != null) {
+                        val identifier = if (collectorNumber != null && variant.setCode != null) {
+                            "$cardName#${variant.setCode}-$collectorNumber"
+                        } else if (collectorNumber != null) {
                             "$cardName#$collectorNumber"
                         } else {
                             cardName

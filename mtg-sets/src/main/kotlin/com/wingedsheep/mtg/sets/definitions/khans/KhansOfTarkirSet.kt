@@ -314,5 +314,5 @@ object KhansOfTarkirSet {
         // Basic lands
     ) + KhansBasicLands
 
-    val basicLands = KhansBasicLands
+    val basicLands = KhansBasicLands.map { it.copy(setCode = SET_CODE) }
 }
