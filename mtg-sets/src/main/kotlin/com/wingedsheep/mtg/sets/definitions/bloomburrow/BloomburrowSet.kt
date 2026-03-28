@@ -116,6 +116,7 @@ object BloomburrowSet {
         ThornplateIntimidator,
         ThornvaultForager,
         ThundertrapTrainer,
+        ValleyMightcaller,
         ValleyQuestcaller,
         ValleyRally,
         ValleyRotcaller,

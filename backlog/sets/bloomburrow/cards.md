@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 105 / 266
+**Implemented:** 106 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 13   |
 | Black      | 40    | 16   |
 | Red        | 41    | 18   |
-| Green      | 41    | 12   |
+| Green      | 41    | 13   |
 | Multicolor | 39    | 14   |
 | Colorless  | 9     | 3    |
 | Land       | 15    | 4    |
@@ -261,7 +261,7 @@
 - [ ] Uncharted Haven
 - [ ] Valley Flamecaller
 - [ ] Valley Floodcaller
-- [ ] Valley Mightcaller
+- [x] Valley Mightcaller
 - [x] Valley Questcaller
 - [x] Valley Rally
 - [x] Valley Rotcaller
