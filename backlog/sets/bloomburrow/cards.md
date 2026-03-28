@@ -2,13 +2,13 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 90 / 266
+**Implemented:** 91 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 20   |
 | Blue       | 41    | 11   |
-| Black      | 40    | 12   |
+| Black      | 40    | 13   |
 | Red        | 41    | 16   |
 | Green      | 41    | 10   |
 | Multicolor | 39    | 13   |
@@ -99,7 +99,7 @@
 - [ ] Galewind Moose
 - [ ] Gev, Scaled Scorch
 - [ ] Glarb, Calamity's Augur
-- [ ] Glidedive Duo
+- [x] Glidedive Duo
 - [ ] Gossip's Talent
 - [ ] Harnesser of Storms
 - [ ] Harvestrite Host
