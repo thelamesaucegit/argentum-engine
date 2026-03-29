@@ -89,6 +89,7 @@ object BloomburrowSet {
         HuntersTalent,
         Mindwhisker,
         MindSpiral,
+        LightshellDuo,
         LifecreedDuo,
         LilypadVillage,
         LupinflowerVillage,
