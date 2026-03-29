@@ -536,6 +536,7 @@ constructors.
 - `Triggers.Valiant` — Valiant: whenever this creature becomes the target of a spell or ability you control for the first time each turn
 - `Triggers.DealsDamage` / `Triggers.DealsCombatDamage`
 - `Triggers.DealsCombatDamageToPlayer` / `Triggers.DealsCombatDamageToCreature`
+- `Triggers.CreatureYouControlDealsCombatDamageToPlayer` — ANY binding; fires for each creature you control that deals combat damage to a player. TriggeringEntity is the damage source creature.
 - `Triggers.CreatureDealtDamageByThisDies` — whenever a creature dealt damage by this creature this turn dies
 - `Triggers.EnchantedCreatureDealsCombatDamageToPlayer` — enchanted creature deals combat damage to a player (aura trigger)
 - `Triggers.EnchantedCreatureAttacks` — attached creature attacks (aura trigger, e.g., Extra Arms)

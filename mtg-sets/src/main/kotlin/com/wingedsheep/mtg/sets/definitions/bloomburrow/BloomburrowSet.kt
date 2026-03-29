@@ -70,6 +70,7 @@ object BloomburrowSet {
         FlowerfootSwordmaster,
         Fountainport,
         GlidediveDuo,
+        GossipsTalent,
         HazardrootHerbalist,
         HeapedHarvest,
         HeirloomEpic,

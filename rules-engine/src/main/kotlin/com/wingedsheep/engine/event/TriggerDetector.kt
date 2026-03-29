@@ -121,11 +121,15 @@ class TriggerDetector(
                             damageToYou.add(entry)
                         } else if (trigger.damageType == DamageType.Combat &&
                             trigger.recipient == RecipientFilter.AnyPlayer &&
-                            trigger.sourceFilter != null
+                            trigger.sourceFilter != null &&
+                            trigger.sourceFilter is GameObjectFilter &&
+                            (trigger.sourceFilter as GameObjectFilter).cardPredicates.any {
+                                it is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype
+                            }
                         ) {
                             subtypeDmg.add(entry)
                         } else {
-                            // General damage observer (e.g., Kazarov: "whenever a creature an opponent controls is dealt damage")
+                            // General damage observer (e.g., Kazarov, Gossip's Talent level 3)
                             damageObs.add(entry)
                         }
                     }

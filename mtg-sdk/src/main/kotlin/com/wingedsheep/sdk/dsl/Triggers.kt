@@ -303,6 +303,19 @@ object Triggers {
     )
 
     /**
+     * Whenever a creature you control deals combat damage to a player.
+     * Uses ANY binding — fires for each creature you control that connects.
+     */
+    val CreatureYouControlDealsCombatDamageToPlayer: TriggerSpec = TriggerSpec(
+        event = DealsDamageEvent(
+            damageType = DamageType.Combat,
+            recipient = RecipientFilter.AnyPlayer,
+            sourceFilter = GameObjectFilter.Creature.youControl()
+        ),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * When this creature deals combat damage to a creature.
      */
     val DealsCombatDamageToCreature: TriggerSpec = TriggerSpec(

@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 147 / 266
+**Implemented:** 148 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 27   |
-| Blue       | 41    | 18   |
+| Blue       | 41    | 19   |
 | Black      | 40    | 25   |
 | Red        | 41    | 23   |
 | Green      | 41    | 19   |
@@ -100,7 +100,7 @@
 - [ ] Gev, Scaled Scorch
 - [ ] Glarb, Calamity's Augur
 - [x] Glidedive Duo
-- [ ] Gossip's Talent
+- [x] Gossip's Talent
 - [ ] Harnesser of Storms
 - [ ] Harvestrite Host
 - [x] Hazardroot Herbalist

@@ -238,13 +238,25 @@ class DamageTriggerDetector(
                 val trigger = ability.trigger
                 if (trigger is GameEvent.DealsDamageEvent && ability.binding == TriggerBinding.ANY) {
                     if (matcher.matchesDealsDamageTrigger(trigger, event, state, entry.controllerId)) {
+                        // When the trigger has a sourceFilter (e.g., "creature you control deals
+                        // combat damage"), the triggering entity is the damage SOURCE (the creature),
+                        // not the damage recipient. This allows effects like "exile it" to reference
+                        // the creature that dealt damage.
+                        val context = if (trigger.sourceFilter != null && event.sourceId != null) {
+                            TriggerContext(
+                                triggeringEntityId = event.sourceId,
+                                damageAmount = event.amount
+                            )
+                        } else {
+                            TriggerContext.fromEvent(event)
+                        }
                         triggers.add(
                             PendingTrigger(
                                 ability = ability,
                                 sourceId = entry.entityId,
                                 sourceName = entry.cardComponent.name,
                                 controllerId = entry.controllerId,
-                                triggerContext = TriggerContext.fromEvent(event)
+                                triggerContext = context
                             )
                         )
                     }

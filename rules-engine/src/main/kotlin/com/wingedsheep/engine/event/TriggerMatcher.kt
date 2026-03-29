@@ -531,7 +531,19 @@ class TriggerMatcher(
             RecipientFilter.Self -> false // handled elsewhere
             else -> false
         }
-        return combatMatches && recipientMatches
+        // Check sourceFilter (e.g., "creature you control" for Gossip's Talent)
+        val sourceMatches = if (trigger.sourceFilter != null && event.sourceId != null) {
+            val predicateContext = com.wingedsheep.engine.handlers.PredicateContext(
+                controllerId = controllerId ?: EntityId(""),
+                sourceId = null
+            )
+            predicateEvaluator.matchesWithProjection(
+                state, state.projectedState, event.sourceId, trigger.sourceFilter!!, predicateContext
+            )
+        } else {
+            true
+        }
+        return combatMatches && recipientMatches && sourceMatches
     }
 
     fun matchesStepTrigger(
