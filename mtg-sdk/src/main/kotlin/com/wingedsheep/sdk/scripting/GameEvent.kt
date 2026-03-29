@@ -867,6 +867,36 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
             return if (newFilter !== filter) copy(filter = newFilter) else this
         }
     }
+
+    // =========================================================================
+    // Combat Damage Batch Triggers
+    // =========================================================================
+
+    /**
+     * Whenever one or more creatures matching [sourceFilter] you control deal combat damage
+     * to a player. Batching trigger — fires at most once per event batch regardless of how
+     * many matching creatures connected.
+     *
+     * Examples:
+     *   → OneOrMoreDealCombatDamageToPlayerEvent(sourceFilter = GameObjectFilter.Creature.withSubtype("Bird"))
+     *     "Whenever one or more Birds you control deal combat damage to a player"
+     */
+    @SerialName("OneOrMoreDealCombatDamageToPlayerEvent")
+    @Serializable
+    data class OneOrMoreDealCombatDamageToPlayerEvent(
+        val sourceFilter: GameObjectFilter = GameObjectFilter.Companion.Creature
+    ) : GameEvent {
+        override val description: String = buildString {
+            append("one or more ")
+            append(describeObjectForEvent(sourceFilter))
+            append(" you control deal combat damage to a player")
+        }
+
+        override fun applyTextReplacement(replacer: TextReplacer): GameEvent {
+            val newFilter = sourceFilter.applyTextReplacement(replacer)
+            return if (newFilter !== sourceFilter) copy(sourceFilter = newFilter) else this
+        }
+    }
 }
 
 /**

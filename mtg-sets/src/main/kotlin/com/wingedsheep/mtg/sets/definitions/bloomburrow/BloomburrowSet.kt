@@ -88,6 +88,7 @@ object BloomburrowSet {
         IridescentVinelasher,
         JackdawSavior,
         JunkbladeBruiser,
+        KastralTheWindcrested,
         KindlesparkDuo,
         Knightfisher,
         HuntersTalent,

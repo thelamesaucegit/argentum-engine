@@ -22,6 +22,7 @@ import com.wingedsheep.engine.state.components.identity.CardComponent
 import com.wingedsheep.engine.state.components.identity.ControllerComponent
 import com.wingedsheep.engine.state.components.identity.FaceDownComponent
 import com.wingedsheep.engine.state.components.identity.OwnerComponent
+import com.wingedsheep.engine.mechanics.layers.ProjectedState
 import com.wingedsheep.sdk.core.CounterType
 import com.wingedsheep.sdk.core.Step
 import com.wingedsheep.sdk.core.Zone
@@ -196,6 +197,11 @@ class TriggerDetector(
         // (e.g., Camellia, the Seedmiser). Groups sacrifice events per controller
         // and fires the trigger at most once per controller.
         detectSacrificeBatchTriggers(state, events, triggers, index)
+
+        // Detect "whenever one or more [creatures] you control deal combat damage to a player"
+        // batching triggers (e.g., Kastral, the Windcrested). Groups combat damage events
+        // and fires the trigger at most once per observer.
+        detectCombatDamageBatchTriggers(state, events, triggers, state.projectedState, index)
 
         // Detect Saga chapter triggers from lore counter additions
         detectSagaChapterTriggers(state, events, triggers)
@@ -821,6 +827,73 @@ class TriggerDetector(
                                 }
                             }
                         } else false
+                    }
+                }
+
+                if (hasMatch) {
+                    triggers.add(
+                        PendingTrigger(
+                            ability = ability,
+                            sourceId = entry.entityId,
+                            sourceName = entry.cardComponent.name,
+                            controllerId = controllerId,
+                            triggerContext = TriggerContext()
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Detect "whenever one or more [creatures] you control deal combat damage to a player"
+     * batching triggers. Groups all combat damage-to-player events and fires matching
+     * triggers at most once per observer, regardless of how many creatures connected.
+     */
+    private fun detectCombatDamageBatchTriggers(
+        state: GameState,
+        events: List<EngineGameEvent>,
+        triggers: MutableList<PendingTrigger>,
+        projected: ProjectedState,
+        index: TriggerIndex
+    ) {
+        // Collect all combat damage-to-player events, grouped by the controller of the damage source
+        data class CombatDamageInfo(val sourceId: EntityId, val targetPlayerId: EntityId)
+        val combatDamageByController = mutableMapOf<EntityId, MutableList<CombatDamageInfo>>()
+        for (event in events) {
+            if (event is DamageDealtEvent && event.isCombatDamage && event.sourceId != null &&
+                event.targetId in state.turnOrder) {
+                val sourceContainer = state.getEntity(event.sourceId) ?: continue
+                val controller = sourceContainer.get<ControllerComponent>()?.playerId ?: continue
+                combatDamageByController.getOrPut(controller) { mutableListOf() }
+                    .add(CombatDamageInfo(event.sourceId, event.targetId))
+            }
+        }
+        if (combatDamageByController.isEmpty()) return
+
+        for (entry in index.getEntitiesForCategory(TriggerCategory.COMBAT_DAMAGE_BATCH)) {
+            for (ability in entry.abilities) {
+                val trigger = ability.trigger
+                if (trigger !is GameEvent.OneOrMoreDealCombatDamageToPlayerEvent) continue
+
+                val controllerId = entry.controllerId
+                val damageEvents = combatDamageByController[controllerId] ?: continue
+
+                // Check if any damage source matches the sourceFilter (using projected state for subtypes)
+                val hasMatch = damageEvents.any { info ->
+                    val sourceContainer = state.getEntity(info.sourceId) ?: return@any false
+                    val sourceCard = sourceContainer.get<CardComponent>() ?: return@any false
+                    if (!sourceCard.typeLine.isCreature) return@any false
+                    if (sourceContainer.has<FaceDownComponent>()) return@any false
+
+                    // Check card predicates from the sourceFilter
+                    trigger.sourceFilter.cardPredicates.all { predicate ->
+                        when (predicate) {
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.IsCreature -> true
+                            is com.wingedsheep.sdk.scripting.predicates.CardPredicate.HasSubtype ->
+                                projected.hasSubtype(info.sourceId, predicate.subtype.value)
+                            else -> true
+                        }
                     }
                 }
 

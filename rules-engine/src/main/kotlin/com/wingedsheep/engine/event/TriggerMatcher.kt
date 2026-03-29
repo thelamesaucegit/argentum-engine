@@ -223,6 +223,8 @@ class TriggerMatcher(
             is GameEvent.CardsPutIntoGraveyardFromLibraryEvent -> false
             // Sacrifice batch triggers are handled by detectSacrificeBatchTriggers
             is GameEvent.PermanentsSacrificedEvent -> false
+            // Combat damage batch triggers are handled by detectCombatDamageBatchTriggers
+            is GameEvent.OneOrMoreDealCombatDamageToPlayerEvent -> false
         }
     }
 

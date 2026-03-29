@@ -1206,6 +1206,7 @@ Used in `OptionalCostEffect`, `MayPayManaEffect`, `AnyPlayerMayPayEffect`, `PayO
 - `SpellCastEvent(spellType, manaValueAtLeast?, manaValueAtMost?, manaValueEquals?, player)`
 - `CycleEvent(player)` / `TapEvent` / `UntapEvent`
 - `TurnFaceUpEvent` / `TransformEvent(intoBackFace?)` / `ControlChangeEvent`
+- `OneOrMoreDealCombatDamageToPlayerEvent(sourceFilter)` — batching trigger: "whenever one or more [filter] you control deal combat damage to a player" (fires at most once per combat damage step)
 
 ### Event Filters
 

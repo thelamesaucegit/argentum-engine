@@ -56,6 +56,7 @@ enum class TriggerCategory {
     STEP,
     LIBRARY_TO_GRAVEYARD,
     SACRIFICE,
+    COMBAT_DAMAGE_BATCH,
 }
 
 /**
@@ -161,6 +162,7 @@ class TriggerIndex(
                 is SdkGameEvent.StepEvent -> listOf(TriggerCategory.STEP)
                 is SdkGameEvent.CardsPutIntoGraveyardFromLibraryEvent -> listOf(TriggerCategory.LIBRARY_TO_GRAVEYARD)
                 is SdkGameEvent.PermanentsSacrificedEvent -> listOf(TriggerCategory.SACRIFICE)
+                is SdkGameEvent.OneOrMoreDealCombatDamageToPlayerEvent -> listOf(TriggerCategory.COMBAT_DAMAGE_BATCH)
                 // These are handled by specialized detect methods, not the main loop
                 else -> emptyList()
             }
