@@ -124,6 +124,7 @@ object BloomburrowSet {
         ScavengersTalent,
         SeasonOfLoss,
         SeasonedWarrenguard,
+        SeedpodSquire,
         SeedglaiveMentor,
         ShoreUp,
         ShorelineLooter,
