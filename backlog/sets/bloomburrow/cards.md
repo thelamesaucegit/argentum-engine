@@ -2,14 +2,14 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 137 / 266
+**Implemented:** 138 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 25   |
 | Blue       | 41    | 16   |
 | Black      | 40    | 24   |
-| Red        | 41    | 21   |
+| Red        | 41    | 22   |
 | Green      | 41    | 17   |
 | Multicolor | 39    | 17   |
 | Colorless  | 9     | 3    |
@@ -275,7 +275,7 @@
 - [ ] Waterspout Warden
 - [x] Wax-Wane Witness
 - [x] Wear Down
-- [ ] Whiskerquill Scribe
+- [x] Whiskerquill Scribe
 - [x] Whiskervale Forerunner
 - [ ] Wick's Patrol
 - [x] Wick, the Whorled Mind

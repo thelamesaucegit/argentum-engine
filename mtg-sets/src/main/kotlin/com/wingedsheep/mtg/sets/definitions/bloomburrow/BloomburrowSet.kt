@@ -152,6 +152,7 @@ object BloomburrowSet {
         WarrenWarleader,
         WaxWaneWitness,
         WearDown,
+        WhiskerquillScribe,
         WhiskervaleForerunner,
         WildfireHowl,
         WickTheWhorledMind,
