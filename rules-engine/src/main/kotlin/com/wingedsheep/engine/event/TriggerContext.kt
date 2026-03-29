@@ -37,7 +37,8 @@ data class TriggerContext(
             return when (event) {
                 is ZoneChangeEvent -> TriggerContext(
                     triggeringEntityId = event.entityId,
-                    counterCount = if (event.lastKnownCounterCount > 0) event.lastKnownCounterCount else null
+                    counterCount = if (event.lastKnownCounterCount > 0) event.lastKnownCounterCount else null,
+                    xValue = event.xValue
                 )
                 is DamageDealtEvent -> TriggerContext(
                     triggeringEntityId = event.targetId,

@@ -364,7 +364,8 @@ class StackResolver(
                     cardComponent.name,
                     null, // Was on stack
                     Zone.BATTLEFIELD,
-                    cardComponent.ownerId ?: spellComponent.casterId
+                    cardComponent.ownerId ?: spellComponent.casterId,
+                    xValue = spellComponent.xValue
                 )
             )
         } else {

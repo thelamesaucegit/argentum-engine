@@ -41,7 +41,9 @@ data class ZoneChangeEvent(
     /** For auras: the entity this aura was attached to when it left the battlefield (for "enchanted creature dies" triggers) */
     val lastKnownAttachedTo: EntityId? = null,
     /** Last known type line when leaving battlefield (for trigger detection when entity has been cleaned up, e.g., tokens) */
-    val lastKnownTypeLine: TypeLine? = null
+    val lastKnownTypeLine: TypeLine? = null,
+    /** X value from the spell that put this permanent onto the battlefield (for ETB triggers using DynamicAmount.XValue) */
+    val xValue: Int? = null
 ) : GameEvent
 
 // =============================================================================
