@@ -114,6 +114,7 @@ object BloomburrowSet {
         SalvationSwan,
         RuthlessNegotiation,
         QuaketuskBoar,
+        RabbitResponse,
         RabidGnaw,
         RavineRaider,
         RepelCalamity,

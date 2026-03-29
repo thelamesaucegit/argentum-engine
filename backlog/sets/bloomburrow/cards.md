@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 140 / 266
+**Implemented:** 141 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 25   |
+| White      | 40    | 26   |
 | Blue       | 41    | 17   |
 | Black      | 40    | 24   |
 | Red        | 41    | 22   |
@@ -185,7 +185,7 @@
 - [ ] Portent of Calamity
 - [x] Psychic Whorl
 - [x] Quaketusk Boar
-- [ ] Rabbit Response
+- [x] Rabbit Response
 - [x] Rabid Gnaw
 - [ ] Raccoon Rallier
 - [ ] Ral, Crackling Wit
