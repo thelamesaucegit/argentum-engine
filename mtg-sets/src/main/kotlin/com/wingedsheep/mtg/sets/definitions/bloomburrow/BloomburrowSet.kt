@@ -145,6 +145,7 @@ object BloomburrowSet {
         ThornplateIntimidator,
         ThornvaultForager,
         ThreeTreeRootweaver,
+        TreeguardDuo,
         ThundertrapTrainer,
         ValleyFloodcaller,
         ValleyMightcaller,

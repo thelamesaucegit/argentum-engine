@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 142 / 266
+**Implemented:** 143 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 17   |
 | Black      | 40    | 24   |
 | Red        | 41    | 22   |
-| Green      | 41    | 18   |
+| Green      | 41    | 19   |
 | Multicolor | 39    | 18   |
 | Colorless  | 9     | 3    |
 | Land       | 15    | 11   |
@@ -256,7 +256,7 @@
 - [ ] Three Tree Scribe
 - [x] Thundertrap Trainer
 - [x] Tidecaller Mentor
-- [ ] Treeguard Duo
+- [x] Treeguard Duo
 - [ ] Treetop Sentries
 - [ ] Uncharted Haven
 - [ ] Valley Flamecaller
