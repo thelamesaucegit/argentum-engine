@@ -115,6 +115,7 @@ object BloomburrowSet {
         RavineRaider,
         RepelCalamity,
         ReptilianRecruiter,
+        RockfaceVillage,
         RunAwayTogether,
         SazacapsBrew,
         ScavengersTalent,

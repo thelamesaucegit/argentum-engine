@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 134 / 266
+**Implemented:** 135 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -13,7 +13,7 @@
 | Green      | 41    | 16   |
 | Multicolor | 39    | 17   |
 | Colorless  | 9     | 3    |
-| Land       | 15    | 10   |
+| Land       | 15    | 11   |
 
 ---
 
@@ -192,7 +192,7 @@
 - [x] Ravine Raider
 - [x] Repel Calamity
 - [x] Reptilian Recruiter
-- [ ] Rockface Village
+- [x] Rockface Village
 - [ ] Rottenmouth Viper
 - [ ] Roughshod Duo
 - [x] Run Away Together
