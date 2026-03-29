@@ -2,14 +2,14 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 144 / 266
+**Implemented:** 145 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 26   |
 | Blue       | 41    | 18   |
 | Black      | 40    | 24   |
-| Red        | 41    | 22   |
+| Red        | 41    | 23   |
 | Green      | 41    | 19   |
 | Multicolor | 39    | 18   |
 | Colorless  | 9     | 3    |
@@ -239,7 +239,7 @@
 - [ ] Sunshower Druid
 - [x] Sunspine Lynx
 - [x] Swamp
-- [ ] Take Out the Trash
+- [x] Take Out the Trash
 - [ ] Tangle Tumbler
 - [ ] Teapot Slinger
 - [ ] Tempest Angler

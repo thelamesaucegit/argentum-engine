@@ -139,6 +139,7 @@ object BloomburrowSet {
         StormcatchMentor,
         StormchasersTalent,
         SunspineLynx,
+        TakeOutTheTrash,
         TenderWildguide,
         ThistledownPlayers,
         TidecallerMentor,
