@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 135 / 266
+**Implemented:** 136 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 24   |
+| White      | 40    | 25   |
 | Blue       | 41    | 16   |
 | Black      | 40    | 24   |
 | Red        | 41    | 21   |
@@ -25,7 +25,7 @@
 - [ ] Azure Beastbinder
 - [ ] Bakersbane Duo
 - [ ] Bandit's Talent
-- [ ] Banishing Light
+- [x] Banishing Light
 - [x] Bark-Knuckle Boxer
 - [x] Barkform Harvester
 - [x] Baylen, the Haymaker

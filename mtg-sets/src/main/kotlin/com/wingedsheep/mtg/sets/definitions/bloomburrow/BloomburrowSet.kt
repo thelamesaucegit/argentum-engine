@@ -27,6 +27,7 @@ object BloomburrowSet {
         AlaniasPathmaker,
         AgateBladeAssassin,
         ArtistsTalent,
+        BanishingLight,
         BarkKnuckleBoxer,
         BonecacheOverseer,
         BarkformHarvester,
