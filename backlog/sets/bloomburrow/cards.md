@@ -2,14 +2,14 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 131 / 266
+**Implemented:** 132 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 24   |
 | Blue       | 41    | 16   |
 | Black      | 40    | 23   |
-| Red        | 41    | 20   |
+| Red        | 41    | 21   |
 | Green      | 41    | 16   |
 | Multicolor | 39    | 17   |
 | Colorless  | 9     | 3    |
@@ -19,7 +19,7 @@
 
 - [ ] Agate Assault
 - [x] Agate-Blade Assassin
-- [ ] Alania's Pathmaker
+- [x] Alania's Pathmaker
 - [ ] Alania, Divergent Storm
 - [x] Artist's Talent
 - [ ] Azure Beastbinder
