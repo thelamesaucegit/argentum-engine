@@ -135,6 +135,10 @@ class DynamicAmountEvaluator(
                 evaluateBattlefieldAggregate(state, amount, context, projectedState)
             }
 
+            is DynamicAmount.AggregateZone -> {
+                evaluateZoneAggregate(state, amount, context)
+            }
+
             is DynamicAmount.AdditionalCostExiledCount -> context.exiledCardCount
 
             is DynamicAmount.Conditional -> {
@@ -332,6 +336,43 @@ class DynamicAmountEvaluator(
             Aggregation.SUM -> {
                 val prop = amount.property ?: return 0
                 matchingEntities.sumOf { resolveCardNumericProperty(state, projected, it, prop) }
+            }
+        }
+    }
+
+    /**
+     * Evaluate an AggregateZone: collect cards from a non-battlefield zone → filter → map → aggregate.
+     */
+    private fun evaluateZoneAggregate(
+        state: GameState,
+        amount: DynamicAmount.AggregateZone,
+        context: EffectContext
+    ): Int {
+        val playerIds = resolveUnifiedPlayerIds(state, amount.player, context)
+        val predicateContext = PredicateContext.fromEffectContext(context)
+
+        // Collect and filter matching entities from the zone
+        val matchingEntities = playerIds.flatMap { playerId ->
+            state.getZone(ZoneKey(playerId, amount.zone))
+                .filter { entityId ->
+                    predicateEvaluator.matches(state, entityId, amount.filter, predicateContext)
+                }
+        }
+
+        // Aggregate
+        return when (amount.aggregation) {
+            Aggregation.COUNT -> matchingEntities.size
+            Aggregation.MAX -> {
+                val prop = amount.property ?: return 0
+                matchingEntities.maxOfOrNull { resolveCardNumericProperty(state, null, it, prop) } ?: 0
+            }
+            Aggregation.MIN -> {
+                val prop = amount.property ?: return 0
+                matchingEntities.minOfOrNull { resolveCardNumericProperty(state, null, it, prop) } ?: 0
+            }
+            Aggregation.SUM -> {
+                val prop = amount.property ?: return 0
+                matchingEntities.sumOf { resolveCardNumericProperty(state, null, it, prop) }
             }
         }
     }

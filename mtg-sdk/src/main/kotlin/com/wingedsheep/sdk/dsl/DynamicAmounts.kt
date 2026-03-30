@@ -67,6 +67,38 @@ object DynamicAmounts {
     }
 
     // =========================================================================
+    // Fluent zone query builder (non-battlefield zones)
+    // =========================================================================
+
+    /**
+     * Start a fluent query over cards in a non-battlefield zone (graveyard, hand, library, exile).
+     *
+     * ```kotlin
+     * DynamicAmounts.zone(Player.You, Zone.GRAVEYARD).maxManaValue()
+     * DynamicAmounts.zone(Player.You, Zone.GRAVEYARD, GameObjectFilter.Creature).count()
+     * ```
+     */
+    fun zone(player: Player, zone: Zone, filter: GameObjectFilter = GameObjectFilter.Any) =
+        ZoneQuery(player, zone, filter)
+
+    class ZoneQuery(private val player: Player, private val zone: Zone, private val filter: GameObjectFilter) {
+        fun count(): DynamicAmount =
+            DynamicAmount.AggregateZone(player, zone, filter)
+
+        fun maxManaValue(): DynamicAmount =
+            DynamicAmount.AggregateZone(player, zone, filter, Aggregation.MAX, CardNumericProperty.MANA_VALUE)
+
+        fun maxPower(): DynamicAmount =
+            DynamicAmount.AggregateZone(player, zone, filter, Aggregation.MAX, CardNumericProperty.POWER)
+
+        fun maxToughness(): DynamicAmount =
+            DynamicAmount.AggregateZone(player, zone, filter, Aggregation.MAX, CardNumericProperty.TOUGHNESS)
+
+        fun sumManaValue(): DynamicAmount =
+            DynamicAmount.AggregateZone(player, zone, filter, Aggregation.SUM, CardNumericProperty.MANA_VALUE)
+    }
+
+    // =========================================================================
     // Battlefield counting (convenience shortcuts)
     // =========================================================================
 

@@ -752,10 +752,13 @@ constructors.
 - `DynamicAmount.DamageDealtToTargetPlayerThisTurn(targetIndex)` — total damage dealt to a target player this turn
 - `DynamicAmount.NonTokenCreaturesDiedThisTurn(player)` / `DynamicAmounts.nonTokenCreaturesDiedThisTurn(player)` — count of nontoken creatures put into a player's graveyard from battlefield this turn
 - `DynamicAmount.Count(player, zone, filter)` /
-  `DynamicAmount.AggregateBattlefield(player, filter, aggregation?, property?, excludeSelf?)`
+  `DynamicAmount.AggregateBattlefield(player, filter, aggregation?, property?, excludeSelf?)` /
+  `DynamicAmount.AggregateZone(player, zone, filter, aggregation?, property?)` — zone-generic aggregate for non-battlefield zones (graveyard, hand, library, exile)
 - `DynamicAmount.Conditional(condition, ifTrue, ifFalse)` — conditional amount
 - Fluent: `DynamicAmounts.battlefield(player, filter).count()` / `.maxManaValue()` / `.maxPower()` / `.maxToughness()` /
   `.minToughness()` / `.sumPower()`
+- Fluent: `DynamicAmounts.zone(player, zone, filter).count()` / `.maxManaValue()` / `.maxPower()` / `.maxToughness()` /
+  `.sumManaValue()`
 - Math: `DynamicAmount.Add(l, r)` / `.Subtract(l, r)` / `.Multiply(amt, n)` / `.Max(l, r)` / `.Min(l, r)` /
   `.IfPositive(amt)`
 

@@ -2,16 +2,16 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 164 / 266
+**Implemented:** 169 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 27   |
 | Blue       | 41    | 23   |
-| Black      | 40    | 27   |
-| Red        | 41    | 24   |
+| Black      | 40    | 30   |
+| Red        | 41    | 25   |
 | Green      | 41    | 22   |
-| Multicolor | 39    | 23   |
+| Multicolor | 39    | 24   |
 | Colorless  | 9     | 4    |
 | Land       | 15    | 11   |
 
@@ -32,7 +32,7 @@
 - [x] Bellowing Crier
 - [ ] Beza, the Bounding Spring
 - [ ] Blacksmith's Talent
-- [ ] Blooming Blast
+- [x] Blooming Blast
 - [x] Bonebind Orator
 - [x] Bonecache Overseer
 - [x] Brambleguard Captain
@@ -70,7 +70,7 @@
 - [x] Dire Downdraft
 - [x] Diresight
 - [x] Dour Port-Mage
-- [ ] Downwind Ambusher
+- [x] Downwind Ambusher
 - [ ] Dragonhawk, Fate's Tempest
 - [x] Dreamdew Entrancer
 - [x] Driftgloom Coyote
@@ -179,7 +179,7 @@
 - [x] Plains
 - [x] Playful Shove
 - [ ] Plumecreed Escort
-- [ ] Plumecreed Mentor
+- [x] Plumecreed Mentor
 - [ ] Polliwallop
 - [x] Pond Prophet
 - [ ] Portent of Calamity
@@ -199,7 +199,7 @@
 - [ ] Rust-Shield Rampager
 - [x] Ruthless Negotiation
 - [x] Salvation Swan
-- [ ] Savor
+- [x] Savor
 - [x] Sazacap's Brew
 - [ ] Scales of Shale
 - [x] Scavenger's Talent
@@ -277,7 +277,7 @@
 - [x] Wear Down
 - [x] Whiskerquill Scribe
 - [x] Whiskervale Forerunner
-- [ ] Wick's Patrol
+- [x] Wick's Patrol
 - [x] Wick, the Whorled Mind
 - [x] Wildfire Howl
 - [ ] Wishing Well

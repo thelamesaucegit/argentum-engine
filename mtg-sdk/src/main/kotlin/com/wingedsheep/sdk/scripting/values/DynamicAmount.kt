@@ -450,6 +450,69 @@ sealed interface DynamicAmount : TextReplaceable<DynamicAmount> {
         }
     }
 
+    /**
+     * Generic zone aggregation primitive.
+     * Queries cards in a player's zone, filters them, optionally maps to a numeric
+     * property, and applies an aggregation function.
+     *
+     * This is the zone-generic equivalent of [AggregateBattlefield], for non-battlefield zones
+     * like graveyard, hand, library, and exile.
+     *
+     * ```kotlin
+     * // Greatest mana value among cards in your graveyard (Wick's Patrol)
+     * AggregateZone(Player.You, Zone.GRAVEYARD, aggregation = Aggregation.MAX, property = CardNumericProperty.MANA_VALUE)
+     *
+     * // Count creature cards in your graveyard
+     * AggregateZone(Player.You, Zone.GRAVEYARD, GameObjectFilter.Creature)
+     * ```
+     *
+     * Prefer using the fluent DSL via [DynamicAmounts.zone] rather than constructing directly.
+     *
+     * @param player Whose zone to query
+     * @param zone Which zone to query (should not be BATTLEFIELD — use AggregateBattlefield for that)
+     * @param filter Filter for which cards to include
+     * @param aggregation How to aggregate (COUNT, MAX, MIN, SUM)
+     * @param property Which numeric property to aggregate (ignored for COUNT)
+     */
+    @SerialName("AggregateZone")
+    @Serializable
+    data class AggregateZone(
+        val player: Player,
+        val zone: Zone,
+        val filter: GameObjectFilter = GameObjectFilter.Companion.Any,
+        val aggregation: Aggregation = Aggregation.COUNT,
+        val property: CardNumericProperty? = null
+    ) : DynamicAmount {
+        override fun applyTextReplacement(replacer: TextReplacer): DynamicAmount {
+            val newFilter = filter.applyTextReplacement(replacer)
+            return if (newFilter !== filter) copy(filter = newFilter) else this
+        }
+        override val description: String = buildString {
+            when (aggregation) {
+                Aggregation.COUNT -> {
+                    append("the number of ")
+                    append(pluralize(filter.description))
+                }
+                Aggregation.MAX -> {
+                    append("the greatest ${property?.description ?: "value"} among ")
+                    append(pluralize(filter.description))
+                }
+                Aggregation.MIN -> {
+                    append("the least ${property?.description ?: "value"} among ")
+                    append(pluralize(filter.description))
+                }
+                Aggregation.SUM -> {
+                    append("the total ${property?.description ?: "value"} of ")
+                    append(pluralize(filter.description))
+                }
+            }
+            append(" in ")
+            append(player.possessive)
+            append(" ")
+            append(zoneSimpleName(zone))
+        }
+    }
+
     // =========================================================================
     // Entity Property — unified access to any entity's numeric property
     // =========================================================================
