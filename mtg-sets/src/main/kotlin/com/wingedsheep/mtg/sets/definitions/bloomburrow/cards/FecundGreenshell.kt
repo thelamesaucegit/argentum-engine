@@ -81,7 +81,7 @@ val FecundGreenshell = card("Fecund Greenshell") {
             // Look at top 1 card
             GatherCardsEffect(
                 source = CardSource.TopOfLibrary(DynamicAmount.Fixed(1)),
-                storeAs = "looked"
+                storeAs = "looked",
             ),
             // Split into land and non-land
             FilterCollectionEffect(
