@@ -83,6 +83,7 @@ object BloomburrowSet {
         GossipsTalent,
         HeadOfTheHomestead,
         HazardrootHerbalist,
+        HazelsNocturne,
         HeapedHarvest,
         HeirloomEpic,
         HelgaSkittishSeer,
