@@ -22,7 +22,7 @@ val TempestAngler = card("Tempest Angler") {
     toughness = 2
 
     triggeredAbility {
-        trigger = Triggers.YouCastNoncreatureSpell
+        trigger = Triggers.YouCastNoncreature
         effect = Effects.AddCounters("+1/+1", 1, EffectTarget.Self)
     }
 

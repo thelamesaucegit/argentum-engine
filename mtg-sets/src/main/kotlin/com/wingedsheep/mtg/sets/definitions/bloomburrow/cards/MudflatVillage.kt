@@ -59,9 +59,9 @@ val MudflatVillage = card("Mudflat Village") {
                                 Subtype("Rat"),
                                 Subtype("Squirrel")
                             )
-                        ),
-                    zone = Zone.GRAVEYARD,
-                    youControlOnly = true
+                        )
+                        .ownedByYou(),
+                    zone = Zone.GRAVEYARD
                 )
             )
         )
