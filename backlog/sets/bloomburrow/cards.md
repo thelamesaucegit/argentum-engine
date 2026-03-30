@@ -2,22 +2,22 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 176 / 266
+**Implemented:** 182 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 27   |
-| Blue       | 41    | 25   |
+| Blue       | 41    | 27   |
 | Black      | 40    | 30   |
-| Red        | 41    | 26   |
-| Green      | 41    | 22   |
-| Multicolor | 39    | 26   |
-| Colorless  | 9     | 4    |
+| Red        | 41    | 27   |
+| Green      | 41    | 23   |
+| Multicolor | 39    | 27   |
+| Colorless  | 9     | 5    |
 | Land       | 15    | 13   |
 
 ---
 
-- [ ] Agate Assault
+- [x] Agate Assault
 - [x] Agate-Blade Assassin
 - [x] Alania's Pathmaker
 - [x] Alania, Divergent Storm
@@ -50,7 +50,7 @@
 - [x] Camellia, the Seedmiser
 - [ ] Caretaker's Talent
 - [ ] Carrot Cake
-- [ ] Cindering Cutthroat
+- [x] Cindering Cutthroat
 - [x] Clement, the Worrywort
 - [x] Clifftop Lookout
 - [ ] Coiling Rebirth
@@ -114,7 +114,7 @@
 - [x] Hidden Grotto
 - [x] High Stride
 - [x] Hired Claw
-- [ ] Hivespine Wolverine
+- [x] Hivespine Wolverine
 - [ ] Hoarder's Overflow
 - [x] Honored Dreyleader
 - [x] Hop to It
@@ -178,7 +178,7 @@
 - [x] Pileated Provisioner
 - [x] Plains
 - [x] Playful Shove
-- [ ] Plumecreed Escort
+- [x] Plumecreed Escort
 - [x] Plumecreed Mentor
 - [ ] Polliwallop
 - [x] Pond Prophet
@@ -214,10 +214,10 @@
 - [x] Seedpod Squire
 - [x] Shore Up
 - [x] Shoreline Looter
-- [ ] Short Bow
+- [x] Short Bow
 - [x] Shrike Force
 - [x] Sinister Monolith
-- [ ] Skyskipper Duo
+- [x] Skyskipper Duo
 - [x] Sonar Strike
 - [x] Spellgyre
 - [x] Splash Lasher
