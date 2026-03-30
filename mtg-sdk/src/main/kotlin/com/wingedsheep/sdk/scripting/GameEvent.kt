@@ -96,11 +96,14 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
     data class ZoneChangeEvent(
         val filter: GameObjectFilter = GameObjectFilter.Any,
         val from: Zone? = null,
-        val to: Zone? = null
+        val to: Zone? = null,
+        val excludeTo: Zone? = null
     ) : GameEvent {
         override val description: String = buildString {
             append(describeObjectForEvent(filter))
-            if (to != null) {
+            if (excludeTo != null && from != null) {
+                append(" would leave ${from.displayName} without ${if (excludeTo == Zone.GRAVEYARD) "dying" else "going to ${excludeTo.displayName}"}")
+            } else if (to != null) {
                 append(" would ")
                 when (to) {
                     Zone.GRAVEYARD -> {

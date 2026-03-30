@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 184 / 266
+**Implemented:** 185 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 27   |
 | Black      | 40    | 31   |
 | Red        | 41    | 27   |
-| Green      | 41    | 23   |
+| Green      | 41    | 24   |
 | Multicolor | 39    | 28   |
 | Colorless  | 9     | 5    |
 | Land       | 15    | 13   |
@@ -253,7 +253,7 @@
 - [ ] Three Tree City
 - [ ] Three Tree Mascot
 - [x] Three Tree Rootweaver
-- [ ] Three Tree Scribe
+- [x] Three Tree Scribe
 - [x] Thundertrap Trainer
 - [x] Tidecaller Mentor
 - [x] Treeguard Duo

@@ -181,6 +181,7 @@ object BloomburrowSet {
         ThornvaultForager,
         ThoughtShucker,
         ThreeTreeRootweaver,
+        ThreeTreeScribe,
         TreeguardDuo,
         ThundertrapTrainer,
         ValleyFloodcaller,

@@ -243,6 +243,7 @@ class TriggerMatcher(
         // Match zones
         if (trigger.from != null && event.fromZone != trigger.from) return false
         if (trigger.to != null && event.toZone != trigger.to) return false
+        if (trigger.excludeTo != null && event.toZone == trigger.excludeTo) return false
 
         // Check binding
         when (binding) {

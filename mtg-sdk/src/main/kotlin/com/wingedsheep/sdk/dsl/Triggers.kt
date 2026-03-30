@@ -158,6 +158,19 @@ object Triggers {
     )
 
     /**
+     * When this creature or another creature you control leaves the battlefield without dying.
+     * "Leaves without dying" = zone change from battlefield to any zone except graveyard.
+     */
+    val YourCreatureLeavesBattlefieldWithoutDying: TriggerSpec = TriggerSpec(
+        event = ZoneChangeEvent(
+            filter = GameObjectFilter.Creature.youControl(),
+            from = Zone.BATTLEFIELD,
+            excludeTo = Zone.GRAVEYARD
+        ),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * When this is put into the graveyard from the battlefield.
      */
     val PutIntoGraveyardFromBattlefield: TriggerSpec = TriggerSpec(
