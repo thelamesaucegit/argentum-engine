@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 183 / 266
+**Implemented:** 184 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -11,7 +11,7 @@
 | Black      | 40    | 31   |
 | Red        | 41    | 27   |
 | Green      | 41    | 23   |
-| Multicolor | 39    | 27   |
+| Multicolor | 39    | 28   |
 | Colorless  | 9     | 5    |
 | Land       | 15    | 13   |
 
@@ -88,7 +88,7 @@
 - [ ] Festival of Embers
 - [ ] Finch Formation
 - [ ] Finneas, Ace Archer
-- [ ] Fireglass Mentor
+- [x] Fireglass Mentor
 - [x] Flamecache Gecko
 - [x] Flowerfoot Swordmaster
 - [x] For the Common Good

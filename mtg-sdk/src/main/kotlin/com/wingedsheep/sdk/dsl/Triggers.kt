@@ -401,6 +401,14 @@ object Triggers {
     )
 
     /**
+     * At the beginning of your postcombat main phase (second main phase).
+     */
+    val YourPostcombatMain: TriggerSpec = TriggerSpec(
+        event = StepEvent(Step.POSTCOMBAT_MAIN, Player.You),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * At the beginning of enchanted creature's controller's upkeep.
      * Used for auras that grant "At the beginning of your upkeep" to the enchanted creature.
      */

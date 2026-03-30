@@ -552,7 +552,7 @@ constructors.
 
 - `Triggers.YourUpkeep` / `Triggers.EachUpkeep` / `Triggers.EachOpponentUpkeep`
 - `Triggers.YourEndStep` / `Triggers.EachEndStep`
-- `Triggers.BeginCombat` / `Triggers.FirstMainPhase`
+- `Triggers.BeginCombat` / `Triggers.FirstMainPhase` / `Triggers.YourPostcombatMain`
 - `Triggers.EnchantedCreatureControllerUpkeep` — enchanted creature's controller's upkeep
 - `Triggers.EnchantedCreatureControllerEndStep` — enchanted creature's controller's end step
 - `Triggers.TurnedFaceUp` — self turns face up
