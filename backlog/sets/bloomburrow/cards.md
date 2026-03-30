@@ -2,13 +2,13 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 163 / 266
+**Implemented:** 164 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 27   |
 | Blue       | 41    | 23   |
-| Black      | 40    | 26   |
+| Black      | 40    | 27   |
 | Red        | 41    | 24   |
 | Green      | 41    | 22   |
 | Multicolor | 39    | 23   |
@@ -24,7 +24,7 @@
 - [x] Artist's Talent
 - [ ] Azure Beastbinder
 - [ ] Bakersbane Duo
-- [ ] Bandit's Talent
+- [x] Bandit's Talent
 - [x] Banishing Light
 - [x] Bark-Knuckle Boxer
 - [x] Barkform Harvester

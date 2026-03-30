@@ -28,6 +28,7 @@ object BloomburrowSet {
         AlaniasPathmaker,
         AgateBladeAssassin,
         ArtistsTalent,
+        BanditsTalent,
         BanishingLight,
         BarkKnuckleBoxer,
         BonecacheOverseer,
