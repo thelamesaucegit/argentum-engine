@@ -116,7 +116,7 @@ class AutoPassManager {
                     // Auto-pass if we have no meaningful instant-speed responses.
                     // Auras are excluded because they target, and the opponent should see what's being targeted.
                     val hasResponses = meaningfulActions.any {
-                        it.actionType == "CastSpell" || it.actionType == "ActivateAbility" || it.actionType == "CycleCard" || it.actionType == "TypecycleCard"
+                        it.actionType == "CastSpell" || it.actionType == "CastSpellMode" || it.actionType == "ActivateAbility" || it.actionType == "CycleCard" || it.actionType == "TypecycleCard"
                     }
                     if (!hasResponses) {
                         logger.debug("AUTO-PASS: Opponent's permanent spell on stack, no responses")
@@ -169,7 +169,7 @@ class AutoPassManager {
         // by shouldAutoPassOnOpponentTurn which only stops if you have blockers.
         if (state.step == Step.DECLARE_BLOCKERS && isMyTurn) {
             val hasInstantSpeedResponses = meaningfulActions.any { action ->
-                (action.actionType == "CastSpell" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+                (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
                 (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
             }
 
@@ -254,7 +254,7 @@ class AutoPassManager {
             // CastSpell is meaningful only if the player can afford it
             // (Regular spells are only added when affordable, but companion actions
             // for cycling/morph cards can be added with isAffordable=false)
-            if (action.actionType == "CastSpell") {
+            if (action.actionType == "CastSpell" || action.actionType == "CastSpellMode") {
                 return@filter action.isAffordable
             }
 
@@ -325,7 +325,7 @@ class AutoPassManager {
 
             Step.DECLARE_BLOCKERS -> {
                 val hasResponses = meaningfulActions.any { action ->
-                    (action.actionType == "CastSpell" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+                    (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
                     (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
                 }
                 if (hasResponses) {
@@ -339,7 +339,7 @@ class AutoPassManager {
 
             Step.FIRST_STRIKE_COMBAT_DAMAGE -> {
                 val hasResponses = meaningfulActions.any { action ->
-                    (action.actionType == "CastSpell" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+                    (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
                     (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
                 }
                 if (hasResponses) {
@@ -392,7 +392,7 @@ class AutoPassManager {
 
         // Check if we have instant-speed responses (spells/abilities, not blockers)
         val hasInstantSpeedResponses = meaningfulActions.any { action ->
-            (action.actionType == "CastSpell" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
+            (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "ActivateAbility" || action.actionType == "CycleCard" || action.actionType == "TypecycleCard") &&
             (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
         }
 
@@ -496,7 +496,7 @@ class AutoPassManager {
             // Exclude mana abilities (unless they have a sacrifice cost)
             (!action.isManaAbility || action.additionalCostInfo?.costType == "SacrificePermanent") &&
             // Must be a spell or ability (not land play or combat action)
-            (action.actionType == "CastSpell" || action.actionType == "ActivateAbility") &&
+            (action.actionType == "CastSpell" || action.actionType == "CastSpellMode" || action.actionType == "ActivateAbility") &&
             // Must have valid targets if required
             (!action.requiresTargets || !action.validTargets.isNullOrEmpty())
         }
