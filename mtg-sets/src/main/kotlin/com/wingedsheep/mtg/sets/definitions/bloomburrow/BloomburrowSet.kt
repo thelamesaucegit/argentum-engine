@@ -140,6 +140,7 @@ object BloomburrowSet {
         ShorelineLooter,
         SinisterMonolith,
         SonarStrike,
+        Spellgyre,
         SplashLasher,
         StickytongueSentinel,
         SugarCoat,
