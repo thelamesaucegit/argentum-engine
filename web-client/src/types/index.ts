@@ -188,6 +188,8 @@ export type {
   OrderObjectsDecision,
   ChooseNumberDecision,
   ChooseOptionDecision,
+  BudgetModalDecision,
+  BudgetModeOption,
   DistributeDecision,
   AssignDamageDecision,
   ChooseColorDecision,

@@ -86,6 +86,7 @@ class DecisionEnricher(private val cardRegistry: CardRegistry) {
             is ReorderLibraryDecision -> "Reordering cards"
             is AssignDamageDecision -> "Assigning damage"
             is ChooseOptionDecision -> "Making a choice"
+            is BudgetModalDecision -> "Choosing modes"
             is SelectManaSourcesDecision -> "Selecting mana sources"
         }
         return ServerMessage.OpponentDecisionStatus(

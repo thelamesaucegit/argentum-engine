@@ -1,6 +1,8 @@
 package com.wingedsheep.engine.handlers.actions.decision
 
 import com.wingedsheep.engine.core.AssignDamageDecision
+import com.wingedsheep.engine.core.BudgetModalDecision
+import com.wingedsheep.engine.core.BudgetModalResponse
 import com.wingedsheep.engine.core.CancelDecisionResponse
 import com.wingedsheep.engine.core.CardsSelectedResponse
 import com.wingedsheep.engine.core.ChooseColorDecision
@@ -57,6 +59,7 @@ object DecisionValidators {
             is OrderObjectsDecision -> validateOrder(decision, response)
             is SplitPilesDecision -> validateSplitPiles(decision, response)
             is ChooseOptionDecision -> validateOption(decision, response)
+            is BudgetModalDecision -> validateBudgetModal(decision, response)
             is AssignDamageDecision -> validateDamageAssignment(decision, response)
             is SearchLibraryDecision -> validateLibrarySearch(decision, response)
             is ReorderLibraryDecision -> validateLibraryReorder(decision, response)
@@ -224,6 +227,22 @@ object DecisionValidators {
         }
         if (response.optionIndex < 0 || response.optionIndex >= decision.options.size) {
             return "Invalid option index: ${response.optionIndex}"
+        }
+        return null
+    }
+
+    private fun validateBudgetModal(decision: BudgetModalDecision, response: DecisionResponse): String? {
+        if (response !is BudgetModalResponse) {
+            return "Expected budget modal response"
+        }
+        for (idx in response.selectedModeIndices) {
+            if (idx < 0 || idx >= decision.modes.size) {
+                return "Invalid mode index: $idx"
+            }
+        }
+        val totalCost = response.selectedModeIndices.sumOf { decision.modes[it].cost }
+        if (totalCost > decision.budget) {
+            return "Total cost ($totalCost) exceeds budget (${decision.budget})"
         }
         return null
     }

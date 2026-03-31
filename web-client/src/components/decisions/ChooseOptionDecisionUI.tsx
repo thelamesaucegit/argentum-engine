@@ -3,7 +3,6 @@ import { useGameStore } from '@/store/gameStore.ts'
 import type { EntityId, ChooseOptionDecision } from '@/types'
 import { useResponsive } from '@/hooks/useResponsive.ts'
 import { getCardImageUrl } from '@/utils/cardImages.ts'
-import { AbilityText } from '@/components/ui/ManaSymbols'
 import { DecisionCardPreview } from './DecisionComponents'
 import styles from './DecisionUI.module.css'
 
@@ -137,7 +136,7 @@ export function ChooseOptionDecisionUI({
             onClick={() => setSelectedIndex(opt.index)}
             className={`${styles.optionItem} ${selectedIndex === opt.index ? styles.optionItemSelected : ''}`}
           >
-            <AbilityText text={opt.label} size={16} />
+            {opt.label}
           </button>
         ))}
         {filteredOptions.length === 0 && (

@@ -9,6 +9,7 @@ import { CombatDamageAssignmentModal } from './CombatDamageAssignmentModal'
 import { YesNoDecisionUI } from './YesNoDecisionUI'
 import { ChooseNumberDecisionUI } from './ChooseNumberDecisionUI'
 import { ChooseOptionDecisionUI } from './ChooseOptionDecisionUI'
+import { BudgetModalDecisionUI } from './BudgetModalDecisionUI'
 import { ChooseColorDecisionUI } from './ChooseColorDecisionUI'
 import { CardSelectionDecision } from './CardSelectionDecisionUI'
 import { BattlefieldSelectionUI } from './BattlefieldSelectionUI'
@@ -113,6 +114,13 @@ export function DecisionUI() {
   if (pendingDecision.type === 'ChooseOptionDecision') {
     return (
       <ChooseOptionDecisionUI key={pendingDecision.id} decision={pendingDecision} />
+    )
+  }
+
+  // Handle BudgetModalDecision (Bloomburrow Season cycle pawprint modes)
+  if (pendingDecision.type === 'BudgetModalDecision') {
+    return (
+      <BudgetModalDecisionUI key={pendingDecision.id} decision={pendingDecision} />
     )
   }
 

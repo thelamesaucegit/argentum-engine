@@ -450,6 +450,25 @@ export interface SplitPilesDecision extends PendingDecisionBase {
 }
 
 /**
+ * A single mode in a budget modal decision.
+ */
+export interface BudgetModeOption {
+  readonly cost: number
+  readonly description: string
+}
+
+/**
+ * Player must choose modes from a budget-based modal spell (Bloomburrow Season cycle).
+ * Each mode has a pawprint cost, and the player has a budget to spend.
+ * The same mode can be chosen multiple times if budget allows.
+ */
+export interface BudgetModalDecision extends PendingDecisionBase {
+  readonly type: 'BudgetModalDecision'
+  readonly budget: number
+  readonly modes: readonly BudgetModeOption[]
+}
+
+/**
  * Union of all pending decision types.
  */
 export type PendingDecision =
@@ -461,6 +480,7 @@ export type PendingDecision =
   | OrderObjectsDecision
   | ChooseNumberDecision
   | ChooseOptionDecision
+  | BudgetModalDecision
   | DistributeDecision
   | ChooseColorDecision
   | SelectManaSourcesDecision

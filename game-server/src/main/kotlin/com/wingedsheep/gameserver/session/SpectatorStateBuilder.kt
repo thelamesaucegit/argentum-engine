@@ -72,6 +72,7 @@ class SpectatorStateBuilder(
             is ReorderLibraryDecision -> "Reordering cards"
             is AssignDamageDecision -> "Assigning damage"
             is ChooseOptionDecision -> "Making a choice"
+            is BudgetModalDecision -> "Choosing modes"
             is SelectManaSourcesDecision -> "Selecting mana sources"
         }
         return ServerMessage.SpectatorDecisionStatus(

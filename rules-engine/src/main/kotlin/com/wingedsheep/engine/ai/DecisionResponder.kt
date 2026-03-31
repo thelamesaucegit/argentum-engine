@@ -34,6 +34,7 @@ class DecisionResponder(
             is OrderObjectsDecision -> respondOrder(state, decision, playerId)
             is SplitPilesDecision -> respondSplitPiles(state, decision, playerId)
             is ChooseOptionDecision -> respondOption(state, decision, playerId)
+            is BudgetModalDecision -> respondBudgetModal(decision)
             is AssignDamageDecision -> respondDamageAssignment(state, decision)
             is SearchLibraryDecision -> respondSearchLibrary(state, decision, playerId)
             is ReorderLibraryDecision -> respondReorderLibrary(state, decision, playerId)
@@ -344,6 +345,22 @@ class DecisionResponder(
             )
         }!!
         return OptionChosenResponse(decision.id, best)
+    }
+
+    // ── Budget modal ─────────────────────────────────────────────────────
+
+    private fun respondBudgetModal(decision: BudgetModalDecision): DecisionResponse {
+        // Greedy: pick cheapest mode repeatedly until budget exhausted
+        val sorted = decision.modes.withIndex().sortedBy { it.value.cost }
+        val selected = mutableListOf<Int>()
+        var remaining = decision.budget
+        for ((idx, mode) in sorted) {
+            while (mode.cost <= remaining) {
+                selected.add(idx)
+                remaining -= mode.cost
+            }
+        }
+        return BudgetModalResponse(decision.id, selected)
     }
 
     // ── Damage assignment ────────────────────────────────────────────────

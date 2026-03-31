@@ -25,6 +25,7 @@ class AiDecisionHandlerRegistry {
         register(OrderObjectsHandler())
         register(SplitPilesHandler())
         register(ChooseOptionHandler())
+        register(BudgetModalHandler())
         register(AssignDamageHandler())
         register(SearchLibraryHandler())
         register(ReorderLibraryHandler())
