@@ -150,6 +150,7 @@ object BloomburrowSet {
         ReptilianRecruiter,
         RockfaceVillage,
         RoughshodDuo,
+        RustShieldRampager,
         RunAwayTogether,
         Savor,
         SazacapsBrew,

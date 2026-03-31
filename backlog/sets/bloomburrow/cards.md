@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 193 / 266
+**Implemented:** 194 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 27   |
 | Black      | 40    | 32   |
 | Red        | 41    | 30   |
-| Green      | 41    | 25   |
+| Green      | 41    | 26   |
 | Multicolor | 39    | 30   |
 | Colorless  | 9     | 5    |
 | Land       | 15    | 13   |
@@ -196,7 +196,7 @@
 - [ ] Rottenmouth Viper
 - [x] Roughshod Duo
 - [x] Run Away Together
-- [ ] Rust-Shield Rampager
+- [x] Rust-Shield Rampager
 - [x] Ruthless Negotiation
 - [x] Salvation Swan
 - [x] Savor
