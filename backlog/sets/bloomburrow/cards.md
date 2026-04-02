@@ -2,14 +2,14 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 221 / 266
+**Implemented:** 222 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 33   |
 | Blue       | 41    | 33   |
 | Black      | 40    | 32   |
-| Red        | 41    | 32   |
+| Red        | 41    | 33   |
 | Green      | 41    | 36   |
 | Multicolor | 39    | 31   |
 | Colorless  | 9     | 8    |
@@ -101,7 +101,7 @@
 - [x] Glarb, Calamity's Augur
 - [x] Glidedive Duo
 - [x] Gossip's Talent
-- [ ] Harnesser of Storms
+- [x] Harnesser of Storms
 - [x] Harvestrite Host
 - [x] Hazardroot Herbalist
 - [x] Hazel's Nocturne

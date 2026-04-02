@@ -574,7 +574,8 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
         val manaValueEquals: Int? = null,
         val kicked: Boolean? = null,
         val player: Player = Player.You,
-        val subtype: Subtype? = null
+        val subtype: Subtype? = null,
+        val orSubtype: Subtype? = null
     ) : GameEvent {
         override val description: String = buildString {
             append(player.description)
@@ -582,6 +583,11 @@ sealed interface GameEvent : TextReplaceable<GameEvent> {
             if (kicked == true) append("a kicked ")
             if (subtype != null) {
                 append("a ${subtype.value} spell")
+            } else if (orSubtype != null) {
+                when (spellType) {
+                    SpellTypeFilter.NONCREATURE -> append("a noncreature or ${orSubtype.value} spell")
+                    else -> append("a spell or ${orSubtype.value} spell")
+                }
             } else {
                 when (spellType) {
                     SpellTypeFilter.ANY -> if (kicked != true) append("a spell") else append("spell")

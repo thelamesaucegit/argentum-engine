@@ -647,7 +647,12 @@ class TriggerMatcher(
             SpellTypeFilter.ENCHANTMENT -> !isFaceDown && cardComponent.typeLine.isEnchantment
             SpellTypeFilter.HISTORIC -> !isFaceDown && cardComponent.typeLine.isHistoric
         }
-        if (!typeMatches) return false
+
+        // orSubtype: match if spellType matches OR spell has this subtype (e.g., "noncreature or Otter spell")
+        val orSubtypeMatches = trigger.orSubtype != null && !isFaceDown &&
+            cardComponent.typeLine.subtypes.contains(trigger.orSubtype!!)
+
+        if (!typeMatches && !orSubtypeMatches) return false
 
         val mv = if (isFaceDown) 0 else cardComponent.manaValue
         if (trigger.manaValueAtLeast != null && mv < trigger.manaValueAtLeast!!) return false

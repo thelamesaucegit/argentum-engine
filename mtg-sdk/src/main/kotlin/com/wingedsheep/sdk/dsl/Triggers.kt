@@ -548,6 +548,15 @@ object Triggers {
     )
 
     /**
+     * Whenever you cast a noncreature or [subtype] spell.
+     * Uses OR logic: triggers on noncreature spells OR spells with the given subtype.
+     */
+    fun YouCastNoncreatureOrSubtype(subtype: Subtype): TriggerSpec = TriggerSpec(
+        event = SpellCastEvent(spellType = SpellTypeFilter.NONCREATURE, orSubtype = subtype, player = Player.You),
+        binding = TriggerBinding.ANY
+    )
+
+    /**
      * Whenever you cast an instant or sorcery.
      */
     val YouCastInstantOrSorcery: TriggerSpec = TriggerSpec(
