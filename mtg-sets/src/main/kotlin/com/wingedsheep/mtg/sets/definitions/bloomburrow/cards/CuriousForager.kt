@@ -41,7 +41,8 @@ val CuriousForager = card("Curious Forager") {
             reflexiveEffect = Effects.ReturnToHand(EffectTarget.ContextTarget(0)),
             reflexiveTargetRequirements = listOf(
                 TargetObject(filter = TargetFilter(GameObjectFilter.Permanent.ownedByYou(), zone = Zone.GRAVEYARD))
-            )
+            ),
+            hint = "Exile three cards from your graveyard or sacrifice a Food"
         )
     }
 

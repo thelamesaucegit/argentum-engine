@@ -81,7 +81,8 @@ class ReflexiveTriggerEffectExecutor(
                 phase = DecisionPhase.RESOLUTION
             ),
             yesText = "Yes",
-            noText = "No"
+            noText = "No",
+            hint = effect.hint
         )
 
         // If yes and there are reflexive targets: execute just the action, then target the reflexive effect.

@@ -58,7 +58,8 @@ class MayEffectExecutor(
                 inlineOnTrigger = effect.inlineOnTrigger
             ),
             yesText = "Yes",
-            noText = "No"
+            noText = "No",
+            hint = effect.hint
         )
 
         // Create continuation to resume after player's choice

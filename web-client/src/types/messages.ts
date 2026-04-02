@@ -287,6 +287,8 @@ export interface YesNoDecision extends PendingDecisionBase {
   readonly type: 'YesNoDecision'
   readonly yesText: string
   readonly noText: string
+  /** Optional hint text shown below the prompt (e.g., keyword reminder text) */
+  readonly hint?: string
 }
 
 /**

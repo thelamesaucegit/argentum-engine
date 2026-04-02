@@ -150,7 +150,9 @@ data class YesNoDecision(
     /** What "yes" means (for UI button text) */
     val yesText: String = "Yes",
     /** What "no" means (for UI button text) */
-    val noText: String = "No"
+    val noText: String = "No",
+    /** Optional hint text shown below the prompt (e.g., keyword reminder text) */
+    val hint: String? = null
 ) : PendingDecision
 
 /**

@@ -7,13 +7,16 @@ import styles from './DecisionUI.module.css'
 /**
  * Yes/No decision - make a binary choice.
  * Shows source card (the ability owner) and optionally the triggering entity for context.
+ * Supports an optional hint (e.g., keyword reminder text) and a View Battlefield button.
  */
 export function YesNoDecisionUI({
   decision,
   gameState,
+  onMinimize,
 }: {
   decision: YesNoDecision
   gameState: ClientGameState | null
+  onMinimize?: () => void
 }) {
   const submitYesNoDecision = useGameStore((s) => s.submitYesNoDecision)
 
@@ -91,8 +94,20 @@ export function YesNoDecisionUI({
         </p>
       )}
 
-      {/* Yes/No buttons */}
+      {/* Hint text (e.g., keyword reminder text) */}
+      {decision.hint && (
+        <p className={styles.hint}>
+          <AbilityText text={decision.hint} size={14} />
+        </p>
+      )}
+
+      {/* Yes/No buttons + optional View Battlefield */}
       <div className={styles.buttonContainer}>
+        {onMinimize && (
+          <button onClick={onMinimize} className={styles.viewBattlefieldButton}>
+            View Battlefield
+          </button>
+        )}
         <button onClick={handleYes} className={styles.yesButton}>
           <AbilityText text={decision.yesText} size={16} />
         </button>

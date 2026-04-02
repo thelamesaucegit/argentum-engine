@@ -56,7 +56,9 @@ data class MayEffect(
     val effect: Effect,
     val description_override: String? = null,
     val sourceRequiredZone: Zone? = null,
-    val inlineOnTrigger: Boolean = false
+    val inlineOnTrigger: Boolean = false,
+    /** Optional hint text shown below the prompt (e.g., keyword reminder text) */
+    val hint: String? = null
 ) : Effect {
     override val description: String = description_override ?: "You may ${effect.description.lowercase()}"
 
@@ -242,7 +244,9 @@ data class ReflexiveTriggerEffect(
     val action: Effect,
     val optional: Boolean = true,
     val reflexiveEffect: Effect,
-    val reflexiveTargetRequirements: List<TargetRequirement> = emptyList()
+    val reflexiveTargetRequirements: List<TargetRequirement> = emptyList(),
+    /** Optional hint text shown on the yes/no decision (e.g., keyword reminder text) */
+    val hint: String? = null
 ) : Effect {
     override val description: String = buildString {
         if (optional) append("You may ")

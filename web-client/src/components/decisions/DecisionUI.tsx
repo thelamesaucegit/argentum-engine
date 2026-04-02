@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useGameStore } from '@/store/gameStore.ts'
 import type { EntityId, ChooseTargetsDecision, ClientGameState } from '@/types'
 import { ZoneType } from '@/types'
@@ -57,6 +58,12 @@ export function DecisionUI() {
   const pendingDecision = useGameStore((state) => state.pendingDecision)
   const gameState = useGameStore((state) => state.gameState)
   const responsive = useResponsive()
+  const [yesNoMinimized, setYesNoMinimized] = useState(false)
+
+  // Reset minimized state when decision changes
+  useEffect(() => {
+    setYesNoMinimized(false)
+  }, [pendingDecision?.id])
 
   if (!pendingDecision) return null
 
@@ -94,9 +101,23 @@ export function DecisionUI() {
         return null
       }
     }
+    if (yesNoMinimized) {
+      return (
+        <button
+          className={styles.floatingReturnButton}
+          onClick={() => setYesNoMinimized(false)}
+        >
+          Return to decision
+        </button>
+      )
+    }
     return (
       <div className={styles.overlay}>
-        <YesNoDecisionUI decision={pendingDecision} gameState={gameState} />
+        <YesNoDecisionUI
+          decision={pendingDecision}
+          gameState={gameState}
+          onMinimize={() => setYesNoMinimized(true)}
+        />
       </div>
     )
   }
