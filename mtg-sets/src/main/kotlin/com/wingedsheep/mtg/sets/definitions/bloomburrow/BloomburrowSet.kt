@@ -45,6 +45,7 @@ object BloomburrowSet {
         BraveKinDuo,
         BrightbladeStoat,
         BurrowguardMentor,
+        BushyBodyguard,
         BywayBarterer,
         CinderingCutthroat,
         ClifftopLookout,
