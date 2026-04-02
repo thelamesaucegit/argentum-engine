@@ -198,6 +198,22 @@ sealed interface CostReductionSource {
     ) : CostReductionSource {
         override val description: String = "the number of ${filter.description} cards in your graveyard"
     }
+
+    /**
+     * Reduces cost by 1 for each card you own in exile and in your graveyard matching the filter.
+     * Used for Huskburster Swarm ("costs {1} less for each creature card you own in exile and in your graveyard").
+     *
+     * @property filter The filter that cards must match to count toward the reduction
+     * @property amountPerCard The amount of generic mana reduced per matching card (typically 1)
+     */
+    @SerialName("CardsInGraveyardAndExileMatchingFilter")
+    @Serializable
+    data class CardsInGraveyardAndExileMatchingFilter(
+        val filter: GameObjectFilter,
+        val amountPerCard: Int = 1
+    ) : CostReductionSource {
+        override val description: String = "the number of ${filter.description} cards you own in exile and in your graveyard"
+    }
 }
 
 /**

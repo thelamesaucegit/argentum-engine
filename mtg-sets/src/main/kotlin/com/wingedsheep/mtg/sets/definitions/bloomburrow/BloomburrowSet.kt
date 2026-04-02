@@ -112,6 +112,7 @@ object BloomburrowSet {
         HoardersOverflow,
         HonoredDreyleader,
         HugsGrislyGuardian,
+        HuskbursterSwarm,
         IntrepidRabbit,
         IntoTheFloodMaw,
         IridescentVinelasher,

@@ -115,6 +115,11 @@ class CostCalculator(
             is CostReductionSource.CardsInGraveyardMatchingFilter -> {
                 countGraveyardCardsMatchingFilter(state, playerId, source.filter) * source.amountPerCard
             }
+            is CostReductionSource.CardsInGraveyardAndExileMatchingFilter -> {
+                val graveyardCount = countGraveyardCardsMatchingFilter(state, playerId, source.filter)
+                val exileCount = countExileCardsMatchingFilter(state, playerId, source.filter)
+                (graveyardCount + exileCount) * source.amountPerCard
+            }
         }
     }
 
@@ -189,6 +194,20 @@ class CostCalculator(
      */
     private fun countGraveyardCardsMatchingFilter(state: GameState, playerId: EntityId, filter: GameObjectFilter): Int {
         return state.getGraveyard(playerId).count { entityId ->
+            val card = state.getEntity(entityId)?.get<CardComponent>() ?: return@count false
+            val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: return@count false
+            filter.cardPredicates.all { predicate ->
+                matchesGraveyardPredicate(cardDef, predicate)
+            }
+        }
+    }
+
+    /**
+     * Count cards in a player's exile that match a filter.
+     * Exile cards use base state (no continuous effects apply in exile).
+     */
+    private fun countExileCardsMatchingFilter(state: GameState, playerId: EntityId, filter: GameObjectFilter): Int {
+        return state.getExile(playerId).count { entityId ->
             val card = state.getEntity(entityId)?.get<CardComponent>() ?: return@count false
             val cardDef = cardRegistry.getCard(card.cardDefinitionId) ?: return@count false
             filter.cardPredicates.all { predicate ->

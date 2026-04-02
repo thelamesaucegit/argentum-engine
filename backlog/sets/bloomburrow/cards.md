@@ -2,13 +2,13 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 224 / 266
+**Implemented:** 225 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 33   |
 | Blue       | 41    | 33   |
-| Black      | 40    | 34   |
+| Black      | 40    | 35   |
 | Red        | 41    | 33   |
 | Green      | 41    | 36   |
 | Multicolor | 39    | 31   |
@@ -120,7 +120,7 @@
 - [x] Hop to It
 - [x] Hugs, Grisly Guardian
 - [x] Hunter's Talent
-- [ ] Huskburster Swarm
+- [x] Huskburster Swarm
 - [ ] Innkeeper's Talent
 - [x] Into the Flood Maw
 - [x] Intrepid Rabbit
