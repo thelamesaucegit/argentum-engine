@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 206 / 266
+**Implemented:** 207 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -10,7 +10,7 @@
 | Blue       | 41    | 30   |
 | Black      | 40    | 32   |
 | Red        | 41    | 32   |
-| Green      | 41    | 30   |
+| Green      | 41    | 31   |
 | Multicolor | 39    | 30   |
 | Colorless  | 9     | 6    |
 | Land       | 15    | 13   |
@@ -204,7 +204,7 @@
 - [x] Scales of Shale
 - [x] Scavenger's Talent
 - [ ] Scrapshooter
-- [ ] Season of Gathering
+- [x] Season of Gathering
 - [x] Season of Loss
 - [x] Season of Weaving
 - [ ] Season of the Bold

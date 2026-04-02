@@ -1,27 +1,15 @@
 package com.wingedsheep.mtg.sets.definitions.bloomburrow.cards
 
 import com.wingedsheep.sdk.core.Zone
+import com.wingedsheep.sdk.dsl.EffectPatterns
 import com.wingedsheep.sdk.dsl.Effects
 import com.wingedsheep.sdk.dsl.Triggers
 import com.wingedsheep.sdk.dsl.card
 import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
-import com.wingedsheep.sdk.scripting.effects.CardDestination
-import com.wingedsheep.sdk.scripting.effects.CardSource
-import com.wingedsheep.sdk.scripting.effects.CompositeEffect
-import com.wingedsheep.sdk.scripting.effects.GatherCardsEffect
-import com.wingedsheep.sdk.scripting.effects.ModalEffect
-import com.wingedsheep.sdk.scripting.effects.Mode
-import com.wingedsheep.sdk.scripting.effects.MoveCollectionEffect
 import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
-import com.wingedsheep.sdk.scripting.effects.SacrificeEffect
-import com.wingedsheep.sdk.scripting.effects.SelectFromCollectionEffect
-import com.wingedsheep.sdk.scripting.effects.SelectionMode
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
-import com.wingedsheep.sdk.scripting.references.Player
-import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.targets.TargetObject
-import com.wingedsheep.sdk.scripting.values.DynamicAmount
 
 /**
  * Curious Forager
@@ -50,38 +38,7 @@ val CuriousForager = card("Curious Forager") {
             TargetObject(filter = TargetFilter(GameObjectFilter.Permanent.ownedByYou(), zone = Zone.GRAVEYARD))
         )
         effect = ReflexiveTriggerEffect(
-            action = ModalEffect.chooseOne(
-                // Mode 1: Exile 3 cards from your graveyard
-                Mode.noTarget(
-                    CompositeEffect(
-                        listOf(
-                            GatherCardsEffect(
-                                source = CardSource.FromZone(Zone.GRAVEYARD, Player.You),
-                                storeAs = "graveCards"
-                            ),
-                            SelectFromCollectionEffect(
-                                from = "graveCards",
-                                selection = SelectionMode.ChooseExactly(DynamicAmount.Fixed(3)),
-                                storeSelected = "exileCards",
-                                prompt = "Choose 3 cards from your graveyard to exile (forage)"
-                            ),
-                            MoveCollectionEffect(
-                                from = "exileCards",
-                                destination = CardDestination.ToZone(Zone.EXILE)
-                            )
-                        )
-                    ),
-                    "Exile three cards from your graveyard"
-                ),
-                // Mode 2: Sacrifice a Food
-                Mode.noTarget(
-                    SacrificeEffect(
-                        filter = GameObjectFilter.Any.withSubtype("Food"),
-                        count = 1
-                    ),
-                    "Sacrifice a Food"
-                )
-            ),
+            action = EffectPatterns.forage(),
             optional = true,
             reflexiveEffect = Effects.ReturnToHand(permanentInGY)
         )
