@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 205 / 266
+**Implemented:** 206 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 29   |
+| White      | 40    | 30   |
 | Blue       | 41    | 30   |
 | Black      | 40    | 32   |
 | Red        | 41    | 32   |
@@ -48,7 +48,7 @@
 - [ ] Cache Grab
 - [ ] Calamitous Tide
 - [x] Camellia, the Seedmiser
-- [ ] Caretaker's Talent
+- [x] Caretaker's Talent
 - [ ] Carrot Cake
 - [x] Cindering Cutthroat
 - [x] Clement, the Worrywort

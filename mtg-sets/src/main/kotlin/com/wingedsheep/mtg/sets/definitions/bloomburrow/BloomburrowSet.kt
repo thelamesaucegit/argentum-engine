@@ -53,6 +53,7 @@ object BloomburrowSet {
         ConductElectricity,
         CruelclawsHeist,
         CamelliaTheSeedmiser,
+        CaretakersTalent,
         CorpseberryCultivator,
         CoruscationMage,
         CrumbAndGetIt,
