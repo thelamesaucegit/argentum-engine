@@ -173,6 +173,29 @@ data object SacrificedFoodThisTurn : Condition {
 }
 
 // =============================================================================
+// Ability Resolution Conditions
+// =============================================================================
+
+/**
+ * Condition: "if this is the Nth time this ability has resolved this turn"
+ * Checks the AbilityResolutionCountThisTurnComponent on the source entity.
+ * Used for cards like Harvestrite Host.
+ */
+@SerialName("SourceAbilityResolvedNTimesThisTurn")
+@Serializable
+data class SourceAbilityResolvedNTimesThisTurn(val count: Int) : Condition {
+    override val description: String = "if this is the ${ordinal(count)} time this ability has resolved this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+
+    private fun ordinal(n: Int): String = when (n) {
+        1 -> "first"
+        2 -> "second"
+        3 -> "third"
+        else -> "${n}th"
+    }
+}
+
+// =============================================================================
 // Stack Conditions
 // =============================================================================
 

@@ -216,6 +216,18 @@ data class TriggeredAbilityFiredThisTurnComponent(
 }
 
 /**
+ * Tracks how many times abilities on this permanent have resolved this turn.
+ * Used for cards like Harvestrite Host: "if this is the second time this ability has resolved this turn."
+ * Cleared at end of turn by CleanupPhaseManager.
+ */
+@Serializable
+data class AbilityResolutionCountThisTurnComponent(
+    val count: Int = 0
+) : Component {
+    fun incremented(): AbilityResolutionCountThisTurnComponent = copy(count = count + 1)
+}
+
+/**
  * Tracks which controllers have targeted this permanent with spells or abilities this turn.
  * Used for Valiant triggers: "for the first time each turn".
  * Cleared at end of turn by CleanupPhaseManager.

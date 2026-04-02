@@ -52,6 +52,7 @@ import com.wingedsheep.sdk.scripting.conditions.YouGainedAndLostLifeThisTurn
 import com.wingedsheep.sdk.scripting.conditions.YouGainedOrLostLifeThisTurn
 import com.wingedsheep.sdk.scripting.conditions.SacrificedFoodThisTurn
 import com.wingedsheep.sdk.scripting.conditions.IsFirstSpellOfTypeCastThisTurn
+import com.wingedsheep.sdk.scripting.conditions.SourceAbilityResolvedNTimesThisTurn
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
 import com.wingedsheep.sdk.scripting.conditions.YouAttackedThisTurn
 import com.wingedsheep.sdk.scripting.conditions.YouWereAttackedThisStep
@@ -113,6 +114,7 @@ class ConditionEvaluator {
             is CardsLeftGraveyardThisTurn -> evaluateCardsLeftGraveyardThisTurn(state, condition, context)
             is SacrificedFoodThisTurn -> evaluateSacrificedFoodThisTurn(state, context)
             is IsFirstSpellOfTypeCastThisTurn -> evaluateFirstSpellOfType(state, condition, context)
+            is SourceAbilityResolvedNTimesThisTurn -> evaluateSourceAbilityResolvedNTimes(state, condition, context)
 
             // Stack conditions
             is OpponentSpellOnStack -> evaluateOpponentSpellOnStack(state, context)
@@ -411,5 +413,17 @@ class ConditionEvaluator {
         val castCounts = state.spellTypesCastThisTurn[context.controllerId] ?: return false
         val count = castCounts[condition.spellCategory] ?: 0
         return count == 1
+    }
+
+    private fun evaluateSourceAbilityResolvedNTimes(
+        state: GameState,
+        condition: SourceAbilityResolvedNTimesThisTurn,
+        context: EffectContext
+    ): Boolean {
+        val sourceId = context.sourceId ?: return false
+        val component = state.getEntity(sourceId)
+            ?.get<com.wingedsheep.engine.state.components.battlefield.AbilityResolutionCountThisTurnComponent>()
+            ?: return false
+        return component.count == condition.count
     }
 }

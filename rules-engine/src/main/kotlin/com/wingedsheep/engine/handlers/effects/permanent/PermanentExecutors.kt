@@ -55,6 +55,7 @@ class PermanentExecutors(
         AttachEquipmentExecutor(),
         GrantExileOnLeaveExecutor(),
         RemoveAllAbilitiesExecutor(),
-        LevelUpClassExecutor()
+        LevelUpClassExecutor(),
+        IncrementAbilityResolutionCountExecutor()
     )
 }

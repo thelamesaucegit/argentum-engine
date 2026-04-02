@@ -363,6 +363,13 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.SacrificedFoodThisTurn
 
     /**
+     * If this is the Nth time this ability has resolved this turn.
+     * Used for cards like Harvestrite Host.
+     */
+    fun SourceAbilityResolvedNTimes(count: Int): ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.SourceAbilityResolvedNTimesThisTurn(count)
+
+    /**
      * If it's your turn.
      */
     val IsYourTurn: ConditionInterface =

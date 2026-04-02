@@ -149,3 +149,19 @@ data class GrantExileOnLeaveEffect(
 
     override fun applyTextReplacement(replacer: TextReplacer): Effect = this
 }
+
+// =============================================================================
+// Ability Resolution Tracking
+// =============================================================================
+
+/**
+ * Increments the ability resolution count on the source permanent.
+ * Used for cards that track "the Nth time this ability has resolved this turn"
+ * (e.g., Harvestrite Host).
+ */
+@SerialName("IncrementAbilityResolutionCount")
+@Serializable
+data object IncrementAbilityResolutionCountEffect : Effect {
+    override val description: String = "Track ability resolution"
+    override fun applyTextReplacement(replacer: TextReplacer): Effect = this
+}

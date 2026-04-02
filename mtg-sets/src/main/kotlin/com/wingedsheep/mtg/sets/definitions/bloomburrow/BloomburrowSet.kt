@@ -92,6 +92,7 @@ object BloomburrowSet {
         GlidediveDuo,
         GevScaledScorch,
         GossipsTalent,
+        HarvestriteHost,
         HeadOfTheHomestead,
         HazardrootHerbalist,
         HazelsNocturne,

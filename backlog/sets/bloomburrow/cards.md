@@ -2,11 +2,11 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 212 / 266
+**Implemented:** 213 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
-| White      | 40    | 30   |
+| White      | 40    | 31   |
 | Blue       | 41    | 32   |
 | Black      | 40    | 32   |
 | Red        | 41    | 32   |
@@ -102,7 +102,7 @@
 - [x] Glidedive Duo
 - [x] Gossip's Talent
 - [ ] Harnesser of Storms
-- [ ] Harvestrite Host
+- [x] Harvestrite Host
 - [x] Hazardroot Herbalist
 - [x] Hazel's Nocturne
 - [x] Head of the Homestead

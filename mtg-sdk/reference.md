@@ -311,6 +311,7 @@ constructors.
 | `TurnFaceUpEffect`                          | `target`                                                                    | Turn face up                             |
 | `TransformEffect`                           | `target`                                                                    | Transform DFC                            |
 | `RemoveFromCombatEffect`                    | `target`                                                                    | Remove from combat                       |
+| `IncrementAbilityResolutionCountEffect`     | (data object)                                                               | Track ability resolution count per turn  |
 
 ### Library
 
@@ -722,6 +723,7 @@ constructors.
 - `Conditions.OpponentLostLifeThisTurn` — true if any opponent lost life this turn (from any source)
 - `Conditions.CardsLeftGraveyardThisTurn(count)` — true if N+ cards left your graveyard this turn
 - `Conditions.SacrificedFoodThisTurn` — true if you've sacrificed a Food artifact this turn
+- `Conditions.SourceAbilityResolvedNTimes(count)` — true if this is the Nth time this ability has resolved this turn (use with `IncrementAbilityResolutionCountEffect`)
 - `IsFirstSpellOfTypeCastThisTurn(spellCategory: String)` — raw condition. True if the count of spells matching the category cast by you this turn is exactly 1. Categories: `"INSTANT"`, `"SORCERY"`, `"CREATURE"`, `"NONCREATURE"`, `"INSTANT_OR_SORCERY"`, `"ENCHANTMENT"`, `"HISTORIC"`, `"SUBTYPE_<NAME>"` (e.g., `"SUBTYPE_OTTER"`).
 
 ### Zone Presence

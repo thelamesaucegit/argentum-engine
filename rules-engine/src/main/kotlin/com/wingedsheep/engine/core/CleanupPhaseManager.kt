@@ -4,6 +4,7 @@ import com.wingedsheep.engine.handlers.DecisionHandler
 import com.wingedsheep.engine.state.GameState
 import com.wingedsheep.engine.state.ZoneKey
 import com.wingedsheep.engine.state.components.battlefield.AbilityActivatedThisTurnComponent
+import com.wingedsheep.engine.state.components.battlefield.AbilityResolutionCountThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.DamageComponent
 import com.wingedsheep.engine.state.components.battlefield.DamageDealtToCreaturesThisTurnComponent
 import com.wingedsheep.engine.state.components.battlefield.TargetedByControllerThisTurnComponent
@@ -337,6 +338,9 @@ class CleanupPhaseManager(
             if (container.has<TriggeredAbilityFiredThisTurnComponent>()) {
                 needsUpdate = true
             }
+            if (container.has<AbilityResolutionCountThisTurnComponent>()) {
+                needsUpdate = true
+            }
             if (needsUpdate) {
                 newState = newState.updateEntity(entityId) { c ->
                     c.without<AbilityActivatedThisTurnComponent>()
@@ -345,6 +349,7 @@ class CleanupPhaseManager(
                         .without<PlayerAttackedThisTurnComponent>()
                         .without<GraveyardPlayPermissionUsedComponent>()
                         .without<TriggeredAbilityFiredThisTurnComponent>()
+                        .without<AbilityResolutionCountThisTurnComponent>()
                 }
             }
         }
