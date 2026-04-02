@@ -45,6 +45,7 @@ object BloomburrowSet {
         BrazenCollector,
         BraveKinDuo,
         BrightbladeStoat,
+        BumbleflowersSharepot,
         BurrowguardMentor,
         BushyBodyguard,
         BywayBarterer,
