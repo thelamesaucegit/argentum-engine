@@ -206,3 +206,37 @@ enum class RepeatWhilePhase {
     /** Waiting for the player's yes/no decision (PlayerChooses only) */
     AFTER_DECISION
 }
+
+/**
+ * Pre-pushed before executing a reflexive trigger's action. Auto-resumed after
+ * the action completes to present target selection for the reflexive effect.
+ *
+ * Flow: executor pre-pushes this → executes action → on success, pops and targets inline;
+ * on pause, auto-resumer handles targeting after the action's decision resolves.
+ *
+ * @property reflexiveEffect The effect to execute after targets are chosen
+ * @property reflexiveTargetRequirements Target requirements for the reflexive effect
+ * @property effectContext The execution context from the parent ability
+ */
+@Serializable
+data class ReflexiveTriggerTargetContinuation(
+    override val decisionId: String,
+    val reflexiveEffect: Effect,
+    val reflexiveTargetRequirements: List<TargetRequirement>,
+    val effectContext: EffectContext
+) : ContinuationFrame
+
+/**
+ * Resumed after the player selects targets for a reflexive trigger's effect.
+ *
+ * @property reflexiveEffect The effect to execute with the chosen targets
+ * @property reflexiveTargetRequirements The original target requirements (for validation)
+ * @property effectContext The execution context (targets will be merged in from the response)
+ */
+@Serializable
+data class ReflexiveTriggerResolveContinuation(
+    override val decisionId: String,
+    val reflexiveEffect: Effect,
+    val reflexiveTargetRequirements: List<TargetRequirement>,
+    val effectContext: EffectContext
+) : ContinuationFrame

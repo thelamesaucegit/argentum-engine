@@ -9,6 +9,7 @@ import com.wingedsheep.sdk.model.Rarity
 import com.wingedsheep.sdk.scripting.GameObjectFilter
 import com.wingedsheep.sdk.scripting.effects.ReflexiveTriggerEffect
 import com.wingedsheep.sdk.scripting.filters.unified.TargetFilter
+import com.wingedsheep.sdk.scripting.targets.EffectTarget
 import com.wingedsheep.sdk.scripting.targets.TargetObject
 
 /**
@@ -23,6 +24,7 @@ import com.wingedsheep.sdk.scripting.targets.TargetObject
  *
  * Modeled as a reflexive trigger: the action is forage (modal: exile 3 or sacrifice Food),
  * optional, and the reflexive effect targets a permanent card in your graveyard to return to hand.
+ * Target is selected AFTER foraging (reflexive trigger targeting).
  */
 val CuriousForager = card("Curious Forager") {
     manaCost = "{2}{G}"
@@ -33,14 +35,13 @@ val CuriousForager = card("Curious Forager") {
 
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
-        val permanentInGY = target(
-            "permanent card in your graveyard",
-            TargetObject(filter = TargetFilter(GameObjectFilter.Permanent.ownedByYou(), zone = Zone.GRAVEYARD))
-        )
         effect = ReflexiveTriggerEffect(
             action = EffectPatterns.forage(),
             optional = true,
-            reflexiveEffect = Effects.ReturnToHand(permanentInGY)
+            reflexiveEffect = Effects.ReturnToHand(EffectTarget.ContextTarget(0)),
+            reflexiveTargetRequirements = listOf(
+                TargetObject(filter = TargetFilter(GameObjectFilter.Permanent.ownedByYou(), zone = Zone.GRAVEYARD))
+            )
         )
     }
 

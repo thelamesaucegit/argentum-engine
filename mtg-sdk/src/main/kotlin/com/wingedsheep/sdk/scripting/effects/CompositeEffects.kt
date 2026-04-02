@@ -232,13 +232,17 @@ data class OptionalCostEffect(
  * @property action The optional action (sacrifice, discard, etc.)
  * @property optional Whether the action is optional
  * @property reflexiveEffect The effect that happens "when you do"
+ * @property reflexiveTargetRequirements Target requirements for the reflexive effect,
+ *           selected AFTER the action completes (not when the trigger goes on the stack).
+ *           Use this for cards like Wick's Patrol where the target depends on what the action did.
  */
 @SerialName("ReflexiveTrigger")
 @Serializable
 data class ReflexiveTriggerEffect(
     val action: Effect,
     val optional: Boolean = true,
-    val reflexiveEffect: Effect
+    val reflexiveEffect: Effect,
+    val reflexiveTargetRequirements: List<TargetRequirement> = emptyList()
 ) : Effect {
     override val description: String = buildString {
         if (optional) append("You may ")

@@ -32,13 +32,13 @@ val WicksPatrol = card("Wick's Patrol") {
 
     triggeredAbility {
         trigger = Triggers.EntersBattlefield
-        val creature = target("creature an opponent controls", Targets.CreatureOpponentControls)
         val greatestMV = DynamicAmounts.zone(Player.You, Zone.GRAVEYARD).maxManaValue()
         val negX = DynamicAmount.Multiply(greatestMV, -1)
         effect = ReflexiveTriggerEffect(
             action = EffectPatterns.mill(3),
             optional = false,
-            reflexiveEffect = Effects.ModifyStats(negX, negX, creature)
+            reflexiveEffect = Effects.ModifyStats(negX, negX, EffectTarget.ContextTarget(0)),
+            reflexiveTargetRequirements = listOf(Targets.CreatureOpponentControls)
         )
     }
 

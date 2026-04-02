@@ -40,7 +40,7 @@ class EffectExecutorRegistry(
     private val cardRegistry: com.wingedsheep.engine.registry.CardRegistry
 ) {
     private val executors = mutableMapOf<KClass<out Effect>, EffectExecutor<*>>()
-    private val compositeExecutors = CompositeExecutors(cardRegistry)
+    private val compositeExecutors = CompositeExecutors(cardRegistry, TargetFinder(), decisionHandler)
     private val drawingExecutors = DrawingExecutors(amountEvaluator, decisionHandler, cardRegistry = cardRegistry)
     private val removalExecutors = RemovalExecutors(cardRegistry)
 

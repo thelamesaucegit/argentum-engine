@@ -25,7 +25,8 @@ class EffectAndTriggerContinuationResumer(
             ExecutionResult.success(state)
         },
         resumer(MayAbilityContinuation::class, ::resumeMayAbility),
-        resumer(MayTriggerContinuation::class, ::resumeMayTrigger)
+        resumer(MayTriggerContinuation::class, ::resumeMayTrigger),
+        resumer(ReflexiveTriggerResolveContinuation::class, ::resumeReflexiveTriggerResolve)
     )
 
     private fun resumeEffect(
@@ -152,6 +153,44 @@ class EffectAndTriggerContinuationResumer(
         }
 
         val result = services.effectExecutorRegistry.execute(state, effectToExecute, context)
+
+        if (result.isPaused) {
+            return result
+        }
+
+        return checkForMore(result.state, result.events.toList())
+    }
+
+    private fun resumeReflexiveTriggerResolve(
+        state: GameState,
+        continuation: ReflexiveTriggerResolveContinuation,
+        response: DecisionResponse,
+        checkForMore: CheckForMore
+    ): ExecutionResult {
+        if (response !is TargetsResponse) {
+            return ExecutionResult.error(state, "Expected target selection response for reflexive trigger")
+        }
+
+        val selectedTargets = response.selectedTargets.flatMap { (_, targetIds) ->
+            targetIds.map { entityId -> entityIdToChosenTarget(state, entityId) }
+        }
+
+        if (selectedTargets.isEmpty()) {
+            // Player declined targets (optional) or no valid targets selected
+            return checkForMore(state, emptyList())
+        }
+
+        // Execute the reflexive effect with the chosen targets
+        val context = continuation.effectContext.copy(
+            targets = selectedTargets,
+            pipeline = continuation.effectContext.pipeline.copy(
+                namedTargets = com.wingedsheep.engine.handlers.EffectContext.buildNamedTargets(
+                    continuation.reflexiveTargetRequirements, selectedTargets
+                )
+            )
+        )
+
+        val result = services.effectExecutorRegistry.execute(state, continuation.reflexiveEffect, context)
 
         if (result.isPaused) {
             return result
