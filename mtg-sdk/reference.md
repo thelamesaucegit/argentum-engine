@@ -956,6 +956,7 @@ Set via `staticAbility { ability = ... }`:
 ### Keywords & Stats
 
 - `GrantKeyword(keyword, target: StaticTarget)` — permanent keyword grant
+- `RemoveKeywordStatic(keyword, target: StaticTarget)` — permanent keyword removal (e.g., "equipped creature loses flying")
 - `GrantKeywordToCreatureGroup(keyword, filter: AffectsFilter)` — keyword to group
 - `GrantTriggeredAbilityToCreatureGroup(ability: TriggeredAbility, filter: GroupFilter)` — triggered ability to group (e.g., Hunter Sliver granting provoke to all Slivers)
 - `GrantActivatedAbilityToCreatureGroup(ability: ActivatedAbility, filter: GroupFilter)` — activated ability to group (e.g., Spectral Sliver granting pump to all Slivers)

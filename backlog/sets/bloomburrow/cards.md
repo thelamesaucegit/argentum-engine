@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 209 / 266
+**Implemented:** 210 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 41    | 32   |
 | Green      | 41    | 31   |
 | Multicolor | 39    | 31   |
-| Colorless  | 9     | 6    |
+| Colorless  | 9     | 7    |
 | Land       | 15    | 13   |
 
 ---
@@ -224,7 +224,7 @@
 - [x] Splash Portal
 - [x] Star Charter
 - [ ] Starfall Invocation
-- [ ] Starforged Sword
+- [x] Starforged Sword
 - [x] Stargaze
 - [ ] Starlit Soothsayer
 - [x] Starscape Cleric

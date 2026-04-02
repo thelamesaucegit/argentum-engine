@@ -188,6 +188,7 @@ object BloomburrowSet {
         SugarCoat,
         StarCharter,
         Stargaze,
+        StarforgedSword,
         StarscapeCleric,
         SteampathCharger,
         StormcatchMentor,

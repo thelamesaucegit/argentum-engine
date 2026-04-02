@@ -54,6 +54,7 @@ import com.wingedsheep.sdk.scripting.GlobalEffect
 import com.wingedsheep.sdk.scripting.GlobalEffectType
 import com.wingedsheep.sdk.scripting.GrantKeyword
 import com.wingedsheep.sdk.scripting.GrantKeywordForChosenCreatureType
+import com.wingedsheep.sdk.scripting.RemoveKeywordStatic
 import com.wingedsheep.sdk.scripting.GrantCantBeBlockedExceptBySubtype
 import com.wingedsheep.sdk.scripting.GrantCantBeBlockedToSmallCreatures
 import com.wingedsheep.sdk.scripting.GrantDynamicStatsEffect
@@ -367,6 +368,14 @@ class StaticAbilityHandler(
                     layer = Layer.ABILITY,
                     sublayer = null,
                     modification = Modification.GrantKeyword(ability.keyword),
+                    affectsFilter = convertStaticTarget(ability.target)
+                )
+            }
+            is RemoveKeywordStatic -> {
+                ContinuousEffectData(
+                    layer = Layer.ABILITY,
+                    sublayer = null,
+                    modification = Modification.RemoveKeyword(ability.keyword),
                     affectsFilter = convertStaticTarget(ability.target)
                 )
             }

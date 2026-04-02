@@ -26,6 +26,24 @@ data class GrantKeyword(
 }
 
 /**
+ * Removes a keyword from the attached/target creature (continuous static ability).
+ * Used for Equipment that causes the equipped creature to lose a keyword.
+ * E.g., Starforged Sword: "Equipped creature loses flying."
+ */
+@SerialName("RemoveKeywordStatic")
+@Serializable
+data class RemoveKeywordStatic(
+    val keyword: String,
+    val target: StaticTarget = StaticTarget.AttachedCreature
+) : StaticAbility {
+    constructor(keyword: Keyword, target: StaticTarget = StaticTarget.AttachedCreature) :
+        this(keyword.name, target)
+
+    override val description: String = "Removes ${keyword.lowercase().replace('_', ' ')}"
+    override fun applyTextReplacement(replacer: TextReplacer): StaticAbility = this
+}
+
+/**
  * Grants a keyword to a group of creatures (continuous static ability).
  * Used for lord effects like "Other creatures you control have flying" or
  * conditional effects like "Other tapped creatures you control have indestructible."
