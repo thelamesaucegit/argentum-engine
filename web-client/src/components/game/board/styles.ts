@@ -987,6 +987,21 @@ export const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     zIndex: 5,
   } as React.CSSProperties,
+  // Stash counter badge (for Hoarder's Overflow etc.)
+  stashCounterBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(120, 50, 20, 0.95)',
+    borderRadius: 4,
+    border: '1px solid rgba(220, 120, 40, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    color: '#f0a030',
+    fontWeight: 700,
+    zIndex: 5,
+  } as React.CSSProperties,
   // Saga lore counter badge (shown in P/T position for sagas)
   sagaLoreBadge: {
     position: 'absolute',
