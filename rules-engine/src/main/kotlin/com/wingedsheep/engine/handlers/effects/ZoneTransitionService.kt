@@ -372,6 +372,11 @@ object ZoneTransitionService {
         return state.updateEntity(entityId) { c ->
             var updated = c.with(ControllerComponent(controllerId))
 
+            // Clear stale LinkedExileComponent from previous battlefield visit (Rule 400.7:
+            // a permanent that re-enters the battlefield is a new object with no memory of
+            // its previous existence, so it should not retain links to previously exiled cards)
+            updated = updated.without<LinkedExileComponent>()
+
             // Track that this permanent entered the battlefield this turn
             updated = updated.with(EnteredThisTurnComponent)
 
