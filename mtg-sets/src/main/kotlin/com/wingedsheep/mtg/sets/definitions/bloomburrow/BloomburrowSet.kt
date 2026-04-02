@@ -214,6 +214,7 @@ object BloomburrowSet {
         ThreeTreeRootweaver,
         ThreeTreeScribe,
         TreeguardDuo,
+        TreetopSentries,
         ThundertrapTrainer,
         ValleyFloodcaller,
         ValleyMightcaller,
