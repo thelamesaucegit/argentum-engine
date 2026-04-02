@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 201 / 266
+**Implemented:** 202 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 29   |
-| Blue       | 41    | 29   |
+| Blue       | 41    | 30   |
 | Black      | 40    | 32   |
 | Red        | 41    | 32   |
 | Green      | 41    | 27   |
@@ -132,7 +132,7 @@
 - [x] Kastral, the Windcrested
 - [ ] Keen-Eyed Curator
 - [x] Kindlespark Duo
-- [ ] Kitnap
+- [x] Kitnap
 - [ ] Kitsa, Otterball Elite
 - [x] Knightfisher
 - [x] Lifecreed Duo

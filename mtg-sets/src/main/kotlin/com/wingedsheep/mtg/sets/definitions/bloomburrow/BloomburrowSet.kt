@@ -108,6 +108,7 @@ object BloomburrowSet {
         JunkbladeBruiser,
         KastralTheWindcrested,
         KindlesparkDuo,
+        Kitnap,
         Knightfisher,
         HuntersTalent,
         Mindwhisker,
