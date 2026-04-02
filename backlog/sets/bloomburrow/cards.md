@@ -2,13 +2,13 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 223 / 266
+**Implemented:** 224 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 33   |
 | Blue       | 41    | 33   |
-| Black      | 40    | 33   |
+| Black      | 40    | 34   |
 | Red        | 41    | 33   |
 | Green      | 41    | 36   |
 | Multicolor | 39    | 31   |
@@ -55,7 +55,7 @@
 - [x] Clifftop Lookout
 - [ ] Coiling Rebirth
 - [x] Conduct Electricity
-- [ ] Consumed by Greed
+- [x] Consumed by Greed
 - [x] Corpseberry Cultivator
 - [x] Coruscation Mage
 - [x] Cruelclaw's Heist

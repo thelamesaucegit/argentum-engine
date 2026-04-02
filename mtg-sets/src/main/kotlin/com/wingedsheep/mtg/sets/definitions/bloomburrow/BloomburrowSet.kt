@@ -55,6 +55,7 @@ object BloomburrowSet {
         ClifftopLookout,
         ClementTheWorrywort,
         ConductElectricity,
+        ConsumedByGreed,
         CruelclawsHeist,
         CamelliaTheSeedmiser,
         CaretakersTalent,
