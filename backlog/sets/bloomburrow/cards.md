@@ -2,12 +2,12 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 210 / 266
+**Implemented:** 211 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
 | White      | 40    | 30   |
-| Blue       | 41    | 31   |
+| Blue       | 41    | 32   |
 | Black      | 40    | 32   |
 | Red        | 41    | 32   |
 | Green      | 41    | 31   |
@@ -139,7 +139,7 @@
 - [x] Lightshell Duo
 - [x] Lilypad Village
 - [ ] Lilysplash Mentor
-- [ ] Long River Lurker
+- [x] Long River Lurker
 - [x] Long River's Pull
 - [x] Longstalk Brawl
 - [ ] Lumra, Bellow of the Woods
