@@ -330,6 +330,13 @@ object Conditions {
         com.wingedsheep.sdk.scripting.conditions.YouGainedLifeThisTurn
 
     /**
+     * If you gained or lost life this turn.
+     * Used for Star Charter and similar Bloomburrow cards.
+     */
+    val YouGainedOrLostLifeThisTurn: ConditionInterface =
+        com.wingedsheep.sdk.scripting.conditions.YouGainedOrLostLifeThisTurn
+
+    /**
      * If you gained and lost life this turn.
      * Used for Lunar Convocation's second ability.
      */

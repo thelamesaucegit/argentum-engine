@@ -95,6 +95,18 @@ data object YouGainedAndLostLifeThisTurn : Condition {
     override fun applyTextReplacement(replacer: TextReplacer): Condition = this
 }
 
+/**
+ * Condition: "if you gained or lost life this turn"
+ * Checks whether the controller has gained OR lost life at any point during the current turn.
+ * Used for Star Charter and similar Bloomburrow cards.
+ */
+@SerialName("YouGainedOrLostLifeThisTurn")
+@Serializable
+data object YouGainedOrLostLifeThisTurn : Condition {
+    override val description: String = "if you gained or lost life this turn"
+    override fun applyTextReplacement(replacer: TextReplacer): Condition = this
+}
+
 @SerialName("OpponentLostLifeThisTurn")
 @Serializable
 data object OpponentLostLifeThisTurn : Condition {

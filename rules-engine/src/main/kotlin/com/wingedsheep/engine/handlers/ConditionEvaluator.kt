@@ -49,6 +49,7 @@ import com.wingedsheep.sdk.scripting.conditions.CardsLeftGraveyardThisTurn
 import com.wingedsheep.sdk.scripting.conditions.OpponentLostLifeThisTurn
 import com.wingedsheep.sdk.scripting.conditions.YouGainedLifeThisTurn
 import com.wingedsheep.sdk.scripting.conditions.YouGainedAndLostLifeThisTurn
+import com.wingedsheep.sdk.scripting.conditions.YouGainedOrLostLifeThisTurn
 import com.wingedsheep.sdk.scripting.conditions.SacrificedFoodThisTurn
 import com.wingedsheep.sdk.scripting.conditions.IsFirstSpellOfTypeCastThisTurn
 import com.wingedsheep.sdk.scripting.conditions.WasKicked
@@ -104,6 +105,7 @@ class ConditionEvaluator {
             is PlayedLandThisTurn -> evaluatePlayedLandThisTurn(state, context)
             is YouAttackedThisTurn -> evaluateYouAttackedThisTurn(state, context)
             is YouGainedLifeThisTurn -> evaluateYouGainedLifeThisTurn(state, context)
+            is YouGainedOrLostLifeThisTurn -> evaluateYouGainedOrLostLifeThisTurn(state, context)
             is YouGainedAndLostLifeThisTurn -> evaluateYouGainedAndLostLifeThisTurn(state, context)
             is OpponentLostLifeThisTurn -> evaluateOpponentLostLifeThisTurn(state, context)
             is YouWereAttackedThisStep -> evaluateYouWereAttackedThisStep(state, context)
@@ -273,6 +275,12 @@ class ConditionEvaluator {
     private fun evaluateYouGainedLifeThisTurn(state: GameState, context: EffectContext): Boolean {
         return state.getEntity(context.controllerId)
             ?.has<com.wingedsheep.engine.state.components.player.LifeGainedThisTurnComponent>() == true
+    }
+
+    private fun evaluateYouGainedOrLostLifeThisTurn(state: GameState, context: EffectContext): Boolean {
+        val entity = state.getEntity(context.controllerId) ?: return false
+        return entity.has<com.wingedsheep.engine.state.components.player.LifeGainedThisTurnComponent>() ||
+            entity.has<com.wingedsheep.engine.state.components.player.LifeLostThisTurnComponent>()
     }
 
     private fun evaluateYouGainedAndLostLifeThisTurn(state: GameState, context: EffectContext): Boolean {

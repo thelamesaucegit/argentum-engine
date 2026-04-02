@@ -176,6 +176,7 @@ object BloomburrowSet {
         StickytongueSentinel,
         StockingThePantry,
         SugarCoat,
+        StarCharter,
         Stargaze,
         StarscapeCleric,
         SteampathCharger,
