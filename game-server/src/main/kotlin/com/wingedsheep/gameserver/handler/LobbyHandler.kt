@@ -20,6 +20,8 @@ import com.wingedsheep.gameserver.config.GameProperties
 import com.wingedsheep.engine.registry.CardRegistry
 import com.wingedsheep.gameserver.deck.EasterEggDeckInjector
 import com.wingedsheep.sdk.model.EntityId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.WebSocketSession
@@ -839,8 +841,9 @@ class LobbyHandler(
                     }
                 }
 
-                // Auto-submit decks for AI players
-                autoSubmitAiDecks(lobby)
+                // Auto-submit decks for AI players in background so LLM deckbuilding
+                // doesn't block the host's WebSocket handler thread
+                launchAiDeckBuilding(lobby)
             }
 
             TournamentFormat.DRAFT -> {
@@ -1003,27 +1006,45 @@ class LobbyHandler(
     }
 
     /**
-     * After sealed pools are generated, auto-submit decks for all AI players.
-     * Builds a simple deck: all non-land cards + enough basic lands to reach 40 cards.
+     * Launch AI deck building in a background coroutine so it doesn't block the
+     * host's WebSocket handler thread. LLM deckbuilding can take 30+ seconds,
+     * and blocking would prevent the human player from submitting their own deck.
      */
-    private fun autoSubmitAiDecks(lobby: TournamentLobby) {
-        for ((playerId, playerState) in lobby.players) {
-            if (!aiGameManager.isAiPlayer(playerId)) continue
-            if (playerState.hasSubmittedDeck) continue
+    private fun launchAiDeckBuilding(lobby: TournamentLobby) {
+        val aiPlayers = lobby.players.filter { (playerId, ps) ->
+            aiGameManager.isAiPlayer(playerId) && !ps.hasSubmittedDeck && ps.cardPool.isNotEmpty()
+        }
+        if (aiPlayers.isEmpty()) return
 
-            val pool = playerState.cardPool
-            if (pool.isEmpty()) continue
-
-            val deck = buildAiSealedDeck(pool)
-            val result = lobby.submitDeck(playerId, deck)
-            when (result) {
-                is TournamentLobby.DeckSubmissionResult.Success -> {
-                    logger.info("AI ${playerState.identity.playerName} auto-submitted sealed deck (${deck.values.sum()} cards)")
-                }
-                is TournamentLobby.DeckSubmissionResult.Error -> {
-                    logger.warn("AI deck submission failed: ${result.message}")
+        ctx.draftScope.launch(Dispatchers.IO) {
+            for ((playerId, playerState) in aiPlayers) {
+                try {
+                    val deck = buildAiSealedDeck(playerState.cardPool)
+                    val result = lobby.submitDeck(playerId, deck)
+                    when (result) {
+                        is TournamentLobby.DeckSubmissionResult.Success -> {
+                            logger.info("AI ${playerState.identity.playerName} auto-submitted sealed deck (${deck.values.sum()} cards)")
+                        }
+                        is TournamentLobby.DeckSubmissionResult.Error -> {
+                            logger.warn("AI deck submission failed: ${result.message}")
+                        }
+                    }
+                } catch (e: Exception) {
+                    logger.error("AI deck building failed for ${playerState.identity.playerName}: ${e.message}", e)
                 }
             }
+
+            // After AI decks are built, broadcast updated lobby state and handle tournament readiness
+            ctx.broadcastLobbyUpdate(lobby)
+
+            if (lobby.allDecksSubmitted() && lobby.state == LobbyState.DECK_BUILDING) {
+                lobby.activateTournament()
+            }
+
+            // Create tournament if needed and auto-ready AI players
+            val tournament = tournamentMatchHandler.ensureTournamentCreated(lobby)
+            tournamentMatchHandler.autoReadyAiPlayers(lobby, tournament)
+            lobbyRepository.saveLobby(lobby)
         }
     }
 
