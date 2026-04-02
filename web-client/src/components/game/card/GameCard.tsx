@@ -26,6 +26,7 @@ import {
   getSupplyCounters,
   getStashCounters,
   getFlyingCounters,
+  getBlightCounters,
 } from '../board/shared'
 import { styles } from '../board/styles'
 import {
@@ -1089,6 +1090,20 @@ export function GameCard({
           <i className={`ms ms-${counterManaClass.STASH}`} style={{ fontSize: responsive.isMobile ? 8 : 10 }} />
           <span style={{ fontWeight: 700 }}>
             {getStashCounters(card)}
+          </span>
+        </div>
+      )}
+
+      {/* Blight counter badge */}
+      {battlefield && getBlightCounters(card) > 0 && (
+        <div style={{
+          ...styles.blightCounterBadge,
+          fontSize: responsive.isMobile ? 9 : 11,
+          padding: responsive.isMobile ? '1px 4px' : '2px 6px',
+        }}>
+          <i className={`ms ms-${counterManaClass.BLIGHT}`} style={{ fontSize: responsive.isMobile ? 8 : 10 }} />
+          <span style={{ fontWeight: 700 }}>
+            {getBlightCounters(card)}
           </span>
         </div>
       )}

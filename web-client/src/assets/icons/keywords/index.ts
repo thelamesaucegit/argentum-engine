@@ -57,4 +57,5 @@ export const counterManaClass: Record<string, string> = {
   SUPPLY: 'counter-brick',
   FLYING: 'ability-flying',
   STASH: 'counter-charge',
+  BLIGHT: 'counter-skull',
 }

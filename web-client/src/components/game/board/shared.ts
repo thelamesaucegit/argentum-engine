@@ -206,6 +206,13 @@ export function getFlyingCounters(card: ClientCard): number {
 }
 
 /**
+ * Get the number of blight counters on a card.
+ */
+export function getBlightCounters(card: ClientCard): number {
+  return card.counters[CounterType.BLIGHT] ?? 0
+}
+
+/**
  * Get an emoji or icon for an effect based on its icon identifier.
  */
 export function getEffectIcon(icon: string): string {
