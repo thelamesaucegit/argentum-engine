@@ -186,6 +186,7 @@ object BloomburrowSet {
         SunshowerDruid,
         SunspineLynx,
         TakeOutTheTrash,
+        TangleTumbler,
         TempestAngler,
         TenderWildguide,
         ThistledownPlayers,

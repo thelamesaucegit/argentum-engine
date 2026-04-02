@@ -2,7 +2,7 @@
 
 **Set Size:** 266 cards
 **Release Date:** August 2, 2024
-**Implemented:** 199 / 266
+**Implemented:** 200 / 266
 
 | Color      | Total | Done |
 |------------|-------|------|
@@ -12,7 +12,7 @@
 | Red        | 41    | 31   |
 | Green      | 41    | 27   |
 | Multicolor | 39    | 30   |
-| Colorless  | 9     | 5    |
+| Colorless  | 9     | 6    |
 | Land       | 15    | 13   |
 
 ---
@@ -240,7 +240,7 @@
 - [x] Sunspine Lynx
 - [x] Swamp
 - [x] Take Out the Trash
-- [ ] Tangle Tumbler
+- [x] Tangle Tumbler
 - [ ] Teapot Slinger
 - [x] Tempest Angler
 - [x] Tender Wildguide
