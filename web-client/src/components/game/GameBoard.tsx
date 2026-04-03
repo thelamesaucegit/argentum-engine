@@ -1,3 +1,5 @@
+//web-client/src/components/game/GameBoard.tsx
+
 import { useMemo, useCallback } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import { useInteraction } from '@/hooks/useInteraction'
