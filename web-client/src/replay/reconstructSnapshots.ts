@@ -1,3 +1,5 @@
+//web-client/src/replay/reconstructSnapshots.ts
+
 import type { SpectatorStateUpdate } from '../components/admin/ReplayViewer'
 
 /**
