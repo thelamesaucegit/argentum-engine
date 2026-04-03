@@ -1,3 +1,5 @@
+//web-client/src/components/replay/ReplayPage.tsx
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGameStore } from '@/store/gameStore.ts'
