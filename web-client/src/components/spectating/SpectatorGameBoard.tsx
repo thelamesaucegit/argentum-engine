@@ -1,3 +1,5 @@
+//web-client/src/components/spectating/SpectatorGameBoard.tsx
+
 import { useGameStore } from '@/store/gameStore.ts'
 import { SpectatorContext } from '../../contexts/SpectatorContext'
 import { GameBoard } from '../game/GameBoard'
