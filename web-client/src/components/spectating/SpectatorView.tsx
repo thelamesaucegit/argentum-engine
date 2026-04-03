@@ -1,3 +1,5 @@
+//web-client/src/components/spectating/SpectatorView.tsx
+
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useGameStore } from '@/store/gameStore.ts'
 import type { SpectatorPlayerState, SpectatorCardInfo, SpectatorCombatState } from '../../types/messages'
