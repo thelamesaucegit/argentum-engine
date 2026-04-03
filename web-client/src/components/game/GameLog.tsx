@@ -1,3 +1,5 @@
+//web-client/src/components/game/GameLog.tsx
+
 import { useGameStore, type LogEntry } from '@/store/gameStore.ts'
 import React, { useState, useRef, useEffect } from 'react'
 
